@@ -1,0 +1,137 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+use Spatie\MediaLibrary\InteractsWithMedia;
+
+class Product extends Model
+{
+    protected $fillable = [
+        'name',
+        'slug',
+        'added_by',
+        'user_id',
+        'category_id',
+        'brand_id',
+        'thumbnail',
+        'photos',
+        'tags',
+        'short_description',
+        'description',
+        'unit_price',
+        'purchase_price',
+        'discount',
+        'discount_type',
+        'discount_start_date',
+        'discount_end_date',
+        'attributes',
+        'choice_options',
+        'published',
+        'approved',
+        'reson_reject',
+        'featured',
+        'stock_visibility_state',
+        'current_stock',
+        'unit',
+        'weight',
+        'min_qty',
+        'low_stock_quantity',
+        'tax',
+        'tax_type',
+        'shipping_type',
+        'shipping_cost',
+        'is_quantity_multiplied',
+        'est_shipping_days',
+        'number_ofsales',
+        'meta_title',
+        'meta_description',
+        'meta_img',
+        'refundable',
+        'rating',
+        'views',
+    ];
+
+    protected $casts = [
+        'tags' => 'array',
+    ];
+
+    protected array $translatable = [
+        'name',
+        'short_description',
+        'description',
+        'tags',
+        'meta_title',
+        'meta_description'
+    ];
+
+    // Relations
+    public function attributes()
+    {
+        return $this->belongsToMany(Attribute::class, 'product_attribute')
+            ->withPivot('attribute_value_id')
+            ->withTimestamps();
+    }
+
+    public function translations()
+    {
+        return $this->hasMany(ProductTranslation::class);
+    }
+
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
+    public function brand()
+    {
+        return $this->belongsTo(Brand::class);
+    }
+
+    // Custom Accessor for attribute-value pairs
+    public function getAttributeCombinationsAttribute()
+    {
+        $combinations = [];
+
+        // Use the relationship explicitly to avoid calling your own getAttribute()
+        foreach ($this->getRelation('attributes') as $attribute) {
+            $value = $attribute->values->firstWhere('id', $attribute->pivot->attribute_value_id);
+            $combinations[] = [
+                'attribute' => $attribute->name,
+                'value' => $value?->value,
+            ];
+        }
+
+        return $combinations;
+    }
+
+
+    public function getAttribute($key)
+    {
+        $value = parent::getAttribute($key);
+
+        if (!in_array($key, $this->translatable)) {
+            return $value;
+        }
+
+        $locale = app()->getLocale();
+
+        if ($locale === 'en') {
+            return $value;
+        }
+
+        $translation = $this->translations->where('locale', $locale)->first();
+
+        return $translation?->$key ?? $value;
+    }
+
+    protected static function booted()
+    {
+        static::saving(function ($product) {
+            if (empty($product->slug) || $product->isDirty('name')) {
+                $product->slug = Str::slug($product->name) . '-' . uniqid();
+            }
+        });
+    }
+}
