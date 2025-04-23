@@ -3,13 +3,18 @@
 use App\Http\Controllers\AttributeController;
 use App\Http\Controllers\AttributeValueController;
 use App\Http\Controllers\BrandController;
+use App\Http\Controllers\BusinessCategoryController;
+use App\Http\Controllers\BusinessTypeController;
 use App\Http\Controllers\CategoryController;
 use App\Http\Controllers\CityController;
 use App\Http\Controllers\CountryController;
+use App\Http\Controllers\CouponController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\InstalmentPlanController;
 use App\Http\Controllers\MediaController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\StateController;
+use App\Http\Controllers\StaticsController;
 use App\Models\Media;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
@@ -38,8 +43,35 @@ Route::group(
 
 
             Route::resource('attributes', AttributeController::class);
+            Route::get('attributes/{attribute}/edit-attribute-value', [AttributeController::class, 'editAttributeValue'])->name('attributes.editAttributeValue');
+
             Route::resource('attribute-values', AttributeValueController::class);
             Route::resource('products', ProductController::class);
+            Route::get('product-approval', [ProductController::class, 'productApproval'])->name('productApproval');
+            Route::get('product-reviews', [ProductController::class, 'productReviews'])->name('productReviews');
+
+
+            Route::resource('coupons', CouponController::class);
+            Route::get('/products/{userId}', [CouponController::class, 'getProductsForMerchant']);
+
+            Route::resource('business-types', BusinessTypeController::class);
+            Route::resource('business-categories', BusinessCategoryController::class);
+
+            Route::resource('intalment-plans', InstalmentPlanController::class);
+
+
+
+
+
+
+            Route::controller(StaticsController::class)
+                ->prefix('statics')
+                ->group(function () {
+                    Route::get('/products', 'products')->name('products.statics');
+                    Route::get('/brands', 'brands')->name('brands.statics');
+                    Route::get('/categories', 'categories')->name('categories.statics');
+                    Route::get('/reviews', 'reviews')->name('reviews.statics');
+                });
         });
 
         // Media routes
@@ -60,48 +92,3 @@ Route::group(
         })->name('media.multi-media-picker');
     }
 );
-
-// public function changeLang($locale)
-// {
-//     session(['locale' => $locale]);
-//     App::setLocale($locale);
-//     return back();
-// }
-
-
-// <ul>
-//     @foreach(LaravelLocalization::getSupportedLocales() as $localeCode => $properties)
-//         <li>
-//             <a rel="alternate" hreflang="{{ $localeCode }}"
-//                href="{{ LaravelLocalization::getLocalizedURL($localeCode, null, [], true) }}">
-//                 {{ $properties['native'] }}
-//             </a>
-//         </li>
-//     @endforeach
-// </ul>
-
-
-
-// $(document).on('click', '.delete-btn', function(e) {
-//     e.preventDefault();
-//     var stateId = $(this).data('id');
-//     var url = $(this).attr('href');
-
-//     if (confirm('Are you sure you want to delete this state?')) {
-//         $.ajax({
-//             url: url,
-//             type: 'POST',
-//             data: {
-//                 '_method': 'DELETE',
-//                 '_token': $('meta[name="csrf-token"]').attr('content')
-//             },
-//             success: function(response) {
-//                 alert(response.success);
-//                 location.reload(); // Reload the page to reflect changes
-//             },
-//             error: function(response) {
-//                 alert('Something went wrong');
-//             }
-//         });
-//     }
-// });

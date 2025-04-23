@@ -30,7 +30,16 @@ class MediaController extends Controller
     {
         $request->validate([
             'files' => 'required|array',
-            'files.*' => 'file|mimes:jpeg,png,jpg,gif,svg,pdf|max:10240',
+            'files.*' => [
+                'file',
+                'mimes:jpeg,png,jpg,gif,svg,pdf',
+                'max:1048' // 2MB = 2048KB
+            ],
+        ], [
+            'files.required' => 'Please select at least one file to upload.',
+            'files.*.file' => 'Each item must be a valid file.',
+            'files.*.mimes' => 'Only JPEG, PNG, JPG, GIF, SVG, and PDF files are allowed.',
+            'files.*.max' => 'Each file must not be larger than 2MB.',
         ]);
 
         $uploadedMedia = [];
@@ -56,6 +65,7 @@ class MediaController extends Controller
             'media' => $uploadedMedia,
         ]);
     }
+
 
     public function bulkDelete(Request $request)
     {

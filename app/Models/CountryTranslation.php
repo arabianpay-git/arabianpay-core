@@ -9,6 +9,7 @@ class CountryTranslation extends Model
     public $timestamps = false;
 
     protected $fillable = ['locale', 'name'];
+    protected $translatable = ['name'];
 
     public function country()
     {

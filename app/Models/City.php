@@ -9,15 +9,9 @@ class City extends Model
     protected $fillable = [
         'name',
         'state_id',
-        'country_id',
     ];
 
     protected array $translatable = ['name'];
-
-    public function country()
-    {
-        return $this->belongsTo(Country::class);
-    }
 
     public function state()
     {

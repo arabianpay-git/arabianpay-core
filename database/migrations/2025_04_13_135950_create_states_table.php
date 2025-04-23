@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('name');
             $table->foreignId('country_id')->nullable()->constrained('countries')->onDelete('cascade');
             $table->timestamps();
+
+            $table->unique(['name', 'country_id']);
         });
 
         Schema::create('state_translations', function (Blueprint $table) {

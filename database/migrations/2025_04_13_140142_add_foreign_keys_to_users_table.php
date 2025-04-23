@@ -20,12 +20,13 @@ return new class extends Migration
                 $table->unsignedBigInteger('state_id')->nullable()->after('country_id');
             }
             if (!Schema::hasColumn('users', 'city_id')) {
-                $table->unsignedBigInteger('city_id')->after('state_id');
+                $table->unsignedBigInteger('city_id')->nullable()->after('state_id');
             }
 
-            $table->foreign('country_id')->references('id')->on('countries')->onDelete('cascade');
-            $table->foreign('state_id')->references('id')->on('states')->onDelete('cascade');
-            $table->foreign('city_id')->references('id')->on('cities')->onDelete('cascade');
+            // Use set null to avoid cascading deletes
+            $table->foreign('country_id')->references('id')->on('countries')->onDelete('set null');
+            $table->foreign('state_id')->references('id')->on('states')->onDelete('set null');
+            $table->foreign('city_id')->references('id')->on('cities')->onDelete('set null');
         });
     }
 

@@ -19,7 +19,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('business_name')->unique();
             $table->string('iqama')->nullable()->unique();
-            $table->string('phone_number');
+            $table->string('phone_number')->unique(); // need to update unique in db
             $table->enum('status', ['active', 'hold', 'suspended'])->default('hold');
 
             $table->timestamp('email_verified_at')->nullable();

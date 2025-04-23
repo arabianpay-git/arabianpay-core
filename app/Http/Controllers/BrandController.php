@@ -6,28 +6,14 @@ use App\Models\Brand;
 use App\Models\BrandTranslation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\DataTables;
+use Illuminate\Validation\Rule;
 
 class BrandController extends Controller
 {
     public function index(Request $request)
     {
-        if ($request->ajax()) {
-            $data = Brand::with('translations')->get();
-            return DataTables::of($data)
-                ->addColumn('name', fn($row) => $row->name)
-                ->addColumn('logo', fn($row) => '<img src="' . $row->logo . '" width="50" />')
-                ->addColumn('order_level', fn($row) => $row->order_level)
-                ->addColumn('featured', fn($row) => $row->featured ? 'Yes' : 'No')
-                ->addColumn('actions', fn($row) => '
-                    <a href="' . route('brands.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a>
-                    <a href="' . route('brands.destroy', $row->id) . '" class="btn btn-sm btn-danger delete-btn" data-id="' . $row->id . '">Delete</a>
-                ')
-                ->rawColumns(['logo', 'actions'])
-                ->make(true);
-        }
-
-        return view('admin.brands.index');
+        $brands = Brand::with('translations')->select('brands.*')->paginate(10);
+        return view('admin.brands.index', compact('brands'));
     }
 
     public function create()
@@ -38,22 +24,24 @@ class BrandController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name.en' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]*$/', 'unique:brands,name'],
+            'logo' => ['required'],
+            'order_level' => ['nullable', 'numeric'],
+            'meta_title' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
+            'meta_description' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
         ]);
 
         DB::beginTransaction();
 
         try {
             $brand = Brand::create([
-                'slug' => $request->slug,
+                'name' => $request->name,
                 'logo' => $request->logo,
                 'order_level' => $request->order_level,
                 'featured' => $request->boolean('featured'),
-                'meta_title' => $request->meta_title['en'],
-                'meta_description' => $request->meta_description['en'],
+                'meta_title' => $request->meta_title,
+                'meta_description' => $request->meta_description,
             ]);
-
-            $this->storeOrUpdateTranslations($brand, $request);
 
             DB::commit();
 
@@ -72,14 +60,24 @@ class BrandController extends Controller
     public function update(Request $request, Brand $brand)
     {
         $request->validate([
-            'name.en' => 'required|string|max:255',
+            'name.en' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z\s]*$/',
+                Rule::unique('brands', 'name')->ignore($brand->id),
+            ],
+            'logo' => ['required'],
+            'order_level' => ['nullable', 'numeric'],
+            'meta_title.en' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
+            'meta_description.en' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
         ]);
 
         DB::beginTransaction();
 
         try {
             $brand->update([
-                'slug' => $request->slug,
+                'name' => $request->name['en'],
                 'logo' => $request->logo,
                 'order_level' => $request->order_level,
                 'featured' => $request->boolean('featured'),
@@ -98,18 +96,16 @@ class BrandController extends Controller
         }
     }
 
-    // Remove the specified resource from storage.
     public function destroy(Brand $brand)
     {
         $brand->delete();
         return redirect()->route('brands.index')->with('success', 'Brand deleted successfully.');
     }
 
-    // Handle storing or updating translations
     private function storeOrUpdateTranslations(Brand $brand, Request $request)
     {
         foreach ($request->name as $locale => $name) {
-            if ($locale == 'ar') { // If Arabic translation is provided
+            if ($locale == 'ar') {
                 BrandTranslation::updateOrCreate(
                     ['brand_id' => $brand->id, 'locale' => $locale],
                     [

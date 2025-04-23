@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Spatie\MediaLibrary\InteractsWithMedia;
 
 class Product extends Model
 {
@@ -18,6 +17,8 @@ class Product extends Model
         'thumbnail',
         'photos',
         'tags',
+        'variants',
+        'sku',
         'short_description',
         'description',
         'unit_price',
@@ -55,6 +56,7 @@ class Product extends Model
 
     protected $casts = [
         'tags' => 'array',
+        'variants' => 'array',
     ];
 
     protected array $translatable = [
@@ -62,9 +64,15 @@ class Product extends Model
         'short_description',
         'description',
         'tags',
+        'unit',
         'meta_title',
         'meta_description'
     ];
+
+    public function getTranslatableFields(): array
+    {
+        return $this->translatable ?? [];
+    }
 
     // Relations
     public function attributes()
@@ -84,28 +92,32 @@ class Product extends Model
         return $this->belongsTo(Category::class);
     }
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function brand()
     {
         return $this->belongsTo(Brand::class);
     }
 
-    // Custom Accessor for attribute-value pairs
     public function getAttributeCombinationsAttribute()
     {
         $combinations = [];
 
-        // Use the relationship explicitly to avoid calling your own getAttribute()
-        foreach ($this->getRelation('attributes') as $attribute) {
+        foreach ($this->attributes as $attribute) {
             $value = $attribute->values->firstWhere('id', $attribute->pivot->attribute_value_id);
             $combinations[] = [
                 'attribute' => $attribute->name,
                 'value' => $value?->value,
+                'attribute_id' => $attribute->id,
+                'attribute_value_id' => $value?->id,
             ];
         }
 
         return $combinations;
     }
-
 
     public function getAttribute($key)
     {
@@ -129,7 +141,7 @@ class Product extends Model
     protected static function booted()
     {
         static::saving(function ($product) {
-            if (empty($product->slug) || $product->isDirty('name')) {
+            if (empty($product->slug) || $product->isDirty('name.en')) {
                 $product->slug = Str::slug($product->name) . '-' . uniqid();
             }
         });

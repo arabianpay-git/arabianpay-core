@@ -338,10 +338,23 @@
                         Swal.fire('Error', response.message || 'Upload failed.', 'error');
                     }
                 },
-                error: () => {
+                error: (xhr) => {
                     $('#loadingSpinner').addClass('d-none');
-                    Swal.fire('Error', 'Upload failed.', 'error');
+
+                    let errorMessage = 'Upload failed.';
+
+                    if (xhr.responseJSON && xhr.responseJSON.errors) {
+                        const errors = Object.values(xhr.responseJSON.errors).flat();
+                        errorMessage = errors.join('<br>');
+                    }
+
+                    Swal.fire({
+                        icon: 'error',
+                        title: 'Error',
+                        html: errorMessage
+                    });
                 }
+
             });
         });
     });

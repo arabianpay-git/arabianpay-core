@@ -11,7 +11,8 @@ class DashboardController extends Controller
 {
     public function index()
     {
-        return view('dashboard');
+        // dd('ok');
+        return view('admin.dashboard.index');
     }
 
     public function getStates($country_id)

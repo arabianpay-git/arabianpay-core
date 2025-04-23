@@ -5,25 +5,15 @@ namespace App\Http\Controllers;
 use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Yajra\DataTables\Facades\DataTables;
+use Illuminate\Validation\Rule;
 
 class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        if ($request->ajax()) {
-            $data = Category::with('parent')->select('categories.*');
-            return DataTables::of($data)
-                ->addColumn('parent', fn($row) => $row->parent?->name ?? '-')
-                ->addColumn('actions', fn($row) => '
-                    <a href="' . route('categories.edit', $row->id) . '" class="btn btn-sm btn-primary">Edit</a>
-                    <a href="' . route('categories.destroy', $row->id) . '" class="btn btn-sm btn-danger delete-btn" data-id="' . $row->id . '">Delete</a>
-                ')
-                ->rawColumns(['actions'])
-                ->make(true);
-        }
+        $categories = Category::with('parent')->select('categories.*')->paginate(10);
 
-        return view('admin.categories.index');
+        return view('admin.categories.index', compact('categories'));
     }
 
     public function create()
@@ -35,7 +25,10 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name.en' => 'required|string|max:255',
+            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]*$/', 'unique:categories,name'],
+            'order_level' => ['nullable', 'numeric'],
+            'meta_title' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
+            'meta_description' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
         ]);
 
         DB::beginTransaction();
@@ -43,13 +36,13 @@ class CategoryController extends Controller
         try {
             $category = Category::create([
                 'parent_id' => $request->parent_id,
-                'name' => $request->name['en'],
+                'name' => $request->name,
                 'order_level' => $request->order_level,
                 'banner' => $request->banner,
                 'icon' => $request->icon,
                 'featured' => $request->boolean('featured'),
-                'meta_title' => $request->meta_title['en'],
-                'meta_description' => $request->meta_description['en'],
+                'meta_title' => $request->meta_title,
+                'meta_description' => $request->meta_description,
             ]);
 
             $this->storeOrUpdateTranslation($category, $request);
@@ -65,6 +58,7 @@ class CategoryController extends Controller
 
     public function edit(Category $category)
     {
+
         $categories = Category::where('id', '!=', $category->id)->get();
         return view('admin.categories.edit', compact('category', 'categories'));
     }
@@ -72,7 +66,16 @@ class CategoryController extends Controller
     public function update(Request $request, Category $category)
     {
         $request->validate([
-            'name.en' => 'required|string|max:255',
+            'name.en' => [
+                'required',
+                'string',
+                'max:255',
+                'regex:/^[a-zA-Z\s]*$/',
+                Rule::unique('categories', 'name')->ignore($category->id),
+            ],
+            'order_level' => ['nullable', 'numeric'],
+            'meta_title.en' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
+            'meta_description.en' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
         ]);
 
         DB::beginTransaction();

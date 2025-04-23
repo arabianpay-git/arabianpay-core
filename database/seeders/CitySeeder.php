@@ -23,7 +23,6 @@ class CitySeeder extends Seeder
                 'id' => $key + 1,
                 'name' => $city['en'],
                 'state_id' => $city['state_id'],
-                'country_id' => 1,
             ]);
 
             $c->translations()->create([
