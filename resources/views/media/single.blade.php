@@ -5,11 +5,16 @@
     $inputValue = $value ?? '';
     $inputId = Str::slug($inputName, '_');
     $info = $info ?? null;
+
+    // Check if the inputValue is a PDF
+    $isPdf = $inputValue && pathinfo($inputValue, PATHINFO_EXTENSION) === 'pdf';
+    // dd($isPdf);
+    $pdfImage = 'assets/media/images/default-pdf.png';
 @endphp
 
 <div class="w-full">
     <div class="flex items-baseline flex-wrap gap-2.5">
-        <label class="form-label flex items-center gap-1 max-w-56">
+        <label class="form-label flex items-center gap-1">
             {{ $inputLabel }}
             @if ($inputRequired)
                 <span class="text-danger">*</span>
@@ -36,7 +41,8 @@
 <!-- Preview Card -->
 <div class="mt-3 {{ $inputValue ? '' : 'd-none' }}" id="{{ $inputId }}_previewCard">
     <div class="media-card" style="width: 160px;">
-        <img id="{{ $inputId }}_previewImage" class="media-thumb" src="{{ $inputValue }}" alt="Preview">
+
+        <img id="{{ $inputId }}_previewImage" class="media-thumb" src="{{ $isPdf ? asset($pdfImage) : $inputValue }}" alt="Preview">
         <div class="media-info">
             <div id="{{ $inputId }}_previewName" class="name">{{ basename($inputValue) }}</div>
             <div id="{{ $inputId }}_previewSize" class="size"></div>
@@ -54,37 +60,33 @@
 
     function bindMediaModal() {
         $(document).on('click', `#${prefix}_modal .media-card`, function () {
-            const imageUrl = $(this).data('url');
-            const imageName = $(this).data('name');
-            const imageSize = $(this).data('size');
+            const url = $(this).data('url');
+            const name = $(this).data('name');
+            const size = $(this).data('size');
 
-            // Set the values of the input fields
-            $(`#${prefix}_display`).val(imageName);
-            $(`#${prefix}`).val(imageUrl);
+            // Fill inputs
+            $(`#${prefix}_display`).val(name);
+            $(`#${prefix}`).val(url);
 
-            // Set image preview
-            $(`#${prefix}_previewImage`).attr('src', imageUrl);
-            $(`#${prefix}_previewName`).text(imageName);
-            $(`#${prefix}_previewSize`).text(imageSize);
+            // Preview: use default for PDFs
+            const isPdf = url.toLowerCase().endsWith('.pdf');
+            const thumb = isPdf ? '/assets/media/images/default-pdf.png' : url;
+            $(`#${prefix}_previewImage`).attr('src', thumb);
+            $(`#${prefix}_previewName`).text(name);
+            $(`#${prefix}_previewSize`).text(size);
             $(`#${prefix}_previewCard`).removeClass('d-none');
 
-            // Hide the modal correctly
+            // Close modal
             const modal = document.getElementById(`${prefix}_modal`);
             if (modal) {
-                modal.classList.remove('show', 'open'); // Remove 'open' and 'show' classes
-                modal.style.display = 'none';            // Ensure it's hidden
-                modal.setAttribute('aria-hidden', 'true');
+                modal.classList.remove('show','open');
+                modal.style.display = 'none';
+                modal.setAttribute('aria-hidden','true');
                 modal.removeAttribute('aria-modal');
             }
-
-            // Remove modal backdrop and modal-open class from body
             document.body.classList.remove('modal-open');
-            document.body.style.paddingRight = ''; // Remove any padding added when modal is open
-            const backdrops = document.querySelectorAll('.modal-backdrop');
-            backdrops.forEach(b => b.remove());
-
-            // Reset body overflow and other styles
-            document.body.style.overflow = '';  // Ensure overflow is reset
+            document.body.style.overflow = '';
+            document.querySelectorAll('.modal-backdrop').forEach(b => b.remove());
         });
 
         // Upload file handler
@@ -168,13 +170,17 @@
                         if (response.media.length > 0) {
                             offset += limit;
                             response.media.forEach(media => {
+                                // Check if file is PDF
+                                const isPdf = media.mime_type === 'application/pdf';
+                                const imageUrl = isPdf ? '/assets/media/images/default-pdf.png' : `/storage/media/${media.file_name}`;
+
                                 $(`#${prefix}_grid`).append(`
                                     <div class="media-card position-relative"
                                         data-id="${media.id}"
                                         data-url="/storage/media/${media.file_name}"
                                         data-name="${media.name}"
                                         data-size="${(media.size / 1024).toFixed(1)} KB">
-                                        <img src="/storage/media/${media.file_name}" class="media-thumb" alt="media">
+                                        <img src="${imageUrl}" class="media-thumb" alt="media">
                                         <div class="media-info">
                                             <div class="name">${media.name}</div>
                                             <div class="size">${(media.size / 1024).toFixed(1)} KB</div>
@@ -193,6 +199,7 @@
                 });
             }
         });
+
     }
 
     bindMediaModal();

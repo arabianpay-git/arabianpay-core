@@ -1380,6 +1380,9 @@
         quantityMultiplyCheckbox.addEventListener('change', function () {
             if (this.checked) {
                 uncheckOtherCheckboxes('quantity_multiply');
+                flatRateInput.classList.remove('hidden');
+            } else {
+                flatRateInput.classList.add('hidden');
             }
         });
     });

@@ -46,7 +46,7 @@ class InstalmentPlanController extends Controller
             'status' => $request->status,
         ]);
 
-        return redirect()->route('intalment-plans.index')->with('success', 'Instalment Plan created successfully.');
+        return redirect()->route('instalment-plans.index')->with('success', 'Instalment Plan created successfully.');
     }
 
     public function edit(InstalmentPlan $instalmentPlan)
@@ -64,7 +64,7 @@ class InstalmentPlanController extends Controller
                 'regex:/^[a-zA-Z\s]*$/',
                 Rule::unique('instalment_plans', 'name')->ignore($instalmentPlan->id),
             ],
-            'description' => ['nullable', 'string'],
+            'description.en' => ['nullable', 'string'],
             'duration' => ['required', 'string'],
             'finance_limit' => ['required', 'string'],
             'patch_days' => ['required', 'string'],
@@ -88,7 +88,7 @@ class InstalmentPlanController extends Controller
 
         $this->storeOrUpdateTranslations($instalmentPlan, $request);
 
-        return redirect()->route('intalment-plans.index')->with('success', 'Instalment Plan updated successfully.');
+        return redirect()->route('instalment-plans.index')->with('success', 'Instalment Plan updated successfully.');
     }
 
     public function destroy($id)
@@ -96,7 +96,7 @@ class InstalmentPlanController extends Controller
         $instalmentPlan = InstalmentPlan::find($id);
         $instalmentPlan->delete();
 
-        return redirect()->route('intalment-plans.index')->with('success', 'Instalment Plan deleted successfully.');
+        return redirect()->route('instalment-plans.index')->with('success', 'Instalment Plan deleted successfully.');
     }
 
     private function storeOrUpdateTranslations(InstalmentPlan $instalmentPlan, Request $request)
@@ -104,7 +104,7 @@ class InstalmentPlanController extends Controller
         if ($request->has('name') && isset($request->name['ar'])) {
             $instalmentPlan->translations()->updateOrCreate(
                 ['locale' => 'ar'],
-                ['name' => $request->name['ar'], 'description' => $request->description]
+                ['name' => $request->name['ar'], 'description' => $request->description['ar']]
             );
         }
     }

@@ -14,7 +14,7 @@
                 </h1>
             </div>
             <div class="flex items-center gap-2.5">
-                <a class="btn btn-sm btn-light" href="{{ route('intalment-plans.create') }}">
+                <a class="btn btn-sm btn-light" href="{{ route('instalment-plans.create') }}">
                     Create New Plan
                 </a>
             </div>
@@ -147,10 +147,10 @@
                                             <td>{{ $item->created_at->format('d M Y') }}</td>
                                             <td>
                                                 <div class="flex gap-1">
-                                                    <a class="btn btn-sm btn-icon btn-clear btn-primary" href="{{ route('intalment-plans.edit', $item->id) }}">
+                                                    <a class="btn btn-sm btn-icon btn-clear btn-primary" href="{{ route('instalment-plans.edit', $item->id) }}">
                                                         <i class="ki-filled ki-notepad-edit"> </i>
                                                     </a>
-                                                    <a class="btn btn-sm btn-icon btn-clear btn-danger delete-btn" href="{{ route('intalment-plans.destroy', $item->id) }}">
+                                                    <a class="btn btn-sm btn-icon btn-clear btn-danger delete-btn" href="{{ route('instalment-plans.destroy', $item->id) }}">
                                                         <i class="ki-filled ki-trash"> </i>
                                                     </a>
                                                 </div>

@@ -102,6 +102,11 @@ class Product extends Model
         return $this->belongsTo(Brand::class);
     }
 
+    public function wishlist()
+    {
+        return $this->belongsTo(ProductWishlist::class);
+    }
+
     public function getAttributeCombinationsAttribute()
     {
         $combinations = [];

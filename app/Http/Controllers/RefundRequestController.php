@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\RefundRequest;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+
+class RefundRequestController extends Controller
+{
+    public function updateRefundStatus(Request $request, $id)
+    {
+        $request->validate([
+            'refund_status' => 'required|in:pending,approved,rejected',
+        ]);
+
+        $refundRequest = RefundRequest::findOrFail($id);
+
+        $refundRequest->update([
+            'refund_status' => $request->input('refund_status'),
+        ]);
+
+        return redirect()->back()->with('success', 'Refund status updated successfully!');
+    }
+
+    public function refundRequests()
+    {
+        $refundRequests = RefundRequest::with('user', 'order')
+            ->where('seller_id', Auth::id())
+            ->select('id', 'user_id', 'seller_id', 'order_id', 'refund_amount', 'refund_status', 'created_at')
+            ->latest()
+            ->paginate(10);
+        $status = 'Refund';
+        return view('merchant.refund-requests.index', compact('refundRequests', 'status'));
+    }
+
+    public function showRefundRequests($status)
+    {
+        $statuses = ['pending', 'approved', 'rejected'];
+
+        if (!in_array($status, $statuses)) {
+            abort(404);
+        }
+
+        $refundRequests = RefundRequest::with('user', 'order')
+            ->where('refund_status', $status)
+            ->where('seller_id', Auth::id())
+            ->select('id', 'user_id', 'seller_id', 'order_id', 'refund_amount', 'refund_status', 'created_at')
+            ->latest()
+            ->paginate(10);
+
+        return view('merchant.refund-requests.index', compact('refundRequests', 'status'));
+    }
+}

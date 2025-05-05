@@ -71,4 +71,19 @@ class InstalmentPlan extends Model
 
         return $translation ? $translation->$key : $value;
     }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'plan_id');
+    }
+
+    public function wallet()
+    {
+        return $this->hasMany(Wallet::class, 'instalment_id');
+    }
+
+    public function customer()
+    {
+        return $this->hasMany(Customer::class, 'instalment_id');
+    }
 }

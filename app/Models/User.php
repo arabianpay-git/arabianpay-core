@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -10,7 +11,7 @@ use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
 
-class User extends Authenticatable
+class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable;
 
@@ -96,5 +97,100 @@ class User extends Authenticatable
     public function coupons()
     {
         return $this->hasMany(Coupon::class);
+    }
+
+    public function pickupPoint()
+    {
+        return $this->hasMany(PickupPoint::class);
+    }
+
+    public function orders()
+    {
+        return $this->hasMany(Order::class);
+    }
+
+    public function sellerOrders()
+    {
+        return $this->hasMany(Order::class, 'seller_id');
+    }
+
+    public function transactions()
+    {
+        return $this->hasMany(Transaction::class, 'user_id');
+    }
+
+    public function sales()
+    {
+        return $this->hasMany(Transaction::class, 'seller_id');
+    }
+
+    public function supportTickets()
+    {
+        return $this->hasMany(SupportTicket::class, 'user_id');
+    }
+
+    public function userSchedulePayment()
+    {
+        return $this->hasMany(SchedulePayment::class, 'user_id');
+    }
+
+    public function sellerSchedulePayment()
+    {
+        return $this->hasMany(SchedulePayment::class, 'seller_id');
+    }
+
+    public function merchant()
+    {
+        return $this->hasOne(Merchant::class, 'user_id');
+    }
+
+    public function paymentsMade()
+    {
+        return $this->hasMany(Payment::class);
+    }
+
+    public function paymentsReceived()
+    {
+        return $this->hasMany(Payment::class, 'seller_id');
+    }
+
+    public function productWishlists()
+    {
+        return $this->hasMany(ProductWishlist::class);
+    }
+
+    public function sellerWishlists()
+    {
+        return $this->hasMany(ProductWishlist::class, 'seller_id');
+    }
+
+    public function userRefund()
+    {
+        return $this->hasMany(RefundRequest::class);
+    }
+
+    public function sellerRefund()
+    {
+        return $this->hasMany(RefundRequest::class, 'seller_id');
+    }
+
+    public function userWallet()
+    {
+        return $this->hasMany(Wallet::class, 'user_id');
+    }
+
+    public function sellerWallet()
+    {
+        return $this->hasMany(Wallet::class, 'seller_id');
+    }
+
+    public function customer()
+    {
+        return $this->hasMany(Customer::class, 'user_id');
+    }
+
+    public function creditLimit()
+    {
+        return $this->hasMany(CustomerCreditLimit::class, 'user_id');
     }
 }

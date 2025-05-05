@@ -4,13 +4,13 @@
             <h5 class="modal-title">Select Media</h5>
             <button type="button" class="btn btn-primary upload-btn" onclick="$('#{{ $inputId }}_fileInput').click()">Upload File</button>
             <input type="file" id="{{ $inputId }}_fileInput" accept="image/*" hidden>
-            <button class="btn btn-sm btn-icon btn-light btn-clear shrink-0" data-modal-dismiss="true">
+            <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0" data-modal-dismiss="true">
                 <i class="ki-filled ki-cross"></i>
             </button>
         </div>
         <div class="modal-body p-0 pb-5">
             <div class="media-grid" id="{{ $inputId }}_grid">
-                @php $media = App\Models\Media::latest()->take(18)->get(); @endphp
+                @php $media = App\Models\Media::where('user_id', Auth::user()->id)->latest()->take(18)->get(); @endphp
                 @foreach ($media as $item)
                     <div class="media-card position-relative"
                         data-id="{{ $item->id }}"

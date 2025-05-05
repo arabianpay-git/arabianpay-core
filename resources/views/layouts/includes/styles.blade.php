@@ -8,6 +8,7 @@
 <link href="{{ asset('assets/css/styles.css') }}" rel="stylesheet" />
 
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css">
 
 
 @stack('styles')
@@ -162,5 +163,7 @@
         font-size: 12px;
         color: #888;
     }
-
+    tbody td:last-child {
+        text-align: center;
+    }
 </style>

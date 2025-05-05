@@ -4,13 +4,15 @@ namespace App\Http\Controllers;
 
 use App\Models\Media;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 class MediaController extends Controller
 {
     public function index()
     {
-        $media = Media::latest()->take(18)->get();
+        $media = Media::where('user_id', Auth::user()->id)->latest()->take(18)->get();
         return view('media.index', compact('media'));
     }
 
@@ -19,7 +21,7 @@ class MediaController extends Controller
         $offset = $request->input('offset', 0);
         $limit = 18;
 
-        $media = Media::latest()->skip($offset)->take($limit)->get();
+        $media = Media::where('user_id', Auth::user()->id)->latest()->skip($offset)->take($limit)->get();
 
         return response()->json([
             'media' => $media,
@@ -29,31 +31,94 @@ class MediaController extends Controller
     public function upload(Request $request)
     {
         $request->validate([
-            'files' => 'required|array',
+            'files'   => 'required|array',
             'files.*' => [
                 'file',
                 'mimes:jpeg,png,jpg,gif,svg,pdf',
-                'max:1048' // 2MB = 2048KB
+                // Removed max-size rule because we auto-compress larger files  
+                // 'max:1048'
             ],
         ], [
-            'files.required' => 'Please select at least one file to upload.',
-            'files.*.file' => 'Each item must be a valid file.',
-            'files.*.mimes' => 'Only JPEG, PNG, JPG, GIF, SVG, and PDF files are allowed.',
-            'files.*.max' => 'Each file must not be larger than 2MB.',
+            'files.required'   => 'Please select at least one file to upload.',
+            'files.*.file'     => 'Each item must be a valid file.',
+            'files.*.mimes'    => 'Only JPEG, PNG, JPG, GIF, SVG, and PDF files are allowed.',
+            // Removed files.*.max message  
         ]);
+
 
         $uploadedMedia = [];
 
         foreach ($request->file('files') as $file) {
-            $path = $file->store('media', 'public');
+            $originalName = $file->getClientOriginalName();
+            $extension    = strtolower($file->getClientOriginalExtension());
+            $filename     = Str::random(40) . '.' . $extension;                   // Changed
+            $disk         = 'public';
+            $folder       = 'media';
+            $fullPath     = "$folder/$filename";
 
+            // Only attempt compression for JPEG/PNG
+            if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
+                // Create image resource
+                if (in_array($extension, ['jpg', 'jpeg'])) {
+                    $resource = imagecreatefromjpeg($file->getPathname());
+                } else { // png
+                    $resource = imagecreatefrompng($file->getPathname());
+                    imagealphablending($resource, false);
+                    imagesavealpha($resource, true);
+                }
+
+                if ($resource) {
+                    // Initial quality/compression
+                    $quality        = in_array($extension, ['jpg', 'jpeg']) ? 75 : 6; // Changed
+                    $maxBytes       = 1024 * 1024;                                   // 1 MB
+                    $compressedData = null;
+
+                    // Loop: compress and check size until under 1MB or quality floor reached
+                    do {
+                        ob_start();
+                        if (in_array($extension, ['jpg', 'jpeg'])) {
+                            imagejpeg($resource, null, $quality);
+                        } else {
+                            imagepng($resource, null, $quality);
+                        }
+                        $compressedData = ob_get_clean();
+
+                        // If still too big, reduce quality
+                        if (strlen($compressedData) > $maxBytes) {
+                            if (in_array($extension, ['jpg', 'jpeg'])) {
+                                $quality = max($quality - 5, 10);            // Changed: floor at 10
+                            } else {
+                                $quality = min($quality + 1, 9);             // Changed: max PNG level 9
+                            }
+                        }
+                    } while (
+                        strlen($compressedData) > $maxBytes
+                        && (($extension !== 'png' && $quality > 10)
+                            || ($extension === 'png' && $quality < 9))
+                    );
+
+                    imagedestroy($resource);
+
+                    // Store the (possibly re-compressed) data
+                    Storage::disk($disk)->put($fullPath, $compressedData);
+                } else {
+                    // fallback if GD fails
+                    $file->storeAs($folder, $filename, $disk);
+                }
+            } else {
+                // Non-image: store as-is
+                $file->storeAs($folder, $filename, $disk);
+            }
+
+            // Create DB record with actual size
             $media = Media::create([
-                'name' => $file->getClientOriginalName(),
-                'file_name' => basename($path),
+                'user_id'   => Auth::id(),
+                'name'      => $originalName,
+                'file_name' => $filename,
                 'mime_type' => $file->getMimeType(),
-                'size' => $file->getSize(),
-                'disk' => 'public',
-                'folder' => 'media',
+                'size'      => Storage::disk($disk)->size($fullPath),        // Changed: accurate size
+                'disk'      => $disk,
+                'folder'    => $folder,
             ]);
 
             $uploadedMedia[] = $media;
@@ -62,17 +127,17 @@ class MediaController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Files uploaded successfully!',
-            'media' => $uploadedMedia,
+            'media'   => $uploadedMedia,
         ]);
     }
 
 
+
     public function bulkDelete(Request $request)
     {
-        // Validate the incoming request
         $request->validate([
-            'ids' => 'required|array', // Ensure that IDs are passed as an array
-            'ids.*' => 'exists:media,id' // Validate that each ID exists in the media table
+            'ids' => 'required|array',
+            'ids.*' => 'exists:media,id'
         ]);
 
         $ids = $request->input('ids');

@@ -146,7 +146,34 @@
                                             </td>
                                             
                                             <td>
-                                                {{ $product->rating > 0 ? number_format($product->rating, 1) : '-' }}
+                                                <div class="rating">
+                                                    @php
+                                                        $rating = $product->rating;
+                                                    @endphp
+                                            
+                                                    @for ($i = 1; $i <= 5; $i++)
+                                                        @if ($rating >= $i)
+                                                            <div class="rating-label checked">
+                                                                <i class="rating-on ki-solid ki-star text-base leading-none"></i>
+                                                                <i class="rating-off ki-outline ki-star text-base leading-none"></i>
+                                                            </div>
+                                            
+                                                        @elseif ($rating >= $i - 0.5)
+                                                            <div class="rating-label indeterminate">
+                                                                <i class="rating-on ki-solid ki-star text-base leading-none" style="width: 50%;"></i>
+                                                                <i class="rating-off ki-outline ki-star text-base leading-none"></i>
+                                                            </div>
+                                            
+                                                        @else
+                                                            <div class="rating-label">
+                                                                <i class="rating-on ki-solid ki-star text-base leading-none"></i>
+                                                                <i class="rating-off ki-outline ki-star text-base leading-none"></i>
+                                                            </div>
+                                                        @endif
+                                                    @endfor
+                                                </div>
+                                            
+                                                <small>({{ $rating > 0 ? number_format($rating, 1) : '-' }})</small>
                                             </td>
                                             
                                             <td>

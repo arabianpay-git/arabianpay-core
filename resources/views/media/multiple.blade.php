@@ -3,6 +3,11 @@
         background-color: #f8f9fa;
         font-family: 'Segoe UI', sans-serif;
     }
+    .media-card {
+        cursor: pointer;
+        transition: transform .2s, box-shadow .2s, border-color .2s;
+        /* border: 2px solid transparent; */
+    }
 
     .media-card {
         border: 1px solid #ddd;
@@ -16,7 +21,12 @@
     }
 
     .media-card:hover {
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        transform: scale(1.03);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+
+    .media-card.selected {
+        border-color: #3b82f6;
     }
 
     .media-thumb {
@@ -51,7 +61,27 @@
     }
 
     .media-card.selected {
-        border: 2px solid #007bff;
+        border: 2px solid #152230;
+    }
+
+    .media-card .overlay-check {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(59,130,246,0.9);
+        color: #fff;
+        border-radius: 50%;
+        width: 14px;
+        height: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        transition: opacity .2s;
+    }
+    /* when card is selected, fade the check in */
+    .media-card.selected .overlay-check {
+        opacity: 1;
     }
 
     .overlay-check {
@@ -66,9 +96,9 @@
         display: none;
     }
 
-    .media-card.selected .overlay-check {
+    /* .media-card.selected .overlay-check {
         display: block;
-    }
+    } */
 
     .preview-card {
         width: 160px;
@@ -184,11 +214,13 @@
                 <h5 class="modal-title">Select Media</h5>
                 <button type="button" class="btn btn-primary" onclick="$('#fileInput').click()">Upload File</button>
                 <input type="file" id="fileInput" accept="image/*" multiple hidden>
-                <button type="button" class="close" data-dismiss="modal"><span>&times;</span></button>
+                <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0" data-modal-dismiss="true">
+                    <i class="ki-filled ki-cross"></i>
+                </button>
             </div>
             <div class="modal-body">
                 <div class="media-grid" id="mediaModalGrid">
-                    @php $media = App\Models\Media::latest()->take(18)->get(); @endphp
+                    @php $media = App\Models\Media::where('user_id', Auth::user()->id)->latest()->take(18)->get(); @endphp
                     @foreach ($media as $item)
                         <div class="media-card"
                             data-id="{{ $item->id }}"
@@ -224,86 +256,108 @@
 
     // Close modal after selecting media
     function confirmMediaSelection(inputId, mediaName, isMultiple) {
-        const selectedCards = document.querySelectorAll(`#${inputId}_modal .media-card.selected`);
-        const display = document.getElementById(`${inputId}_display`);
-        const previewContainer = document.getElementById(`${inputId}_previewCard`);
+        const selectedCards     = document.querySelectorAll(`#${inputId}_modal .media-card.selected`);
+        const display           = document.getElementById(`${inputId}_display`);
+        const previewContainer  = document.getElementById(`${inputId}_previewCard`);
         let urls = [], names = [];
 
+        // Collect just the newly selected cards
         selectedCards.forEach(card => {
             urls.push(card.dataset.url);
             names.push(card.dataset.name);
         });
 
-        // Clear previews and hidden inputs
-        previewContainer.innerHTML = '';
-        $(`input[name="${mediaName}${isMultiple ? '[]' : ''}"]`).remove();
+        // Single vs. multiple: clear old only in single mode
+        if (!isMultiple) {
+            previewContainer.innerHTML = '';
+            document.querySelectorAll(`input[name="${mediaName}"]`).forEach(i => i.remove());
+        }
 
-        // Set display field
-        display.value = names.join(', ');
+        // Build display text
+        if (isMultiple) {
+            const existingNames = Array.from(
+                previewContainer.querySelectorAll('.media-info .name')
+            ).map(el => el.textContent);
+            display.value = existingNames.concat(names).join(', ');
+        } else {
+            display.value = names.join(', ');
+        }
 
-        // Update previews
+        // Append *only* the new hidden inputs + preview cards
         urls.forEach((url, index) => {
+            // hidden input
             const input = document.createElement('input');
-            input.type = 'hidden';
-            input.name = mediaName + (isMultiple ? '[]' : '');
+            input.type  = 'hidden';
+            input.name  = mediaName + (isMultiple ? '[]' : '');
             input.value = url;
             display.insertAdjacentElement('afterend', input);
 
+            // preview card
             const card = document.createElement('div');
-            card.className = 'media-card relative';
-            card.style.width = '160px';
+            card.className = 'media-card relative selected'; // Changed: mark as selected
+            card.style.width = '160px';                       // Changed: keep original width
             card.setAttribute('data-url', url);
             card.innerHTML = `
                 <img class="media-thumb" src="${url}" alt="Preview">
                 <div class="media-info"><div class="name">${names[index]}</div></div>
-                ${isMultiple ? `<button class="remove-btn absolute top-1 right-1 bg-white text-black rounded-full text-xs w-5 h-5 leading-5 text-center">&times;</button>` : ''}
+                ${isMultiple 
+                    ? `<button class="remove-btn absolute top-1 right-1 bg-white text-black rounded-full text-xs w-5 h-5 leading-5 text-center">&times;</button>`
+                    : ''}
             `;
             previewContainer.appendChild(card);
         });
 
-        // Close modal after selection
+        // Close modal
         $(`#${inputId}_modal`).modal('hide');
     }
 
-    // Remove preview and unselect the media in modal
-    $(document).on('click', '.remove-btn', function (e) {
+    // Remove preview and unselect in the modal
+    $(document).on('click', '.remove-btn', function(e) {
         e.preventDefault();
-        const card = $(this).closest('.media-card');
-        const url = card.data('url');
 
-        // Remove the hidden input
+        // 1) Grab & remove the preview card + its hidden input
+        const $previewCard = $(this).closest('.media-card');
+        const url          = $previewCard.data('url');
+        $previewCard.remove();
         $(`input[type="hidden"][value="${url}"]`).remove();
-        card.remove();
 
-        const updatedNames = [];
-        $('#{{ $inputId }}_previewCard .name').each(function () {
-            updatedNames.push($(this).text().trim());
+        // 2) Un-select every card that still bears this URL
+        //    (the preview is gone, so this only hits the modal card)
+        $(`.media-card[data-url="${url}"]`).removeClass('selected');
+
+        // 3) Refresh the display text
+        //    (pull whatever names remain in the preview pane)
+        const inputId = $previewCard.closest('.media-picker').data('input-id');
+        const remaining = [];
+        $(`#${inputId}_previewCard .name`).each(function() {
+            remaining.push($(this).text().trim());
         });
-        $('#{{ $inputId }}_display').val(updatedNames.join(', '));
-
-        // Unselect the media card in the modal
-        const modalCard = $(`#{{ $inputId }}_modal .media-card[data-url="${url}"]`);
-        modalCard.removeClass('selected');
+        $(`#${inputId}_display`).val(remaining.join(', '));
     });
 
-    // Toggle selection for media card in modal
-    $(document).on('click', '.media-card', function () {
-        const isMultiple = {{ $isMultipleSelect ? 'true' : 'false' }};
-        if (!isMultiple) {
-            $(this).siblings().removeClass('selected');
-        }
-        $(this).toggleClass('selected');
+
+    // Toggle selection in the modal grid
+    $(document).on('click', '.media-card', function() {
+    const isMultiple = {{ $isMultipleSelect ? 'true' : 'false' }};
+
+    if (!isMultiple) {
+        // in single mode, clear any other
+        $(this).siblings('.media-card.selected').removeClass('selected');
+    }
+
+    // toggle this one
+    $(this).toggleClass('selected');
     });
 
     // File upload
-    $('#fileInput').on('change', function (e) {
+    $('#fileInput').on('change', function(e) {
         const files = e.target.files;
         if (!files.length) return;
 
         $('#loadingSpinner').removeClass('d-none');
 
         const formData = new FormData();
-        Array.from(files).forEach(file => formData.append('files[]', file));
+        Array.from(files).forEach(f => formData.append('files[]', f));
         formData.append('_token', "{{ csrf_token() }}");
 
         $.ajax({
@@ -312,50 +366,59 @@
             data: formData,
             contentType: false,
             processData: false,
-            success: function (response) {
+            success: function(response) {
                 $('#loadingSpinner').addClass('d-none');
+
+                // Changed: use SweetAlert for success
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Upload Successful',
+                    text: response.message
+                });
+
                 if (response.success && response.media.length) {
                     response.media.forEach(media => {
+                        // Changed: build correct URL from file_name
+                        const url = `/storage/media/${media.file_name}`;
                         $('#mediaModalGrid').prepend(`
-                            <div class="media-card"
-                                data-id="${media.id}"
-                                data-url="${media.url}"
-                                data-name="${media.name}"
-                                data-size="${(media.size / 1024).toFixed(1)} KB">
-                                <img src="/storage/media/${media.file_name}" class="media-thumb" alt="media">
+                            <div class="media-card" 
+                                 data-url="${url}" 
+                                 data-name="${media.name}" 
+                                 data-size="${(media.size/1024).toFixed(1)} KB">
+                                <img src="${url}" class="media-thumb" alt="${media.name}">
                                 <div class="media-info">
                                     <div class="name">${media.name}</div>
-                                    <div class="size">${(media.size / 1024).toFixed(1)} KB</div>
+                                    <div class="size">${(media.size/1024).toFixed(1)} KB</div>
                                 </div>
-                                <div class="overlay-check"><i class="fas fa-check"></i></div>
+                                <div class="overlay-check" style="display:none;"><i class="fas fa-check"></i></div>
                             </div>
                         `);
                     });
                 }
             },
-            error: (xhr) => {
-                $(`#${prefix}_loadingSpinner`).addClass('d-none');
+            error: function(xhr) {
+                $('#loadingSpinner').addClass('d-none');
 
                 let errorMessage = 'Upload failed.';
-
                 if (xhr.responseJSON && xhr.responseJSON.errors) {
-                    const errors = Object.values(xhr.responseJSON.errors).flat();
-                    errorMessage = errors.join('<br>');
+                    errorMessage = Object.values(xhr.responseJSON.errors).flat().join(' ');
                 }
 
+                // Changed: use SweetAlert for error
                 Swal.fire({
                     icon: 'error',
-                    title: 'Error',
-                    html: errorMessage
+                    title: 'Upload Error',
+                    html: `<div>${errorMessage}</div>`
                 });
             }
         });
     });
 
-    // Infinite scroll in modal
-    $(`#{{ $inputId }}_modal .modal-body`).on('scroll', function () {
+    // Infinite scroll
+    $(`#{{ $inputId }}_modal .modal-body`).on('scroll', function() {
         const modalBody = $(this);
-        if (modalBody.scrollTop() + modalBody.innerHeight() >= modalBody[0].scrollHeight - 100 && !isLoading) {
+        if (modalBody.scrollTop() + modalBody.innerHeight() >= modalBody[0].scrollHeight - 100
+            && !isLoading) {
             isLoading = true;
             $('#loadingSpinner').removeClass('d-none');
 
@@ -363,22 +426,24 @@
                 url: "{{ route('media.lazyLoad') }}",
                 method: 'GET',
                 data: { offset, limit },
-                success: function (response) {
+                success: function(response) {
                     $('#loadingSpinner').addClass('d-none');
                     if (response.length) {
                         response.forEach(media => {
+                            // Changed: build correct URL here too
+                            const url = `/storage/media/${media.file_name}`;
                             $('#mediaModalGrid').append(`
                                 <div class="media-card"
-                                    data-id="${media.id}"
-                                    data-url="${media.url}"
-                                    data-name="${media.name}"
-                                    data-size="${(media.size / 1024).toFixed(1)} KB">
-                                    <img src="${media.url}" class="media-thumb" alt="media">
+                                     data-url="${url}"
+                                     data-name="${media.name}"
+                                     data-size="${(media.size/1024).toFixed(1)} KB"
+                                     style="width:160px;">                              <!-- Changed -->
+                                    <img src="${url}" class="media-thumb" alt="${media.name}">
                                     <div class="media-info">
                                         <div class="name">${media.name}</div>
-                                        <div class="size">${(media.size / 1024).toFixed(1)} KB</div>
+                                        <div class="size">${(media.size/1024).toFixed(1)} KB</div>
                                     </div>
-                                    <div class="overlay-check"><i class="fas fa-check"></i></div>
+                                    <div class="overlay-check" style="display:none;"><i class="fas fa-check"></i></div>
                                 </div>
                             `);
                         });
@@ -386,7 +451,7 @@
                         isLoading = false;
                     }
                 },
-                error: function () {
+                error: function() {
                     $('#loadingSpinner').addClass('d-none');
                     console.error('Failed to load more media.');
                 }

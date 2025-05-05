@@ -25,6 +25,14 @@ class DatabaseSeeder extends Seeder
             BrandSeeder::class,
             ProductSeeder::class,
 
+            PickupPointSeeder::class,
+            OrderSeeder::class,
+
+            TransactionSeeder::class,
+            PaymentSeeder::class,
+            RefundRequestSeeder::class,
+
+            RiskManagementSeeder::class
         ]);
     }
 }

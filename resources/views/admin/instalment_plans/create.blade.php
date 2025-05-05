@@ -13,7 +13,7 @@
                             Add New Instalment Plan
                         </h3>
                     </div>
-                    <form action="{{ route('intallment-plans.store') }}" method="POST">
+                    <form action="{{ route('instalment-plans.store') }}" method="POST">
                         @csrf
                         <div class="card-body grid gap-5">
                             <!-- Plan Name Input -->
@@ -25,6 +25,18 @@
                                     <input class="input @error('name') border-red-500 @enderror" name="name" type="text" value="{{ old('name') }}" required />
                                 </div>
                                 @error('name')
+                                    <span class="text-danger text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
+
+                            <div class="w-full">
+                                <div class="flex items-baseline flex-wrap gap-2.5">
+                                    <label class="form-label flex items-center gap-1 max-w-56">
+                                        Description
+                                    </label>
+                                    <textarea class="textarea @error('description') border-red-500 @enderror" name="description" rows="4">{{ old('description') }}</textarea>
+                                </div>
+                                @error('description')
                                     <span class="text-danger text-sm">{{ $message }}</span>
                                 @enderror
                             </div>
@@ -54,7 +66,6 @@
                                     @enderror
                                 </div>
                             </div>
-                            
                     
                             <div class="flex gap-5">
                                 <div class="w-full">
