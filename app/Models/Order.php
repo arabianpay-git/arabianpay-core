@@ -43,9 +43,14 @@ class Order extends Model
     ];
 
     // Define relationships (e.g., user, seller, pickup_point)
+
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+    public function customer()
+    {
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function seller()

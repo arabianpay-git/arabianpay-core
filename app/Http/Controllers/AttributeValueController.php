@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AttributeValue;
+use App\Rules\NoHtml;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 
@@ -40,6 +41,10 @@ class AttributeValueController extends Controller
                 'max:255',
                 'regex:/^[a-zA-Z\s]*$/',
                 Rule::unique('attribute_values', 'value')->ignore($attributeValue->id),
+            ],
+            'value.ar' => [
+                'nullable',
+                new NoHtml,
             ]
         ]);
 

@@ -8,11 +8,11 @@
     <div class="sidebar-header hidden lg:flex items-center relative justify-between px-3 lg:px-6 shrink-0" id="sidebar_header">
         <a class="dark:hidden" href="{{ route('dashboard') }}">
             <img class="default-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/app/default-logo.svg' ) }}" />
-            <img class="small-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/app/mini-logo.svg' ) }}" />
+            <img class="small-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/app/default-logo.svg' ) }}" />
         </a>
         <a class="hidden dark:block" href="{{ route('dashboard') }}">
             <img class="default-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/app/default-logo-dark.svg' ) }}" />
-            <img class="small-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/app/mini-logo.svg' ) }}" />
+            <img class="small-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/app/default-logo.svg' ) }}" />
         </a>
         <button
             class="btn btn-icon btn-icon-md size-[30px] rounded-lg border border-gray-200 dark:border-gray-300 bg-light text-gray-500 hover:text-gray-700 toggle absolute start-full top-2/4 -translate-x-2/4 -translate-y-2/4 rtl:translate-x-2/4"
@@ -303,7 +303,7 @@
                             </a>
                         </div>
 
-                        <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+                        {{-- <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                             <div class="menu-link border border-transparent grow cursor-pointer gap-[14px] ps-[10px] pe-[10px] py-[8px]" tabindex="0">
                                 <span
                                     class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
@@ -349,7 +349,7 @@
                                     </a>
                                 </div>
                             </div>
-                        </div>
+                        </div> --}}
 
                         <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                             <div class="menu-link border border-transparent grow cursor-pointer gap-[14px] ps-[10px] pe-[10px] py-[8px]" tabindex="0">
@@ -868,23 +868,6 @@
                                         </span>
                                     </a>
                                 </div>
-
-                                <div class="menu-item">
-                                    <a
-                                        class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="{{ route('supplierAccountStatment') }}"
-                                        tabindex="0"
-                                    >
-                                        <span
-                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
-                                        >
-                                        </span>
-                                        <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Supplier Account Statment
-                                        </span>
-                                    </a>
-                                </div>
-
                             </div>
                         </div>
 
@@ -906,7 +889,7 @@
                                 <div class="menu-item">
                                     <a
                                         class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/projects/3-columns.html"
+                                        href="{{ route('saleReport') }}"
                                         tabindex="0"
                                     >
                                         <span
@@ -922,7 +905,7 @@
                                 <div class="menu-item">
                                     <a
                                         class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/projects/2-columns.html"
+                                        href="{{ route('totalSaleReport') }}"
                                         tabindex="0"
                                     >
                                         <span
@@ -938,7 +921,7 @@
                                 <div class="menu-item">
                                     <a
                                         class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/projects/2-columns.html"
+                                        href="{{ route('collectionReport') }}"
                                         tabindex="0"
                                     >
                                         <span
@@ -954,7 +937,7 @@
                                 <div class="menu-item">
                                     <a
                                         class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/projects/2-columns.html"
+                                        href="{{ route('detailedCustomerDebt') }}"
                                         tabindex="0"
                                     >
                                         <span
@@ -970,7 +953,7 @@
                                 <div class="menu-item">
                                     <a
                                         class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/projects/2-columns.html"
+                                        href="{{ route('totalCustomerDebt') }}"
                                         tabindex="0"
                                     >
                                         <span
@@ -982,42 +965,10 @@
                                         </span>
                                     </a>
                                 </div>
-
-                                <div class="menu-item">
-                                    <a
-                                        class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/projects/2-columns.html"
-                                        tabindex="0"
-                                    >
-                                        <span
-                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
-                                        >
-                                        </span>
-                                        <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Customer Account Statment
-                                        </span>
-                                    </a>
-                                </div>
-
-                                <div class="menu-item">
-                                    <a
-                                        class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/projects/2-columns.html"
-                                        tabindex="0"
-                                    >
-                                        <span
-                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
-                                        >
-                                        </span>
-                                        <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Reconstruction of Customer Debt
-                                        </span>
-                                    </a>
-                                </div>
                             </div>
                         </div>
 
-                        <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+                        {{-- <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                             <div class="menu-link border border-transparent grow cursor-pointer gap-[14px] ps-[10px] pe-[10px] py-[8px]" tabindex="0">
                                 <span
                                     class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
@@ -1080,7 +1031,7 @@
                                     </a>
                                 </div>
                             </div>
-                        </div>
+                        </div> --}}
 
                     </div>
                 </div>
@@ -1184,14 +1135,16 @@
                 </div>
 
                 <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
-                    <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
-                        <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
-                            <i class="ki-filled ki-profile-circle text-lg"> </i>
-                        </span>
-                        <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                            Support & Tickets
-                        </span>
-                    </div>
+                    <a href="{{ route('tickets') }}" class="active-link" >
+                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]" tabindex="0">
+                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                <i class="ki-filled ki-profile-circle text-lg"> </i>
+                            </span>
+                            <span class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                Support & Tickets
+                            </span>
+                        </div>
+                    </a>
                 </div>
 
                 <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
@@ -1236,9 +1189,9 @@
                     <div class="menu-accordion gap-0.5 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
 
                         <div class="menu-item">
-                            <a
+                            <a 
                                 class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                href="html/demo1/public-profile/works.html"
+                                href="{{ route('productStock') }}"
                                 tabindex="0"
                             >
                                 <span
@@ -1254,7 +1207,7 @@
                         <div class="menu-item">
                             <a
                                 class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                href="html/demo1/public-profile/works.html"
+                                href="{{ route('productWishlist') }}"
                                 tabindex="0"
                             >
                                 <span
@@ -1270,7 +1223,7 @@
                         <div class="menu-item">
                             <a
                                 class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                href="html/demo1/public-profile/works.html"
+                                href="{{ route('userSearch') }}"
                                 tabindex="0"
                             >
                                 <span
@@ -1303,7 +1256,7 @@
                         <div class="menu-item">
                             <a
                                 class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                href="html/demo1/public-profile/works.html"
+                                href="{{ route('refund-requests') }}"
                                 tabindex="0"
                             >
                                 <span
@@ -1319,7 +1272,7 @@
                         <div class="menu-item">
                             <a
                                 class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                href="html/demo1/public-profile/works.html"
+                                href="{{ route('refund-requests.status', ['status' => 'approved']) }}"
                                 tabindex="0"
                             >
                                 <span
@@ -1335,7 +1288,7 @@
                         <div class="menu-item">
                             <a
                                 class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                href="html/demo1/public-profile/works.html"
+                                href="{{ route('refund-requests.status', ['status' => 'rejected']) }}"
                                 tabindex="0"
                             >
                                 <span
@@ -1351,7 +1304,7 @@
                         <div class="menu-item">
                             <a
                                 class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                href="html/demo1/public-profile/works.html"
+                                href="{{ route('refund-requests.status', ['status' => 'pending']) }}"
                                 tabindex="0"
                             >
                                 <span
@@ -1359,7 +1312,7 @@
                                 >
                                 </span>
                                 <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                    Refunds Configuration
+                                    Pending Refunds
                                 </span>
                             </a>
                         </div>
@@ -1390,7 +1343,7 @@
                         <div class="menu-item">
                             <a
                                 class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                href="html/demo1/public-profile/projects/3-columns.html"
+                                href="{{ route('supplierEntitilements') }}"
                                 tabindex="0"
                             >
                                 <span
@@ -1406,7 +1359,7 @@
                         <div class="menu-item">
                             <a
                                 class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                href="html/demo1/public-profile/projects/2-columns.html"
+                                href="{{ route('supplierAccounts') }}"
                                 tabindex="0"
                             >
                                 <span
@@ -1422,7 +1375,7 @@
                         <div class="menu-item">
                             <a
                                 class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                href="html/demo1/public-profile/projects/2-columns.html"
+                                href="{{ route('supplierPayouts') }}"
                                 tabindex="0"
                             >
                                 <span
@@ -1640,20 +1593,36 @@
         document.querySelectorAll('.menu-item > a').forEach(anchor => {
             if (anchor.href === currentUrl) {
                 const menuItem = anchor.closest('.menu-item');
-                if (menuItem) {
-                    // Add active to the current item
-                    menuItem.classList.add('active');
+                const menuLink = anchor.querySelector('.menu-link');
+                const menuTitle = anchor.querySelector('.menu-title');
+                const menuIcon = anchor.querySelector('.menu-icon');
 
-                    // Traverse up to open all parent accordions
-                    let parent = menuItem.parentElement;
-                    while (parent) {
-                        const accordion = parent.closest('.menu-item.menu-item-accordion');
-                        if (accordion) {
-                            accordion.classList.add('menu-item-show', 'show');
-                            parent = accordion.parentElement;
-                        } else {
-                            break;
-                        }
+                if (menuItem) {
+                    menuItem.classList.add('active');
+                }
+
+                // Apply active classes to direct links (non-accordion items)
+                if (!menuItem.querySelector('.menu-accordion')) {
+                    if (menuLink) {
+                        menuLink.classList.add('active-link');
+                    }
+                    if (menuTitle) {
+                        menuTitle.classList.add('active-title');
+                    }
+                    if (menuIcon) {
+                        menuIcon.classList.add('active-icon');
+                    }
+                }
+
+                // Open parent accordion menus
+                let parent = menuItem.parentElement;
+                while (parent) {
+                    const accordion = parent.closest('.menu-item[data-menu-item-toggle="accordion"]');
+                    if (accordion) {
+                        accordion.classList.add('menu-item-show', 'show');
+                        parent = accordion.parentElement;
+                    } else {
+                        break;
                     }
                 }
             }

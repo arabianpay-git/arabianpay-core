@@ -11,18 +11,17 @@ class SupportTicketController extends Controller
     public function index()
     {
         $tickets = SupportTicket::selectRaw('MAX(id) as id, ticket_number, MAX(user_id) as user_id, MAX(subject) as subject, MAX(details) as details, MAX(files) as files, MAX(reply) as reply, MAX(status) as status, MAX(created_at) as created_at')
-            ->where('user_id', Auth::id())
             ->groupBy('ticket_number')
             ->orderByDesc('id')
             ->paginate(10);
 
-        return view('merchant.support-ticket.index', compact('tickets'));
+        return view('admin.support-ticket.index', compact('tickets'));
     }
 
 
     public function show($id)
     {
-        $ticket = SupportTicket::where('user_id', Auth::id())->findOrFail($id);
+        $ticket = SupportTicket::findOrFail($id);
 
         $activities = SupportTicket::where('ticket_number', $ticket->ticket_number)
             ->orderBy('created_at')
@@ -32,6 +31,7 @@ class SupportTicketController extends Controller
 
         foreach ($activities as $activity) {
             $activityData->push([
+                'id'    => $activity->id,
                 'type' => $activity->user_id == Auth::id(),
                 'message' => $activity->details,
                 'subject' => $activity->subject,
@@ -41,55 +41,22 @@ class SupportTicketController extends Controller
             ]);
         }
 
-        return view('merchant.support-ticket.show', compact('ticket', 'activityData'));
-    }
-
-
-
-
-    public function create()
-    {
-        return view('merchant.support-ticket.create');
-    }
-
-    public function store(Request $request)
-    {
-        $validated = $request->validate([
-            'subject' => 'required|string|max:255',
-            'details' => 'required|string|max:700',
-            'files' => 'nullable|array',
-        ]);
-
-        $ticket = SupportTicket::create([
-            'user_id' => Auth::id(),
-            'ticket_number' => 'TKT-' . now()->format('Ymd') . '-' . rand(1000, 9999),
-            'subject' => $validated['subject'],
-            'details' => $validated['details'],
-            'files' => $validated['files'] ?? [],
-        ]);
-
-        return redirect()->route('support-ticket.index')->with('success', 'Ticket created successfully!');
+        return view('admin.support-ticket.show', compact('ticket', 'activityData'));
     }
 
     public function reply(Request $request, $ticket_id)
     {
         $validated = $request->validate([
-            'subject' => 'required|string|max:255',
-            'details' => 'required|string|max:700',
-            'files' => 'nullable|array',
+            'reply' => 'required|string|max:700',
         ]);
 
-        $ticket = SupportTicket::where('user_id', Auth::id())->findOrFail($ticket_id);
+        $ticket = SupportTicket::findOrFail($ticket_id);
 
-        $newTicket = SupportTicket::create([
-            'user_id' => Auth::id(),
-            'ticket_number' => $ticket->ticket_number,
-            'subject' => $validated['subject'],
-            'details' => $validated['details'],
-            'files' => $validated['files'] ?? [],
+        $ticket->update([
+            'reply' => $validated['reply'],
         ]);
 
-        return redirect()->route('support-ticket.show', $ticket->id)
+        return redirect()->route('showTickets', $ticket->id)
             ->with('success', 'Your reply has been submitted successfully!');
     }
 }

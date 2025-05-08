@@ -89,9 +89,8 @@
     <form action="{{ route('products.update', $product->id) }}" method="POST">
         @csrf
         @method('PUT')
-        <div class="tab-content" id="tab-en">
-
-            <div class="container-fixed">
+        <div class="container-fixed">
+            <div class="tab-content" id="tab-en">
                 @if ($errors->any())
                     <div class="grid gap-5 lg:gap-7.5">
                         <div class="card rounded-xl">
@@ -286,7 +285,7 @@
                                                 <span class="text-danger text-sm">{{ $message }}</span>
                                             @enderror
                                         </div>
-                                       
+                                        
                                         
                                         <div class="flex items-center flex-wrap gap-2.5">
                                             <label class="form-label max-w-56">
@@ -572,9 +571,9 @@
                                                     Meta Title (English)
                                                 </label>
                                                 <input class="input @error('meta_title.en') border-red-500 @enderror"
-                                                       name="meta_title[en]"
-                                                       type="text"
-                                                       value="{{ old('meta_title.en', $product->meta_title ?? '') }}" />
+                                                        name="meta_title[en]"
+                                                        type="text"
+                                                        value="{{ old('meta_title.en', $product->meta_title ?? '') }}" />
                                             </div>
                                             @error('meta_title.en')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
@@ -587,8 +586,8 @@
                                                     Meta Description (English)
                                                 </label>
                                                 <textarea class="textarea @error('meta_description.en') border-red-500 @enderror"
-                                                          name="meta_description[en]"
-                                                          rows="4">{{ old('meta_description.en', $product->meta_description ?? '') }}</textarea>
+                                                            name="meta_description[en]"
+                                                            rows="4">{{ old('meta_description.en', $product->meta_description ?? '') }}</textarea>
                                             </div>
                                             @error('meta_description.en')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
@@ -892,13 +891,9 @@
                         </div>  
                     </div>  
                 </div>
-                <!-- end: grid -->
             </div>
-        </div>
 
-        <div class="tab-content hidden" id="tab-ar">
-            <div class="container-fixed">
-
+            <div class="tab-content hidden" id="tab-ar">
                 <div class="col-span-2">
                     <div class="grid gap-5 lg:gap-7.5">
                         <div class="card min-w-full">
@@ -1023,18 +1018,18 @@
                                         <div class="w-full">
                                             <label class="form-label">Meta Title (Arabic)</label>
                                             <input class="input @error('meta_title.ar') border-red-500 @enderror"
-                                                   name="meta_title[ar]"
-                                                   type="text"
-                                                   value="{{ old('meta_title.ar', $product->translations->where('locale', 'ar')->first()->meta_title ?? '') }}" />
+                                                    name="meta_title[ar]"
+                                                    type="text"
+                                                    value="{{ old('meta_title.ar', $product->translations->where('locale', 'ar')->first()->meta_title ?? '') }}" />
                                             @error('meta_title.ar')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
                                             @enderror
                                         </div>
-    
+
                                         <div class="w-full">
                                             <label class="form-label">Meta Description (Arabic)</label>
                                             <textarea class="textarea @error('meta_description.ar') border-red-500 @enderror"
-                                                      name="meta_description[ar]" rows="4">{{ old('meta_description.ar', $product->translations->where('locale', 'ar')->first()->meta_description ?? '') }}</textarea>
+                                                        name="meta_description[ar]" rows="4">{{ old('meta_description.ar', $product->translations->where('locale', 'ar')->first()->meta_description ?? '') }}</textarea>
                                             @error('meta_description.ar')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
                                             @enderror
@@ -1048,12 +1043,12 @@
                     </div>
                 </div> 
             </div>
-        </div>
 
-        <div class="flex justify-end pt-2.5">
-            <button type="submit" class="btn btn-primary">
-                Save Changes
-            </button>
+            <div class="flex justify-end pt-2.5">
+                <button type="submit" class="btn btn-primary">
+                    Save Changes
+                </button>
+            </div>
         </div>
     </form>
     <!-- End of Container -->
@@ -1287,38 +1282,71 @@
         buildValueSelectors(selectedAttrs);
     };
 </script>
-    
-
-
-
-
-
-
-
-
-
-
 
 <script src="https://cdn.ckeditor.com/ckeditor5/39.0.1/classic/ckeditor.js"></script>
 <script>
     ClassicEditor
-        .create(document.querySelector('#short_description'))
+        .create(document.querySelector('#short_description'), {
+            toolbar: [
+                'heading', '|',
+                'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', '|',
+                'bulletedList', 'numberedList', 'todoList', '|',
+                'alignment', '|',
+                'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+                'highlight', '|',
+                'imageUpload', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
+                'undo', 'redo'
+            ]
+        })
         .catch(error => {
             console.error(error);
         });
     ClassicEditor
-        .create(document.querySelector('#description'))
+        .create(document.querySelector('#description'), {
+            toolbar: [
+                'heading', '|',
+                'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', '|',
+                'bulletedList', 'numberedList', 'todoList', '|',
+                'alignment', '|',
+                'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+                'highlight', '|',
+                'imageUpload', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
+                'undo', 'redo'
+            ]
+        })
         .catch(error => {
             console.error(error);
         });
 
         ClassicEditor
-        .create(document.querySelector('#short_description_ar'))
+        .create(document.querySelector('#short_description_ar'), {
+            toolbar: [
+                'heading', '|',
+                'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', '|',
+                'bulletedList', 'numberedList', 'todoList', '|',
+                'alignment', '|',
+                'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+                'highlight', '|',
+                'imageUpload', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
+                'undo', 'redo'
+            ]
+        })
         .catch(error => {
             console.error(error);
         });
     ClassicEditor
-        .create(document.querySelector('#description_ar'))
+        .create(document.querySelector('#description_ar'), {
+            toolbar: [
+                'heading', '|',
+                'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', '|',
+                'bulletedList', 'numberedList', 'todoList', '|',
+                'alignment', '|',
+                'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+                'highlight', '|',
+                'imageUpload', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
+                'undo', 'redo'
+            ]
+        })
         .catch(error => {
             console.error(error);
         });

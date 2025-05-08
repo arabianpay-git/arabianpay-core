@@ -103,7 +103,15 @@
                                     @foreach($summary as $index => $item)
                                         <tr>
                                             <td class="text-center">{{ $index + 1 + ($paginator->currentPage() - 1) * $paginator->perPage() }}</td>
-                                            <td class="text-left">{{ $item['seller_name'] }}</td>
+                                            <td>
+                                                <div class="whitespace-nowrap">
+                                                    {{ $item['seller_name'] }}
+                                                    <br>
+                                                    <small class="text-gray-500">
+                                                        — {{ $item['seller_business'] }}
+                                                    </small>
+                                                </div>
+                                            </td>
                                             <td class="text-left">{{ $item['invoice_number'] }}</td>
                                             <td class="text-center">{{ $item['payment_date'] }}</td>
                                             <td class="text-center">{{ $item['payment_invoice_paid'] }}</td>

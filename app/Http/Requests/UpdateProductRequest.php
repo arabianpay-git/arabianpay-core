@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\NoHtml;
 use Illuminate\Foundation\Http\FormRequest;
 
 class UpdateProductRequest extends FormRequest
@@ -14,8 +15,8 @@ class UpdateProductRequest extends FormRequest
     public function rules()
     {
         return [
-            'name.en' => 'required|string|max:255',
-            'name.ar' => 'nullable|string|max:255',
+            'name.en' => ['required', 'string', 'max:255', new NoHtml],
+            'name.ar' => ['nullable', 'string', 'max:255', new NoHtml],
 
             'unit.en' => 'nullable|string|max:255',
 

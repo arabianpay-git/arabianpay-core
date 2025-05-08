@@ -166,4 +166,12 @@
     tbody td:last-child {
         text-align: center;
     }
+    .active-link {
+        background-color: var(--tw-secondary-active);
+        border-radius: 0.25rem;
+    }
+
+    .active-title,.active-icon {
+        color: var(--tw-primary);
+    }
 </style>

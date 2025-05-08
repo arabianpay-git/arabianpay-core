@@ -86,6 +86,19 @@ class Transaction extends Model
             ->where('seller_id', Auth::id());
     }
 
+    public function refundRequests()
+    {
+        return $this->hasMany(RefundRequest::class, 'order_id', 'order_id')
+            ->where('seller_id', $this->seller_id);
+    }
+
+    public function getRefundAmountAttribute()
+    {
+        // this requires you eager‐load `refund_requests_sum`
+        return $this->refund_requests_sum ?? 0;
+    }
+
+
     /**
      * Disbursed vs repaid over past N months.
      */

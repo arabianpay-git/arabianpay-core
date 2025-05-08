@@ -832,16 +832,40 @@
 </script>
 <script>
     ClassicEditor
-        .create(document.querySelector('#short_description'))
+        .create(document.querySelector('#short_description'), {
+            toolbar: [
+                'heading', '|',
+                'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', '|',
+                'bulletedList', 'numberedList', 'todoList', '|',
+                'alignment', '|',
+                'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+                'highlight', '|',
+                'imageUpload', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
+                'undo', 'redo'
+            ]
+        })
         .catch(error => {
             console.error(error);
         });
+
     ClassicEditor
-        .create(document.querySelector('#description'))
+        .create(document.querySelector('#description'), {
+            toolbar: [
+                'heading', '|',
+                'bold', 'italic', 'underline', 'strikethrough', 'subscript', 'superscript', '|',
+                'bulletedList', 'numberedList', 'todoList', '|',
+                'alignment', '|',
+                'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', '|',
+                'highlight', '|',
+                'imageUpload', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
+                'undo', 'redo'
+            ]
+        })
         .catch(error => {
             console.error(error);
         });
 </script>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {

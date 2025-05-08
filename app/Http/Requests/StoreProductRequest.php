@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\NoHtml;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreProductRequest extends FormRequest
@@ -24,7 +25,7 @@ class StoreProductRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => 'required|string|max:255|regex:/^[a-zA-Z\s]*$/',
+            'name' => ['required', 'string', 'regex:/^[a-zA-Z\s]*$/', 'max:255', new NoHtml],
             'user_id' => 'required',
             'category_id' => 'nullable|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',

@@ -26,12 +26,11 @@ class RefundRequestController extends Controller
     public function refundRequests()
     {
         $refundRequests = RefundRequest::with('user', 'order')
-            ->where('seller_id', Auth::id())
             ->select('id', 'user_id', 'seller_id', 'order_id', 'refund_amount', 'refund_status', 'created_at')
             ->latest()
             ->paginate(10);
         $status = 'Refund';
-        return view('merchant.refund-requests.index', compact('refundRequests', 'status'));
+        return view('admin.refund-requests.index', compact('refundRequests', 'status'));
     }
 
     public function showRefundRequests($status)
@@ -44,11 +43,10 @@ class RefundRequestController extends Controller
 
         $refundRequests = RefundRequest::with('user', 'order')
             ->where('refund_status', $status)
-            ->where('seller_id', Auth::id())
             ->select('id', 'user_id', 'seller_id', 'order_id', 'refund_amount', 'refund_status', 'created_at')
             ->latest()
             ->paginate(10);
 
-        return view('merchant.refund-requests.index', compact('refundRequests', 'status'));
+        return view('admin.refund-requests.index', compact('refundRequests', 'status'));
     }
 }

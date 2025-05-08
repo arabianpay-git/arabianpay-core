@@ -9,17 +9,16 @@ class ProductWishlist extends Model
 {
     use HasFactory;
 
-    protected $table = 'product_wishlists';
-
     protected $fillable = [
         'user_id',
         'seller_id',
         'product_id',
     ];
 
+    // Relationships
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function seller()

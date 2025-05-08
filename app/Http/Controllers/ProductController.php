@@ -206,6 +206,11 @@ class ProductController extends Controller
                 return ['discount_end_date' => 'Discount end date must be after start date.'];
             }
         }
+        // Validate against credit limit
+        $creditLimit = get_setting('credit_limit', null);
+        if (!is_null($creditLimit) && !empty($data['unit_price']) && $data['unit_price'] > $creditLimit) {
+            return ['unit_price' => 'Unit price cannot exceed the credit limit.'];
+        }
         return null;
     }
 

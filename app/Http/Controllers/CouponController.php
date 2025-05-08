@@ -153,4 +153,13 @@ class CouponController extends Controller
         $coupon->delete();
         return redirect()->back()->with('success', 'Coupon deleted successfully!');
     }
+
+    public function getProductsForMerchant($userId)
+    {
+        $products = Product::where('user_id', $userId)
+            ->select('id', 'name')
+            ->get();
+
+        return response()->json(['products' => $products]);
+    }
 }

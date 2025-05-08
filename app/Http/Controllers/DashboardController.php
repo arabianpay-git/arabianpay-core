@@ -136,7 +136,7 @@ class DashboardController extends Controller
 
     public function home()
     {
-
+        $cities = City::all();
         return view('welcome', compact('cities'));
     }
 }

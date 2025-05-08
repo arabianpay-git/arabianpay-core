@@ -186,11 +186,16 @@ class User extends Authenticatable implements MustVerifyEmail
 
     public function customer()
     {
-        return $this->hasMany(Customer::class, 'user_id');
+        return $this->hasOne(Customer::class, 'user_id');
     }
 
     public function creditLimit()
     {
         return $this->hasMany(CustomerCreditLimit::class, 'user_id');
+    }
+
+    public function userSearches()
+    {
+        return $this->hasMany(UserSearch::class, 'user_id');
     }
 }

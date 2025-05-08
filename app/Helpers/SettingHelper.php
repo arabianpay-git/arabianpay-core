@@ -2,6 +2,7 @@
 
 use App\Models\Setting;
 
+// Get Settings
 if (!function_exists('get_setting')) {
     function get_setting($label, $default = null)
     {

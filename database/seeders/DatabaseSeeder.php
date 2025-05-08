@@ -32,7 +32,8 @@ class DatabaseSeeder extends Seeder
             PaymentSeeder::class,
             RefundRequestSeeder::class,
 
-            RiskManagementSeeder::class
+            RiskManagementSeeder::class,
+            ProductWishlistSeeder::class,
         ]);
     }
 }

@@ -11,6 +11,7 @@ use App\Http\Controllers\{
     CityController,
     CountryController,
     CouponController,
+    CustomerAndSalesController,
     DashboardController,
     InstalmentPlanController,
     MediaController,
@@ -18,19 +19,24 @@ use App\Http\Controllers\{
     PackageController,
     ProductController,
     RefundRequestController,
+    ReportController,
     SchedulePaymentController,
     StateController,
     StaticsController,
     SupplierAndSalesController,
+    SupportTicketController,
     TransactionController,
 };
 use App\Http\Middleware\CheckAdmin;
+use App\Http\Middleware\PreventBackHistory;
 use App\Models\Media;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 Route::group([
-    'prefix'     => LaravelLocalization::setLocale()
+    'prefix'     => LaravelLocalization::setLocale(),
+    'middleware' => ['throttle:global'],
 ], function () {
 
     //
@@ -46,14 +52,14 @@ Route::group([
     // Admin area (all routes under /{locale}/admin)
     //
     Route::prefix('admin')
-        ->middleware(['auth:sanctum', CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
+        ->middleware(['auth:sanctum', PreventBackHistory::class, CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
         ->group(function () {
 
             //
             // Dashboard
             //
             Route::controller(DashboardController::class)->group(function () {
-                Route::get('dashboard', 'index')->name('dashboard');
+                Route::get('/dashboard', 'index')->name('dashboard');
                 Route::get('/dashboard/data', 'filterData');
             });
 
@@ -142,15 +148,31 @@ Route::group([
             //
             // Supplier and Sales
             //
-
             Route::controller(SupplierAndSalesController::class)->group(function () {
-                Route::get('detail-purchases', 'detailPurchases')->name('detailPurchases');
-                Route::get('total-purchases', 'totalPurchases')->name('totalPurchases');
-                Route::get('payment-of-supplier', 'paymentOfSupplier')->name('paymentOfSupplier');
-                Route::get('detailed-supplier-debt', 'detailedSupplierDebt')->name('detailedSupplierDebt');
-                Route::get('total-supplier-debt', 'totalSupplierDebt')->name('totalSupplierDebt');
-                Route::get('supplier-account-statment', 'supplierAccountStatment')->name('supplierAccountStatment');
+                Route::get('supplier-detail-purchases', 'detailPurchases')->name('detailPurchases');
+                Route::get('supplier-total-purchases', 'totalPurchases')->name('totalPurchases');
+                Route::get('supplier-payment-of-supplier', 'paymentOfSupplier')->name('paymentOfSupplier');
+                Route::get('supplier-detailed-debt', 'detailedSupplierDebt')->name('detailedSupplierDebt');
+                Route::get('supplier-total-debt', 'totalSupplierDebt')->name('totalSupplierDebt');
+
+                Route::get('supplier-entitilements', 'supplierEntitilements')->name('supplierEntitilements');
+                Route::post('seller-payment-from-admin', 'sellerPaymentFromAdmin')->name('sellerPaymentFromAdmin');
+
+                Route::get('supplier-accounts', 'supplierAccounts')->name('supplierAccounts');
+                Route::get('supplier-payouts', 'supplierPayouts')->name('supplierPayouts');
             });
+
+            //
+            // Customer and Sales
+            //
+            Route::controller(CustomerAndSalesController::class)->group(function () {
+                Route::get('customer-sale-report', 'saleReport')->name('saleReport');
+                Route::get('customer-total-sale-report', 'totalSaleReport')->name('totalSaleReport');
+                Route::get('customer-collection-report', 'collectionReport')->name('collectionReport');
+                Route::get('customer-detailed-debt', 'detailedCustomerDebt')->name('detailedCustomerDebt');
+                Route::get('customer-total-customer-debt', 'totalCustomerDebt')->name('totalCustomerDebt');
+            });
+
 
             //
             // Transactions
@@ -192,6 +214,24 @@ Route::group([
                 Route::get('brands',         'brands')->name('brands.statics');
                 Route::get('categories',     'categories')->name('categories.statics');
                 Route::get('reviews',        'reviews')->name('reviews.statics');
+            });
+
+            //
+            // Support Tickets
+            //
+            Route::controller(SupportTicketController::class)->group(function () {
+                Route::get('support-tickets', 'index')->name('tickets');
+                Route::get('support-ticket/{id}', 'show')->name('showTickets');
+                Route::post('/support-ticket/{ticket}/reply', 'reply')->name('ticketReply');
+            });
+
+            //
+            // Reports
+            //
+            Route::controller(ReportController::class)->group(function () {
+                Route::get('product-stock', 'productStock')->name('productStock');
+                Route::get('product-wishlist', 'productWishlist')->name('productWishlist');
+                Route::get('user-search', 'userSearch')->name('userSearch');
             });
 
             //
