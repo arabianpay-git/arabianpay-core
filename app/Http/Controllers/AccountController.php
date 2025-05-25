@@ -2,77 +2,129 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\BusinessCategory;
-use App\Models\Customer;
-use App\Models\CustomerCreditLimit;
-use App\Models\Merchant;
-use App\Models\Order;
-use App\Models\Package;
-use App\Models\Payment;
-use App\Models\Product;
-use App\Models\SchedulePayment;
-use App\Models\ShopSetting;
-use App\Models\Transaction;
-use App\Models\Wallet;
+use App\Models\{BusinessCategory, Customer, CustomerCreditLimit, Merchant, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, Transaction, Wallet};
+use App\Traits\EmailSender;
+use App\Traits\SmsSender;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
 
 class AccountController extends Controller
 {
+    use SmsSender, EmailSender;
+    /**
+     * Shared calculation for total order amount.
+     *
+     * @param \Illuminate\Support\Collection|array $orders
+     * @return float
+     */
+    private function calculateTotalOrderAmount($orders): float
+    {
+        $total = 0;
+
+        foreach ($orders as $order) {
+            $items    = map_product_details($order->product_details);
+            $subTotal = $items->sum('total');
+            $shipping = $order->shipping_cost ?? 0;
+            $discount = $order->coupon_discount ?? 0;
+            $tax      = calculate_order_tax($order);
+
+            $base = $subTotal + $tax + $shipping - $discount;
+
+            $commissionPct    = get_system_commission();
+            $commissionAmount = $base * ($commissionPct / 100);
+
+            $commissionTaxPct  = get_commission_tax();
+            $commissionTaxAmt  = $commissionAmount * ($commissionTaxPct / 100);
+
+            $total += $base + $commissionAmount + $commissionTaxAmt;
+        }
+
+        return $total;
+    }
+
+    private function calculateTotalOrderAmountWithoutTax($orders): float
+    {
+        $total = 0;
+
+        foreach ($orders as $order) {
+            $items    = map_product_details($order->product_details);
+            $subTotal = $items->sum('total');
+            $shipping = $order->shipping_cost ?? 0;
+            $discount = $order->coupon_discount ?? 0;
+            $tax      = calculate_order_tax($order);
+
+            $base = $subTotal + $tax + $shipping - $discount;
+        }
+
+        return $base;
+    }
+
     public function customers()
     {
-        $customers = Customer::with('user', 'package')
-            ->select('id', 'user_id', 'package_id', 'cr_number', 'address', 'purchasing_volume', 'status', 'created_at')
+        $user = currentUser();
+
+        $customers = Customer::with([
+            'assigned',
+            'user',
+            'package',
+            'user.orders' => function ($q) {
+                $q->where('delivery_status', 'delivered');
+            }
+        ])
+            ->select(['id', 'assigned_to', 'user_id', 'package_id', 'cr_number', 'address', 'purchasing_volume', 'status', 'created_at'])
+            ->when($user->user_type !== 'admin', function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })
+            ->orderByRaw('ISNULL(assigned_to) DESC')
             ->paginate(10);
 
-        return view('admin.accounts.customer', compact('customers'));
+        $totalOrderAmount = 0;
+
+        if ($customers->isNotEmpty()) {
+            foreach ($customers as $customer) {
+                $orders = $customer->user->orders ?? collect();
+                $totalOrderAmount += $this->calculateTotalOrderAmount($orders);
+            }
+        }
+
+        return view('admin.accounts.customer', compact('customers', 'totalOrderAmount'));
+    }
+
+    public function customerBusiness()
+    {
+        dd('Remaning');
+    }
+
+    public function customerSimah()
+    {
+        dd('Remaning');
     }
 
     public function customerProfile($id)
     {
+        $user = currentUser();
+
         $customer = Customer::with('user')
             ->where('user_id', $id)
-            ->firstOrFail();
+            ->when($user->user_type !== 'admin', function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })
+            ->first();
 
-        if (empty($customer->cr_data) && !empty($customer->cr_number)) {
-            try {
-                $response = Http::withHeaders([
-                    // swagger says 'apiKey' in header
-                    'apiKey' => env('API_KEY_WATHQ'),
-                    'Accept' => 'application/json',
-                ])->get(sprintf(
-                    'https://%s/commercial-registration/fullinfo/%s',
-                    env('BASE_URL_WATHQ'),
-                    $customer->cr_number
-                ), [
-                    'language' => 'en'
-                ]);
+        if (!$customer) {
+            return redirect()->route('customers')->with('error', __('Customer not found or not assigned to you.'));
+        }
 
-                // cache whatever we get (success or not)
-                if ($response->successful()) {
-                    $customer->goverment_data = $response->json();
-                } else {
-                    $customer->goverment_data = [
-                        'status' => $response->status(),
-                        'body'   => $response->json() ?: $response->body(),
-                    ];
-                    Log::warning("WAT-HQ API returned {$response->status()} for CR {$customer->cr_number}");
-                }
-
-                $customer->save();
-            } catch (\Exception $e) {
-                $customer->goverment_data = [
-                    'exception' => $e->getMessage(),
-                ];
-                $customer->save();
-                Log::error("Failed to fetch gov data for CR {$customer->cr_number}: {$e->getMessage()}");
-            }
+        if (empty($customer->cr_data) && $customer->cr_number) {
+            $customer->cr_data = app('App\Services\WathqService')->fetchCrData($customer->cr_number);
+            $customer->save();
         }
 
         return view('admin.accounts.customer-profile', compact('customer'));
     }
+
 
     public function customerFinance($id)
     {
@@ -80,76 +132,106 @@ class AccountController extends Controller
             ->where('user_id', $id)
             ->firstOrFail();
 
-        $packages = Package::orderBy('name', 'ASC')->get();
-        $creditLimitLogs = CustomerCreditLimit::where('user_id', $id)->paginate(10);
+        $packages = Package::orderBy('name')->get();
 
-        $totalPaymentDueAmount = SchedulePayment::where('user_id', $id)->whereIn('payment_status', ['due', 'late'])->sum('instalment_amount');
-        $totalDuePayments = SchedulePayment::where('user_id', $id)->where('payment_status', 'due')->count();
-        $totalLatePayments = SchedulePayment::where('user_id', $id)->where('payment_status', 'late')->count();
-        return view('admin.accounts.customer-finance', compact('customer', 'packages', 'totalPaymentDueAmount', 'totalDuePayments', 'totalLatePayments', 'creditLimitLogs'));
+        $creditLimitLogs    = CustomerCreditLimit::where('user_id', $id)->paginate(10);
+        $creditLimit        = CustomerCreditLimit::where('user_id', $id)->latest()->first();
+        $totalPaymentDue    = SchedulePayment::where('user_id', $id)
+            ->whereIn('payment_status', ['due', 'late'])
+            ->sum('instalment_amount');
+        $dueCount           = SchedulePayment::where('user_id', $id)->where('payment_status', 'due')->count();
+        $lateCount          = SchedulePayment::where('user_id', $id)->where('payment_status', 'late')->count();
+
+        $orders             = $customer->user->orders()->where('delivery_status', 'delivered')->get();
+        $totalOrderAmount   = $this->calculateTotalOrderAmount($orders);
+
+        return view('admin.accounts.customer-finance', compact(
+            'customer',
+            'packages',
+            'creditLimitLogs',
+            'creditLimit',
+            'totalPaymentDue',
+            'dueCount',
+            'lateCount',
+            'totalOrderAmount'
+        ));
     }
 
     public function upgradePackage(Request $request, $user)
     {
-        $request->validate([
-            'package_id' => 'required|exists:packages,id',
-        ]);
+        $request->validate(['package_id' => 'required|exists:packages,id']);
 
-        $customer = Customer::where('user_id', $user)->firstOrFail();
-        $customer->package_id = $request->package_id;
-        $customer->save();
+        Customer::where('user_id', $user)
+            ->firstOrFail()
+            ->update(['package_id' => $request->package_id]);
 
-        return redirect()->back()->with('success', 'User package upgraded successfully.');
+        return back()->with('success', 'User package upgraded successfully.');
     }
 
     public function upgradeLimit(Request $request)
     {
-        $request->validate([
-            'limit_arabianpay_before' => 'required|string|max:255',
-            'limit_arabianpay_after' => 'required|string|max:255',
+        $data = $request->validate([
+            'credit_limit_id'            => 'required|exists:customer_credit_limits,id',
+            'limit_arabianpay_before'    => 'required|numeric',
+            'limit_arabianpay_after'     => 'required|numeric',
+            'comission'                  => 'nullable|numeric',
         ]);
 
-        $limit = CustomerCreditLimit::findOrFail($request->credit_limit_id);
+        CustomerCreditLimit::findOrFail($data['credit_limit_id'])
+            ->update([
+                'limit_arabianpay_before' => $data['limit_arabianpay_before'],
+                'limit_arabianpay_after'  => $data['limit_arabianpay_after'],
+                'comission'               => $data['comission'] ?? 0,
+            ]);
 
-        $limit->limit_arabianpay_after = $request->limit_arabianpay_after;
-        $limit->limit_arabianpay_before = $request->limit_arabianpay_before;
-        $limit->save();
-
-        return redirect()->back()->with('success', 'Customer credit limit updated successfully.');
+        return back()->with('success', 'Customer credit limit updated successfully.');
     }
 
     public function createCreditLimit(Request $request)
     {
-        $request->validate([
-            'limit_arabianpay_before' => 'required|numeric',
-            'limit_arabianpay_after'  => 'required|numeric',
-            'simah_limit'             => 'required|numeric',
+        $data = $request->validate([
+            'user_id'                    => 'required|exists:customers,user_id',
+            'package_id'                 => 'nullable|exists:packages,id',
+            'limit_arabianpay_before'    => 'required|numeric',
+            'limit_arabianpay_after'     => 'required|numeric',
+            'comission'                  => 'nullable|numeric',
         ]);
 
-        $creditLimit = new CustomerCreditLimit();
-        $creditLimit->user_id = $request->user_id;
-        $creditLimit->user_id = $request->package_id;
-        $creditLimit->limit_arabianpay_before = $request->input('limit_arabianpay_before');
-        $creditLimit->limit_arabianpay_after  = $request->input('limit_arabianpay_after');
-        $creditLimit->simah_limit = $request->input('simah_limit');
-        $creditLimit->save();
+        CustomerCreditLimit::create($data);
 
-        return redirect()->back()->with('success', 'Credit Limit created successfully.');
+        return back()->with('success', 'Credit limit created successfully.');
     }
 
     public function updateCustomerStatus(Request $request, $id)
     {
-        $customer = Customer::findOrFail($id);
-
-        $validated = $request->validate([
+        $status = $request->validate([
             'status' => 'required|in:approved,suspended,pending,blacklisted',
-        ]);
+        ])['status'];
 
-        $customer->status = $validated['status'];
-        $customer->save();
+        $customer = Customer::findOrFail($id);
+        $customer->update(['status' => $status]);
+
+        if ($status === 'approved') {
+
+            $this->sendEmail(
+                'emails.welcome_account_approved',
+                $customer->user->email,
+                'Account Approved',
+                [
+                    'name' => $customer->user->first_name . " " . $customer->user->last_name,
+                ]
+            );
+
+
+            $this->sendSms(
+                $customer->user->phone_number,
+                'Welcome to ArabianPay! Your account has been approved.'
+            );
+        }
 
         return back()->with('success', 'Status updated successfully!');
     }
+
 
     protected $selectFields = [
         'id',
@@ -168,29 +250,21 @@ class AccountController extends Controller
 
     public function transactions($id)
     {
-        $customer = Customer::with('user')
-            ->where('user_id', $id)
-            ->firstOrFail();
+        $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
 
         $transactions = Transaction::select($this->selectFields)
-            ->with([
-                'order' => function ($query) {
-                    $query->select('id', 'grand_total', 'shipping_city', 'general_status');
-                },
-                'user'
-            ])
+            ->with(['order:id,grand_total,shipping_city,general_status', 'user'])
             ->where('user_id', $id)
             ->paginate(10);
+
         return view('admin.accounts.customer-transactions', compact('customer', 'transactions'));
     }
 
     public function orders($id)
     {
-        $customer = Customer::with('user')
-            ->where('user_id', $id)
-            ->firstOrFail();
+        $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
 
-        $orders = Order::select(
+        $orders = Order::select([
             'id',
             'user_id',
             'seller_id',
@@ -201,100 +275,39 @@ class AccountController extends Controller
             'delivery_status',
             'general_status',
             'created_at'
-        )
+        ])
             ->where('user_id', $id)
             ->with(['user', 'seller', 'pickupPoint'])
             ->paginate(10);
+
         return view('admin.accounts.customer-orders', compact('customer', 'orders'));
     }
 
     public function payments($id)
     {
+        $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
 
-        $customer = Customer::with('user')
+        $wallets = Wallet::select(['id', 'order_id', 'amount', 'balance_after', 'transaction_type', 'status', 'created_at'])
             ->where('user_id', $id)
-            ->firstOrFail();
-        $wallets = Wallet::select([
-            'id',
-            'order_id',
-            'amount',
-            'balance_after',
-            'transaction_type',
-            'status',
-            'created_at'
-        ])
-            ->where('user_id', $id)
-            ->with([
-                'order:id,invoice_number',
-            ])
+            ->with('order:id,invoice_number')
             ->latest()
             ->paginate(10);
 
         return view('admin.accounts.customer-payments', compact('customer', 'wallets'));
     }
 
-    public function customerBusiness()
-    {
-        dd('remaning');
-    }
-
-    public function customerSimah()
-    {
-        dd('remaning');
-    }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+    // ---- Supplier Methods (similarly optimized) ----
 
     public function suppliers()
     {
-        $merchants = Merchant::with('user', 'businessType')
-            ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status')
+        $user = currentUser();
+
+        $merchants = Merchant::with('user', 'businessType', 'assigned')
+            ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to')
+            ->when($user->user_type !== 'admin', function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })
+            ->orderByRaw('ISNULL(assigned_to) DESC')
             ->paginate(10);
 
         return view('admin.accounts.suppliers', compact('merchants'));
@@ -302,94 +315,591 @@ class AccountController extends Controller
 
     public function supplierProducts($id)
     {
-        $merchant = Merchant::with('user', 'businessType')
-            ->where('user_id', $id)
+        $merchant = Merchant::where('user_id', $id)
+            ->with('user', 'businessType')
             ->firstOrFail();
 
-        $products = Product::with(['category:id,name', 'brand:id,name'])
-            ->where('user_id', $id)
+        $products = Product::where('user_id', $id)
+            ->with(['category:id,name', 'brand:id,name'])
             ->select(['id', 'name', 'thumbnail', 'unit_price', 'brand_id', 'current_stock', 'approved', 'published', 'created_at'])
             ->latest()
             ->paginate(10);
+
         return view('admin.accounts.suppliers-products', compact('merchant', 'products'));
     }
 
     public function supplierProfile($id)
     {
-        $merchant = Merchant::with('user', 'businessType')
-            ->where('id', $id)
-            ->firstOrFail();
+        $user = currentUser();
+        $merchant = Merchant::where('user_id', $id)
+            ->with('user', 'businessType')
+            ->when($user->user_type !== 'admin', function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })
+            ->first();
 
-        $sellerShop = ShopSetting::where('user_id', $merchant->user_id)->select('address')->first();
-
+        if (!$merchant) {
+            return redirect()->route('suppliers')->with('error', __('Supplier not found or not assigned to you.'));
+        }
+        $sellerShop = ShopSetting::where('user_id', $merchant->user_id)
+            ->select('address')
+            ->first();
 
         $businessCategory = [];
         if ($merchant->business_category_id) {
-            $categoryIds = json_decode($merchant->business_category_id, true);
-            $businessCategory = BusinessCategory::whereIn('id', $categoryIds)->get();
+            $businessCategory = BusinessCategory::whereIn(
+                'id',
+                json_decode($merchant->business_category_id, true)
+            )->get();
         }
 
-        $totalProducts = Product::where('user_id', $merchant->user_id)->count();
-        $totalOrders = Order::where('seller_id', $merchant->user_id)->count();
-        $revenue = Payment::where('seller_id', $merchant->user_id)->sum('amount');
+        $stats = [
+            'totalProducts' => Product::where('user_id', $merchant->user_id)->count(),
+            'totalOrders'   => Order::where('seller_id', $merchant->user_id)->count(),
+            'revenue'       => Payment::where('seller_id', $merchant->user_id)->sum('amount'),
+            'walletBalance' => Wallet::where('seller_id', $merchant->user_id)->sum('balance_after'),
+        ];
 
-        if (empty($merchant->goverment_data) && !empty($merchant->cr_number)) {
-            try {
-                $response = Http::withHeaders([
-                    // swagger says 'apiKey' in header
-                    'apiKey' => env('API_KEY_WATHQ'),
-                    'Accept' => 'application/json',
-                ])->get(sprintf(
-                    'https://%s/commercial-registration/fullinfo/%s',
-                    env('BASE_URL_WATHQ'),
-                    $merchant->cr_number
-                ), [
-                    'language' => 'en'
-                ]);
-
-                // cache whatever we get (success or not)
-                if ($response->successful()) {
-                    $merchant->goverment_data = $response->json();
-                } else {
-                    $merchant->goverment_data = [
-                        'status' => $response->status(),
-                        'body'   => $response->json() ?: $response->body(),
-                    ];
-                    Log::warning("WAT-HQ API returned {$response->status()} for CR {$merchant->cr_number}");
-                }
-
-                $merchant->save();
-            } catch (\Exception $e) {
-                $merchant->goverment_data = [
-                    'exception' => $e->getMessage(),
-                ];
-                $merchant->save();
-                Log::error("Failed to fetch gov data for CR {$merchant->cr_number}: {$e->getMessage()}");
-            }
+        if (empty($merchant->goverment_data) && $merchant->cr_number) {
+            $merchant->goverment_data = app('App\Services\WathqService')->fetchCrData($merchant->cr_number);
+            $merchant->save();
         }
 
-        // 5) Render the view
-        return view('admin.accounts.supplier-profile', [
+        $supplierBank = SupplierBank::where('user_id', $merchant->user_id)->first();
+
+        return view('admin.accounts.supplier-profile', array_merge([
             'merchant'         => $merchant,
             'businessCategory' => $businessCategory,
-            'totalProducts'    => $totalProducts,
             'sellerShop'       => $sellerShop,
-            'totalOrders'      => $totalOrders,
-            'revenue'          => $revenue
-        ]);
+            'supplierBank'     => $supplierBank,
+        ], $stats));
+    }
+
+    public function supplierFinance($id)
+    {
+        $merchant = Merchant::where('user_id', $id)
+            ->with('user', 'businessType')
+            ->firstOrFail();
+
+        $creditLimitLogs = CustomerCreditLimit::where('user_id', $id)->paginate(10);
+
+        // Total orders supplied
+        $totalOrders = Order::where('seller_id', $id)->count();
+
+        // Total products supplied
+        $totalProducts = Order::where('seller_id', $id)
+            ->get()
+            ->reduce(function ($carry, $order) {
+                $items = json_decode($order->product_details, true) ?: [];
+                foreach ($items as $item) {
+                    $carry += $item['quantity'] ?? 0;
+                }
+                return $carry;
+            }, 0);
+
+        // Average delivery time (days between created_at and updated_at for delivered orders)
+        $avgDeliveryTime = Order::where('seller_id', $id)
+            ->where('delivery_status', 'delivered')
+            ->get()
+            ->map(function ($order) {
+                return \Carbon\Carbon::parse($order->created_at)
+                    ->diffInDays(\Carbon\Carbon::parse($order->updated_at));
+            })->average();
+
+        // Total returned orders
+        $totalReturns = Order::where('seller_id', $id)
+            ->where('delivery_status', 'returned')
+            ->count();
+
+        // Total cancelled orders
+        $totalCancelled = Order::where('seller_id', $id)
+            ->where('general_status', 'cancelled')
+            ->count();
+
+        // Last supplied order date
+        $lastOrderDate = Order::where('seller_id', $id)
+            ->latest('created_at')
+            ->value('created_at');
+
+        $totalPaid = Wallet::where('seller_id', $id)
+            ->where('transaction_type', 'seller_payment')
+            ->sum('amount');
+
+        // Fetch all transactions to summarize
+        $transactions = Transaction::with('order')
+            ->where('seller_id', $id)
+            ->get();
+
+        $totalEntitlement = 0;
+        $pendingPayment = 0;
+
+        foreach ($transactions as $tx) {
+            $order = $tx->order;
+            if (! $order) continue;
+
+            $items = map_product_details($order->product_details);
+            $subTotal = $items->sum('total');
+            $shipping = $order->shipping_cost ?? 0;
+            $discount = $order->coupon_discount ?? 0;
+            $tax = calculate_order_tax($order);
+
+            $base = $subTotal + $shipping + $tax - $discount;
+            $totalEntitlement += $base;
+
+            $supplierPaid = Wallet::where('seller_id', $id)
+                ->where('order_id', $order->id)
+                ->where('transaction_type', 'seller_payment')
+                ->sum('balance_after');
+
+            $supplierDue = $base - $supplierPaid;
+            $pendingPayment += $supplierDue;
+        }
+
+        // Commission percentage
+        $totalCommissionPercentage = get_seller_commission($merchant->user_id);
+        $totalCommission = round(($totalEntitlement * $totalCommissionPercentage) / 100, 2);
+
+
+        $stockCount = Product::where('user_id', $merchant->user_id)
+            ->sum('current_stock');
+
+        $avgRating = Product::where('user_id', $merchant->user_id)
+            ->avg('rating');
+
+        $status = ucfirst($merchant->status);
+
+        $lastPaymentDate = Wallet::where('seller_id', $id)->where('transaction_type', 'seller_payment')
+            ->latest('updated_at')
+            ->value('updated_at');
+
+        return view('admin.accounts.supplier-finance', compact(
+            'merchant',
+            'creditLimitLogs',
+            'totalOrders',
+            'totalProducts',
+            'avgDeliveryTime',
+            'totalReturns',
+            'totalCancelled',
+            'lastOrderDate',
+            'totalEntitlement',
+            'totalPaid',
+            'stockCount',
+            'avgRating',
+            'status',
+            'pendingPayment',
+            'lastPaymentDate',
+            'totalCommission'
+        ));
     }
 
     public function updateSupplierStatus(Request $request, $id)
     {
-        $merchant = Merchant::findOrFail($id);
+        $status = $request->validate([
+            'status' => 'required|in:approved,suspended,pending,blacklisted',
+        ])['status'];
 
-        $validated = $request->validate([
-            'status' => 'required|in:approved,rejected,pending,draft,blocked',
-        ]);
-
-        $merchant->status = $validated['status'];
+        $merchant = Merchant::where('user_id', $id)->firstOrFail();
+        $merchant->status = $status;
         $merchant->save();
 
+        $merchant->update(['status' => $status]);
+
+        if ($status === 'approved') {
+
+            $this->sendEmail(
+                'emails.welcome_account_approved',
+                $merchant->user->email,
+                'Account Approved',
+                [
+                    'name' => $merchant->user->first_name . " " . $merchant->user->last_name,
+                ]
+            );
+
+
+            $this->sendSms(
+                $merchant->user->phone_number,
+                'Welcome to ArabianPay! Your account has been approved.'
+            );
+        }
+
         return back()->with('success', 'Status updated successfully!');
+    }
+
+    public function supplierTransactions($id)
+    {
+        $merchant = Merchant::where('user_id', $id)->with('user', 'businessType')->firstOrFail();
+
+        $transactions = Transaction::select($this->selectFields)
+            ->with(['order:id,grand_total,shipping_city,general_status', 'user'])
+            ->where('seller_id', $id)
+            ->paginate(10);
+
+        return view('admin.accounts.supplier-transactions', compact('merchant', 'transactions'));
+    }
+
+    public function supplierOrders($id)
+    {
+        $merchant = Merchant::where('user_id', $id)->with('user', 'businessType')->firstOrFail();
+
+        $orders = Order::select([
+            'id',
+            'user_id',
+            'seller_id',
+            'payment_type',
+            'payment_status',
+            'grand_total',
+            'coupon_discount',
+            'delivery_status',
+            'general_status',
+            'created_at'
+        ])
+            ->where('seller_id', $id)
+            ->with(['user', 'pickupPoint'])
+            ->paginate(10);
+
+        return view('admin.accounts.supplier-orders', compact('merchant', 'orders'));
+    }
+
+    public function supplierPayments($id)
+    {
+        $merchant = Merchant::where('user_id', $id)->with('user', 'businessType')->firstOrFail();
+
+        $paginator = Wallet::where('transaction_type', 'seller_payment')
+            ->where('seller_id', $id)
+            ->with(['seller.merchant', 'order'])
+            ->latest()
+            ->paginate(10);
+
+        // CHANGED: reuse calculateTotalOrderAmount for each wallet's order
+        $summary = $paginator->getCollection()->map(fn($wallet) => [
+            'seller_name'     => trim($wallet->seller->first_name . ' ' . $wallet->seller->last_name),
+            'seller_business' => $wallet->seller->business_name,
+            'invoice_number'  => strtoupper($wallet->order->invoice_number ?? 'N/A'),
+            'payment_date'    => $wallet->updated_at->format('Y-m-d'),
+            'payment_invoice' => $this->calculateTotalOrderAmountWithoutTax(collect([$wallet->order])),
+            'tax_number'      => optional($wallet->seller->merchant)->vat_register_number ?? 'N/A',
+            'amount_paid'     => $wallet->balance_after,
+            'tax_total'       => calculate_order_tax($wallet->order),
+            'total_bills'     => $this->calculateTotalOrderAmount(collect([$wallet->order])),
+        ]);
+
+        return view('admin.accounts.supplier-payments', compact('merchant', 'summary', 'paginator'));
+    }
+
+    public function supplierSales($id)
+    {
+        $merchant = Merchant::with('user', 'businessType')
+            ->where('user_id', $id)
+            ->firstOrFail();
+
+        $orders = Order::where('seller_id', $id)->latest()->paginate(10);
+
+        $orders->getCollection()->transform(function ($order) {
+            $items         = map_product_details($order->product_details);
+            $subTotal      = $items->sum('total');
+            $shipping      = $order->shipping_cost ?? 0;
+            $discount      = $order->coupon_discount ?? 0;
+            $tax           = calculate_order_tax($order);
+
+            $base          = $subTotal + $tax + $shipping - $discount;
+
+            $commissionPct     = get_system_commission();
+            $commissionAmount  = $base * ($commissionPct / 100);
+
+            $commissionTaxPct  = get_commission_tax();
+            $commissionTaxAmt  = $commissionAmount * ($commissionTaxPct / 100);
+
+            $totalAmount       = $base + $commissionAmount + $commissionTaxAmt;
+
+            $supplierDue = \App\Models\Wallet::where('seller_id', $order->seller_id)
+                ->where('order_id', $order->id)
+                ->where('transaction_type', 'seller_payment')
+                ->sum('balance_after');
+
+            $totalSuplierDue = $base - $supplierDue;
+
+            // Add calculated fields to order
+            $order->calculated = [
+                'subTotal'         => $subTotal,
+                'shipping'         => $shipping,
+                'discount'         => $discount,
+                'tax'              => $tax,
+                'base'             => $base,
+                'commissionPct'    => $commissionPct,
+                'commissionAmount' => $commissionAmount,
+                'commissionTaxPct' => $commissionTaxPct,
+                'commissionTaxAmt' => $commissionTaxAmt,
+                'totalAmount'      => $totalAmount,
+                'supplierDue'      => $supplierDue,
+                'totalSuplierDue'  => $totalSuplierDue,
+            ];
+
+            return $order;
+        });
+
+        return view('admin.accounts.supplier-sales', compact('merchant', 'orders'));
+    }
+
+    public function customerCreditAssessment($id)
+    {
+        // 1) Fetch merchant (with its user and businessType)
+        $customer = Customer::with('user')
+            ->where('user_id', $id)
+            ->firstOrFail();
+
+        // 2) Fetch all orders for that merchant
+        $orders = Order::where('user_id', $customer->id)
+            ->orderBy('created_at')
+            ->get();
+
+        // 3) Calculate Business Age in years
+        $governmentData = is_array($customer->cr_data)
+            ? $customer->cr_data
+            : json_decode($customer->cr_data, true);
+
+        $issueDateStr = Arr::get($governmentData, 'issueDateGregorian');
+
+        $startDate    = $issueDateStr
+            ? Carbon::parse($issueDateStr)
+            : $customer->created_at;
+
+        $businessAge  = $this->formatBusinessAge($startDate);
+
+        // 4) Placeholder credit score calculation
+        //    TODO: Replace this with your real algorithm/service call
+        $creditScore = $this->calculateCreditScore($orders, $customer);
+
+        // 5) Determine risk level based on score
+        //    TODO: Adjust thresholds to your requirements
+        if ($creditScore['compositeScore'] >= 80) {
+            $riskLevel = 'Low';
+        } elseif ($creditScore['compositeScore'] >= 50) {
+            $riskLevel = 'Medium';
+        } else {
+            $riskLevel = 'High';
+        }
+
+        // 6) Score components breakdown (labels => percentages)
+        //    TODO: Build this array from your scoring logic
+        $scoreComponents = [
+            'POS Revenue'       => $creditScore['monthlyPOSScore'],
+            'Industry Risk'     => $creditScore['industryRiskScore'],
+            'Repayment'         => $creditScore['repaymentScore'],
+            'Business Age'      => $creditScore['businessAgeScore'],
+            'Obligations'       => $creditScore['obligationsScore'],
+            'Liquidity'         => $creditScore['liquidityScore'],
+            'Supplier Ratings'  => $creditScore['supplierScore'],
+        ];
+
+        // 7) Payment history timeline (e.g., payments per month)
+        //    TODO: Build real data series and categories
+        $monthlyData = Wallet::selectRaw("MONTH(created_at) as month, SUM(amount) as total")
+            ->where('user_id', $customer->user_id)
+            ->where('transaction_type', 'user_repayment')
+            ->whereYear('created_at', now()->year)
+            ->groupByRaw("MONTH(created_at)")
+            ->pluck('total', 'month');
+
+        // Prepare full 12 months even if no data
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $data = [];
+
+        foreach (range(1, 12) as $month) {
+            $data[] = round($monthlyData[$month] ?? 0, 2);
+        }
+
+        $paymentTimeline = [
+            'categories' => $months,
+            'data'       => $data,
+        ];
+
+
+        // 8) Flagged risk factors
+        //    Each item: ['label' => '', 'value' => '', 'class' => 'text-red-600' etc.]
+        //    TODO: Generate from real risk checks
+        $riskFactors = [
+            ['label' => 'Industry Volatility',    'value' => 'High Risk', 'class' => 'text-red-600'],
+            ['label' => 'Debt-to-Revenue Ratio',  'value' => '1.2:1',       'class' => 'text-yellow-600'],
+            ['label' => 'Recent Disputes',         'value' => '3 Cases',     'class' => 'text-red-600'],
+        ];
+
+        // 9) Compliance statuses
+        //    Each item: ['name' => '', 'status' => '', 'badge' => 'badge-success' etc.]
+        //    TODO: Fetch real flags from your KYC/SIMAH/CR services
+        $statusBadgeMap = [
+            'approved'     => 'badge-success',
+            'pending'      => 'badge-warning',
+            'suspended'    => 'badge-neutral',
+            'blacklisted'  => 'badge-danger',
+        ];
+
+        $crValidation = $governmentData['status']['id'] ?? null;
+        $crValidationName = $governmentData['status']['name'] ?? 'Unknown';
+        $complianceStatus = [
+            [
+                'name'   => 'KYC Verification',
+                'status' => ucfirst($customer->status),
+                'badge'  => 'badge-sm badge-outline ' . ($statusBadgeMap[$customer->status] ?? 'badge-secondary')
+            ],
+            [
+                'name'   => 'SIMAH Integration',
+                'status' => 'Pending',
+                'badge'  => 'badge-sm badge-outline badge-warning'
+            ],
+            [
+                'name'   => 'CR Validation',
+                'status' => $crValidationName,
+                'badge'  => 'badge-sm badge-outline ' . ($crValidation ? 'badge-success' : 'badge-danger')
+            ],
+        ];
+
+        // 10) Return all variables to the Blade
+        return view('admin.accounts.customer-credit', compact(
+            'customer',
+            'orders',
+            'businessAge',
+            'creditScore',
+            'riskLevel',
+            'scoreComponents',
+            'paymentTimeline',
+            'riskFactors',
+            'complianceStatus'
+        ));
+    }
+
+    private function formatBusinessAge(Carbon $start): string
+    {
+        $interval = $start->diffAsCarbonInterval(Carbon::now());
+
+        if ($interval->y > 0) {
+            $decimal = round($interval->y + ($interval->m / 12), 1);
+            return $decimal . ' Year';
+        }
+
+        if ($interval->m > 0) {
+            return $interval->m . ' Month';
+        }
+
+        return $interval->d . ' Days';
+    }
+
+    private function calculateBase(Order $order): float
+    {
+        $items    = map_product_details($order->product_details);
+        $subTotal = $items->sum('total');
+        $shipping = $order->shipping_cost   ?? 0;
+        $discount = $order->coupon_discount ?? 0;
+        $tax      = calculate_order_tax($order);
+
+        return $subTotal + $tax + $shipping - $discount;
+    }
+
+    private function calculateCreditScore($orders, $customer = null)
+    {
+        // dd($customer->user_id);
+        // 1) Monthly POS Revenue (weight 25%)
+        // Sum total revenue from orders, assume 'total_amount' column or similar
+        $monthlyRevenue = Wallet::where('user_id', $customer->user_id)
+            ->where('transaction_type', 'user_repayment')
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('amount');
+
+        // Normalize monthlyRevenue by 50,000 as per formula in PDF
+        $monthlyPOSScore = min($monthlyRevenue / 50000, 1) * 25;
+
+        // 2) Business Age & Stability (weight 10%)
+        // Use businessAge string from formatBusinessAge - convert to years approx
+        // Assume businessAge format like '2.4 Year', '3 Month', or '20 Days'
+        $businessAge = 0;
+        if ($customer) {
+            $issueDateStr = Arr::get(is_array($customer->goverment_data) ? $customer->goverment_data : json_decode($customer->goverment_data, true), 'issueDateGregorian');
+            $startDate    = $issueDateStr ? Carbon::parse($issueDateStr) : $customer->created_at;
+            $interval = $startDate->diffAsCarbonInterval(Carbon::now());
+            $businessAge = $interval->y + ($interval->m / 12) + ($interval->d / 365);
+        }
+
+        if ($businessAge >= 3) {
+            $businessAgeScore = 10;
+        } elseif ($businessAge >= 1) {
+            $businessAgeScore = 7;
+        } else {
+            $businessAgeScore = 5;
+        }
+        $businessAgeScore *= 1; // 10% weight = max 10 points, so already correct.
+
+        // 3) Industry/Market Risk (weight 15%)
+        // Placeholder: Assume merchant has a riskLevel attribute or default to Medium
+
+        $industryRisk = $customer && isset($customer->businessType->risk_level) ? $customer->businessType->risk_level : 'Medium';
+        $industryRiskScores = ['low' => 15, 'medium' => 10, 'high' => 5];
+        $industryRiskScore = $industryRiskScores[$industryRisk] ?? 10;
+
+        // 4) Existing Financial Obligations (weight 10%)
+        // Placeholder: Assume $existingDebt in local variable, for now set to 0 (no debt)
+        $totalPurchases   = Order::where('user_id', $customer->user_id)->where('delivery_status', 'delivered')
+            ->get()
+            ->reduce(function ($carry, $order) {
+                return $carry + $this->calculateBase($order);
+            }, 0.0);
+        $totalPayments    = Wallet::where('transaction_type', 'user_repayment')->sum('amount');
+
+        $existingDebt = $totalPurchases - $totalPayments;
+        // Formula: 10 - min(Monthly Revenue / Existing Debt, 10), if debt=0, max score 10
+        if ($existingDebt > 0) {
+            $obligationsScore = 10 - min($monthlyRevenue / $existingDebt, 10);
+        } else {
+            $obligationsScore = 10;
+        }
+
+        // 5) Repayment Behavior (weight 20%)
+        // Placeholder: Assume repaymentDelays count from SIMAH or history, default 1 delay
+        $repaymentDelays = Transaction::where('user_id', $customer->user_id)->count('payment_status');
+        if ($repaymentDelays == 0) {
+            $repaymentScore = 20;
+        } elseif ($repaymentDelays <= 2) {
+            $repaymentScore = 15;
+        } else {
+            $repaymentScore = 5;
+        }
+
+
+        // 6) Bank Balance & Liquidity Trend (weight 10%)
+        // Placeholder: Assume positive trend, flat, or negative
+        $liquidityTrend = 'positive'; // options: positive, flat, negative
+        $liquidityScores = ['positive' => 10, 'flat' => 5, 'negative' => 0];
+        $liquidityScore = $liquidityScores[$liquidityTrend] ?? 5;
+
+        // 7) Supplier Feedback & External Ratings (weight 10%)
+        // Placeholder: Assume rating out of 10, default 7
+        $supplierRating = Product::where('user_id', $customer->user_id)->sum('rating');
+        $supplierScore = $supplierRating * 2; // directly out of 10 // I add *2 because we are working with out of 5 not out of 10
+
+        // Calculate final composite score (sum of weighted scores)
+        $compositeScore = $monthlyPOSScore
+            + $businessAgeScore
+            + $industryRiskScore
+            + $obligationsScore
+            + $repaymentScore
+            + $liquidityScore
+            + $supplierScore;
+
+        return [
+            'monthlyRevenue' => round($monthlyRevenue, 2),
+            'monthlyPOSScore' => round($monthlyPOSScore, 2),
+            'businessAge' => round($businessAge, 2),
+            'businessAgeScore' => round($businessAgeScore, 2),
+            'industryRisk' => ucfirst($industryRisk),
+            'industryRiskScore' => round($industryRiskScore, 2),
+            'existingDebt' => round($existingDebt, 2),
+            'obligationsScore' => round($obligationsScore, 2),
+            'repaymentDelays' => $repaymentDelays,
+            'repaymentScore' => round($repaymentScore, 2),
+            'liquidityTrend' => $liquidityTrend,
+            'liquidityScore' => round($liquidityScore, 2),
+            'supplierRating' => round($supplierRating, 2),
+            'supplierScore' => round($supplierScore, 2),
+            'compositeScore' => round($compositeScore, 2),
+        ];
     }
 }

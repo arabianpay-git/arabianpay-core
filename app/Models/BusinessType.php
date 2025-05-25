@@ -13,6 +13,7 @@ class BusinessType extends Model
     protected $fillable = [
         'name',
         'slug',
+        'risk_level',
         'order_level',
         'banner',
         'icon',
@@ -45,5 +46,15 @@ class BusinessType extends Model
     public function translations()
     {
         return $this->hasMany(BusinessTypeTranslation::class);
+    }
+
+    public function customers()
+    {
+        return $this->hasMany(Customer::class);
+    }
+
+    public function merchant()
+    {
+        return $this->hasMany(Merchant::class);
     }
 }

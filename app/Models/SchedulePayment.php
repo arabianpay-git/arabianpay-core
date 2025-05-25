@@ -14,6 +14,7 @@ class SchedulePayment extends Model
 
     protected $fillable = [
         'uuid',
+        'assigned_to',
         'user_id',
         'seller_id',
         'order_id',
@@ -46,6 +47,11 @@ class SchedulePayment extends Model
     }
 
     // Relations
+    public function assigned()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

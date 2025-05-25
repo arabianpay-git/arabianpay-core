@@ -24,6 +24,7 @@ class BusinessTypeController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:business_types,name'],
+            'risk_level' => ['required', 'in:low,medium,high'],
             'order_level' => ['required', 'string', 'max:255'],
             'banner' => ['nullable', 'string', 'max:255'],
             'icon' => ['nullable', 'string', 'max:255'],
@@ -34,6 +35,7 @@ class BusinessTypeController extends Controller
         try {
             $businessType = BusinessType::create([
                 'name' => $request->name,
+                'risk_level' => $request->risk_level,
                 'order_level' => $request->order_level,
                 'banner' => $request->banner,
                 'icon' => $request->icon,
@@ -63,6 +65,7 @@ class BusinessTypeController extends Controller
                 'max:255',
                 Rule::unique('business_types', 'name')->ignore($businessType->id)
             ],
+            'risk_level' => ['required', 'in:low,medium,high'],
             'order_level' => ['required', 'string', 'max:255'],
             'banner' => ['nullable', 'string', 'max:255'],
             'icon' => ['nullable', 'string', 'max:255'],
@@ -73,6 +76,7 @@ class BusinessTypeController extends Controller
         try {
             $businessType->update([
                 'name' => $request->name['en'],
+                'risk_level' => $request->risk_level,
                 'order_level' => $request->order_level,
                 'banner' => $request->banner,
                 'icon' => $request->icon,

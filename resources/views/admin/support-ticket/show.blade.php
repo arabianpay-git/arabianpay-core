@@ -12,8 +12,25 @@
                     Support Ticket #{{ $ticket->ticket_number }}
                 </h1>
             </div>
+    
+            <div class="">
+                <form action="{{ route('ticketUpdateStatus', $ticket->ticket_number) }}" method="POST" class="w-full">
+                    @csrf
+                    @method('POST')
+                    
+                    <label for="status" class="block mb-1 text-sm font-medium text-gray-700">Status</label>
+                    <select name="status" id="status" class="select" style="width: 10rem;" onchange="this.form.submit()">
+                        <option value="active" {{ $ticket->status == 'active' ? 'selected' : '' }}>Active</option>
+                        <option value="solved" {{ $ticket->status == 'solved' ? 'selected' : '' }}>Solved</option>
+                        <option value="draft" {{ $ticket->status == 'draft' ? 'selected' : '' }}>Draft</option>
+                        <option value="canceled" {{ $ticket->status == 'canceled' ? 'selected' : '' }}>Canceled</option>
+                    </select>
+                </form>
+                
+            </div>
         </div>
     </div>
+    
 
     <!-- Ticket Details -->
     <div class="container-fixed">

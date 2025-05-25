@@ -99,44 +99,32 @@
                                 <tbody>
                                     @foreach($customers as $index => $customer)
                                         @foreach($customer->orders as $order)
-                                        @php
-                                            $grandTotal = $order->grand_total;
-                                            $shippingCost = $order->shipping_cost;
-                                        
-                                            $systemCommissionPercent = get_system_commission(0);
-                                            $serviceFee = ($systemCommissionPercent / 100) * $grandTotal;
-                                        
-                                            $taxPercent = get_tax(0);
-                                            $taxAmount = ($taxPercent / 100) * $grandTotal;
-                                        
-                                            $invoiceAmount = $grandTotal;
-                                            $taxInvoice = $taxAmount;
-                                        
-                                            $totalInvoice = $invoiceAmount + $shippingCost + $serviceFee + $taxInvoice;
-                                        @endphp
                                             <tr>
-                                                <td class="text-center">{{ $index + 1 }}</td>
-                                                <td>
-                                                    <div class="whitespace-nowrap">
-                                                        {{ $customer->user->first_name }} {{ $customer->user->last_name }}
-                                                        <br>
-                                                        <small class="text-gray-500">
-                                                            — {{ $customer->user->business_name }}
-                                                        </small>
-                                                    </div>
-                                                </td>
-                                                <td class="text-center">{{ $customer->tax_number }}</td>
+                                                @if ($loop->first) <!-- Check if it's the first order of this customer -->
+                                                    <td rowspan="{{ count($customer->orders) }}" class="text-center">{{ $index + 1 }}</td>
+                                                    <td rowspan="{{ count($customer->orders) }}">
+                                                        <div class="whitespace-nowrap">
+                                                            {{ $customer->user->first_name }} {{ $customer->user->last_name }}
+                                                            <br>
+                                                            <small class="text-gray-500">
+                                                                — {{ $customer->user->business_name }}
+                                                            </small>
+                                                        </div>
+                                                    </td>
+                                                    <td rowspan="{{ count($customer->orders) }}" class="text-center">{{ $customer->tax_number }}</td>
+                                                @endif
                                                 <td class="text-center">{{ $order->invoice_number }}</td>
                                                 <td class="text-center">{{ $order->tracking }}</td>
-                                                <td class="text-center">{{ number_format($invoiceAmount, 2) }}</td>
-                                                <td class="text-center">{{ $order->created_at->format('Y-m-d') }}</td>
-                                                <td class="text-center">{{ number_format($shippingCost, 2) }}</td>
-                                                <td class="text-center">{{ number_format($serviceFee, 2) }}</td>
-                                                <td class="text-center">{{ number_format($taxInvoice, 2) }}</td>
-                                                <td class="text-center">{{ number_format($totalInvoice, 2) }}</td>
+                                                <td class="text-center">{{ number_format($order->calculated['base'], 2) }}</td>
+                                                <td class="text-center">{{ number_format($order->calculated['shipping'], 2) }}</td>
+                                                <td class="text-center">{{ number_format($order->calculated['commissionAmount'], 2) }}</td>
+                                                <td class="text-center">{{ number_format($order->calculated['tax'], 2) }}</td>
+                                                <td class="text-center">{{ number_format($order->calculated['serviceFee'], 2) }}</td>
+                                                <td class="text-center">{{ number_format($order->calculated['totalAmount'], 2) }}</td>
                                             </tr>
                                         @endforeach
                                     @endforeach
+                                
                                 </tbody>
                             </table>
                         </div>

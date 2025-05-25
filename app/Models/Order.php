@@ -12,6 +12,7 @@ class Order extends Model
     use HasFactory;
 
     protected $fillable = [
+        'assigned_to',
         'user_id',
         'seller_id',
         'pickup_point_id',
@@ -43,6 +44,11 @@ class Order extends Model
     ];
 
     // Define relationships (e.g., user, seller, pickup_point)
+
+    public function assigned()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
 
     public function user()
     {

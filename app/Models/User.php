@@ -10,10 +10,11 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements MustVerifyEmail
 {
-    use HasApiTokens, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable;
+    use HasApiTokens, HasRoles, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable;
 
     /**
      * The attributes that are mass assignable.
@@ -27,6 +28,8 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'business_name',
         'phone_number',
+        'department',
+        'is_manager',
         'country_id',
         'state_id',
         'city_id',
@@ -88,6 +91,10 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->belongsTo(City::class);
     }
+    public function merchant()
+    {
+        return $this->hasOne(Merchant::class, 'user_id', 'id');
+    }
 
     public function products()
     {
@@ -139,11 +146,6 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasMany(SchedulePayment::class, 'seller_id');
     }
 
-    public function merchant()
-    {
-        return $this->hasOne(Merchant::class, 'user_id');
-    }
-
     public function paymentsMade()
     {
         return $this->hasMany(Payment::class);
@@ -189,13 +191,13 @@ class User extends Authenticatable implements MustVerifyEmail
         return $this->hasOne(Customer::class, 'user_id');
     }
 
-    public function creditLimit()
+    public function transferRequestsSent()
     {
-        return $this->hasMany(CustomerCreditLimit::class, 'user_id');
+        return $this->hasMany(TransferRequest::class, 'from_user_id');
     }
 
-    public function userSearches()
+    public function transferRequestsReceived()
     {
-        return $this->hasMany(UserSearch::class, 'user_id');
+        return $this->hasMany(TransferRequest::class, 'to_user_id');
     }
 }

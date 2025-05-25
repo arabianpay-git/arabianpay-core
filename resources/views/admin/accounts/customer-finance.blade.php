@@ -24,10 +24,9 @@
                             <div class="flex flex-col">
                                 <span class="text-sm opacity-80">Total Limit</span>
                                 <span class="text-xl font-bold">
-                                    <span class="icon-saudi_riyal"></span> {{ number_format(get_setting('credit_limit', 0), 2) }}
+                                    <span class="icon-saudi_riyal"></span> {{ number_format($creditLimit->limit_arabianpay_after - $totalOrderAmount, 2) }}
                                 </span>
                             </div>
-                            
         
                             <div class="flex flex-col">
                                 <span class="text-sm opacity-80">Simah Limit</span>
@@ -36,7 +35,7 @@
         
                             <div class="flex flex-col">
                                 <span class="text-sm opacity-80">Used Limit</span>
-                                <span class="text-xl font-bold"><span class="icon-saudi_riyal"></span> 0.00</span>
+                                <span class="text-xl font-bold"><span class="icon-saudi_riyal"></span> {{ number_format($totalOrderAmount, 2) }}</span>
                             </div>
         
                             <div class="flex flex-col">
@@ -63,18 +62,18 @@
                             <div class="w-full">
                                 <span class="text-sm opacity-80">Total Payment Due Amount</span>
                                 <span class="text-xl font-bold">
-                                    <span class="icon-saudi_riyal"></span> {{ number_format($totalPaymentDueAmount, 2) }}
+                                    <span class="icon-saudi_riyal"></span> {{ number_format($totalPaymentDue, 2) }}
                                 </span>
                             </div>
                         
                             <div class="w-full">
                                 <span class="text-sm opacity-80">Total Payment Due</span>
-                                <span class="text-xl font-bold">{{ number_format($totalDuePayments) }}</span>
+                                <span class="text-xl font-bold">{{ number_format($lateCount) }}</span>
                             </div>
                         
                             <div class="w-full">
                                 <span class="text-sm opacity-80">Total Late Payments</span>
-                                <span class="text-xl font-bold">{{ number_format($totalLatePayments) }}</span>
+                                <span class="text-xl font-bold">{{ number_format($lateCount) }}</span>
                             </div>
                         </div>
                         
@@ -284,14 +283,8 @@
                     <input type="text" name="limit_arabianpay_after" class="input" value="{{ old('limit_arabianpay_after', $customer->limit_arabianpay_after ?? '') }}" required>
                 </div>
 
-                <!-- Added Simah Limit Field -->
-                <div class="mb-4">
-                    <label class="form-label">Simah Limit</label>
-                    <input type="text" name="simah_limit" class="input" value="{{ old('simah_limit', $customer->simah_limit ?? '') }}" required>
-                </div>
-
                 <div class="flex justify-end">
-                    <button type="submit" class="btn btn-primary">Upgrade</button>
+                    <button type="submit" class="btn btn-primary">Create</button>
                 </div>
             </form>
         </div>

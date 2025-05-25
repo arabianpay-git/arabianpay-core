@@ -17,6 +17,7 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('package_id')->nullable()->constrained('packages')->onDelete('cascade');
 
+            $table->decimal('comission')->nullable();
             $table->decimal('simah_limit', 15, 2)->nullable();
             $table->decimal('limit_arabianpay_before', 15, 2)->nullable();
             $table->decimal('limit_arabianpay_after', 15, 2)->nullable();

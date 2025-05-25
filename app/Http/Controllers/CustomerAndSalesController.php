@@ -12,30 +12,107 @@ class CustomerAndSalesController extends Controller
 {
     public function saleReport()
     {
-        $customers = Customer::with('orders')->paginate(10);
+        $customers = Customer::with(['orders' => function ($query) {
+            $query->where('delivery_status', 'delivered');
+        }])->paginate(10);
+
+        $customers->getCollection()->transform(function ($customer) {
+            foreach ($customer->orders as $order) {
+                $items = map_product_details($order->product_details);
+                $subTotal = $items->sum('total');
+                $shipping = $order->shipping_cost ?? 0;
+                $discount = $order->coupon_discount ?? 0;
+                $tax = calculate_order_tax($order);
+
+                $base = $subTotal + $tax + $shipping - $discount;
+
+                $commissionPct = get_system_commission();
+                $commissionAmount = $base * ($commissionPct / 100);
+
+                $commissionTaxPct = get_commission_tax();
+                $commissionTaxAmt = $commissionAmount * ($commissionTaxPct / 100);
+
+                $serviceFee = $base * ($commissionPct / 100);
+                $totalAmount = $base + $serviceFee + $commissionAmount + $commissionTaxAmt;
+
+                $order->calculated = [
+                    'base' => $base,
+                    'shipping' => $shipping,
+                    'discount' => $discount,
+                    'tax' => $tax,
+                    'commissionAmount' => $commissionAmount,
+                    'commissionTaxAmt' => $commissionTaxAmt,
+                    'serviceFee' => $serviceFee,
+                    'totalAmount' => $totalAmount,
+                ];
+            }
+
+            return $customer;
+        });
+
         return view('admin.customer-and-sales.sale-report', compact('customers'));
     }
 
     public function totalSaleReport()
     {
-        $orders = Order::select('invoice_number', 'grand_total', 'shipping_cost', 'created_at')->orderBy('created_at')->paginate(10);
+        $orders = Order::where('delivery_status', 'delivered')
+            ->select('invoice_number', 'grand_total', 'shipping_cost', 'created_at', 'product_details', 'coupon_discount')
+            ->orderBy('created_at')
+            ->paginate(10);
 
         $invoiceCount = $orders->count();
-        $invoiceFrom  = $orders->first()?->invoice_number ?? '-';
-        $invoiceTo    = $orders->last()?->invoice_number ?? '-';
+        $invoiceFrom = $orders->first()?->invoice_number ?? '-';
+        $invoiceTo = $orders->last()?->invoice_number ?? '-';
 
         $orderDateFrom = $orders->first()?->created_at->format('Y-m-d') ?? '-';
-        $orderDateTo   = $orders->last()?->created_at->format('Y-m-d') ?? '-';
+        $orderDateTo = $orders->last()?->created_at->format('Y-m-d') ?? '-';
 
-        $grandTotal    = $orders->sum('grand_total');
-        $shippingTotal = $orders->sum('shipping_cost');
+        $grandTotal = $shippingTotal = $serviceFee = $taxAmount = $totalInvoice = 0;
 
-        $systemCommission = get_system_commission(0);
-        $taxPercent       = get_tax(0);
+        $orders->getCollection()->transform(function ($order) use (
+            &$grandTotal,
+            &$shippingTotal,
+            &$serviceFee,
+            &$taxAmount,
+            &$totalInvoice
+        ) {
+            $productDetails = $order->product_details ?? '[]';
 
-        $serviceFee  = ($systemCommission / 100) * $grandTotal;
-        $taxAmount   = ($taxPercent / 100) * $grandTotal;
-        $totalInvoice = $grandTotal + $shippingTotal + $serviceFee + $taxAmount;
+            $items = map_product_details($productDetails);
+            $subTotal = $items->sum('total');
+            $shipping = $order->shipping_cost ?? 0;
+            $discount = $order->coupon_discount ?? 0;
+            $tax = calculate_order_tax($order);
+
+            $base = $subTotal + $tax + $shipping - $discount;
+
+            $commissionPct = get_system_commission();
+            $commissionAmount = $base * ($commissionPct / 100);
+
+            $commissionTaxPct = get_commission_tax();
+            $commissionTaxAmt = $commissionAmount * ($commissionTaxPct / 100);
+
+            $serviceFee = $base * ($commissionPct / 100);
+            $totalAmount = $base + $serviceFee + $commissionAmount + $commissionTaxAmt;
+
+            $grandTotal += $base;
+            $shippingTotal += $shipping;
+            $taxAmount += $tax;
+            $totalInvoice += $totalAmount;
+
+            $order->calculated = [
+                'base' => $base,
+                'shipping' => $shipping,
+                'discount' => $discount,
+                'tax' => $tax,
+                'commissionAmount' => $commissionAmount,
+                'commissionTaxAmt' => $commissionTaxAmt,
+                'serviceFee' => $serviceFee,
+                'totalAmount' => $totalAmount,
+            ];
+
+            return $order;
+        });
 
         return view('admin.customer-and-sales.total-sale-report', compact(
             'invoiceCount',
@@ -71,7 +148,8 @@ class CustomerAndSalesController extends Controller
             }
         }
 
-        $ordersQuery = Order::with(['transactions', 'customer']);
+        $ordersQuery = Order::with(['transactions', 'customer'])
+            ->where('delivery_status', 'delivered');
 
         if ($userId) {
             $ordersQuery->where('user_id', $userId);
@@ -82,23 +160,31 @@ class CustomerAndSalesController extends Controller
 
         $summary = $groupedByUser->map(function ($orders, $userId) {
             $order = $orders->first();
-
             $customer = $order->customer;
 
             $taxNumber = optional($customer?->customer)->tax_number ?? 'N/A';
             $collected = (float) Transaction::where('user_id', $userId)->sum('collected');
-            $totalInvoices = (float) $orders->sum('grand_total');
-            $remaining = $totalInvoices - $collected;
 
+            $totalInvoices = $orders->sum(function ($order) {
+                $items = map_product_details($order->product_details);
+                $subTotal = $items->sum('total');
+                $tax = calculate_order_tax($order);
+                $shipping = $order->shipping_cost ?? 0;
+                $discount = $order->coupon_discount ?? 0;
+
+                return $subTotal + $tax + $shipping - $discount;
+            });
+
+            $remaining = $totalInvoices - $collected;
             $customerName = trim(optional($customer)->first_name . ' ' . optional($customer)->last_name);
 
             return [
-                'customer_name'       => $customerName,
-                'customer_business'   => optional($customer)->business_name,
-                'tax_number'          => $taxNumber,
-                'total_invoice'       => $totalInvoices,
-                'total_collected'     => $collected,
-                'remaining_balance'   => $remaining,
+                'customer_name' => $customerName,
+                'customer_business' => optional($customer)->business_name,
+                'tax_number' => $taxNumber,
+                'total_invoice' => $totalInvoices,
+                'total_collected' => $collected,
+                'remaining_balance' => $remaining,
             ];
         });
 
@@ -114,7 +200,7 @@ class CustomerAndSalesController extends Controller
             ->values();
 
         return view('admin.customer-and-sales.detailed-customer-debt', [
-            'summary'   => $summary,
+            'summary' => $summary,
             'paginator' => $orders,
             'customers' => $customers,
             'selectedCustomer' => $userId,
@@ -123,22 +209,25 @@ class CustomerAndSalesController extends Controller
 
     public function totalCustomerDebt()
     {
-        // Get the total amount for all orders (grand_total) and total collected from transactions
-        $totalInvoices = Order::sum('grand_total'); // Sum of all orders' grand totals
-        $totalCollected = Transaction::sum('collected'); // Sum of all collected amounts
+        $totalInvoices = Order::where('delivery_status', 'delivered')->get()->reduce(function ($carry, $order) {
+            $items = map_product_details($order->product_details);
+            $subTotal = $items->sum('total');
+            $tax = calculate_order_tax($order);
+            $shipping = $order->shipping_cost ?? 0;
+            $discount = $order->coupon_discount ?? 0;
 
-        // Calculate the remaining debt
+            return $carry + ($subTotal + $tax + $shipping - $discount);
+        }, 0);
+
+        $totalCollected = Transaction::sum('collected');
         $remainingDebt = $totalInvoices - $totalCollected;
+        $openingBalance = 0;
 
-        // Get the opening balance (if any)
-        $openingBalance = 0; // Set your logic to get the opening balance, if applicable
-
-        // Pass the totals to the view
         return view('admin.customer-and-sales.total-customer-debt', [
             'totalInvoices' => $totalInvoices,
             'totalCollected' => $totalCollected,
             'remainingDebt' => $remainingDebt,
-            'openingBalance' => $openingBalance, // Include opening balance if needed
+            'openingBalance' => $openingBalance,
         ]);
     }
 }

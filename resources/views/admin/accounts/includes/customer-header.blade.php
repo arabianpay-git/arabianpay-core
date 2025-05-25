@@ -39,6 +39,17 @@
                             </span>
                         </a>
                     </div>
+
+                    <div class="{{ Route::is('customerCreditAssessment') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('customerCreditAssessment', ['id' => $customer->user_id]) }}">
+                            <span
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 {{ Route::is('customerCreditAssessment') ? 'border-b-primary' : '' }}
+                                menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary"
+                            >
+                                Credit Assessment
+                            </span>
+                        </a>
+                    </div>
                 
                     {{-- Transactions --}}
                     <div class="menu-item border-b-2 {{ Route::is('customerTransactions') ? 'border-b-primary' : 'border-b-transparent' }}">

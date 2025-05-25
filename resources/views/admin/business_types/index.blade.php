@@ -69,6 +69,15 @@
                                         <th class="">
                                             <span class="sort asc">
                                                 <span class="sort-label font-normal text-gray-700">
+                                                    Risk Level
+                                                </span>
+                                                <span class="sort-icon"> </span>
+                                            </span>
+                                        </th>
+
+                                        <th class="">
+                                            <span class="sort asc">
+                                                <span class="sort-label font-normal text-gray-700">
                                                     Order Level
                                                 </span>
                                                 <span class="sort-icon"> </span>
@@ -118,8 +127,21 @@
                                             
                                             <td>{{ $item->name }}</td>
 
+                                            <td>
+                                                @if ($item->risk_level === 'low')
+                                                    <span class="badge badge-sm badge-outline badge-success">Low</span>
+                                                @elseif ($item->risk_level === 'medium')
+                                                    <span class="badge badge-sm badge-outline badge-warning">Medium</span>
+                                                @elseif ($item->risk_level === 'high')
+                                                    <span class="badge badge-sm badge-outline badge-danger">High</span>
+                                                @else
+                                                    <span class="badge badge-sm badge-outline badge-secondary">-</span>
+                                                @endif
+                                            </td>
+
+                                            
                                             <td>{{ $item->order_level ?? 0 }}</td>
-                                
+                                            
                                             <td>
                                                 @if ($item->featured)
                                                     <span class="badge badge-sm badge-outline badge-success">Yes</span>

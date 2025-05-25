@@ -6,7 +6,8 @@ use Illuminate\Database\Seeder;
 use App\Models\Wallet;
 use App\Models\User;
 use App\Models\Order;
-use App\Models\InstalmentPlan;
+use App\Models\Payment;
+use App\Models\Transaction;
 use Faker\Factory as Faker;
 
 class WalletSeeder extends Seeder
@@ -14,26 +15,39 @@ class WalletSeeder extends Seeder
     public function run(): void
     {
         $faker = Faker::create();
+        $orders = Order::all();
+        $lastBalance = 0.00; // initial wallet balance
 
-        $users = User::pluck('id')->toArray();
-        $orders = Order::pluck('id')->toArray();
-        $instalments = InstalmentPlan::pluck('id')->toArray();
+        foreach ($orders as $order) {
+            // Get related payment for amount
+            $payment = Payment::where('order_id', $order->id)->first();
 
-        for ($i = 0; $i < 30; $i++) {
+            // Get related transaction to fetch the instalment_id
+            $transaction = Transaction::where('order_id', $order->id)->first();
+
+            // Skip if either is missing
+            if (!$payment || !$transaction) {
+                continue;
+            }
+
+            $amount = $payment->amount;
+            $balanceAfter = $lastBalance + $amount;
+
             Wallet::create([
-                'user_id' => $faker->randomElement($users),
-                'seller_id' => $faker->randomElement($users),
-                'order_id' => $faker->optional()->randomElement($orders),
-                'instalment_id' => $faker->optional()->randomElement($instalments),
-
-                'transaction_type' => $faker->randomElement(['loan_disbursement', 'user_repayment', 'seller_payment']),
-                'amount' => $faker->randomFloat(2, 100, 5000),
-                'balance_after' => $faker->randomFloat(2, 1000, 10000),
-
-                'status' => $faker->randomElement(['active', 'pending', 'closed']),
+                'user_id' => $order->user_id,
+                'seller_id' => $order->seller_id,
+                'order_id' => $order->id,
+                'instalment_id' => $transaction->plan_id, // real instalment reference from transaction
+                'transaction_type' => 'user_repayment', // using fixed type for clarity
+                'amount' => $amount, // pulled from payment for that order
+                'balance_after' => $balanceAfter, // cumulative running total
+                'status' => 'active',
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+
+            // Update last balance for the next entry
+            $lastBalance = $balanceAfter;
         }
     }
 }

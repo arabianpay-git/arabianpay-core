@@ -104,11 +104,19 @@
                                             <td class="text-center">{{ $transaction->order->invoice_number ?? '-' }}</td>
 
                                             @php
-                                                $orderTotal = $transaction->order->grand_total ?? 0;
-                                                $remaining = $orderTotal - $transaction->collected;
+                                                $items = map_product_details($transaction->order->product_details);
+
+                                                $subTotal = $items->sum('total');
+
+                                                $tax = calculate_order_tax($transaction->order);
+                                                $shipping = $transaction->order->shipping_cost ?? 0;
+                                                $discount = $transaction->order->coupon_discount ?? 0;
+
+                                                $base = $subTotal + $tax + $shipping - $discount;
+                                                $remaining = $base - $transaction->collected;
                                             @endphp
 
-                                            <td class="text-center">{{ number_format($orderTotal, 2) }}</td>
+                                            <td class="text-center">{{ number_format($base, 2) }}</td>
                                             <td class="text-center">{{ number_format($remaining, 2) }}</td>
                                         </tr>
                                     @endforeach

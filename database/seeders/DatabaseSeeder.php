@@ -14,26 +14,26 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
-            CountrySeeder::class,
-            StateSeeder::class,
-            CitySeeder::class,
-            UserSeeder::class,
+            // CountrySeeder::class,
+            // StateSeeder::class,
+            // CitySeeder::class,
+            // UserSeeder::class,
 
-            AttributeSeeder::class,
-            AttributeValueSeeder::class,
-            CategorySeeder::class,
-            BrandSeeder::class,
-            ProductSeeder::class,
+            // AttributeSeeder::class,
+            // AttributeValueSeeder::class,
+            // CategorySeeder::class,
+            // BrandSeeder::class,
+            // ProductSeeder::class,
 
-            PickupPointSeeder::class,
-            OrderSeeder::class,
+            // PickupPointSeeder::class,
+            // OrderSeeder::class,
 
-            TransactionSeeder::class,
-            PaymentSeeder::class,
-            RefundRequestSeeder::class,
+            // TransactionSeeder::class,
+            // PaymentSeeder::class,
+            // RefundRequestSeeder::class,
 
-            RiskManagementSeeder::class,
-            ProductWishlistSeeder::class,
+            // RiskManagementSeeder::class,
+            // ProductWishlistSeeder::class,
         ]);
     }
 }

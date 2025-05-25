@@ -26,19 +26,7 @@
                     data-drawer-enable="true|lg:false"
                     id="mega_menu_wrapper"
                 >
-                    <!--Megamenu-->
-                    <div class="menu flex-col lg:flex-row gap-5 lg:gap-7.5" data-menu="true" id="mega_menu">
-                        <!--Megamenu Item-->
-                        <div class="menu-item active">
-                            <a class="menu-link text-nowrap text-sm text-gray-800 font-medium menu-item-hover:text-primary menu-item-active:text-gray-900 menu-item-active:font-medium" href="{{ route('dashboard') }}">
-                                <span class="menu-title text-nowrap">
-                                    Home
-                                </span>
-                            </a>
-                        </div>
-                        <!--End of Megamenu Item-->
-                    </div>
-                    <!--End of Megamenu-->
+                    
                 </div>
                 <!--End of Megamenu Wrapper-->
             </div>
@@ -59,12 +47,12 @@
                     data-menu-item-trigger="click|lg:click"
                 >
                     <div class="menu-toggle btn btn-icon rounded-full">
-                        <img class="size-9 rounded-full border-2 border-success shrink-0" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" />
+                        <img class="size-9 rounded-full border-2 border-success shrink-0" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" style="object-fit: contain;" />
                     </div>
                     <div class="menu-dropdown menu-default light:border-gray-300 w-screen max-w-[250px]">
                         <div class="flex items-center justify-between px-5 py-1.5 gap-1.5">
                             <div class="flex items-center gap-2">
-                                <img class="size-9 rounded-full border-2 border-success" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" />
+                                <img class="size-9 rounded-full border-2 border-success" src="{{ Auth::user()->profile_photo_url }}" alt="{{ Auth::user()->name }}" style="object-fit: contain;" />
                                 <div class="flex flex-col gap-1.5">
                                     <span class="text-sm text-gray-800 font-semibold leading-none">
                                         {{ Auth::user()->first_name }} {{ Auth::user()->last_name }}
@@ -81,7 +69,7 @@
                         <div class="menu-separator"></div>
                         <div class="flex flex-col">
                             <div class="menu-item">
-                                <a class="menu-link" href="html/demo1/public-profile/profiles/default.html">
+                                <a class="menu-link" href="{{ route('profile.show') }}">
                                     <span class="menu-icon">
                                         <i class="ki-filled ki-badge"> </i>
                                     </span>

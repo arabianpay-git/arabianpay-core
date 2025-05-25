@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\Brand;
-use App\Models\BrandTranslation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -59,6 +58,7 @@ class BrandController extends Controller
 
     public function update(Request $request, Brand $brand)
     {
+        // dd($request->all());
         $request->validate([
             'name.en' => [
                 'required',
@@ -69,31 +69,31 @@ class BrandController extends Controller
             ],
             'logo' => ['required'],
             'order_level' => ['nullable', 'numeric'],
-            'meta_title.en' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
-            'meta_description.en' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
+            // 'meta_title.en' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
+            // 'meta_description.en' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
         ]);
 
         DB::beginTransaction();
 
-        try {
-            $brand->update([
-                'name' => $request->name['en'],
-                'logo' => $request->logo,
-                'order_level' => $request->order_level,
-                'featured' => $request->boolean('featured'),
-                'meta_title' => $request->meta_title['en'],
-                'meta_description' => $request->meta_description['en'],
-            ]);
+        // try {
+        $brand->update([
+            'name' => $request->name['en'],
+            'logo' => $request->logo,
+            'order_level' => $request->order_level,
+            'featured' => $request->boolean('featured'),
+            'meta_title' => $request->meta_title['en'],
+            'meta_description' => $request->meta_description['en'],
+        ]);
 
-            $this->storeOrUpdateTranslations($brand, $request);
+        $this->storeOrUpdateTranslations($brand, $request);
 
-            DB::commit();
+        DB::commit();
 
-            return redirect()->route('brands.index')->with('success', 'Brand updated successfully.');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
-        }
+        return redirect()->route('brands.index')->with('success', 'Brand updated successfully.');
+        // } catch (\Exception $e) {
+        //     DB::rollBack();
+        //     return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+        // }
     }
 
     public function destroy(Brand $brand)
@@ -104,17 +104,15 @@ class BrandController extends Controller
 
     private function storeOrUpdateTranslations(Brand $brand, Request $request)
     {
-        foreach ($request->name as $locale => $name) {
-            if ($locale == 'ar') {
-                BrandTranslation::updateOrCreate(
-                    ['brand_id' => $brand->id, 'locale' => $locale],
-                    [
-                        'name' => $name,
-                        'meta_title' => $request->meta_title[$locale] ?? null,
-                        'meta_description' => $request->meta_description[$locale] ?? null,
-                    ]
-                );
-            }
+        if (isset($request->name['ar'])) {
+            $brand->translations()->updateOrCreate(
+                ['locale' => 'ar'],
+                [
+                    'name' => $request->name['ar'],
+                    'meta_title' => $request->meta_title['ar'] ?? null,
+                    'meta_description' => $request->meta_description['ar'] ?? null,
+                ]
+            );
         }
     }
 }

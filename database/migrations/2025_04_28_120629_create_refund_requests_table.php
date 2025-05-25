@@ -13,7 +13,7 @@ return new class extends Migration
     {
         Schema::create('refund_requests', function (Blueprint $table) {
             $table->id();
-
+            $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('seller_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('order_id')->nullable()->constrained('orders')->onDelete('cascade');

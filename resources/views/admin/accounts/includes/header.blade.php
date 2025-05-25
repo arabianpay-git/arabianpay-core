@@ -5,7 +5,7 @@
                 <div class="menu gap-3" data-menu="true">
                     <div class="menu-item border-b-2 border-b-transparent 
                         {{ Route::is('supplierProfile') ? 'border-b-primary' : '' }} menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierProfile', ['id' => $merchant->id]) }}">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierProfile', ['id' => $merchant->user_id]) }}">
                             <span class="menu-title text-nowrap font-medium text-sm text-gray-700 
                                 {{ Route::is('supplierProfile') ? 'text-primary font-semibold' : 'menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary' }}">
                                 Profile
@@ -14,31 +14,46 @@
                     </div>
 
                     <div class="menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierProfile', ['id' => $merchant->id]) }}">
+                        <a class="{{ Route::is('supplierTransactions') ? 'border-b-primary' : '' }} menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierTransactions', ['id' => $merchant->user_id]) }}">
                             <span
-                                class="menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary"
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 
+                                {{ Route::is('supplierTransactions') ? 'border-b-primary' : '' }}
+                                 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary"
                             >
                                 Transactions
                             </span>
                         </a>
                     </div>
 
-                    <div class="menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierProfile', ['id' => $merchant->id]) }}">
+                    <div class="{{ Route::is('supplierOrders') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierOrders', ['id' => $merchant->user_id]) }}">
                             <span
-                                class="menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary"
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 
+                                {{ Route::is('supplierOrders') ? 'border-b-primary' : '' }} menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary"
                             >
                                 Orders
                             </span>
                         </a>
                     </div>
 
-                    <div class="menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierProfile', ['id' => $merchant->id]) }}">
+                    <div class="{{ Route::is('supplierPayments') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierPayments', ['id' => $merchant->user_id]) }}">
                             <span
-                                class="menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary"
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 {{ Route::is('supplierPayments') ? 'border-b-primary' : '' }}
+                                menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary"
                             >
                                 Payments
+                            </span>
+                        </a>
+                    </div>
+
+                    <div class="{{ Route::is('supplierFinance') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierFinance', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 {{ Route::is('supplierFinance') ? 'border-b-primary' : '' }}
+                                menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary"
+                            >
+                                Finance
                             </span>
                         </a>
                     </div>
@@ -54,10 +69,10 @@
                     </div>
 
 
-                    <div class="menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierProfile', ['id' => $merchant->id]) }}">
+                    <div class="{{ Route::is('supplierSales') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('supplierSales', ['id' => $merchant->user_id]) }}">
                             <span
-                                class="menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary"
+                                class="{{ Route::is('supplierSales') ? 'border-b-primary' : '' }} menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary"
                             >
                                 Sales
                             </span>
@@ -73,7 +88,7 @@
                     <i class="ki-filled ki-dots-vertical"> </i>
                 </button>
                 <div class="dropdown-content menu-default w-full max-w-[220px]">
-                    <form action="{{ route('updateSupplierStatus', ['id' => $merchant->id]) }}" method="POST" id="statusForm">
+                    <form action="{{ route('updateSupplierStatus', ['id' => $merchant->user_id]) }}" method="POST" id="statusForm">
                         @csrf
                         @method('PUT')
                         <!-- Hidden Input for Status -->
@@ -92,13 +107,13 @@
                         </div>
 
                         <!-- Rejected Menu Item -->
-                        <div class="menu-item status {{ $merchant->status == 'rejected' ? 'active' : '' }}" data-dropdown-dismiss="true" data-status="rejected">
+                        <div class="menu-item status {{ $merchant->status == 'suspended' ? 'active' : '' }}" data-dropdown-dismiss="true" data-status="suspended">
                             <a class="menu-link" href="javascript:void(0)">
                                 <span class="menu-icon">
                                     <i class="ki-filled ki-shield-cross"> </i>
                                 </span>
                                 <span class="menu-title">
-                                    Rejected
+                                    Suspended
                                 </span>
                             </a>
                         </div>
@@ -116,25 +131,13 @@
                         </div>
                 
                         <!-- Draft Menu Item -->
-                        <div class="menu-item status {{ $merchant->status == 'draft' ? 'active' : '' }}" data-dropdown-dismiss="true" data-status="draft">
+                        <div class="menu-item status {{ $merchant->status == 'blacklisted' ? 'active' : '' }}" data-dropdown-dismiss="true" data-status="blacklisted">
                             <a class="menu-link" href="javascript:void(0)">
                                 <span class="menu-icon">
                                     <i class="ki-filled ki-wrench"> </i>
                                 </span>
                                 <span class="menu-title">
-                                    Draft
-                                </span>
-                            </a>
-                        </div>
-                
-                        <!-- Block Menu Item -->
-                        <div class="menu-item status {{ $merchant->status == 'blocked' ? 'active' : '' }}" data-dropdown-dismiss="true" data-status="blocked">
-                            <a class="menu-link" href="javascript:void(0)">
-                                <span class="menu-icon">
-                                    <i class="ki-filled ki-abstract-11"> </i>
-                                </span>
-                                <span class="menu-title">
-                                    Block
+                                    Blacklisted
                                 </span>
                             </a>
                         </div>

@@ -15,11 +15,13 @@ return new class extends Migration
             $table->id();
             $table->string('first_name');
             $table->string('last_name');
-            $table->enum('user_type', ['admin', 'merchant', 'user'])->default('merchant');
+            $table->enum('user_type', ['admin', 'employee', 'merchant', 'user'])->default('merchant');
             $table->string('email')->unique();
             $table->string('business_name')->unique();
             $table->string('iqama')->nullable()->unique();
             $table->string('phone_number')->unique();
+            $table->string('department')->nullable();
+            $table->boolean('is_manager')->nullable();
             // $table->enum('status', ['active', 'hold', 'suspended'])->default('hold');
 
             $table->timestamp('email_verified_at')->nullable();

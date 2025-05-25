@@ -94,6 +94,24 @@
                                         </th>
 
                                         <th class="">
+                                            <span class="sort asc">
+                                                <span class="sort-label font-normal text-gray-700">
+                                                    Discount Start Date
+                                                </span>
+                                                <span class="sort-icon"> </span>
+                                            </span>
+                                        </th>
+
+                                        <th class="">
+                                            <span class="sort asc">
+                                                <span class="sort-label font-normal text-gray-700">
+                                                    Discount End Date
+                                                </span>
+                                                <span class="sort-icon"> </span>
+                                            </span>
+                                        </th>
+
+                                        <th class="">
                                             <span class="sort">
                                                 <span class="sort-label font-normal text-gray-700">
                                                     Created At
@@ -116,9 +134,17 @@
                                     @foreach ($coupons as $item)
                                         <tr>
                                             <td class="text-center">{{ $loop->iteration }}</td>
-                                
-                                            <td>{{ $item->user?->first_name ?? 'Admin' }}</td>
-                                
+
+                                            <td>
+                                                <div class="whitespace-nowrap">
+                                                    {{ $item->user?->first_name ?? '-' }} {{ $item->user?->last_name ?? '-' }}
+                                                    <br>
+                                                    <small class="text-gray-500">
+                                                        — {{ $item->user?->business_name ?? '—' }}
+                                                    </small>
+                                                </div>
+                                            </td>
+
                                             <td>{{ $item->code }}</td>
                                 
                                             <td>
@@ -135,6 +161,14 @@
                                                 <span class="badge badge-sm badge-outline badge-primary">
                                                     {{ ucfirst($item->discount_type) }}
                                                 </span>
+                                            </td>
+
+                                            <td>
+                                                {{ $item->start_date->format('d M Y') }}
+                                            </td>
+
+                                            <td>
+                                                {{ $item->end_date->format('d M Y') }}
                                             </td>
                                 
                                             <td>

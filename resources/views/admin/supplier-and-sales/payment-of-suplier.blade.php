@@ -65,7 +65,7 @@
 
                                         <th class="text-center">
                                             <span class="sort">
-                                                <span class="sort-label font-normal text-gray-700">Payment Invoice Paid</span>
+                                                <span class="sort-label font-normal text-gray-700">Invoice Payment</span>
                                                 <span class="sort-icon"> </span>
                                             </span>
                                         </th>
@@ -102,7 +102,12 @@
                                 <tbody>
                                     @foreach($summary as $index => $item)
                                         <tr>
-                                            <td class="text-center">{{ $index + 1 + ($paginator->currentPage() - 1) * $paginator->perPage() }}</td>
+                                            {{-- Row number with pagination offset --}}
+                                            <td class="text-center">
+                                                {{ $index + 1 + ($paginator->currentPage() - 1) * $paginator->perPage() }}
+                                            </td>
+                                
+                                            {{-- Seller name and business --}}
                                             <td>
                                                 <div class="whitespace-nowrap">
                                                     {{ $item['seller_name'] }}
@@ -112,16 +117,49 @@
                                                     </small>
                                                 </div>
                                             </td>
-                                            <td class="text-left">{{ $item['invoice_number'] }}</td>
-                                            <td class="text-center">{{ $item['payment_date'] }}</td>
-                                            <td class="text-center">{{ $item['payment_invoice_paid'] }}</td>
-                                            <td class="text-center">{{ $item['tax_number'] }}</td>
-                                            <td class="text-center">{{ number_format($item['amount_paid'], 2) }}</td>
-                                            <td class="text-center">{{ number_format($item['tax_total'], 2) }}</td>
-                                            <td class="text-center">{{ number_format($item['grand_total'], 2) }}</td>
+                                
+                                            {{-- Payment Invoice Number --}}
+                                            <td class="text-left">
+                                                {{ $item['invoice_number'] }}
+                                            </td>
+                                
+                                            {{-- Payment Date --}}
+                                            <td class="text-center">
+                                                {{ $item['payment_date'] }}
+                                            </td>
+                                
+                                            {{-- Invoice Payment (BASE) --}}
+                                            <td class="text-center">
+                                                <span class="icon-saudi_riyal"></span>
+                                                {{ number_format($item['payment_invoice'], 2) }}
+                                            </td>
+                                
+                                            {{-- Tax Number --}}
+                                            <td class="text-center">
+                                                {{ $item['tax_number'] }}
+                                            </td>
+                                
+                                            {{-- Amount Paid (balance_after) --}}
+                                            <td class="text-center">
+                                                <span class="icon-saudi_riyal"></span>
+                                                {{ number_format($item['amount_paid'], 2) }}
+                                            </td>
+                                
+                                            {{-- Value Added Tax --}}
+                                            <td class="text-center">
+                                                <span class="icon-saudi_riyal"></span>
+                                                {{ number_format($item['tax_total'], 2) }}
+                                            </td>
+                                
+                                            {{-- Total Bills (BASE + commission + commission_tax) --}}
+                                            <td class="text-center">
+                                                <span class="icon-saudi_riyal"></span>
+                                                {{ number_format($item['total_bills'], 2) }}
+                                            </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
+                                
                             </table>
                         </div>
                         <!-- Pagination Footer -->

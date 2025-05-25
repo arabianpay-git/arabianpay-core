@@ -28,7 +28,7 @@
             <div class="col-span-1 lg:col-span-3">
                 <div class="card">
                     <div class="card-body">
-                        <div class="flex lg:px-10 py-1.5 gap-2">
+                        <div class="flex gap-2">
                             <div class="grid grid-cols-1 place-content-center flex-1 gap-1 text-center">
                                 <span class="text-gray-900 text-2xl lg:text-2.5xl leading-none font-semibold">
                                     {{ number_format($totalProducts) }}
@@ -49,7 +49,7 @@
                             <span class="[&:not(:last-child)]:border-e border-e-gray-300 my-1"> </span>
                             <div class="grid grid-cols-1 place-content-center flex-1 gap-1 text-center">
                                 <span class="text-gray-900 text-2xl lg:text-2.5xl leading-none font-semibold">
-                                    369M
+                                    <span class="icon-saudi_riyal"></span> {{ number_format($walletBalance, 2) }}
                                 </span>
                                 <span class="text-gray-700 text-sm">
                                     Wallet Balance
@@ -58,7 +58,7 @@
                             <span class="[&:not(:last-child)]:border-e border-e-gray-300 my-1"> </span>
                             <div class="grid grid-cols-1 place-content-center flex-1 gap-1 text-center">
                                 <span class="text-gray-900 text-2xl lg:text-2.5xl leading-none font-semibold">
-                                    {{ number_format($revenue, 2) }} SAR
+                                    <span class="icon-saudi_riyal"></span> {{ number_format($revenue, 2) }}
                                 </span>
                                 <span class="text-gray-700 text-sm">
                                     Revenue
@@ -446,7 +446,7 @@
                                             Bank Name
                                         </td>
                                         <td class="text-sm ext-gray-900 pb-3">
-                                            79
+                                            {{ $supplierBank->bank_name ?? '-' }}
                                         </td>
                                     </tr>
                                     <tr>
@@ -454,25 +454,15 @@
                                             Bank Acount Name
                                         </td>
                                         <td class="text-sm ext-gray-900 pb-3">
-                                            2011
+                                            {{ $supplierBank->account_name ?? '-' }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
-                                            Bank Acount Number
+                                            IBAN
                                         </td>
                                         <td class="text-sm ext-gray-900 pb-3">
-                                            <span class="badge badge-sm badge-success badge-outline">
-                                                Subscribed
-                                            </span>
-                                        </td>
-                                    </tr>
-                                    <tr>
-                                        <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
-                                            Bank Routing Number
-                                        </td>
-                                        <td class="text-sm ext-gray-900 pb-3">
-                                            Worldwide
+                                            {{ $supplierBank->iban ?? '-' }}
                                         </td>
                                     </tr>
                                 </tbody>

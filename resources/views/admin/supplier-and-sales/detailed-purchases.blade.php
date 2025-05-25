@@ -77,18 +77,8 @@
                                 <thead>
                                     <tr>
                                         <th class="w-[60px] text-center">No</th>
-                                        <th class="text-left">
-                                            <span class="sort asc">
-                                                <span class="sort-label font-normal text-gray-700">Order Code</span>
-                                                <span class="sort-icon"> </span>
-                                            </span>
-                                        </th>
-                                        <th class="text-center">
-                                            <span class="sort">
-                                                <span class="sort-label font-normal text-gray-700">Order Date</span>
-                                                <span class="sort-icon"> </span>
-                                            </span>
-                                        </th>
+                                        <th class="text-left">Order Code</th>
+                                        <th class="text-center">Order Date</th>
                                         <th class="text-center">
                                             <div class="flex flex-col items-center space-y-1">
                                                 <div class="font-normal text-gray-700 flex items-center gap-1">
@@ -107,12 +97,7 @@
                                             </div>
                                         </th>
                                         
-                                        <th class="text-center">
-                                            <span class="sort">
-                                                <span class="sort-label font-normal text-gray-700">Total Invoice Without Tax</span>
-                                                <span class="sort-icon"> </span>
-                                            </span>
-                                        </th>
+                                        <th class="text-center">Total Invoice Without Tax</th>
                                         <th class="text-center">
                                             <div class="flex flex-col items-center space-y-1">
                                                 <div class="font-normal text-gray-700 flex items-center gap-1">
@@ -149,88 +134,69 @@
                                             </div>
                                         </th>
 
-                                        <th class="text-center">
-                                            <span class="sort">
-                                                <span class="sort-label font-normal text-gray-700">Net Invoice</span>
-                                                <span class="sort-icon"> </span>
-                                            </span>
-                                        </th>
-                                        <th class="text-center">
-                                            <span class="sort">
-                                                <span class="sort-label font-normal text-gray-700">Tax</span>
-                                                <span class="sort-icon"> </span>
-                                            </span>
-                                        </th>
-                                        <th class="text-center">
-                                            <span class="sort">
-                                                <span class="sort-label font-normal text-gray-700">Supplier due</span>
-                                                <span class="sort-icon"> </span>
-                                            </span>
-                                        </th>
+                                        <th class="text-center">Net Invoice</th>
+                                        <th class="text-center">Tax</th>
+                                        <th class="text-center">Supplier Due</th>
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    @foreach ($orders as $index => $item)
-                                        <tr>
-                                            <td class="text-center">{{ $index + 1 }}</td>
-                                            <td class="text-center">{{ $item->tracking ?? '-' }}</td>
-                                            <td>{{ $item->created_at->format('d M Y') }}</td>
-                                            <td><span class="icon-saudi_riyal"></span> {{ number_format(calculate_order_tax($item), 2) }}</td>
-                                            @php
-                                                $grandTotal = $item->grand_total;
-                                                $commissionPercent = get_system_commission();
-                                                $commissionAmount = $grandTotal * $commissionPercent / 100;
-                                                $afterCommission = $commissionAmount;
-                                                $commissionTax = get_commission_tax();
-                                                $commissionTaxAmount = ($commissionTax / 100) * $commissionAmount;
-                                                $afterCommissionWithTax = $afterCommission + $commissionTaxAmount;
-                                                $netInvoice = $grandTotal - $afterCommission;
-
-                                                $items = json_decode($item->product_details, true);
-                                                $calculatedTax = 0;
-                                                $taxType = null;
-
-                                                foreach ($items as $p) {
-                                                    $product = App\Models\Product::find($p['product_id']);
-                                                    $attributePrice = collect($p['attributes'])->sum('price');
-                                                    $totalPrice = $attributePrice * $p['quantity'];
-
-                                                    if ($product && $product->tax !== null) {
-                                                        if ($product->tax_type === 'amount') {
-                                                            $calculatedTax += $product->tax * $p['quantity'];
-                                                            $taxType = $product->tax. ' Flat';
-                                                        } else {
-                                                            $calculatedTax += ($product->tax / 100) * $totalPrice;
-                                                            $taxType = $product->tax . ' %';
-                                                        }
-                                                    } else {
-                                                        $defaultTax = get_tax();
-                                                        $calculatedTax += ($defaultTax / 100) * $totalPrice;
-                                                        $taxType = $defaultTax. ' %';
-                                                    }
-                                                }
-
-                                                $afterTax = $grandTotal - $calculatedTax;
-
-                                                $instalmentSum = App\Models\SchedulePayment::where('seller_id', $item->seller_id)
-                                                    ->where('order_id', $item->id)
-                                                    ->whereNotIn('payment_status', ['paid', 'failed'])
-                                                    ->sum('instalment_amount');
-                                            @endphp
-
-                                            <td><span class="icon-saudi_riyal"></span> {{ number_format($grandTotal, 2) }}</td>
-                                            <td><span class="icon-saudi_riyal"></span> {{ number_format($afterCommission, 2) }} ({{ $commissionPercent }}%)</td>
-                                            <td><span class="icon-saudi_riyal"></span> {{ number_format($afterCommissionWithTax, 2) }} ({{ get_commission_tax() }}%)</td>
-                                            <td><span class="icon-saudi_riyal"></span> {{ number_format($netInvoice, 2) }}</td>
-                                            <td>
-                                                <span class="icon-saudi_riyal"></span>
-                                                {{ number_format($afterTax, 2) }} ({{ $taxType ?? '%' }})
-                                            </td>
-                                            
-                                            <td><span class="icon-saudi_riyal"></span> {{ number_format($instalmentSum, 2) }}</td>
-                                        </tr>
+                                    @foreach($orders as $index => $order)
+                                      @php
+                                        // Unpack everything you calculated in the controller
+                                        $calc = $order->calculated;
+                                      @endphp
+                                  
+                                      <tr>
+                                        <td class="text-center">{{ $index + 1 }}</td>
+                                        <td class="text-center">{{ $order->tracking ?? '-' }}</td>
+                                        <td class="text-center">{{ $order->created_at->format('d M Y') }}</td>
+                                  
+                                        {{-- Total Amount (base + commission + commission tax) --}}
+                                        <td class="text-right">
+                                          <span class="icon-saudi_riyal"></span>
+                                          {{ number_format($calc['totalAmount'], 2) }}
+                                        </td>
+                                  
+                                        {{-- Total Invoice Without Tax (subTotal + shipping – discount) --}}
+                                        <td class="text-right">
+                                          <span class="icon-saudi_riyal"></span>
+                                          {{ number_format($calc['subTotal'] + $calc['shipping'] - $calc['discount'], 2) }}
+                                        </td>
+                                  
+                                        {{-- System Commission --}}
+                                        <td class="text-right">
+                                          <span class="icon-saudi_riyal"></span>
+                                          {{ number_format($calc['commissionAmount'], 2) }} ({{ $calc['commissionPct'] }}%)
+                                        </td>
+                                  
+                                        {{-- Commission Tax --}}
+                                        <td class="text-right">
+                                          <span class="icon-saudi_riyal"></span>
+                                          {{ number_format($calc['commissionTaxAmt'], 2) }} ({{ $calc['commissionTaxPct'] }}%)
+                                        </td>
+                                  
+                                        {{-- Net Invoice (base only) --}}
+                                        <td class="text-right">
+                                          <span class="icon-saudi_riyal"></span>
+                                          {{ number_format($calc['base'], 2) }}
+                                        </td>
+                                  
+                                        {{-- Tax --}}
+                                        <td class="text-right">
+                                          <span class="icon-saudi_riyal"></span>
+                                          {{ number_format($calc['tax'], 2) }}
+                                        </td>
+                                  
+                                        {{-- Supplier Due (base – total paid out) --}}
+                                        <td class="text-right">
+                                          <span class="icon-saudi_riyal"></span>
+                                          {{ number_format($calc['totalSuplierDue'], 2) }}
+                                        </td>
+                                      </tr>
                                     @endforeach
-                                </tbody>
+                                  </tbody>
+                                  
+                                    
                             </table>
                              
                         </div>

@@ -10,8 +10,11 @@ class Customer extends Model
     use HasFactory;
 
     protected $fillable = [
+        'assigned_to',
         'user_id',
         'package_id',
+        'business_type_id',
+        'business_category_id',
         'id_number',
         'id_owner',
         'cr_number',
@@ -33,9 +36,25 @@ class Customer extends Model
         'date_of_birth' => 'date',
     ];
 
+
+    public function businessType()
+    {
+        return $this->belongsTo(BusinessType::class);
+    }
+
+    public function assignedTo()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function assigned()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
     public function package()

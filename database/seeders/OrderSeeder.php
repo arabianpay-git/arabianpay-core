@@ -15,78 +15,87 @@ class OrderSeeder extends Seeder
     {
         $faker = Faker::create();
 
-        $users = User::pluck('id')->toArray();
-        $pickupPoints = PickupPoint::pluck('id')->toArray();
-        $products = Product::pluck('id')->toArray();
+        $users = User::where('user_type', 'user')->get();
+        $sellers = User::where('user_type', 'merchant')->get();
+        $pickupPoints = PickupPoint::all();
+        $products = Product::all();
 
-        foreach (range(1, 10) as $index) {
-            $selectedProducts = $faker->randomElements($products, 2);
+        for ($i = 0; $i < 2; $i++) {
+            $user = $users->random();
+            $seller = $sellers->random();
+            $pickupPoint = $pickupPoints->random();
+            $selectedProducts = $products->random(2);
+
             $productItems = [];
+            $calculatedTotal = 0;
 
-            foreach ($selectedProducts as $productId) {
-                $product = Product::find($productId);
-                $hasAttributes = $faker->boolean(70); // 70% chance of having attributes
+            foreach ($selectedProducts as $product) {
+                $variants = $product->variants;
+
+                if (is_string($variants)) {
+                    $variants = json_decode($variants, true);
+                }
+
+                $selectedVariantAttributes = null;
+                $attributePrice = 0;
+
+                if (is_array($variants) && count($variants)) {
+                    $randomVariant = collect($variants)->random();
+                    $selectedVariantAttributes = $randomVariant['attributes'] ?? null;
+
+                    if (!empty($randomVariant['price'])) {
+                        $attributePrice = (float) $randomVariant['price'];
+                    }
+                }
+
+                $quantity = rand(1, 3);
+                $calculatedTotal += $attributePrice * $quantity;
 
                 $productItems[] = [
-                    'product_id' => $productId,
-                    'quantity' => rand(1, 5),
-                    'attributes' => $hasAttributes ? [
-                        [
-                            'attribute' => 'Material',
-                            'value' => $faker->randomElement(['Cotton', 'Leather', 'Plastic']),
-                            'price' => rand(100, 5000),
-                        ],
-                        [
-                            'attribute' => 'Color',
-                            'value' => $faker->randomElement(['Red', 'Blue', 'Brown', 'Black']),
-                            'price' => rand(100, 5000),
-                        ],
-                        [
-                            'attribute' => 'Size',
-                            'value' => $faker->randomElement(['S', 'M', 'L', 'XL']),
-                            'price' => rand(100, 5000),
-                        ],
-                    ] : null,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'attributes' => $selectedVariantAttributes,
                 ];
             }
 
-            Order::create([
-                'user_id' => $faker->randomElement($users),
-                'seller_id' => $faker->randomElement($users),
-                'pickup_point_id' => $faker->randomElement($pickupPoints),
+            $order = new Order();
+            $order->user()->associate($user);
+            $order->seller()->associate($seller);
+            $order->pickupPoint()->associate($pickupPoint);
+            $order->product_details = json_encode($productItems);
 
-                'product_details' => json_encode($productItems),
+            $order->shipping_first_name = $faker->firstName();
+            $order->shipping_last_name = $faker->lastName();
+            $order->shipping_address_line1 = $faker->address();
+            $order->shipping_address_line2 = $faker->optional()->address();
+            $order->shipping_city = 'Riyadh';
+            $order->shipping_state = 'Riyadh';
+            $order->shipping_country = 'Saudi Arabia';
+            $order->shipping_postal_code = $faker->postcode();
 
-                'shipping_first_name' => $faker->firstName(),
-                'shipping_last_name' => $faker->lastName(),
-                'shipping_address_line1' => $faker->address(),
-                'shipping_address_line2' => $faker->optional()->address(),
-                'shipping_city' => $faker->city(),
-                'shipping_state' => $faker->state(),
-                'shipping_country' => $faker->country(),
-                'shipping_postal_code' => $faker->postcode(),
+            $order->shipping_type = 'Standard';
+            $order->order_from = 'Website';
+            $order->payment_type = 'Instalment Plan';
+            $order->shipping_cost = 20.00;
 
-                'shipping_type' => $faker->randomElement(['Standard', 'Express']),
-                'order_from' => $faker->randomElement(['Website', 'Mobile App']),
-                'payment_type' => $faker->randomElement(['Credit Card', 'PayPal', 'Cash']),
-                'shipping_cost' => $faker->randomFloat(2, 5, 30),
-                'payment_status' => $faker->randomElement(['pending', 'completed', 'failed', 'refunded']),
-                'payment_details' => json_encode([
-                    'transaction_id' => $faker->uuid(),
-                    'gateway' => $faker->randomElement(['PayPal', 'Stripe']),
-                ]),
-
-                'grand_total' => $faker->randomFloat(2, 50, 500),
-                'coupon_discount' => $faker->randomFloat(2, 0, 50),
-                'code' => $faker->optional()->word(),
-                'tracking' => $faker->optional()->uuid(),
-
-                'delivery_status' => $faker->randomElement(['pending', 'shipped', 'delivered', 'returned']),
-                'general_status' => $faker->randomElement(['processing', 'completed', 'cancelled', 'failed']),
-
-                'created_at' => $faker->dateTimeThisYear(),
-                'updated_at' => now(),
+            $order->payment_status = 'completed';
+            $order->payment_details = json_encode([
+                'transaction_id' => $faker->uuid(),
+                'gateway' => 'Instalment Plan',
             ]);
+
+            $order->coupon_discount = 10.00;
+            $order->grand_total = $calculatedTotal + $order->shipping_cost - $order->coupon_discount;
+            $order->code = 'ORDER-' . strtoupper($faker->unique()->bothify('??###'));
+            $order->tracking = strtoupper($faker->unique()->bothify('TRACK###??'));
+
+            $order->delivery_status = 'shipped';
+            $order->general_status = 'processing';
+
+            $order->created_at = now();
+            $order->updated_at = now();
+
+            $order->save();
         }
     }
 }

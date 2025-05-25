@@ -13,30 +13,36 @@ use App\Http\Controllers\{
     CouponController,
     CustomerAndSalesController,
     DashboardController,
+    EmployeeController,
     InstalmentPlanController,
     MediaController,
     OrderController,
     PackageController,
+    PermissionController,
     ProductController,
     RefundRequestController,
     ReportController,
+    RiskAnalyticsController,
+    RoleController,
+    RolePermissionController,
     SchedulePaymentController,
     StateController,
     StaticsController,
     SupplierAndSalesController,
     SupportTicketController,
     TransactionController,
+    TransferRequestController,
+    UserRoleController,
 };
 use App\Http\Middleware\CheckAdmin;
 use App\Http\Middleware\PreventBackHistory;
-use App\Models\Media;
-use Illuminate\Http\Request;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 Route::group([
     'prefix'     => LaravelLocalization::setLocale(),
-    'middleware' => ['throttle:global'],
+    'middleware' => ThrottleRequests::class,
 ], function () {
 
     //
@@ -64,6 +70,28 @@ Route::group([
             });
 
             //
+            // Role and Permission
+            //
+            Route::resource('roles', RoleController::class);
+            Route::resource('permissions', PermissionController::class);
+            Route::resource('role-permissions', RolePermissionController::class);
+            Route::get('user-roles', [UserRoleController::class, 'index'])->name('user-roles.index');
+            Route::get('user-roles/create', [UserRoleController::class, 'create'])->name('user-roles.create');
+            Route::post('user-roles', [UserRoleController::class, 'store'])->name('user-roles.store');
+            Route::get('user-roles/{user}/edit', [UserRoleController::class, 'edit'])->name('user-roles.edit');
+            Route::put('user-roles/{user}', [UserRoleController::class, 'update'])->name('user-roles.update');
+
+            //
+            // Request Transfer and managment
+            //
+            Route::get('/transfer-requests', [TransferRequestController::class, 'index'])->name('transferRequests.index');
+            Route::post('/transfer-requests', [TransferRequestController::class, 'store'])->name('transfer-requests.store');
+            Route::post('/transfer-requests/bulk', [TransferRequestController::class, 'bulkStore'])
+                ->name('transfer-requests.bulk');
+            Route::get('/get-transfer-requests', [TransferRequestController::class, 'fetch'])->name('transfer.requests.fetch');
+
+
+            //
             // Master-data CRUD
             //
             Route::resources([
@@ -80,6 +108,7 @@ Route::group([
                 'business-categories' => BusinessCategoryController::class,
                 'instalment-plans'  => InstalmentPlanController::class,
                 'packages'          => PackageController::class,
+                'employees'         => EmployeeController::class,
             ]);
 
             // one-off attribute route
@@ -108,22 +137,30 @@ Route::group([
                 Route::get('customer-orders/{id}', 'orders')->name('customerOrders');
                 Route::get('customer-payments/{id}', 'payments')->name('customerPayments');
 
+                Route::get('customer-credit-assesment/{id}', 'customerCreditAssessment')->name('customerCreditAssessment');
+
                 Route::put('customer-status/{id}', 'updateCustomerStatus')->name('updateCustomerStatus');
                 Route::post('customer/{user}/upgrade-package', 'upgradePackage')->name('updateCustomerPackage');
                 Route::post('customer/upgrade-limit', 'upgradeLimit')->name('customerUpgradeLimit');
                 Route::post('customer/create-limit', 'createCreditLimit')->name('createCreditLimit');
                 Route::get('custoemr-transactions', 'transactions')->name('transactions');
 
-
                 Route::get('suppliers',            'suppliers')->name('suppliers');
                 Route::get('supplier/{id}',        'supplierProfile')->name('supplierProfile');
+                Route::get('supplier-transactions/{id}', 'supplierTransactions')->name('supplierTransactions');
+                Route::get('supplier-finance/{id}', 'supplierFinance')->name('supplierFinance');
+                Route::get('supplier-orders/{id}', 'supplierOrders')->name('supplierOrders');
+                Route::get('supplier-payments/{id}', 'supplierPayments')->name('supplierPayments');
                 Route::get('supplier-products/{id}', 'supplierProducts')->name('supplierProducts');
+                Route::get('supplier-sales/{id}', 'supplierSales')->name('supplierSales');
                 Route::put('supplier-status/{id}', 'updateSupplierStatus')->name('updateSupplierStatus');
 
                 Route::get('customers-statics',    'customersStatics')->name('customers.statics');
                 Route::get('suppliers-statics',    'suppliersStatics')->name('suppliers.statics');
             });
 
+            Route::get('/risk-management', [RiskAnalyticsController::class, 'index'])->name('risk.index');
+            Route::post('/risk-management', [RiskAnalyticsController::class, 'show'])->name('risk.show');
             //
             // Orders + shipping
             //
@@ -172,7 +209,6 @@ Route::group([
                 Route::get('customer-detailed-debt', 'detailedCustomerDebt')->name('detailedCustomerDebt');
                 Route::get('customer-total-customer-debt', 'totalCustomerDebt')->name('totalCustomerDebt');
             });
-
 
             //
             // Transactions
@@ -223,6 +259,7 @@ Route::group([
                 Route::get('support-tickets', 'index')->name('tickets');
                 Route::get('support-ticket/{id}', 'show')->name('showTickets');
                 Route::post('/support-ticket/{ticket}/reply', 'reply')->name('ticketReply');
+                Route::post('/tickets/{id}/update-status', 'updateStatus')->name('ticketUpdateStatus');
             });
 
             //

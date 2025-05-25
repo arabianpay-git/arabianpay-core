@@ -1,193 +1,218 @@
 @extends('layouts.base')
 
 @section('content')
-<main class="grow content pt-5" id="content" role="content">
-    <!-- Container -->
-    <div class="container-fixed" id="content_container"></div>
-    
-    <div class="container-fixed">
-        <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
-            <div class="flex flex-col justify-center gap-2">
-                <h1 class="text-xl font-medium leading-none text-gray-900">
-                    Media Manager
-                </h1>
-            </div>
-            <div class="flex items-center gap-2.5">
-                <button class="btn btn-sm btn-danger delete-selected-btn d-none" id="deleteSelectedBtn">Delete Selected</button>
-                <button class="btn btn-sm btn-primary upload-btn" id="uploadBtn">Upload File</button>
-                <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
-                <div id="uploadSpinner" class="spinner-border spinner-border-sm d-none ml-2" role="status">
-                    <span class="sr-only">Uploading...</span>
+    <main class="grow content pt-5" id="content" role="content">
+        <!-- Container -->
+        <div class="container-fixed" id="content_container"></div>
+
+        <div class="container-fixed">
+            <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+                <div class="flex flex-col justify-center gap-2">
+                    <h1 class="text-xl font-medium leading-none text-gray-900">
+                        Media Manager
+                    </h1>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <button class="btn btn-sm btn-danger delete-selected-btn d-none" id="deleteSelectedBtn">Delete
+                        Selected</button>
+                    <button class="btn btn-sm btn-primary upload-btn" id="uploadBtn">Upload File</button>
+                    <input type="file" id="fileInput" accept="image/*" multiple class="hidden">
+                    <div id="uploadSpinner" class="spinner-border spinner-border-sm d-none ml-2" role="status">
+                        <span class="sr-only">Uploading...</span>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <!-- End of Container -->
+        <!-- End of Container -->
 
-    <!-- Media Grid -->
-    <div class="container-fixed">
-        <div class="grid gap-5 lg:gap-7.5">
-            <div class="media-grid" id="mediaGrid" style="padding:0">
-                @foreach ($media as $item)
-                    <div class="media-card position-relative" 
-                        data-id="{{ $item->id }}" 
-                        data-url="{{ asset('storage/media/' . $item->file_name) }}" 
-                        data-name="{{ $item->name }}" data-size="{{ $item->size }}"
-                        style="overflow: visible; padding: 0.25rem;">
-                        <img src="{{ asset('storage/media/' . $item->file_name) }}" class="media-thumb" loading="lazy" alt="media">
-                        <div class="media-info">
-                            <div class="name">{{ $item->name }}</div>
-                            <div class="size">{{ number_format($item->size / 1024, 1) }} KB</div>
+        <!-- Media Grid -->
+        <div class="container-fixed">
+            <div class="grid gap-5 lg:gap-7.5">
+                <div class="media-grid" id="mediaGrid" style="padding:0">
+                    @foreach ($media as $item)
+                        <div class="media-card position-relative" data-id="{{ $item->id }}"
+                            data-url="{{ asset('storage/media/' . $item->file_name) }}" data-name="{{ $item->name }}"
+                            data-size="{{ $item->size }}" style="overflow: visible; padding: 0.25rem;">
+                            <img src="{{ asset('storage/media/' . $item->file_name) }}" class="media-thumb" loading="lazy"
+                                alt="media">
+                            <div class="media-info">
+                                <div class="name">{{ $item->name }}</div>
+                                <div class="size">{{ number_format($item->size / 1024, 1) }} KB</div>
+                            </div>
+                            <div class="overlay-check"><i class="fas fa-check"></i></div>
                         </div>
-                        <div class="overlay-check"><i class="fas fa-check"></i></div>
-                    </div>
-                @endforeach
+                    @endforeach
+                </div>
             </div>
         </div>
-    </div>
-    <!-- End of Container -->
-</main>
-
+        <!-- End of Container -->
+    </main>
 @endsection
 
 @push('scripts')
-<script>
-    $(function() {
-        const $window = $(window),
-              $document = $(document),
-              $deleteBtn = $('#deleteSelectedBtn'),
-              $uploadBtn = $('#uploadBtn'),
-              $uploadMoreBtn = $('#uploadMoreBtn'),
-              $fileInput = $('#fileInput'),
-              $uploadSpinner = $('#uploadSpinner'),
-              $lazySpinner = $('#lazyLoadSpinner'),
-              $mediaGrid = $('#mediaGrid'),
-              $mediaModalGrid = $('#mediaModalGrid');
+    <script>
+        $(function() {
+            const $window = $(window),
+                $document = $(document),
+                $deleteBtn = $('#deleteSelectedBtn'),
+                $uploadBtn = $('#uploadBtn'),
+                $uploadMoreBtn = $('#uploadMoreBtn'),
+                $fileInput = $('#fileInput'),
+                $uploadSpinner = $('#uploadSpinner'),
+                $lazySpinner = $('#lazyLoadSpinner'),
+                $mediaGrid = $('#mediaGrid'),
+                $mediaModalGrid = $('#mediaModalGrid');
 
-        let selected = [],
-            offset = {{ count($media) }},
-            loading = false,
-            noMoreMedia = false;
+            let selected = [],
+                offset = {{ count($media) }},
+                loading = false,
+                noMoreMedia = false;
 
-        function throttle(fn, limit) {
-            let waiting = false;
-            return function(...args) {
-                if (!waiting) {
-                    fn.apply(this, args);
-                    waiting = true;
-                    setTimeout(() => waiting = false, limit);
-                }
-            };
-        }
-
-        function updateDeleteButton() {
-            $deleteBtn.toggle(selected.length > 0);
-        }
-
-        function toggleCardSelection(el) {
-            const id = $(el).data('id');
-            if ($(el).hasClass('selected')) {
-                selected = selected.filter(i => i !== id);
-                $(el).removeClass('selected');
-            } else {
-                selected.push(id);
-                $(el).addClass('selected');
+            function throttle(fn, limit) {
+                let waiting = false;
+                return function(...args) {
+                    if (!waiting) {
+                        fn.apply(this, args);
+                        waiting = true;
+                        setTimeout(() => waiting = false, limit);
+                    }
+                };
             }
-            updateDeleteButton();
-        }
-        $document.on('click', '.media-card', function() {
-            toggleCardSelection(this);
-        });
 
-        $deleteBtn.on('click', function() {
-            if (!selected.length) return;
-            Swal.fire({
-                title: 'Delete selected?',
-                text: 'These files will be permanently removed.',
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Delete'
-            }).then(res => {
-                if (res.isConfirmed) {
-                    $.post("{{ route('media.bulkDelete') }}", { _token: "{{ csrf_token() }}", ids: selected })
-                        .done(r => {
-                            selected.forEach(id => $(`.media-card[data-id="${id}"]`).remove());
-                            selected = [];
-                            updateDeleteButton();
-                            Swal.fire('Deleted!', r.message, 'success');
-                        })
-                        .fail(() => Swal.fire('Error', 'Failed to delete media.', 'error'));
+            function updateDeleteButton() {
+                $deleteBtn.toggle(selected.length > 0);
+            }
+
+            function toggleCardSelection(el) {
+                const id = $(el).data('id');
+                if ($(el).hasClass('selected')) {
+                    selected = selected.filter(i => i !== id);
+                    $(el).removeClass('selected');
+                } else {
+                    selected.push(id);
+                    $(el).addClass('selected');
                 }
+                updateDeleteButton();
+            }
+            $document.on('click', '.media-card', function() {
+                toggleCardSelection(this);
+            });
+
+            $deleteBtn.on('click', function() {
+                if (!selected.length) return;
+                Swal.fire({
+                    title: 'Delete selected?',
+                    text: 'These files will be permanently removed.',
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: '#dc3545',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Delete'
+                }).then(res => {
+                    if (res.isConfirmed) {
+                        $.post("{{ route('media.bulkDelete') }}", {
+                                _token: "{{ csrf_token() }}",
+                                ids: selected
+                            })
+                            .done(r => {
+                                selected.forEach(id => $(`.media-card[data-id="${id}"]`)
+                                    .remove());
+                                selected = [];
+                                updateDeleteButton();
+                                Swal.fire('Deleted!', r.message, 'success');
+                            })
+                            .fail(() => Swal.fire('Error', 'Failed to delete media.', 'error'));
+                    }
+                });
+            });
+
+            // Restore original template-based renderCard
+            function renderCard(media) {
+                return `
+                <div class="media-card position-relative" data-id="${media.id}" data-url="${media.url}" data-name="${media.name}" data-size="${media.size}">
+                    <img src="/storage/media/${media.file_name}" class="media-thumb" loading="lazy" alt="media">
+                    <div class="media-info">
+                        <div class="name">${media.name}</div>
+                        <div class="size">${(media.size/1024).toFixed(1)} KB</div>
+                    </div>
+                    <div class="overlay-check"><i class="fas fa-check"></i></div>
+                </div>`;
+            }
+
+            function updateGrids(html, prepend = false) {
+                if (prepend) {
+                    $mediaGrid.prepend(html);
+                    if ($mediaModalGrid.length) $mediaModalGrid.prepend(html);
+                } else {
+                    $mediaGrid.append(html);
+                    if ($mediaModalGrid.length) $mediaModalGrid.append(html);
+                }
+            }
+
+            function loadMoreMedia() {
+                if (loading || noMoreMedia) return;
+                loading = true;
+                $lazySpinner.show();
+                $.get("{{ route('media.lazyLoad') }}", {
+                        offset
+                    })
+                    .done(res => {
+                        if (!res.media.length) noMoreMedia = true;
+                        else {
+                            res.media.forEach(m => updateGrids(renderCard(m)));
+                            offset += res.media.length;
+                        }
+                    })
+                    .always(() => {
+                        loading = false;
+                        $lazySpinner.hide();
+                    });
+            }
+            $window.on('scroll', throttle(() => {
+                if ($window.scrollTop() + $window.height() >= $document.height() - 300) loadMoreMedia();
+            }, 200));
+
+            function startUpload() {
+                $fileInput.click();
+            }
+            $uploadBtn.on('click', startUpload);
+            $uploadMoreBtn.on('click', startUpload);
+            $fileInput.on('change', function() {
+                const files = this.files;
+                if (!files.length) return;
+                const formData = new FormData();
+                Array.from(files).forEach(f => formData.append('files[]', f));
+                formData.append('_token', "{{ csrf_token() }}");
+                $uploadSpinner.removeClass('d-none');
+                $.ajax({
+                        url: "{{ route('media.upload') }}",
+                        method: 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false
+                    })
+                    .done(res => {
+                        if (res.success) {
+                            res.media.forEach(m => updateGrids(renderCard(m), true));
+                            Swal.fire('Uploaded!', res.message || 'Files uploaded successfully.',
+                                'success');
+                        } else Swal.fire('Error', res.message || 'Upload failed.', 'error');
+                    })
+                    .fail(xhr => {
+                        let msg = 'Upload failed.';
+                        if (xhr.responseJSON && xhr.responseJSON.errors) msg = Object.values(xhr
+                            .responseJSON.errors).flat().join('<br>');
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            html: msg
+                        });
+                    })
+                    .always(() => {
+                        $uploadSpinner.addClass('d-none');
+                        $fileInput.val('');
+                    });
             });
         });
-
-        // Restore original template-based renderCard
-        function renderCard(media) {
-            return `
-<div class="media-card position-relative" data-id="${media.id}" data-url="${media.url}" data-name="${media.name}" data-size="${media.size}">
-    <img src="/storage/media/${media.file_name}" class="media-thumb" loading="lazy" alt="media">
-    <div class="media-info">
-        <div class="name">${media.name}</div>
-        <div class="size">${(media.size/1024).toFixed(1)} KB</div>
-    </div>
-    <div class="overlay-check"><i class="fas fa-check"></i></div>
-</div>`;
-        }
-
-        function updateGrids(html, prepend = false) {
-            if (prepend) {
-                $mediaGrid.prepend(html);
-                if ($mediaModalGrid.length) $mediaModalGrid.prepend(html);
-            } else {
-                $mediaGrid.append(html);
-                if ($mediaModalGrid.length) $mediaModalGrid.append(html);
-            }
-        }
-
-        function loadMoreMedia() {
-            if (loading || noMoreMedia) return;
-            loading = true;
-            $lazySpinner.show();
-            $.get("{{ route('media.lazyLoad') }}", { offset })
-                .done(res => {
-                    if (!res.media.length) noMoreMedia = true;
-                    else {
-                        res.media.forEach(m => updateGrids(renderCard(m)));
-                        offset += res.media.length;
-                    }
-                })
-                .always(() => { loading = false; $lazySpinner.hide(); });
-        }
-        $window.on('scroll', throttle(() => {
-            if ($window.scrollTop() + $window.height() >= $document.height() - 300) loadMoreMedia();
-        }, 200));
-
-        function startUpload() { $fileInput.click(); }
-        $uploadBtn.on('click', startUpload);
-        $uploadMoreBtn.on('click', startUpload);
-        $fileInput.on('change', function() {
-            const files = this.files;
-            if (!files.length) return;
-            const formData = new FormData();
-            Array.from(files).forEach(f => formData.append('files[]', f));
-            formData.append('_token', "{{ csrf_token() }}");
-            $uploadSpinner.removeClass('d-none');
-            $.ajax({ url: "{{ route('media.upload') }}", method: 'POST', data: formData, contentType: false, processData: false })
-                .done(res => {
-                    if (res.success) {
-                        res.media.forEach(m => updateGrids(renderCard(m), true));
-                        Swal.fire('Uploaded!', res.message || 'Files uploaded successfully.', 'success');
-                    } else Swal.fire('Error', res.message || 'Upload failed.', 'error');
-                })
-                .fail(xhr => {
-                    let msg = 'Upload failed.';
-                    if (xhr.responseJSON && xhr.responseJSON.errors) msg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
-                    Swal.fire({ icon: 'error', title: 'Error', html: msg });
-                })
-                .always(() => { $uploadSpinner.addClass('d-none'); $fileInput.val(''); });
-        });
-    });
-</script>
+    </script>
 @endpush

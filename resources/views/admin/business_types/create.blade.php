@@ -27,6 +27,24 @@
                                 @enderror
                             </div>
 
+                            <div class="w-full">
+                                <div class="flex items-baseline flex-wrap gap-2.5">
+                                    <label class="form-label flex items-center gap-1 max-w-56">
+                                        Risk Level <span class="text-danger">*</span>
+                                    </label>
+                                    <select class="input @error('risk_level') border-red-500 @enderror" name="risk_level" required>
+                                        <option value="">Select risk level</option>
+                                        <option value="low" {{ old('risk_level') == 'low' ? 'selected' : '' }}>Low</option>
+                                        <option value="medium" {{ old('risk_level') == 'medium' ? 'selected' : '' }}>Medium</option>
+                                        <option value="high" {{ old('risk_level') == 'high' ? 'selected' : '' }}>High</option>
+                                    </select>
+                                </div>
+                                @error('risk_level')
+                                <span class="text-danger text-sm">{{ $message }}</span>
+                                @enderror
+                            </div>
+                            
+
                             <div class="flex gap-2.5">
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">

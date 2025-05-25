@@ -18,7 +18,6 @@ return new class extends Migration
             $table->json('address');
             $table->string('phone_number');
             $table->enum('pick_up_status', ['active', 'disabled'])->default('active');
-            $table->enum('cash_on_pickup_status', ['active', 'disabled'])->default('active');
             $table->timestamps();
         });
     }

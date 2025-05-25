@@ -13,11 +13,6 @@
                     Products Stock
                 </h1>
             </div>
-            <div class="flex items-center gap-2.5">
-                <a class="btn btn-sm btn-light" href="{{ route('products.create') }}">
-                    Create New Product
-                </a>
-            </div>
         </div>
     </div>
     <!-- End of Container -->
@@ -118,13 +113,13 @@
                                             </td>
                                             
                                 
-                                            <td>{{ $product->unit_price ?? '—' }}</td>
+                                            <td><span class="icon-saudi_riyal"></span> {{ $product->unit_price ?? '—' }}</td>
                                             <td>
                                                 <div class="whitespace-nowrap">
-                                                    {{ $product->current_stock ?? '—' }}
+                                                    <strong>Stock:</strong> {{ number_format($product->current_stock) ?? 'N/A' }}
                                                     <br>
                                                     <small class="text-gray-500">
-                                                        — SKU: {{ $product->sku ?? '—' }}
+                                                        <strong>SKU:</strong> {{ $product->sku ?? 'N/A' }}
                                                     </small>
                                                 </div>
                                             </td>

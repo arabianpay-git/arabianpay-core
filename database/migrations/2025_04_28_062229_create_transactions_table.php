@@ -14,6 +14,7 @@ return new class extends Migration
         Schema::create('transactions', function (Blueprint $table) {
             $table->id();
             $table->uuid('uuid');
+            $table->foreignId('assigned_to')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('refrence_payment');
 
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');

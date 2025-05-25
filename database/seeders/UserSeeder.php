@@ -33,7 +33,7 @@ class UserSeeder extends Seeder
             'user_type' => 'merchant',
             'email' => 'merchant@gmail.com',
             'business_name' => 'Merchant Inc',
-            'phone_number' => '0555555555',
+            'phone_number' => '0544444444',
             'country_id' => 1,
             'state_id' => 1,
             'city_id' => 1,

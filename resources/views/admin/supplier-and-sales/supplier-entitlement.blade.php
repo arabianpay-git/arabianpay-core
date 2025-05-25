@@ -147,9 +147,17 @@
                                                 </span>
                                             </td>
                                 
-                                            <td class="text-center">{{ number_format($transaction->loan_amount, 2) }}</td>
-                                            <td class="text-center">{{ number_format($transaction->collected, 2) }}</td>
-                                            <td class="text-center">{{ number_format($transaction->collected + $transaction->subscription_fees, 2) }}</td>
+                                            <td class="text-center">
+                                                {{ number_format($transaction->calculated['totalSuplierDue'] ?? 0.00, 2) }}
+                                            </td>
+                                
+                                            <td class="text-center">
+                                                {{ number_format($transaction->calculated['supplierDue'] ?? 0.00, 2) }}
+                                            </td>
+                                
+                                            <td class="text-center">
+                                                {{ number_format($transaction->calculated['base'] ?? 0.00, 2) }}
+                                            </td>
                                 
                                             <td>
                                                 <div class="flex gap-1">
@@ -160,21 +168,19 @@
                                                         data-modal-toggle="#payment_modal"
                                                         data-id="{{ $transaction->id }}"
                                                         data-seller-id="{{ $transaction->seller->id }}"
-                                                        data-due="{{ $transaction->loan_amount }}"
+                                                        data-due="{{ number_format($transaction->calculated['totalSuplierDue'] ?? 0.00, 2) }}"
                                                         data-transfer-fee="{{ get_setting('service_fees', 0) }}"
-                                                        data-settled="{{ $transaction->collected }}"
+                                                        data-settled="{{ number_format($transaction->calculated['supplierDue'] ?? 0.00, 2) }}"
                                                         data-refund-sum="{{ $transaction->refund_amount }}"
-                                                        data-final="{{ $transaction->loan_amount - get_setting('service_fees', 0) }}"
+                                                        data-final="{{ number_format(($transaction->calculated['totalSuplierDue'] ?? 0.00) - get_setting('service_fees', 0), 2) }}"
                                                         data-date="{{ now()->format('Y-m-d') }}">
                                                         <i class="ki-filled ki-cheque"> </i>
-                                                        </a>
-
+                                                    </a>
                                                 </div>
                                             </td>
                                         </tr>
                                     @endforeach
                                 </tbody>
-                                
                             </table>
                         </div>
                         <!-- Pagination Footer -->

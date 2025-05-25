@@ -1,0 +1,80 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\Request;
+use Spatie\Permission\Models\Role;
+use Spatie\Permission\Models\Permission;
+
+class RolePermissionController extends Controller
+{
+    public function index()
+    {
+        $roles = Role::with('permissions')->paginate(10);
+        return view('admin.role_permissions.index', compact('roles'));
+    }
+
+    public function create()
+    {
+        $roles = Role::all();
+        $permissions = Permission::all()->groupBy(function ($permission) {
+            return explode('.', $permission->name)[0];
+        });
+
+        return view('admin.role_permissions.form', compact('roles', 'permissions'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'role_id' => 'required|exists:roles,id',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|exists:permissions,name',
+        ]);
+
+        $role = Role::findOrFail($request->role_id);
+
+        // Sync permissions (assign the selected permissions)
+        $role->syncPermissions($request->permissions ?? []);
+
+        return redirect()->route('role-permissions.index')
+            ->with('success', 'Permissions assigned successfully.');
+    }
+
+
+    public function edit($roleId)
+    {
+        $role = Role::with('permissions')->findOrFail($roleId);
+
+        // Group permissions by resource/module (text before the dot)
+        $permissions = Permission::all()->groupBy(function ($permission) {
+            return explode('.', $permission->name)[0];
+        });
+
+        return view('admin.role_permissions.form', compact('role', 'permissions'));
+    }
+
+    public function update(Request $request, $id)
+    {
+        $request->validate([
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'string|exists:permissions,name',
+        ]);
+
+        $role = Role::findOrFail($id);
+
+        // Sync permissions
+        $role->syncPermissions($request->permissions ?? []);
+
+        return redirect()->route('role-permissions.index')
+            ->with('success', 'Permissions updated successfully.');
+    }
+
+    public function destroy($roleId)
+    {
+        $role = Role::findOrFail($roleId);
+        $role->syncPermissions([]);
+
+        return redirect()->back()->with('success', 'Permissions removed from role.');
+    }
+}

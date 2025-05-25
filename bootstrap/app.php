@@ -1,10 +1,13 @@
 <?php
 
-use App\Http\Middleware\FrameHeadersMiddleware;
+use App\Http\Middleware\SecureHeaders;
+use Bepsvpt\SecureHeaders\SecureHeadersMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
 use Mcamara\LaravelLocalization\Middleware\LocaleSessionRedirect;
+use Spatie\Permission\Middleware\PermissionMiddleware;
+use Spatie\Permission\Middleware\RoleMiddleware;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -14,11 +17,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function ($middleware) {
+        $middleware->append(SecureHeaders::class);
         return [
             LocaleSessionRedirect::class,
-            VerifyCsrfToken::class,
-            FrameHeadersMiddleware::class,
-            'throttle:global',
+            RoleMiddleware::class,
+            PermissionMiddleware::class,
         ];
     })
     ->withExceptions(function (Exceptions $exceptions) {

@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
 use App\Models\User;
 
@@ -14,7 +13,7 @@ class RiskManagementSeeder extends Seeder
     {
         for ($i = 1; $i <= 15; $i++) {
 
-            $user = User::inRandomOrder()->first();
+            $user = User::where('user_type', 'user')->inRandomOrder()->first();
 
             if (!$user) {
                 continue;

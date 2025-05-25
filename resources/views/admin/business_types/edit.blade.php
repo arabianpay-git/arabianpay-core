@@ -84,6 +84,19 @@
                                             <span class="text-danger text-sm">{{ $message }}</span>
                                         @enderror
                                     </div>
+
+                                    <div class="w-full">
+                                        <label class="form-label">Risk Level <span class="text-danger">*</span></label>
+                                        <select class="input @error('risk_level') border-red-500 @enderror" name="risk_level" required>
+                                            <option value="low" {{ old('risk_level', $businessType->risk_level) == 'low' ? 'selected' : '' }}>Low</option>
+                                            <option value="medium" {{ old('risk_level', $businessType->risk_level) == 'medium' ? 'selected' : '' }}>Medium</option>
+                                            <option value="high" {{ old('risk_level', $businessType->risk_level) == 'high' ? 'selected' : '' }}>High</option>
+                                        </select>
+                                        @error('risk_level')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                    
         
                                     <div class="w-full">
                                         <label class="form-label">Featured</label>

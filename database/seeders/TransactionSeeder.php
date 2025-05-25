@@ -13,35 +13,47 @@ class TransactionSeeder extends Seeder
 {
     public function run()
     {
-        // DB::table('transactions')->truncate();
+        $orders = Order::all();
+        $plan = InstalmentPlan::first();
 
-        // Fetch all IDs first
-        $userIds = User::pluck('id')->toArray();
-        $orderIds = Order::pluck('id')->toArray();
-        $planIds = InstalmentPlan::pluck('id')->toArray();
+        if (!$plan) {
+            return; // skip if no plan
+        }
 
-        for ($i = 0; $i < 15; $i++) {
+        foreach ($orders as $order) {
+            $productIds = [];
+
+            $productDetails = json_decode($order->product_details, true);
+
+            if (is_array($productDetails)) {
+                foreach ($productDetails as $item) {
+                    if (isset($item['product_id'])) {
+                        $productIds[] = (int) $item['product_id'];
+                    }
+                }
+            }
+
             Transaction::create([
                 'uuid' => Str::uuid(),
-                'refrence_payment' => strtoupper(Str::random(10)),
-                'user_id' => fake()->randomElement($userIds),
-                'seller_id' => fake()->randomElement($userIds),
-                'order_id' => fake()->randomElement($orderIds),
-                'product_ids' => [rand(1, 50), rand(51, 100)],
-                'plan_id' => fake()->randomElement($planIds),
-                'collected' => fake()->randomFloat(2, 100, 5000),
-                'retrieved' => fake()->optional()->randomFloat(2, 50, 5000),
-                'canceled' => fake()->optional()->randomFloat(2, 50, 5000),
-                'loan_amount' => fake()->optional()->randomFloat(2, 500, 10000),
-                'loan_start_date' => fake()->optional()->date(),
-                'loan_end_date' => fake()->optional()->date(),
-                'loan_term' => fake()->optional()->numberBetween(6, 36),
-                'subscription_fees' => fake()->optional()->randomFloat(2, 10, 100),
-                'credit_limit_at_time' => fake()->optional()->randomFloat(2, 1000, 5000),
-                'remaining_credit_limit' => fake()->optional()->randomFloat(2, 100, 4000),
-                'payment_status' => fake()->randomElement(['pending', 'due', 'late', 'paid', 'failed']),
-                'settlement_status' => fake()->randomElement(['pending', 'settled', 'failed']),
-                'general_status' => fake()->randomElement(['active', 'inactive', 'cancelled']),
+                'refrence_payment' => 'TXN-' . strtoupper(Str::random(6)) . '-' . $order->id,
+                'user_id' => $order->user_id,
+                'seller_id' => $order->seller_id,
+                'order_id' => $order->id,
+                'product_ids' => $productIds,
+                'plan_id' => $plan->id,
+                'collected' => $order->grand_total,
+                'retrieved' => rand(0, 1) ? rand(50, 300) : null,
+                'canceled' => rand(0, 1) ? rand(50, 300) : null,
+                'loan_amount' => $order->grand_total,
+                'loan_start_date' => now()->subDays(rand(0, 30)),
+                'loan_end_date' => now()->addDays(rand(30, 120)),
+                'loan_term' => rand(6, 36),
+                'subscription_fees' => rand(0, 1) ? rand(10, 100) : null,
+                'credit_limit_at_time' => rand(1000, 5000),
+                'remaining_credit_limit' => rand(100, 4000),
+                'payment_status' => collect(['pending', 'due', 'late', 'paid', 'failed'])->random(),
+                'settlement_status' => collect(['pending', 'settled', 'failed'])->random(),
+                'general_status' => collect(['active', 'inactive', 'cancelled'])->random(),
                 'resource' => fake()->optional()->word(),
             ]);
         }

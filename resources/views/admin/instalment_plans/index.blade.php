@@ -128,7 +128,7 @@
                                             <td class="whitespace-nowrap">
                                                 {{ $item->name }}
                                             </td>
-                                            <td>{{ $item->duration }} Payments</td>
+                                            <td>{{ $item->duration }} Days</td>
 
                                             <td>
                                                 {{ $item->finance_limit > 0 ? number_format($item->finance_limit) : '-'  }}

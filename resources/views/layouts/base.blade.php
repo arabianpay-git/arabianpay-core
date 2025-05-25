@@ -2,7 +2,7 @@
 <html class="h-full" data-theme="true" data-theme-mode="light" dir="ltr" lang="en">
     <head>
         <title>
-            ArabianPay
+            ArabianPay | Admin Dashboard
         </title>
         @include('layouts.includes.meta')
         @include('layouts.includes.styles')

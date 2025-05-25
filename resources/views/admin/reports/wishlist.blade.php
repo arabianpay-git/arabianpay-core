@@ -98,7 +98,7 @@
                                                 </div>
                                             </td>
                                 
-                                            <td>{{ $product->wishlists_count }}</td>
+                                            <td>{{ number_format($product->wishlists_count) }}</td>
                                 
                                         </tr>
                                     @endforeach

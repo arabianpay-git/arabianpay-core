@@ -207,7 +207,7 @@ class ProductController extends Controller
             }
         }
         // Validate against credit limit
-        $creditLimit = get_setting('credit_limit', null);
+        $creditLimit = get_credit_limit($data['user_id']);
         if (!is_null($creditLimit) && !empty($data['unit_price']) && $data['unit_price'] > $creditLimit) {
             return ['unit_price' => 'Unit price cannot exceed the credit limit.'];
         }

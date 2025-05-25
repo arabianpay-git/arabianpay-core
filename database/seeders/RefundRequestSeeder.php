@@ -15,7 +15,7 @@ class RefundRequestSeeder extends Seeder
         $faker = Faker::create();
 
         // Generate 15 refund requests
-        foreach (range(1, 15) as $index) {
+        foreach (range(1, 3) as $index) {
             RefundRequest::create([
                 'user_id' => User::inRandomOrder()->first()->id,
                 'seller_id' => User::inRandomOrder()->first()->id,

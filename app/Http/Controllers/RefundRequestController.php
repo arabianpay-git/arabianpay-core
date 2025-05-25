@@ -25,9 +25,12 @@ class RefundRequestController extends Controller
 
     public function refundRequests()
     {
+        $user = currentUser();
         $refundRequests = RefundRequest::with('user', 'order')
-            ->select('id', 'user_id', 'seller_id', 'order_id', 'refund_amount', 'refund_status', 'created_at')
-            ->latest()
+            ->select('id', 'assigned_to', 'user_id', 'seller_id', 'order_id', 'refund_amount', 'refund_status', 'created_at')
+            ->when($user->user_type !== 'admin', function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })->orderByRaw('assigned_to IS NULL DESC')
             ->paginate(10);
         $status = 'Refund';
         return view('admin.refund-requests.index', compact('refundRequests', 'status'));
@@ -40,11 +43,13 @@ class RefundRequestController extends Controller
         if (!in_array($status, $statuses)) {
             abort(404);
         }
-
+        $user = currentUser();
         $refundRequests = RefundRequest::with('user', 'order')
             ->where('refund_status', $status)
-            ->select('id', 'user_id', 'seller_id', 'order_id', 'refund_amount', 'refund_status', 'created_at')
-            ->latest()
+            ->select('id', 'assigned_to', 'user_id', 'seller_id', 'order_id', 'refund_amount', 'refund_status', 'created_at')
+            ->when($user->user_type !== 'admin', function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })->orderByRaw('assigned_to IS NULL DESC')
             ->paginate(10);
 
         return view('admin.refund-requests.index', compact('refundRequests', 'status'));

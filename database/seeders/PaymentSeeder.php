@@ -14,16 +14,21 @@ class PaymentSeeder extends Seeder
     {
         $faker = Faker::create();
 
-        for ($i = 0; $i < 15; $i++) {
+        $orders = Order::all();
+
+        foreach ($orders as $order) {
             Payment::create([
-                'user_id' => User::inRandomOrder()->first()->id,
-                'seller_id' => User::inRandomOrder()->first()->id,
-                'order_id' => Order::inRandomOrder()->first()->id,
-                'amount' => $faker->randomFloat(2, 100, 1000),
-                'payment_details' => json_encode(['gateway' => 'Stripe', 'transaction_id' => $faker->uuid]),
-                'invoice_number' => $faker->word(),
-                'txn_code' => $faker->word(),
-                'tax_number' => $faker->word(),
+                'user_id' => $order->user_id,
+                'seller_id' => $order->seller_id,
+                'order_id' => $order->id,
+                'amount' => $order->grand_total,
+                'payment_details' => json_encode([
+                    'gateway' => 'Stripe',
+                    'transaction_id' => $faker->uuid()
+                ]),
+                'invoice_number' => $order->invoice_number,
+                'txn_code' => strtoupper('TXN' . rand(1000, 9999)),
+                'tax_number' => strtoupper('TAX' . rand(100, 999)),
                 'payment_status' => $faker->randomElement(['pending', 'due', 'late', 'paid', 'failed']),
             ]);
         }

@@ -43,4 +43,35 @@ class RiskManagement extends Model
         return (float) DB::table('risk_management')
             ->avg('credit_score');
     }
+
+    public function merchant()
+    {
+        return $this->belongsTo(Merchant::class, 'user_id', 'user_id');
+    }
+
+    // public static function getDefaultRatesByBusiness()
+    // {
+    //     $riskLevels = ['low', 'medium', 'high'];
+
+    //     return BusinessType::withCount([
+    //         'customers as low_count' => function ($query) {
+    //             $query->whereHas('businessType', fn($q) => $q->where('risk_level', 'low'));
+    //         },
+    //         'customers as medium_count' => function ($query) {
+    //             $query->whereHas('businessType', fn($q) => $q->where('risk_level', 'medium'));
+    //         },
+    //         'customers as high_count' => function ($query) {
+    //             $query->whereHas('businessType', fn($q) => $q->where('risk_level', 'high'));
+    //         },
+    //     ])->get()->map(function ($type) {
+    //         return [
+    //             'name' => $type->name,
+    //             'data' => [
+    //                 $type->low_count,
+    //                 $type->medium_count,
+    //                 $type->high_count
+    //             ]
+    //         ];
+    //     })->toArray();
+    // }
 }

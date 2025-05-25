@@ -13,6 +13,7 @@ class TransactionController extends Controller
 {
     protected $selectFields = [
         'id',
+        'assigned_to',
         'uuid',
         'refrence_payment',
         'user_id',
@@ -28,26 +29,36 @@ class TransactionController extends Controller
 
     protected function getTransactionsByStatus($status)
     {
+        $user = currentUser();
         return Transaction::select($this->selectFields)
             ->with([
                 'order' => function ($query) {
                     $query->select('id', 'grand_total', 'shipping_city', 'general_status');
                 },
-                'user'
+                'user',
+                'assigned'
             ])
             ->where('payment_status', $status)
+            ->when($user->user_type !== 'admin', function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })->orderByRaw('assigned_to IS NULL DESC')
             ->paginate(10);
     }
 
     public function transactionHistory()
     {
+        $user = currentUser();
         $transactions = Transaction::select($this->selectFields)
             ->with([
                 'order' => function ($query) {
                     $query->select('id', 'grand_total', 'shipping_city', 'general_status');
                 },
-                'user'
+                'user',
+                'assigned'
             ])
+            ->when($user->user_type !== 'admin', function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })->orderByRaw('assigned_to IS NULL DESC')
             ->paginate(10);
 
         $type = 'All Transactions';
@@ -91,13 +102,18 @@ class TransactionController extends Controller
 
     public function payments()
     {
+        $user = currentUser();
         $transactions = Transaction::select($this->selectFields)
             ->with([
                 'order' => function ($query) {
                     $query->select('id', 'grand_total', 'shipping_city', 'general_status');
                 },
-                'user'
+                'user',
+                'assigned'
             ])
+            ->when($user->user_type !== 'admin', function ($query) use ($user) {
+                $query->where('assigned_to', $user->id);
+            })->orderByRaw('assigned_to IS NULL DESC')
             ->paginate(10);
         $type = 'All';
         return view('admin.transactions.index', compact('transactions', 'type'));

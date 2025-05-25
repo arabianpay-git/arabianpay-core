@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->string('name')->unique();
             $table->string('slug');
+            $table->enum('risk_level', ['low', 'medium', 'high'])->default('low');
             $table->string('order_level');
             $table->string('banner')->nullable();
             $table->string('icon')->nullable();

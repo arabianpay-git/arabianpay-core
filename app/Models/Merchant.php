@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 class Merchant extends Model
 {
     protected $fillable = [
+        'assigned_to',
         'user_id',
         'business_type_id',
         'business_category_id',
@@ -33,12 +34,22 @@ class Merchant extends Model
         'status',
     ];
 
+    protected $casts = [
+        'payment_history' => 'array',
+        'simah_api_response' => 'array',
+        'external_credit_data' => 'array'
+    ];
     /**
      * User relation
      */
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class, 'user_id');
+    }
+
+    public function assigned()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
     }
 
     /**
@@ -55,5 +66,10 @@ class Merchant extends Model
     public function getBusinessCategoryIdsAttribute()
     {
         return explode(',', $this->business_category_id);
+    }
+
+    public function riskManagement()
+    {
+        return $this->hasOne(RiskManagement::class, 'user_id', 'user_id');
     }
 }

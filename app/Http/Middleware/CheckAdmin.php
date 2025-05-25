@@ -17,7 +17,7 @@ class CheckAdmin
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (Auth::check() && Auth::user()->user_type !== 'admin') {
+        if (Auth::check() && !in_array(Auth::user()->user_type, ['admin', 'employee'])) {
             Session::flush();
             return redirect()->route('login');
         }

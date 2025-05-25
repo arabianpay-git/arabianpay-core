@@ -34,7 +34,7 @@ class InstalmentPlanController extends Controller
             'status' => ['required', 'string'],
         ]);
 
-        $instalmentPlan = InstalmentPlan::create([
+        InstalmentPlan::create([
             'name' => $request->name,
             'description' => $request->description,
             'duration' => $request->duration,

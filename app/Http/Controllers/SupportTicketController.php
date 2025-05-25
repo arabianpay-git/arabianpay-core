@@ -59,4 +59,20 @@ class SupportTicketController extends Controller
         return redirect()->route('showTickets', $ticket->id)
             ->with('success', 'Your reply has been submitted successfully!');
     }
+
+    public function updateStatus(Request $request, $ticket_number)
+    {
+        $request->validate([
+            'status' => 'required|in:active,solved,draft,canceled',
+        ]);
+
+        $tickets = SupportTicket::where('ticket_number', $ticket_number)->get();
+
+        foreach ($tickets as $ticket) {
+            $ticket->status = $request->status;
+            $ticket->save();
+        }
+
+        return redirect()->back()->with('success', 'Ticket status updated everywhere successfully.');
+    }
 }

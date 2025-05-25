@@ -34,14 +34,14 @@ class MediaController extends Controller
             'files'   => 'required|array',
             'files.*' => [
                 'file',
-                'mimes:jpeg,png,jpg,gif,svg,pdf',
+                'mimes:jpeg,png,jpg,webp,gif,svg,pdf',
                 // Removed max-size rule because we auto-compress larger files  
                 // 'max:1048'
             ],
         ], [
             'files.required'   => 'Please select at least one file to upload.',
             'files.*.file'     => 'Each item must be a valid file.',
-            'files.*.mimes'    => 'Only JPEG, PNG, JPG, GIF, SVG, and PDF files are allowed.',
+            'files.*.mimes'    => 'Only JPEG, PNG, JPG, WEBP, GIF, SVG, and PDF files are allowed.',
             // Removed files.*.max message  
         ]);
 

@@ -15,6 +15,7 @@ class Transaction extends Model
 
     protected $fillable = [
         'uuid',
+        'assigned_to',
         'refrence_payment',
         'user_id',
         'seller_id',
@@ -54,11 +55,15 @@ class Transaction extends Model
     }
 
     // Relations
-
+    public function assigned()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
     public function user()
     {
-        return $this->belongsTo(User::class, 'user_id');
+        return $this->belongsTo(User::class);
     }
+
 
     public function seller()
     {

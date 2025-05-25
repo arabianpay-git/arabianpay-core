@@ -11,6 +11,7 @@ class RefundRequest extends Model
     use HasFactory;
 
     protected $fillable = [
+        'assigned_to',
         'user_id',
         'seller_id',
         'order_id',
@@ -21,6 +22,11 @@ class RefundRequest extends Model
         'reject_reason',
         'refund_status',
     ];
+
+    public function assigned()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
 
     public function user()
     {
