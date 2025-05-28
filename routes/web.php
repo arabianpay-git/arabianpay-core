@@ -7,22 +7,27 @@ use App\Http\Controllers\{
     BrandController,
     BusinessCategoryController,
     BusinessTypeController,
+    CaseManagementController,
     CategoryController,
     CityController,
     CountryController,
     CouponController,
+    CreditManagmentController,
     CustomerAndSalesController,
     DashboardController,
     EmployeeController,
     InstalmentPlanController,
     MediaController,
     OrderController,
+    OtpVerificationController,
     PackageController,
     PermissionController,
     ProductController,
+    RealTimeAlertController,
     RefundRequestController,
     ReportController,
     RiskAnalyticsController,
+    RiskController,
     RoleController,
     RolePermissionController,
     SchedulePaymentController,
@@ -35,6 +40,7 @@ use App\Http\Controllers\{
     UserRoleController,
 };
 use App\Http\Middleware\CheckAdmin;
+use App\Http\Middleware\EnsureOtpVerified;
 use App\Http\Middleware\PreventBackHistory;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
@@ -58,7 +64,7 @@ Route::group([
     // Admin area (all routes under /{locale}/admin)
     //
     Route::prefix('admin')
-        ->middleware(['auth:sanctum', PreventBackHistory::class, CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
+        ->middleware(['auth:sanctum', CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
         ->group(function () {
 
             //
@@ -109,6 +115,8 @@ Route::group([
                 'instalment-plans'  => InstalmentPlanController::class,
                 'packages'          => PackageController::class,
                 'employees'         => EmployeeController::class,
+                'risk-register'     => RiskController::class,
+                'case-management'     => CaseManagementController::class,
             ]);
 
             // one-off attribute route
@@ -159,8 +167,35 @@ Route::group([
                 Route::get('suppliers-statics',    'suppliersStatics')->name('suppliers.statics');
             });
 
-            Route::get('/risk-management', [RiskAnalyticsController::class, 'index'])->name('risk.index');
-            Route::post('/risk-management', [RiskAnalyticsController::class, 'show'])->name('risk.show');
+            //
+            // Risk Analytics
+            //
+            Route::controller(RiskAnalyticsController::class)->prefix('risk')->group(function () {
+                Route::get('score-engine', 'score')->name('risk.score');
+                Route::post('score-update', 'scoreUpdate')->name('risk.scoreUpdate')->middleware(EnsureOtpVerified::class);
+                Route::get('export/pdf', 'exportPdf')->name('risk.exportPdf');
+                Route::get('export/csv', 'exportCsv')->name('risk.exportCsv');
+            });
+
+            Route::get('/otp/send', [OtpVerificationController::class, 'send'])->name('otp.send');
+            Route::get('otp', [OtpVerificationController::class, 'showVerifyForm'])->name('otp.verify.form');
+            Route::post('/otp/verify', [OtpVerificationController::class, 'verifyOtp'])->name('otp.verify.confirm');
+
+
+            Route::get('real-time-alerts', [RealTimeAlertController::class, 'index'])
+                ->name('real-time-alerts.index');
+
+            //
+            // Credit Managment
+            //
+            Route::controller(CreditManagmentController::class)->prefix('credit')->group(function () {
+                Route::get('credit-profiles', 'creditProfile')->name('creditProfile');
+                Route::get('credit-limit', 'creditLimit')->name('creditLimit');
+                Route::get('repayment-schedule', 'repaymentSchedule')->name('repaymentSchedule');
+                Route::get('export/pdf', 'exportPdf')->name('credit.exportPdf');
+                Route::get('export/csv', 'exportCsv')->name('credit.exportCsv');
+            });
+
             //
             // Orders + shipping
             //

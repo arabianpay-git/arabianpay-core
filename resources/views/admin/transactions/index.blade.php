@@ -22,7 +22,7 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            {{ $type }} Transactions
+                            Transactions
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
@@ -55,7 +55,7 @@
                                                 <input class="checkbox checkbox-sm" data-datatable-check="true"
                                                     type="checkbox" id="select-all-checkbox">
                                             </th>
-                                            <th class="w-[60px] text-center">No</th>
+                                            <th class="w-[60px] text-center">ID</th>
                                             <th class="text-left">User</th>
                                             <th class="text-left">Order ID</th>
                                             <th class="text-left">Loan Amount</th>
@@ -68,13 +68,13 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($transactions as $index => $item)
+                                        @foreach ($transactions as $item)
                                             <tr>
                                                 <td>
                                                     <input class="checkbox checkbox-sm row-checkbox" type="checkbox"
                                                         name="ids[]" value="{{ $item->id }}">
                                                 </td>
-                                                <td class="text-center">{{ number_format($index + 1) }}</td>
+                                                <td class="text-center">{{ $item->id }}</td>
 
                                                 <td>
                                                     <div class="whitespace-nowrap">

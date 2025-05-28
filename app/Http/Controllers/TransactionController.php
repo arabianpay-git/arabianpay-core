@@ -4,8 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Transaction;
 use App\Models\Wallet;
-use Illuminate\Http\Request;
-use PDF;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
@@ -61,7 +60,7 @@ class TransactionController extends Controller
             })->orderByRaw('assigned_to IS NULL DESC')
             ->paginate(10);
 
-        $type = 'All Transactions';
+        $type = 'All';
         return view('admin.transactions.index', compact('transactions', 'type'));
     }
 

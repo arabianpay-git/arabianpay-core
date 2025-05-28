@@ -1,0 +1,144 @@
+    @extends('layouts.base')
+
+    @section('content')
+        <main class="grow content pt-5" id="content" role="content">
+            <div class="container-fixed">
+                <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+                    <div class="flex flex-col justify-center gap-2">
+                        <h1 class="text-xl font-medium leading-none text-gray-900">
+                            {{ __('Customers Credit Profile') }}
+                        </h1>
+                    </div>
+                </div>
+            </div>
+
+            <div class="container-fixed">
+                <div class="grid gap-5 lg:gap-7.5">
+                    <div class="card card-grid min-w-full">
+                        <div class="card-header flex-wrap gap-2">
+                            <h3 class="card-title font-medium text-sm">
+                                {{ __('Credit Profiles') }}
+                            </h3>
+                            <div class="flex flex-wrap gap-2 lg:gap-5 items-center">
+                                <div class="flex">
+                                    <form method="GET" action="{{ route('creditProfile') }}" class="flex">
+                                        <label class="input input-sm">
+                                            <i class="ki-filled ki-magnifier"></i>
+                                            <input name="search" type="text" placeholder="{{ __('Search by user') }}"
+                                                value="{{ request('search') }}" />
+                                        </label>
+                                        <button type="submit" class="btn btn-sm btn-primary" style="margin-left: 5px;">
+                                            {{ __('Search') }}
+                                        </button>
+                                    </form>
+                                </div>
+
+                                <div class="flex gap-2 lg:gap-3">
+                                    <a href="{{ route('credit.exportCsv', request()->only('search')) }}"
+                                        class="btn btn-sm btn-outline btn-success flex items-center"
+                                        title="{{ __('Export CSV') }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round"
+                                                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M4 12h16M4 8h16M4 4h16" />
+                                        </svg>
+                                        {{ __('Export CSV') }}
+                                    </a>
+
+                                    <a href="{{ route('credit.exportPdf', request()->only('search')) }}"
+                                        class="btn btn-sm btn-outline btn-danger flex items-center"
+                                        title="{{ __('Export PDF') }}">
+                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
+                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                                        </svg>
+                                        {{ __('Export PDF') }}
+                                    </a>
+                                </div>
+                            </div>
+
+                        </div>
+                        <div class="card-body">
+                            <div data-datatable="true" data-datatable-state-save="false" id="refund_requests_table">
+                                <div class="scrollable-x-auto">
+                                    <table class="table table-auto table-border" data-datatable-table="true">
+                                        <thead>
+                                            <tr>
+                                                <th class="w-[60px] text-center">ID</th>
+                                                <th>User Name</th>
+                                                <th>Total Credit Limit</th>
+                                                <th>Credit Used</th>
+                                                <th>Remaning Credit Limit</th>
+                                                <th>Repayment History</th>
+                                                <th>Credit Score</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            @foreach ($customers as $item)
+                                                <tr>
+                                                    <td class="text-center">{{ $item->id }}</td>
+                                                    <td>
+                                                        <div class="whitespace-nowrap">
+                                                            {{ $item->first_name }} {{ $item->last_name }}
+                                                            <br>
+                                                            <small class="text-gray-500">
+                                                                — {{ $item->business_name ?? '-' }}
+                                                            </small>
+                                                        </div>
+                                                    </td>
+
+                                                    <td>{{ number_format(optional($item->customerCreditLimit)->limit_arabianpay_after ?? 0, 2) }}
+                                                    </td>
+                                                    <td>{{ number_format($item->total_used ?? 0, 2) }}</td>
+                                                    <td>
+                                                        @php
+                                                            $before =
+                                                                optional($item->customerCreditLimit)
+                                                                    ->limit_arabianpay_after ?? 0;
+                                                            $after = $item->total_used;
+                                                            $remaining = $before - $after;
+                                                        @endphp
+                                                        {{ number_format($remaining, 2) }}
+
+                                                    </td>
+                                                    <td>{{ number_format($item->repayment_history ?? 0, 2) }}</td>
+                                                    {{-- Static repayment history --}}
+                                                    <td>
+                                                        @php
+                                                            $score = $item->credit_score ?? 0;
+
+                                                            if ($score >= 80) {
+                                                                $creditLevel = 'Excellent';
+                                                                $badgeColor =
+                                                                    'badge badge-sm badge-outline badge-success';
+                                                            } elseif ($score >= 60) {
+                                                                $creditLevel = 'Fair';
+                                                                $badgeColor =
+                                                                    'badge badge-sm badge-outline badge-warning';
+                                                            } else {
+                                                                $creditLevel = 'Poor';
+                                                                $badgeColor =
+                                                                    'badge badge-sm badge-outline badge-danger';
+                                                            }
+                                                        @endphp
+
+                                                        <span class="{{ $badgeColor }}">
+                                                            {{ $score }}/100 - {{ $creditLevel }}
+                                                        </span>
+                                                    </td>
+
+                                                </tr>
+                                            @endforeach
+
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <!-- Pagination Footer -->
+                                @include('layouts.includes.table-pagination', ['paginator' => $customers])
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+    @endsection

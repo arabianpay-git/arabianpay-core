@@ -1,7 +1,7 @@
-<link href="{{ asset('assets/media/app/apple-touch-icon.png') }}" rel="apple-touch-icon" sizes="180x180" />
-<link href="{{ asset('assets/media/app/favicon-32x32.png') }}" rel="icon" sizes="32x32" type="image/png" />
-<link href="{{ asset('assets/media/app/favicon-16x16.png') }}" rel="icon" sizes="16x16" type="image/png" />
-<link href="{{ asset('assets/media/app/favicon.ico') }}" rel="shortcut icon" />
+<link href="{{ asset('assets/media/images/favicon.png') }}" rel="apple-touch-icon" sizes="180x180" />
+<link href="{{ asset('assets/media/images/favicon.png') }}" rel="icon" sizes="32x32" type="image/png" />
+<link href="{{ asset('assets/media/images/favicon.png') }}" rel="icon" sizes="16x16" type="image/png" />
+<link href="{{ asset('assets/media/images/favicon.png') }}" rel="shortcut icon" />
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
 <link href="{{ asset('assets/vendors/apexcharts/apexcharts.css') }}" rel="stylesheet" />
 <link href="{{ asset('assets/vendors/keenicons/styles.bundle.css') }}" rel="stylesheet" />
@@ -14,25 +14,27 @@
 @stack('styles')
 
 <style>
-    .border-7{
+    .border-7 {
         border-radius: 7px;
     }
+
     .tab-btn {
         padding: 0.5rem 1rem;
         border-bottom: 2px solid transparent;
         font-weight: 500;
         color: #6B7280;
     }
+
     .tab-btn.active {
         border-color: #3B82F6;
         color: #111827;
         background-color: #F3F4F6;
     }
-    
+
     .d-none {
         display: none;
     }
-    
+
     .media-card {
         border: 1px solid #ddd;
         border-radius: 8px;
@@ -163,15 +165,18 @@
         font-size: 12px;
         color: #888;
     }
+
     tbody td:last-child {
         text-align: center;
     }
+
     .active-link {
         background-color: var(--tw-secondary-active);
         border-radius: 0.25rem;
     }
 
-    .active-title,.active-icon {
+    .active-title,
+    .active-icon {
         color: var(--tw-primary);
     }
 </style>

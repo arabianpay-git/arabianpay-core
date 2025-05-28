@@ -49,7 +49,7 @@
                                                 <input class="checkbox checkbox-sm" data-datatable-check="true"
                                                     type="checkbox" id="select-all-checkbox">
                                             </th>
-                                            <th class="w-[60px] text-center">No</th>
+                                            <th class="w-[60px] text-center">ID</th>
                                             <th class="text-center">User</th>
                                             <th class="text-center">Order</th>
                                             <th class="text-center">Refund Amount</th>
@@ -60,13 +60,13 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($refundRequests as $index => $request)
+                                        @foreach ($refundRequests as $request)
                                             <tr>
                                                 <td>
                                                     <input class="checkbox checkbox-sm row-checkbox" type="checkbox"
                                                         name="ids[]" value="{{ $request->id }}">
                                                 </td>
-                                                <td class="text-center">{{ $index + 1 }}</td>
+                                                <td class="text-center">{{ $request->id }}</td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
                                                         {{ $request->user?->first_name }} {{ $request->user?->last_name }}

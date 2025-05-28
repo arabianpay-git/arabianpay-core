@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ShopSetting;
+use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use PDF;
 
 class OrderController extends Controller
 {
@@ -118,7 +118,7 @@ class OrderController extends Controller
         $store          = ShopSetting::firstWhere('user_id', $order->seller_id);
         $productDetails = $this->mapProductDetails($order);
 
-        $pdf = PDF::loadView('admin.orders.order_invoice', compact(
+        $pdf = Pdf::loadView('admin.orders.order_invoice', compact(
             'order',
             'store',
             'productDetails'
@@ -135,7 +135,7 @@ class OrderController extends Controller
             $store          = ShopSetting::firstWhere('user_id', $order->seller_id);
             $productDetails = $this->mapProductDetails($order);
 
-            $pdf = PDF::loadView('admin.orders.shipping_label', compact(
+            $pdf = Pdf::loadView('admin.orders.shipping_label', compact(
                 'order',
                 'store',
                 'productDetails',

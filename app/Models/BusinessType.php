@@ -27,10 +27,8 @@ class BusinessType extends Model
     protected static function booted()
     {
         static::saving(function ($businessType) {
-            $nameEn = is_array($businessType->name) ? ($businessType->name['en'] ?? '') : $businessType->name;
-
             if (empty($businessType->slug) || $businessType->isDirty('name')) {
-                $slug = Str::slug($nameEn);
+                $slug = Str::slug($businessType->name);
                 $originalSlug = $slug;
                 $counter = 1;
 

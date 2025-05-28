@@ -12,7 +12,11 @@ class TransferRequestController extends Controller
 {
     public function index()
     {
+        $user = currentUser();
         $transferRequests = TransferRequest::with(['fromUser', 'toUser', 'model'])
+            ->when($user->user_type !== 'admin', function ($query) use ($user) {
+                $query->where('to_user_id', $user->id);
+            })
             ->latest()
             ->paginate(10);
 

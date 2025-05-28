@@ -56,7 +56,7 @@
                                                     type="checkbox" id="select-all-checkbox">
                                             </th>
                                             <th class="w-[60px] text-center">
-                                                No
+                                                ID
                                             </th>
 
                                             <th class="">
@@ -130,7 +130,7 @@
                                                     <input class="checkbox checkbox-sm row-checkbox" type="checkbox"
                                                         name="ids[]" value="{{ $item->id }}">
                                                 </td>
-                                                <td class="text-center">{{ $loop->iteration }}</td>
+                                                <td class="text-center">{{ $item->id }}</td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
                                                         {{ $item->user?->first_name }} {{ $item->user?->last_name }}
@@ -170,21 +170,6 @@
                                                             <span class="icon-saudi_riyal"></span>
                                                             {{ number_format($totalOrderAmount, 2) }}
                                                         </small>
-                                                        <br>
-                                                        @if ($item->package)
-                                                            <div class="flex items-center gap-2 mt-1">
-                                                                @if ($item->package->logo)
-                                                                    <img src="{{ asset($item->package->logo) }}"
-                                                                        alt="{{ $item->package->name }}"
-                                                                        class="h-8 object-contain border rounded"
-                                                                        style="height: 50px">
-                                                                @endif
-                                                                <small
-                                                                    class="text-gray-500">{{ $item->package->name }}</small>
-                                                            </div>
-                                                        @else
-                                                            <span class="text-gray-400">N/A</span>
-                                                        @endif
                                                     </div>
                                                 </td>
 

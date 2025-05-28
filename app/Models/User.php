@@ -77,6 +77,15 @@ class User extends Authenticatable implements MustVerifyEmail
     // Relationships
     // ==========================
 
+    public function riskScore()
+    {
+        return $this->hasOne(RiskScore::class, 'user_id');
+    }
+    public function customerCreditLimit()
+    {
+        return $this->hasOne(CustomerCreditLimit::class, 'user_id');
+    }
+
     public function country()
     {
         return $this->belongsTo(Country::class);

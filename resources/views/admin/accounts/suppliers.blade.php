@@ -56,7 +56,7 @@
                                                     type="checkbox" id="select-all-checkbox">
                                             </th>
                                             <th class="w-[60px] text-center">
-                                                No
+                                                ID
                                             </th>
 
                                             <th class="">
@@ -120,7 +120,7 @@
                                                     <input class="checkbox checkbox-sm row-checkbox" type="checkbox"
                                                         name="ids[]" value="{{ $item->id }}">
                                                 </td>
-                                                <td class="text-center">{{ $loop->iteration }}</td>
+                                                <td class="text-center">{{ $item->id }}</td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
                                                         {{ $item->user->first_name }} {{ $item->user->last_name }}

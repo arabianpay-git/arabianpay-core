@@ -54,7 +54,7 @@
                                                 <input class="checkbox checkbox-sm" data-datatable-check="true"
                                                     type="checkbox" id="select-all-checkbox">
                                             </th>
-                                            <th class="w-[60px] text-center">No</th>
+                                            <th class="w-[60px] text-center">ID</th>
                                             <th class="text-left">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">User</span>
@@ -128,13 +128,13 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($orders as $index => $item)
+                                        @foreach ($orders as $item)
                                             <tr>
                                                 <td>
                                                     <input class="checkbox checkbox-sm row-checkbox" type="checkbox"
                                                         name="ids[]" value="{{ $item->id }}">
                                                 </td>
-                                                <td class="text-center">{{ $index + 1 }}</td>
+                                                <td class="text-center">{{ $item->id }}</td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
                                                         {{ $item->user?->first_name }} {{ $item->user?->last_name }}
