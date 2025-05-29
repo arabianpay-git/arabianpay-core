@@ -132,23 +132,11 @@ class RiskAnalyticsController extends Controller
             }
         }
 
-        // 4. Business Type score
-        $businessType = BusinessType::find($user->business_type_id);
-        $type = strtolower($businessType->type ?? 'informal');
-        $businessTypeScore = match ($type) {
-            'llc', 'corporation' => 15,
-            'sole proprietor' => 10,
-            default => 0,
-        };
 
         // 5. Business Activity alignment score
         $activityNames = collect($decodedCrData['activities'] ?? [])->pluck('name')->toArray();
-        $userActivities = $user->businessType->activities ?? [];
-        $activityScore = count(array_intersect($activityNames, $userActivities)) > 0 ? 15 : 0;
+        $activityScore = count($activityNames) > 0 ? 15 : 0;
 
-        // Normalize CR & ID total score (max 100) to 25%
-        $crIdRaw = $idMatchScore + $idExpiryScore + $crExpiryScore + $businessTypeScore + $activityScore;
-        $crIdScore = min($crIdRaw / 100, 1) * 25;
 
         // POS Revenue Score (dummy example - replace with real data)
         $monthlyPos = 30000;
@@ -188,6 +176,10 @@ class RiskAnalyticsController extends Controller
             $industryScore = $map[$industryRisk] ?? 10;
             $industry = optional(optional($user->customer)->businessType)->name ?? '-';
         }
+
+        // Normalize CR & ID total score (max 100) to 25%
+        $crIdRaw = $idMatchScore + $idExpiryScore + $crExpiryScore + $industryScore + $activityScore;
+        $crIdScore = min($crIdRaw / 100, 1) * 25;
 
         // Location Risk Score (max 15)
         $city = strtolower($decodedCrData['headquarterCityName'] ?? '');

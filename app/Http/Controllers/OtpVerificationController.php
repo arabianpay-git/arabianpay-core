@@ -6,12 +6,11 @@ use App\Models\Otp;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\Facades\Session;
 use Illuminate\Validation\ValidationException;
 
 class OtpVerificationController extends Controller
 {
-    const PHONE = '0545232968';
+    const PHONE = '0506879195';
     const COOLDOWN_SECONDS = 60;
     const MAX_ATTEMPTS = 5;
 

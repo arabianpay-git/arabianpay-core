@@ -6,10 +6,24 @@ use App\Models\CustomerCreditLimit;
 use App\Models\RiskScore;
 use App\Models\SchedulePayment;
 use App\Models\User;
+use App\Services\CreditAssessmentService;
+use App\Services\RiskAnalyticsService;
 use Illuminate\Http\Request;
 
 class CreditManagmentController extends Controller
 {
+
+    protected $creditAssesmentService;
+    protected $riskAnalyticsService;
+
+    public function __construct(
+        CreditAssessmentService $creditAssesmentService,
+        RiskAnalyticsService $riskAnalyticsService
+    ) {
+        $this->creditAssesmentService = $creditAssesmentService;
+        $this->riskAnalyticsService = $riskAnalyticsService;
+    }
+
     private function calculateTotalOrderAmount($orders): float
     {
         $total = 0;
@@ -49,43 +63,43 @@ class CreditManagmentController extends Controller
             });
         }
 
-        // Eager load credit and orders
         $customers = $query->with([
             'customerCreditLimit',
             'orders' => function ($q) {
                 $q->where('delivery_status', 'delivered');
             },
-        ])->paginate(15);
+        ])->paginate(10);
 
-        // Add calculated fields
         foreach ($customers as $customer) {
             $orders = $customer->orders ?? collect();
             $customer->total_used = $this->calculateTotalOrderAmount($orders);
 
-            $limit = $customer->customerCreditLimit->limit_arabianpay_after ?? 0;
-            $customer->limit_remaining = max(0, $limit - $customer->total_used);
+            $creditScoreService = $this->creditAssesmentService->assess($customer->id);
+            $riskScoreService = $this->riskAnalyticsService->calculateForUser($customer);
 
-            // Repayment history: total paid amount from schedule payments
+            $creditScore = $creditScoreService['creditScore']['compositeScore'] ?? 0;
+            $riskScore = $riskScoreService->total_score ?? 0;
+
+            $oldCreditLimit = 20000;
+
+            $finalScore = $creditScore * ($riskScore / 100);
+
+            $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
+
+            $remainingCreditLimit = max(0, $newCreditLimit - $customer->total_used);
+
+            $customer->creditLimit = $newCreditLimit;
+            $customer->limit_remaining = $remainingCreditLimit;
             $customer->repayment_history = SchedulePayment::where('user_id', $customer->id)
                 ->where('payment_status', 'paid')
                 ->sum('instalment_amount');
 
-            // Credit Score Calculation
-            $used = $customer->total_used ?? 0;
-            $repaid = $customer->repayment_history ?? 0;
-            $remaining = max(0, $limit - $used);
-
-            $utilizationPct = $limit > 0 ? ($used / $limit) : 0;
-
-            $utilScore = 40 * (1 - min(1, $utilizationPct)); // lower usage = higher score
-            $repaymentScore = $limit > 0 ? 40 * min(1, $repaid / $limit) : 0; // more repaid = higher score
-            $remainingScore = $limit > 0 ? 20 * ($remaining / $limit) : 0;
-
-            $customer->credit_score = round($utilScore + $repaymentScore + $remainingScore);
+            $customer->credit_score = round($creditScore);
         }
 
-        return view('admin.credit-managment.profiles', ['customers' => $customers]);
+        return view('admin.credit-managment.profiles', compact('customers'));
     }
+
 
     public function creditLimit(Request $request)
     {
