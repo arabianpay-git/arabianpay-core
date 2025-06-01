@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\{BusinessCategory, Customer, CustomerCreditLimit, Merchant, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, Transaction, Wallet};
+use App\Services\CreditAssessmentService;
+use App\Services\RiskAnalyticsService;
 use App\Traits\EmailSender;
 use App\Traits\SmsSender;
 use Carbon\Carbon;
@@ -103,7 +105,7 @@ class AccountController extends Controller
         dd('Remaning');
     }
 
-    public function customerProfile($id)
+    public function customerProfile($id, CreditAssessmentService $creditService, RiskAnalyticsService $riskService)
     {
         $user = currentUser();
 
@@ -113,6 +115,9 @@ class AccountController extends Controller
                 $query->where('assigned_to', $user->id);
             })
             ->first();
+        
+        $data = $creditService->assess($id);
+        $riskScore = $riskService->calculateForUser($customer->user);
 
         if (!$customer) {
             return redirect()->route('customers')->with('error', __('Customer not found or not assigned to you.'));
@@ -123,15 +128,17 @@ class AccountController extends Controller
             $customer->save();
         }
 
-        return view('admin.accounts.customer-profile', compact('customer'));
+        return view('admin.accounts.customer-profile', compact('customer', 'data', 'riskScore'));
     }
 
 
-    public function customerFinance($id)
+    public function customerFinance($id, CreditAssessmentService $creditService, RiskAnalyticsService $riskService)
     {
         $customer = Customer::with('user', 'package')
             ->where('user_id', $id)
             ->firstOrFail();
+        $data = $creditService->assess($id);
+        $riskScore = $riskService->calculateForUser($customer->user);
 
         $packages = Package::orderBy('name')->get();
 
@@ -154,7 +161,9 @@ class AccountController extends Controller
             'totalPaymentDue',
             'dueCount',
             'lateCount',
-            'totalOrderAmount'
+            'totalOrderAmount',
+            'data',
+            'riskScore'
         ));
     }
 
@@ -691,7 +700,7 @@ class AccountController extends Controller
         return view('admin.accounts.supplier-sales', compact('merchant', 'orders'));
     }
 
-    public function customerCreditAssessment($id)
+    public function customerCreditAssessment($id, CreditAssessmentService $service)
     {
         // 1) Fetch merchant (with its user and businessType)
         $customer = Customer::with('user')
