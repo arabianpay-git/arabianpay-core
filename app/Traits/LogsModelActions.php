@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Traits;
 
 use Illuminate\Support\Facades\Auth;
@@ -9,7 +10,6 @@ trait LogsModelActions
 {
     public function logModelAction(string $event, string $description, array $properties = [])
     {
-
         activity($this->getTable())
             ->performedOn($this)
             ->causedBy(Auth::user())

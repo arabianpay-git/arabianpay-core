@@ -11,7 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
-use Str;
+use Illuminate\Support\Str;
 
 class AccountController extends Controller
 {
@@ -115,7 +115,7 @@ class AccountController extends Controller
                 $query->where('assigned_to', $user->id);
             })
             ->first();
-        
+
         $data = $creditService->assess($id);
         $riskScore = $riskService->calculateForUser($customer->user);
 
@@ -176,20 +176,18 @@ class AccountController extends Controller
 
         $customer->update(['package_id' => $request->package_id]);
 
-        
-        
         // Log the activity
         $batchUuid = (string) Str::uuid();
 
         $customer->logModelAction(
             event: 'update',
-            description: auth()->user()->first_name." ".auth()->user()->last_name." upgrade Customer: {$customer->user->first_name} {$customer->user->last_name} [$customer->id] package from $oldPackage to {$customer->package->name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " upgrade Customer: {$customer->user->first_name} {$customer->user->last_name} [$customer->id] package from $oldPackage to {$customer->package->name}",
             properties: [
                 'old_status' => $oldPackage,
                 'new_status' => $customer->package->name,
-                'reason' => $reason ?? null, // reson can be optional
+                'reason' => $reason ?? null,
                 'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                'batch_uuid' => $batchUuid,
             ],
         );
 
@@ -245,7 +243,7 @@ class AccountController extends Controller
 
         $customer->logModelAction(
             event: 'update',
-            description: auth()->user()->first_name." ".auth()->user()->last_name." update Customer: {$customer->user->first_name} {$customer->user->last_name} [$customer->id] status from $oldStatus to {$customer->status}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " update Customer: {$customer->user->first_name} {$customer->user->last_name} [$customer->id] status from $oldStatus to {$customer->status}",
             properties: [
                 'old_status' => $oldStatus,
                 'new_status' => $customer->status,
@@ -554,7 +552,7 @@ class AccountController extends Controller
 
         $merchant->logModelAction(
             event: 'update',
-            description: auth()->user()->first_name." ".auth()->user()->last_name." update Supplier: {$merchant->user->first_name} {$merchant->user->last_name} [$merchant->id] status from $oldStatus to {$merchant->status}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " update Supplier: {$merchant->user->first_name} {$merchant->user->last_name} [$merchant->id] status from $oldStatus to {$merchant->status}",
             properties: [
                 'old_status' => $oldStatus,
                 'new_status' => $merchant->status,
