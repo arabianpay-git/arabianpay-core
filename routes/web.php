@@ -22,6 +22,7 @@ use App\Http\Controllers\{
     OtpVerificationController,
     PackageController,
     PermissionController,
+    ProductBulkUploadController,
     ProductController,
     RealTimeAlertController,
     RefundRequestController,
@@ -42,6 +43,7 @@ use App\Http\Controllers\{
 use App\Http\Middleware\CheckAdmin;
 use App\Http\Middleware\EnsureOtpVerified;
 use App\Http\Middleware\PreventBackHistory;
+use App\Http\Middleware\SecureHeaders;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
@@ -64,7 +66,7 @@ Route::group([
     // Admin area (all routes under /{locale}/admin)
     //
     Route::prefix('admin')
-        ->middleware(['auth:sanctum', CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
+        ->middleware(['auth:sanctum', PreventBackHistory::class, SecureHeaders::class, CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
         ->group(function () {
 
             //
@@ -96,6 +98,10 @@ Route::group([
                 ->name('transfer-requests.bulk');
             Route::get('/get-transfer-requests', [TransferRequestController::class, 'fetch'])->name('transfer.requests.fetch');
 
+            // Product bulk upload
+            Route::get('/products/bulk-upload', [ProductBulkUploadController::class, 'bulkUploadForm'])->name('productsBulkUpload');
+            Route::post('/products/bulk-upload', [ProductBulkUploadController::class, 'bulkUpload'])->name('products.bulk-upload');
+            Route::post('/products/bulk-upload/store', [ProductBulkUploadController::class, 'bulkStore'])->name('productsBulkStore');
 
             //
             // Master-data CRUD
@@ -144,6 +150,7 @@ Route::group([
                 Route::get('customer-transactions/{id}', 'transactions')->name('customerTransactions');
                 Route::get('customer-orders/{id}', 'orders')->name('customerOrders');
                 Route::get('customer-payments/{id}', 'payments')->name('customerPayments');
+                Route::get('customer-compliance/{id}', 'customerCompliance')->name('customerCompliance');
 
                 Route::get('customer-credit-assesment/{id}', 'customerCreditAssessment')->name('customerCreditAssessment');
 
@@ -162,6 +169,7 @@ Route::group([
                 Route::get('supplier-products/{id}', 'supplierProducts')->name('supplierProducts');
                 Route::get('supplier-sales/{id}', 'supplierSales')->name('supplierSales');
                 Route::put('supplier-status/{id}', 'updateSupplierStatus')->name('updateSupplierStatus');
+                Route::get('supplier-compliance/{id}', 'supplierCompliance')->name('supplierCompliance');
 
                 Route::get('customers-statics',    'customersStatics')->name('customers.statics');
                 Route::get('suppliers-statics',    'suppliersStatics')->name('suppliers.statics');

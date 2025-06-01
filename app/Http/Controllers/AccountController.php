@@ -338,6 +338,12 @@ class AccountController extends Controller
         return view('admin.accounts.customer-payments', compact('customer', 'wallets'));
     }
 
+    public function customerCompliance($id)
+    {
+        $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
+        return view('admin.accounts.customer-compliance', compact('customer'));
+    }
+
     // ---- Supplier Methods (similarly optimized) ----
 
     public function suppliers()
@@ -533,6 +539,13 @@ class AccountController extends Controller
             'totalCommission'
         ));
     }
+
+    public function supplierCompliance($id)
+    {
+        $merchant = Merchant::where('user_id', $id)->with('user')->firstOrFail();
+        return view('admin.accounts.supplier-compliance', compact('merchant'));
+    }
+
 
     public function updateSupplierStatus(Request $request, $id)
     {
