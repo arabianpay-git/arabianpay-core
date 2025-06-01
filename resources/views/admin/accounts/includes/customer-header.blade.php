@@ -112,6 +112,15 @@
                             </span>
                         </a>
                     </div>
+
+                    {{-- Log --}}
+                    <div class="menu-item border-b-2 {{ Route::is('customerLog') ? 'border-b-primary' : 'border-b-transparent' }}">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('customerLog', ['id' => $customer->user_id]) }}">
+                            <span class="menu-title text-sm font-medium {{ Route::is('customerLog') ? 'text-primary font-semibold' : 'text-gray-700' }}">
+                                Log
+                            </span>
+                        </a>
+                    </div>
                 </div>
 
             </div>

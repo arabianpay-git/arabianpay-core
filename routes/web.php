@@ -40,6 +40,8 @@ use App\Http\Controllers\{
     TransferRequestController,
     UserRoleController,
 };
+use App\Http\Controllers\ActivityLogsController;
+use App\Http\Controllers\FahmanController;
 use App\Http\Middleware\CheckAdmin;
 use App\Http\Middleware\EnsureOtpVerified;
 use App\Http\Middleware\PreventBackHistory;
@@ -123,6 +125,7 @@ Route::group([
                 'employees'         => EmployeeController::class,
                 'risk-register'     => RiskController::class,
                 'case-management'     => CaseManagementController::class,
+                'activity-logs'     => ActivityLogsController::class,
             ]);
 
             // one-off attribute route
@@ -141,6 +144,9 @@ Route::group([
             //
             // Account management
             //
+            Route::get('fahman-results/{id}', [FahmanController::class,'fahmanResults'])->name('fahmanResults');
+            Route::get('fahman-details/{id}', [FahmanController::class, 'fahmanDetails']);
+            
             Route::controller(AccountController::class)->group(function () {
                 Route::get('customers',            'customers')->name('customers');
                 Route::get('customer/{id}',        'customerProfile')->name('customerProfile');
@@ -151,7 +157,7 @@ Route::group([
                 Route::get('customer-orders/{id}', 'orders')->name('customerOrders');
                 Route::get('customer-payments/{id}', 'payments')->name('customerPayments');
                 Route::get('customer-compliance/{id}', 'customerCompliance')->name('customerCompliance');
-
+                Route::get('customer-log/{id}', 'log')->name('customerLog');
                 Route::get('customer-credit-assesment/{id}', 'customerCreditAssessment')->name('customerCreditAssessment');
 
                 Route::put('customer-status/{id}', 'updateCustomerStatus')->name('updateCustomerStatus');
@@ -183,6 +189,15 @@ Route::group([
                 Route::post('score-update', 'scoreUpdate')->name('risk.scoreUpdate')->middleware(EnsureOtpVerified::class);
                 Route::get('export/pdf', 'exportPdf')->name('risk.exportPdf');
                 Route::get('export/csv', 'exportCsv')->name('risk.exportCsv');
+            });
+
+            //
+            // Activity logs
+            //
+            Route::controller(ActivityLogsController::class)->prefix('activity-logs')->group(function () {
+                Route::get('/', 'index')->name('activity-logs.index');
+                Route::get('/export/csv', 'exportCsv')->name('activity-logs.exportCsv');
+                Route::get('/export/pdf', 'exportPdf')->name('activity-logs.exportPdf');
             });
 
             Route::get('/otp/send', [OtpVerificationController::class, 'send'])->name('otp.send');
