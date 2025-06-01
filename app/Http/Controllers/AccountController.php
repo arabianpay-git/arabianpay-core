@@ -752,13 +752,13 @@ class AccountController extends Controller
 
         // 4) Placeholder credit score calculation
         //    TODO: Replace this with your real algorithm/service call
-        $creditScore = $this->calculateCreditScore($orders, $customer);
+        $creditScore = $service->assess($id);
 
         // 5) Determine risk level based on score
         //    TODO: Adjust thresholds to your requirements
-        if ($creditScore['compositeScore'] >= 80) {
+        if ($creditScore['creditScore']['compositeScore'] >= 80) {
             $riskLevel = 'Low';
-        } elseif ($creditScore['compositeScore'] >= 50) {
+        } elseif ($creditScore['creditScore']['compositeScore'] >= 50) {
             $riskLevel = 'Medium';
         } else {
             $riskLevel = 'High';
@@ -767,13 +767,13 @@ class AccountController extends Controller
         // 6) Score components breakdown (labels => percentages)
         //    TODO: Build this array from your scoring logic
         $scoreComponents = [
-            'POS Revenue'       => $creditScore['monthlyPOSScore'],
-            'Industry Risk'     => $creditScore['industryRiskScore'],
-            'Repayment'         => $creditScore['repaymentScore'],
-            'Business Age'      => $creditScore['businessAgeScore'],
-            'Obligations'       => $creditScore['obligationsScore'],
-            'Liquidity'         => $creditScore['liquidityScore'],
-            'Supplier Ratings'  => $creditScore['supplierScore'],
+            'POS Revenue'       => $creditScore['creditScore']['monthlyPOSScore'],
+            'Industry Risk'     => $creditScore['creditScore']['industryRiskScore'],
+            'Repayment'         => $creditScore['creditScore']['repaymentScore'],
+            'Business Age'      => $creditScore['creditScore']['businessAgeScore'],
+            'Obligations'       => $creditScore['creditScore']['obligationsScore'],
+            'Liquidity'         => $creditScore['creditScore']['liquidityScore'],
+            'Supplier Ratings'  => $creditScore['creditScore']['supplierScore'],
         ];
 
         // 7) Payment history timeline (e.g., payments per month)
