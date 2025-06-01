@@ -59,7 +59,9 @@ Route::group([
     // Public pages + AJAX lookups
     //
     Route::controller(DashboardController::class)->group(function () {
-        Route::get('/',                      'home');
+        Route::get('/', function () {
+            return redirect('/login');
+        });
         Route::get('/get-states/{country}',  'getStates');
         Route::get('/get-cities/{state}',    'getCities');
     });
@@ -144,9 +146,9 @@ Route::group([
             //
             // Account management
             //
-            Route::get('fahman-results/{id}', [FahmanController::class,'fahmanResults'])->name('fahmanResults');
+            Route::get('fahman-results/{id}', [FahmanController::class, 'fahmanResults'])->name('fahmanResults');
             Route::get('fahman-details/{id}', [FahmanController::class, 'fahmanDetails']);
-            
+
             Route::controller(AccountController::class)->group(function () {
                 Route::get('customers',            'customers')->name('customers');
                 Route::get('customer/{id}',        'customerProfile')->name('customerProfile');
