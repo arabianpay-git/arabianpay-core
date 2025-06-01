@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Services\RiskAnalyticsService;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -40,8 +41,19 @@ class RiskManagement extends Model
      */
     public static function getAverageCreditScores()
     {
-        return (float) DB::table('risk_management')
-            ->avg('credit_score');
+        $riskAnalyticsService = new RiskAnalyticsService();
+        $users = User::all();
+
+        $totalScores = [];
+
+        foreach ($users as $user) {
+            $riskScore = $riskAnalyticsService->calculateForUser($user);
+            $totalScores[] = $riskScore->total_score;
+        }
+
+        $averageScore = count($totalScores) > 0 ? array_sum($totalScores) / count($totalScores) : 0;
+
+        return (float) $averageScore;
     }
 
     public function merchant()

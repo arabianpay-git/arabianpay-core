@@ -13,12 +13,16 @@ use App\Models\CustomerCreditLimit;
 use App\Models\Product;
 use App\Models\State;
 use App\Models\Wallet;
+use App\Services\RiskAnalyticsService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\Cache;
 
 class DashboardController extends Controller
 {
+    public $riskService;
+    public function __construct()
+    {
+        $riskService = RiskAnalyticsService::class;
+    }
     public function index(Request $request)
     {
         $dateRange = $request->input('date_range', '12M');
