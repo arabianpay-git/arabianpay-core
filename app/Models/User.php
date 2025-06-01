@@ -15,7 +15,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasRoles, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable;
-
+    use \App\Traits\LogsModelActions;
     /**
      * The attributes that are mass assignable.
      *
@@ -77,10 +77,6 @@ class User extends Authenticatable implements MustVerifyEmail
     // Relationships
     // ==========================
 
-    public function riskScore()
-    {
-        return $this->hasOne(RiskScore::class, 'user_id');
-    }
     public function customerCreditLimit()
     {
         return $this->hasOne(CustomerCreditLimit::class, 'user_id');

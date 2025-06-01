@@ -3,13 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\{BusinessCategory, Customer, CustomerCreditLimit, Merchant, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, Transaction, Wallet};
-use App\Services\CreditAssessmentService;
-use App\Services\RiskAnalyticsService;
 use App\Traits\EmailSender;
 use App\Traits\SmsSender;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Auth;
+use Str;
 
 class AccountController extends Controller
 {
@@ -103,18 +103,16 @@ class AccountController extends Controller
         dd('Remaning');
     }
 
-    public function customerProfile($id, CreditAssessmentService $creditService, RiskAnalyticsService $riskService)
+    public function customerProfile($id)
     {
         $user = currentUser();
+
         $customer = Customer::with('user')
             ->where('user_id', $id)
             ->when($user->user_type !== 'admin', function ($query) use ($user) {
                 $query->where('assigned_to', $user->id);
             })
             ->first();
-
-        $data = $creditService->assess($id);
-        $riskScore = $riskService->calculateForUser($customer->user);
 
         if (!$customer) {
             return redirect()->route('customers')->with('error', __('Customer not found or not assigned to you.'));
@@ -125,17 +123,16 @@ class AccountController extends Controller
             $customer->save();
         }
 
-        return view('admin.accounts.customer-profile', compact('customer', 'data', 'riskScore'));
+        return view('admin.accounts.customer-profile', compact('customer'));
     }
 
 
-    public function customerFinance($id, CreditAssessmentService $creditService, RiskAnalyticsService $riskService)
+    public function customerFinance($id)
     {
         $customer = Customer::with('user', 'package')
             ->where('user_id', $id)
             ->firstOrFail();
-        $data = $creditService->assess($id);
-        $riskScore = $riskService->calculateForUser($customer->user);
+
         $packages = Package::orderBy('name')->get();
 
         $creditLimitLogs    = CustomerCreditLimit::where('user_id', $id)->paginate(10);
@@ -157,19 +154,35 @@ class AccountController extends Controller
             'totalPaymentDue',
             'dueCount',
             'lateCount',
-            'totalOrderAmount',
-            'data',
-            'riskScore'
+            'totalOrderAmount'
         ));
     }
 
     public function upgradePackage(Request $request, $user)
     {
         $request->validate(['package_id' => 'required|exists:packages,id']);
+        $customer = Customer::where('user_id', $user)->firstOrFail();
 
-        Customer::where('user_id', $user)
-            ->firstOrFail()
-            ->update(['package_id' => $request->package_id]);
+        $oldPackage = $customer->package->name;
+
+        $customer->update(['package_id' => $request->package_id]);
+
+        
+        
+        // Log the activity
+        $batchUuid = (string) Str::uuid();
+
+        $customer->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name." ".auth()->user()->last_name." upgrade Customer: {$customer->user->first_name} {$customer->user->last_name} [$customer->id] package from $oldPackage to {$customer->package->name}",
+            properties: [
+                'old_status' => $oldPackage,
+                'new_status' => $customer->package->name,
+                'reason' => $reason ?? null, // reson can be optional
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
 
         return back()->with('success', 'User package upgraded successfully.');
     }
@@ -215,7 +228,23 @@ class AccountController extends Controller
         ])['status'];
 
         $customer = Customer::findOrFail($id);
+        $oldStatus = $customer->status;
         $customer->update(['status' => $status]);
+
+        // Log the activity
+        $batchUuid = (string) Str::uuid();
+
+        $customer->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name." ".auth()->user()->last_name." update Customer: {$customer->user->first_name} {$customer->user->last_name} [$customer->id] status from $oldStatus to {$customer->status}",
+            properties: [
+                'old_status' => $oldStatus,
+                'new_status' => $customer->status,
+                'reason' => $reason ?? null, // reson can be optional
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
 
         if ($status === 'approved') {
 
@@ -505,10 +534,26 @@ class AccountController extends Controller
         ])['status'];
 
         $merchant = Merchant::where('user_id', $id)->firstOrFail();
+        $oldStatus = $merchant->status;
         $merchant->status = $status;
         $merchant->save();
 
         $merchant->update(['status' => $status]);
+
+        // Log the activity
+        $batchUuid = (string) Str::uuid();
+
+        $merchant->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name." ".auth()->user()->last_name." update Supplier: {$merchant->user->first_name} {$merchant->user->last_name} [$merchant->id] status from $oldStatus to {$merchant->status}",
+            properties: [
+                'old_status' => $oldStatus,
+                'new_status' => $merchant->status,
+                'reason' => $reason ?? null, // reson can be optional
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
 
         if ($status === 'approved') {
 
@@ -646,9 +691,266 @@ class AccountController extends Controller
         return view('admin.accounts.supplier-sales', compact('merchant', 'orders'));
     }
 
-    public function customerCreditAssessment($id, CreditAssessmentService $service)
+    public function customerCreditAssessment($id)
     {
-        $data = $service->assess($id);
-        return view('admin.accounts.customer-credit', $data);
+        // 1) Fetch merchant (with its user and businessType)
+        $customer = Customer::with('user')
+            ->where('user_id', $id)
+            ->firstOrFail();
+
+        // 2) Fetch all orders for that merchant
+        $orders = Order::where('user_id', $customer->id)
+            ->orderBy('created_at')
+            ->get();
+
+        // 3) Calculate Business Age in years
+        $governmentData = is_array($customer->cr_data)
+            ? $customer->cr_data
+            : json_decode($customer->cr_data, true);
+
+        $issueDateStr = Arr::get($governmentData, 'issueDateGregorian');
+
+        $startDate    = $issueDateStr
+            ? Carbon::parse($issueDateStr)
+            : $customer->created_at;
+
+        $businessAge  = $this->formatBusinessAge($startDate);
+
+        // 4) Placeholder credit score calculation
+        //    TODO: Replace this with your real algorithm/service call
+        $creditScore = $this->calculateCreditScore($orders, $customer);
+
+        // 5) Determine risk level based on score
+        //    TODO: Adjust thresholds to your requirements
+        if ($creditScore['compositeScore'] >= 80) {
+            $riskLevel = 'Low';
+        } elseif ($creditScore['compositeScore'] >= 50) {
+            $riskLevel = 'Medium';
+        } else {
+            $riskLevel = 'High';
+        }
+
+        // 6) Score components breakdown (labels => percentages)
+        //    TODO: Build this array from your scoring logic
+        $scoreComponents = [
+            'POS Revenue'       => $creditScore['monthlyPOSScore'],
+            'Industry Risk'     => $creditScore['industryRiskScore'],
+            'Repayment'         => $creditScore['repaymentScore'],
+            'Business Age'      => $creditScore['businessAgeScore'],
+            'Obligations'       => $creditScore['obligationsScore'],
+            'Liquidity'         => $creditScore['liquidityScore'],
+            'Supplier Ratings'  => $creditScore['supplierScore'],
+        ];
+
+        // 7) Payment history timeline (e.g., payments per month)
+        //    TODO: Build real data series and categories
+        $monthlyData = Wallet::selectRaw("MONTH(created_at) as month, SUM(amount) as total")
+            ->where('user_id', $customer->user_id)
+            ->where('transaction_type', 'user_repayment')
+            ->whereYear('created_at', now()->year)
+            ->groupByRaw("MONTH(created_at)")
+            ->pluck('total', 'month');
+
+        // Prepare full 12 months even if no data
+        $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        $data = [];
+
+        foreach (range(1, 12) as $month) {
+            $data[] = round($monthlyData[$month] ?? 0, 2);
+        }
+
+        $paymentTimeline = [
+            'categories' => $months,
+            'data'       => $data,
+        ];
+
+
+        // 8) Flagged risk factors
+        //    Each item: ['label' => '', 'value' => '', 'class' => 'text-red-600' etc.]
+        //    TODO: Generate from real risk checks
+        $riskFactors = [
+            ['label' => 'Industry Volatility',    'value' => 'High Risk', 'class' => 'text-red-600'],
+            ['label' => 'Debt-to-Revenue Ratio',  'value' => '1.2:1',       'class' => 'text-yellow-600'],
+            ['label' => 'Recent Disputes',         'value' => '3 Cases',     'class' => 'text-red-600'],
+        ];
+
+        // 9) Compliance statuses
+        //    Each item: ['name' => '', 'status' => '', 'badge' => 'badge-success' etc.]
+        //    TODO: Fetch real flags from your KYC/SIMAH/CR services
+        $statusBadgeMap = [
+            'approved'     => 'badge-success',
+            'pending'      => 'badge-warning',
+            'suspended'    => 'badge-neutral',
+            'blacklisted'  => 'badge-danger',
+        ];
+
+        $crValidation = $governmentData['status']['id'] ?? null;
+        $crValidationName = $governmentData['status']['name'] ?? 'Unknown';
+        $complianceStatus = [
+            [
+                'name'   => 'KYC Verification',
+                'status' => ucfirst($customer->status),
+                'badge'  => 'badge-sm badge-outline ' . ($statusBadgeMap[$customer->status] ?? 'badge-secondary')
+            ],
+            [
+                'name'   => 'SIMAH Integration',
+                'status' => 'Pending',
+                'badge'  => 'badge-sm badge-outline badge-warning'
+            ],
+            [
+                'name'   => 'CR Validation',
+                'status' => $crValidationName,
+                'badge'  => 'badge-sm badge-outline ' . ($crValidation ? 'badge-success' : 'badge-danger')
+            ],
+        ];
+
+        // 10) Return all variables to the Blade
+        return view('admin.accounts.customer-credit', compact(
+            'customer',
+            'orders',
+            'businessAge',
+            'creditScore',
+            'riskLevel',
+            'scoreComponents',
+            'paymentTimeline',
+            'riskFactors',
+            'complianceStatus'
+        ));
+    }
+
+    private function formatBusinessAge(Carbon $start): string
+    {
+        $interval = $start->diffAsCarbonInterval(Carbon::now());
+
+        if ($interval->y > 0) {
+            $decimal = round($interval->y + ($interval->m / 12), 1);
+            return $decimal . ' Year';
+        }
+
+        if ($interval->m > 0) {
+            return $interval->m . ' Month';
+        }
+
+        return $interval->d . ' Days';
+    }
+
+    private function calculateBase(Order $order): float
+    {
+        $items    = map_product_details($order->product_details);
+        $subTotal = $items->sum('total');
+        $shipping = $order->shipping_cost   ?? 0;
+        $discount = $order->coupon_discount ?? 0;
+        $tax      = calculate_order_tax($order);
+
+        return $subTotal + $tax + $shipping - $discount;
+    }
+
+    private function calculateCreditScore($orders, $customer = null)
+    {
+        // dd($customer->user_id);
+        // 1) Monthly POS Revenue (weight 25%)
+        // Sum total revenue from orders, assume 'total_amount' column or similar
+        $monthlyRevenue = Wallet::where('user_id', $customer->user_id)
+            ->where('transaction_type', 'user_repayment')
+            ->whereMonth('created_at', now()->month)
+            ->whereYear('created_at', now()->year)
+            ->sum('amount');
+
+        // Normalize monthlyRevenue by 50,000 as per formula in PDF
+        $monthlyPOSScore = min($monthlyRevenue / 50000, 1) * 25;
+
+        // 2) Business Age & Stability (weight 10%)
+        // Use businessAge string from formatBusinessAge - convert to years approx
+        // Assume businessAge format like '2.4 Year', '3 Month', or '20 Days'
+        $businessAge = 0;
+        if ($customer) {
+            $issueDateStr = Arr::get(is_array($customer->goverment_data) ? $customer->goverment_data : json_decode($customer->goverment_data, true), 'issueDateGregorian');
+            $startDate    = $issueDateStr ? Carbon::parse($issueDateStr) : $customer->created_at;
+            $interval = $startDate->diffAsCarbonInterval(Carbon::now());
+            $businessAge = $interval->y + ($interval->m / 12) + ($interval->d / 365);
+        }
+
+        if ($businessAge >= 3) {
+            $businessAgeScore = 10;
+        } elseif ($businessAge >= 1) {
+            $businessAgeScore = 7;
+        } else {
+            $businessAgeScore = 5;
+        }
+        $businessAgeScore *= 1; // 10% weight = max 10 points, so already correct.
+
+        // 3) Industry/Market Risk (weight 15%)
+        // Placeholder: Assume merchant has a riskLevel attribute or default to Medium
+
+        $industryRisk = $customer && isset($customer->businessType->risk_level) ? $customer->businessType->risk_level : 'Medium';
+        $industryRiskScores = ['low' => 15, 'medium' => 10, 'high' => 5];
+        $industryRiskScore = $industryRiskScores[$industryRisk] ?? 10;
+
+        // 4) Existing Financial Obligations (weight 10%)
+        // Placeholder: Assume $existingDebt in local variable, for now set to 0 (no debt)
+        $totalPurchases   = Order::where('user_id', $customer->user_id)->where('delivery_status', 'delivered')
+            ->get()
+            ->reduce(function ($carry, $order) {
+                return $carry + $this->calculateBase($order);
+            }, 0.0);
+        $totalPayments    = Wallet::where('transaction_type', 'user_repayment')->sum('amount');
+
+        $existingDebt = $totalPurchases - $totalPayments;
+        // Formula: 10 - min(Monthly Revenue / Existing Debt, 10), if debt=0, max score 10
+        if ($existingDebt > 0) {
+            $obligationsScore = 10 - min($monthlyRevenue / $existingDebt, 10);
+        } else {
+            $obligationsScore = 10;
+        }
+
+        // 5) Repayment Behavior (weight 20%)
+        // Placeholder: Assume repaymentDelays count from SIMAH or history, default 1 delay
+        $repaymentDelays = Transaction::where('user_id', $customer->user_id)->count('payment_status');
+        if ($repaymentDelays == 0) {
+            $repaymentScore = 20;
+        } elseif ($repaymentDelays <= 2) {
+            $repaymentScore = 15;
+        } else {
+            $repaymentScore = 5;
+        }
+
+
+        // 6) Bank Balance & Liquidity Trend (weight 10%)
+        // Placeholder: Assume positive trend, flat, or negative
+        $liquidityTrend = 'positive'; // options: positive, flat, negative
+        $liquidityScores = ['positive' => 10, 'flat' => 5, 'negative' => 0];
+        $liquidityScore = $liquidityScores[$liquidityTrend] ?? 5;
+
+        // 7) Supplier Feedback & External Ratings (weight 10%)
+        // Placeholder: Assume rating out of 10, default 7
+        $supplierRating = Product::where('user_id', $customer->user_id)->sum('rating');
+        $supplierScore = $supplierRating * 2; // directly out of 10 // I add *2 because we are working with out of 5 not out of 10
+
+        // Calculate final composite score (sum of weighted scores)
+        $compositeScore = $monthlyPOSScore
+            + $businessAgeScore
+            + $industryRiskScore
+            + $obligationsScore
+            + $repaymentScore
+            + $liquidityScore
+            + $supplierScore;
+
+        return [
+            'monthlyRevenue' => round($monthlyRevenue, 2),
+            'monthlyPOSScore' => round($monthlyPOSScore, 2),
+            'businessAge' => round($businessAge, 2),
+            'businessAgeScore' => round($businessAgeScore, 2),
+            'industryRisk' => ucfirst($industryRisk),
+            'industryRiskScore' => round($industryRiskScore, 2),
+            'existingDebt' => round($existingDebt, 2),
+            'obligationsScore' => round($obligationsScore, 2),
+            'repaymentDelays' => $repaymentDelays,
+            'repaymentScore' => round($repaymentScore, 2),
+            'liquidityTrend' => $liquidityTrend,
+            'liquidityScore' => round($liquidityScore, 2),
+            'supplierRating' => round($supplierRating, 2),
+            'supplierScore' => round($supplierScore, 2),
+            'compositeScore' => round($compositeScore, 2),
+        ];
     }
 }

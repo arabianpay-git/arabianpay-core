@@ -37,6 +37,16 @@ class RolePermissionController extends Controller
         // Sync permissions (assign the selected permissions)
         $role->syncPermissions($request->permissions ?? []);
 
+        // Log the assignment of permissions
+        auth()->user()->logModelAction(
+            event: 'assign_permissions',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " assigned permissions to role: {$role->name}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->route('role-permissions.index')
             ->with('success', 'Permissions assigned successfully.');
     }
@@ -66,6 +76,16 @@ class RolePermissionController extends Controller
         // Sync permissions
         $role->syncPermissions($request->permissions ?? []);
 
+        // Log the update of permissions
+        auth()->user()->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated permissions for role: {$role->name}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->route('role-permissions.index')
             ->with('success', 'Permissions updated successfully.');
     }
@@ -73,6 +93,15 @@ class RolePermissionController extends Controller
     public function destroy($roleId)
     {
         $role = Role::findOrFail($roleId);
+        // Log the removal of permissions
+        auth()->user()->logModelAction(
+            event: 'remove_permissions',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " removed permissions from role: {$role->name}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
         $role->syncPermissions([]);
 
         return redirect()->back()->with('success', 'Permissions removed from role.');

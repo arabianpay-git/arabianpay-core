@@ -42,6 +42,16 @@ class StateController extends Controller
             'name' => $request->name,
         ]);
 
+        // log the creation of the state
+        $state->logModelAction(
+            event: 'create',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new state: {$state->name} in country ID {$state->country_id}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         $this->storeOrUpdateTranslations($state, $request);
 
         return redirect()->route('states.index')->with('success', 'State created successfully.');
@@ -72,6 +82,16 @@ class StateController extends Controller
             'name' => $request->name['en'],
         ]);
 
+        // log the update of the state
+        $state->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated state: {$state->name} in country ID {$state->country_id}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         $this->storeOrUpdateTranslations($state, $request);
 
         return redirect()->route('states.index')->with('success', 'State updated successfully.');
@@ -80,6 +100,16 @@ class StateController extends Controller
 
     public function destroy(State $state)
     {
+        // log the deletion of the state
+        $state->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted state: {$state->name} in country ID {$state->country_id}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+        // Delete the state
         $state->delete();
 
         return redirect()->route('states.index')->with('success', 'State deleted successfully.');

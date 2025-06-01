@@ -6,6 +6,7 @@ use App\Models\Category;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Str;
 
 class CategoryController extends Controller
 {
@@ -48,6 +49,18 @@ class CategoryController extends Controller
             $this->storeOrUpdateTranslation($category, $request);
 
             DB::commit();
+
+            //Log the creation of the category
+            $batchUuid = (string) Str::uuid();
+            $category->logModelAction(
+                event: 'create',
+                description: auth()->user()->first_name." ".auth()->user()->last_name." created category: {$category->name} [$category->id]",
+                properties: [
+                    'reason' => $request->input('reason', null), // reson can be optional
+                    'ip' => request()->ip(),
+                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                ],
+            );
 
             return redirect()->route('categories.index')->with('success', 'Category created successfully.');
         } catch (\Exception $e) {
@@ -96,6 +109,17 @@ class CategoryController extends Controller
 
             DB::commit();
 
+            //Log the update of the category
+            $batchUuid = (string) Str::uuid();
+            $category->logModelAction(
+                event: 'update',
+                description: auth()->user()->first_name." ".auth()->user()->last_name." updated category: {$category->name} [$category->id]",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                ],
+            );
+
             return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -105,6 +129,16 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
+        //Log the deletion of the category
+        $batchUuid = (string) Str::uuid();
+        $category->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name." ".auth()->user()->last_name." delete category: {$category->name} [$category->id]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
         $category->delete();
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
     }

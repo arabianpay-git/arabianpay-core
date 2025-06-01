@@ -44,6 +44,16 @@ class BusinessTypeController extends Controller
 
             DB::commit();
 
+            // log the creation of the business type
+            $businessType->logModelAction(
+                event: 'create',
+                description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new business type: {$businessType->name}",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                ],
+            );
+
             return redirect()->route('business-types.index')->with('success', 'Business Type created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -88,6 +98,16 @@ class BusinessTypeController extends Controller
 
             DB::commit();
 
+            // log the update of the business type
+            $businessType->logModelAction(
+                event: 'update',
+                description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated business type: {$businessType->name} [{$businessType->id}]",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                ],
+            );
+
             return redirect()->route('business-types.index')->with('success', 'Business Type updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -97,6 +117,15 @@ class BusinessTypeController extends Controller
 
     public function destroy(BusinessType $businessType)
     {
+        // log the deletion of the business type
+        $businessType->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted business type: {$businessType->name} [{$businessType->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
         $businessType->delete();
         return redirect()->route('business-types.index')->with('success', 'Business Type deleted successfully.');
     }

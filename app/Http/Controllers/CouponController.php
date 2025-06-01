@@ -68,6 +68,19 @@ class CouponController extends Controller
 
         Coupon::create($validated);
 
+        // Log the creation of the coupon
+        $batchUuid = (string) \Str::uuid();
+        $coupon = Coupon::latest()->first();
+        $coupon->logModelAction(
+            event: 'create',
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created coupon: {$coupon->code} [{$coupon->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid,
+            ]
+        );
+        // End of logging
+
         return redirect()->route('coupons.index')->with('success', 'Coupon created successfully!');
     }
 
@@ -145,12 +158,36 @@ class CouponController extends Controller
 
         $coupon->update($validated);
 
+        // Log the update of the coupon
+        $batchUuid = (string) \Str::uuid();
+        $coupon->logModelAction(
+            event: 'update',
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated coupon: {$coupon->code} [{$coupon->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid,
+            ]
+        );
+        // End of logging
+
         return redirect()->route('coupons.index')->with('success', 'Coupon updated successfully!');
     }
 
     public function destroy(Coupon $coupon)
     {
+        // Log the deletion of the coupon
+        $batchUuid = (string) \Str::uuid();
+        $coupon->logModelAction(
+            event: 'delete',
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted coupon: {$coupon->code} [{$coupon->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid,
+            ]
+        );
+        // End of logging
         $coupon->delete();
+        
         return redirect()->back()->with('success', 'Coupon deleted successfully!');
     }
 

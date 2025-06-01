@@ -159,6 +159,16 @@ class OrderController extends Controller
         $order = Order::findOrFail($id);
         $order->update($request->only(['delivery_status', 'general_status']));
 
+        // Log the status update
+        auth()->user()->logModelAction(
+            event: 'update_status',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated order status for order ID: {$order->id}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return back()->withSuccess('Order status updated successfully.');
     }
 

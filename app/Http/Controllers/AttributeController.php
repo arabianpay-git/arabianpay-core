@@ -26,6 +26,17 @@ class AttributeController extends Controller
             'name' => $request->name,
         ]);
 
+        // log the creation of the attribute
+        $batchUuid = (string) \Str::uuid();
+        $attribute->logModelAction(
+            event: 'create',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created attribute: {$attribute->name} [{$attribute->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid,
+            ]
+        );
+
         return redirect()->route('attributes.index')->with('success', 'Attribute created successfully.');
     }
 
@@ -60,6 +71,17 @@ class AttributeController extends Controller
             'name' => $request->name['en'],
         ]);
 
+        // log the update of the attribute
+        $batchUuid = (string) \Str::uuid();
+        $attribute->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated attribute: {$attribute->name} [{$attribute->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid,
+            ]
+        );
+
         $this->storeOrUpdateTranslations($attribute, $request);
 
         return redirect()->route('attributes.index')->with('success', 'Attribute updated successfully.');
@@ -67,6 +89,16 @@ class AttributeController extends Controller
 
     public function destroy(Attribute $attribute)
     {
+        // log the deletion of the attribute
+        $batchUuid = (string) \Str::uuid();
+        $attribute->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted attribute: {$attribute->name} [{$attribute->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid,
+            ]
+        );
         $attribute->delete();
 
         return redirect()->route('attributes.index')->with('success', 'Attribute deleted successfully.');

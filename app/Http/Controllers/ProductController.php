@@ -8,6 +8,7 @@ use App\Models\{Attribute, AttributeValue, Product, Category, Brand, User};
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Str;
 
 class ProductController extends Controller
 {
@@ -70,6 +71,19 @@ class ProductController extends Controller
             $this->syncProductAttributes($product, $data['attribute_id'] ?? [], $request->input('attribute_value_id', []));
 
             DB::commit();
+
+            // Log the activity
+            $batchUuid = (string) Str::uuid();
+            $product->logModelAction(
+                event: 'create',
+                description: auth()->user()->first_name." ".auth()->user()->last_name." created product: {$product->name} [$product->id]",
+                properties: [
+                    'reason' => $request->input('reason', null), // reson can be optional
+                    'ip' => request()->ip(),
+                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                ],
+            );
+
             return redirect()->route('products.index')->with('success', 'Product created successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -158,6 +172,19 @@ class ProductController extends Controller
             }
 
             DB::commit();
+            // Log the activity
+            $batchUuid = (string) Str::uuid();
+
+            $product->logModelAction(
+                event: 'update',
+                description: auth()->user()->first_name." ".auth()->user()->last_name." update product: {$product->name} [$product->id]",
+                properties: [
+                    'reason' => $reason ?? null, // reson can be optional
+                    'ip' => request()->ip(),
+                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                ],
+            );
+
             return redirect()->route('products.index')->with('success', 'Product updated successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();
@@ -185,7 +212,20 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
+        
+        // Log the activity
+        $batchUuid = (string) Str::uuid();
+        $product->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name." ".auth()->user()->last_name." deleted product: {$product->name} [$product->id]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
+
         $product->delete();
+        
         return redirect()->route('products.index')->with('success', 'Product deleted successfully.');
     }
 
@@ -207,10 +247,10 @@ class ProductController extends Controller
             }
         }
         // Validate against credit limit
-        $creditLimit = get_credit_limit($data['user_id']);
-        if (!is_null($creditLimit) && !empty($data['unit_price']) && $data['unit_price'] > $creditLimit) {
-            return ['unit_price' => 'Unit price cannot exceed the credit limit.'];
-        }
+        //$creditLimit = get_credit_limit($data['user_id']);
+        //if (!is_null($creditLimit) && !empty($data['unit_price']) && $data['unit_price'] > $creditLimit) {
+          //  return ['unit_price' => 'Unit price cannot exceed the credit limit.'];
+        //}
         return null;
     }
 

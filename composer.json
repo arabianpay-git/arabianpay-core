@@ -17,6 +17,7 @@
         "livewire/livewire": "^3.0",
         "mcamara/laravel-localization": "^2.3",
         "milon/barcode": "^12.0",
+        "spatie/laravel-activitylog": "^4.10",
         "spatie/laravel-permission": "^6.18",
         "spatie/laravel-translatable": "^6.11",
         "yajra/laravel-datatables-oracle": "^12.0"

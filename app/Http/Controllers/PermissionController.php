@@ -29,6 +29,16 @@ class PermissionController extends Controller
             'guard_name' => 'web'
         ]);
 
+        // Log the creation of the permission
+        auth()->user()->logModelAction(
+            event: 'create',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new permission: {$request->name}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->route('permissions.index')->with('success', 'Permission created successfully.');
     }
 
@@ -51,12 +61,31 @@ class PermissionController extends Controller
             'guard_name' => 'web'
         ]);
 
+        // Log the update of the permission
+        auth()->user()->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated the permission: {$request->name}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->route('permissions.index')->with('success', 'Permission updated successfully.');
     }
 
     public function destroy($id)
     {
         $permission = Permission::findOrFail($id);
+        // log the deletion of the permission
+        auth()->user()->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted the permission: {$permission->name} [{$permission->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
         $permission->delete();
 
         return redirect()->route('permissions.index')->with('success', 'Permission deleted successfully.');

@@ -30,6 +30,16 @@ class UserRoleController extends Controller
 
         $user->syncRoles([$role->name]);
 
+        // Log the role update
+        auth()->user()->logModelAction(
+            event: 'update_role',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated role for user: {$user->first_name} {$user->last_name}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->route('user-roles.index')->with('success', 'User role updated.');
     }
 }

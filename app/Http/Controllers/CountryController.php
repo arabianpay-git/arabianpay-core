@@ -32,6 +32,16 @@ class CountryController extends Controller
             'name' => $request->name,
         ]);
 
+        // log the creation of the country
+        $country->logModelAction(
+            event: 'create',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created country: {$country->name} [{$country->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->route('countries.index')->with('success', 'Country created successfully.');
     }
 
@@ -64,6 +74,16 @@ class CountryController extends Controller
             'name' => $request->name['en'],
         ]);
 
+        // log the update of the country
+        $country->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated country: {$country->name} [{$country->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         $this->storeOrUpdateTranslations($country, $request);
 
         return redirect()->route('countries.index')->with('success', 'Country updated successfully.');
@@ -71,6 +91,15 @@ class CountryController extends Controller
 
     public function destroy(Country $country)
     {
+        // log the deletion of the country
+        $country->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted country: {$country->name} [{$country->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
         $country->delete();
 
         return redirect()->route('countries.index')->with('success', 'Country deleted successfully.');

@@ -20,6 +20,16 @@ class RefundRequestController extends Controller
             'refund_status' => $request->input('refund_status'),
         ]);
 
+        // Log the refund status update
+        $refundRequest->logModelAction(
+            event: 'update',
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated refund request status to {$refundRequest->refund_status} for order ID {$refundRequest->order_id}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->back()->with('success', 'Refund status updated successfully!');
     }
 

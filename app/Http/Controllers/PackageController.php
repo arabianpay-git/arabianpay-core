@@ -32,6 +32,19 @@ class PackageController extends Controller
 
         Package::create($data);
 
+        //log the creation of the package
+        $package = Package::where('name', $data['name'])->first();
+        $batchUuid = (string) Str::uuid();
+        $package->logModelAction(
+            event: 'create',
+            description: auth()->user()->first_name." ".auth()->user()->last_name." created package: {$package->name} [$package->id]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
+
+
         return redirect()->route('packages.index')->with('success', 'Package created successfully.');
     }
 
@@ -65,6 +78,16 @@ class PackageController extends Controller
 
 
         $package->update($data);
+        // Log the update of the package
+        $batchUuid = (string) Str::uuid();
+        $package->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name." ".auth()->user()->last_name." updated package: {$package->name} [$package->id]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
 
         $this->storeOrUpdateTranslations($package, $request);
 
@@ -73,6 +96,17 @@ class PackageController extends Controller
 
     public function destroy(Package $package)
     {
+        // log the deletion of the package
+        $batchUuid = (string) Str::uuid();
+        $package->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name." ".auth()->user()->last_name." deleted package: {$package->name} [$package->id]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
+        // Delete the package
         $package->delete();
         return redirect()->route('packages.index')->with('success', 'Package deleted successfully.');
     }

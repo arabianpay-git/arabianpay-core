@@ -2,10 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
 
 class City extends Model
 {
+    use LogsModelActions;
+
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true; // Save only changed attributes
+    protected static $logName = 'city'; // Custom log name
     protected $fillable = [
         'name',
         'state_id',

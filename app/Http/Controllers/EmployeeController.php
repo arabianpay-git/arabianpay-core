@@ -49,6 +49,16 @@ class EmployeeController extends Controller
             'user_type'     => 'employee',
         ]);
 
+        // Log the creation of the employee
+        auth()->user()->logModelAction(
+            event: 'create',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new employee: {$request->first_name} {$request->last_name}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->route('employees.index')->with('success', 'Employee created successfully.');
     }
 
@@ -98,12 +108,31 @@ class EmployeeController extends Controller
 
         $employee->update($data);
 
+        // Log the update of the employee
+        auth()->user()->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated employee: {$request->first_name} {$request->last_name}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->route('employees.index')->with('success', 'Employee updated successfully.');
     }
 
     public function destroy(User $employee)
     {
         abort_unless($employee->role === 'employee', 404);
+        // log the deletion of the employee
+        auth()->user()->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted employee: {$employee->first_name} {$employee->last_name}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
         $employee->delete();
         return redirect()->route('employees.index')->with('success', 'Employee deleted successfully.');
     }

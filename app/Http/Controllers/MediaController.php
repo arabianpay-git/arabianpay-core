@@ -121,6 +121,16 @@ class MediaController extends Controller
                 'folder'    => $folder,
             ]);
 
+            // Log the upload action
+            $media->logModelAction(
+                event: 'upload',
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " uploaded a file: {$originalName} [{$media->id}]",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => (string) Str::uuid(),
+                ]
+            );
+
             $uploadedMedia[] = $media;
         }
 
@@ -145,6 +155,16 @@ class MediaController extends Controller
         $mediaItems = Media::whereIn('id', $ids)->get();
 
         foreach ($mediaItems as $media) {
+            // Log the delete action
+            $media->logModelAction(
+                event: 'delete',
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted a file: {$media->name} [{$media->id}]",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => (string) Str::uuid(),
+                ]
+            );
+            // Delete the file from storage
             Storage::disk('public')->delete('media/' . $media->file_name);
 
             $media->delete();

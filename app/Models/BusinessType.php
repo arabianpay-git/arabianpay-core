@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -9,6 +10,11 @@ use Illuminate\Support\Str;
 class BusinessType extends Model
 {
     use HasFactory;
+    use LogsModelActions;
+
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true; // Save only changed attributes
+    protected static $logName = 'business_type'; // Custom log name
 
     protected $fillable = [
         'name',

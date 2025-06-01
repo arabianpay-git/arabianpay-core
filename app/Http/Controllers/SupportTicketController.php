@@ -56,6 +56,16 @@ class SupportTicketController extends Controller
             'reply' => $validated['reply'],
         ]);
 
+        // Log the reply action
+        $ticket->logModelAction(
+            event: 'reply',
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " replied to ticket: {$ticket->ticket_number} [{$ticket->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(),
+            ]
+        );
+
         return redirect()->route('showTickets', $ticket->id)
             ->with('success', 'Your reply has been submitted successfully!');
     }
@@ -68,9 +78,20 @@ class SupportTicketController extends Controller
 
         $tickets = SupportTicket::where('ticket_number', $ticket_number)->get();
 
+        // Log the status update
+        $batchUuid = (string) \Str::uuid();
         foreach ($tickets as $ticket) {
             $ticket->status = $request->status;
             $ticket->save();
+
+            $ticket->logModelAction(
+                event: 'status_update',
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated ticket status: {$ticket->ticket_number} [{$ticket->id}] to {$request->status}",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => $batchUuid,
+                ]
+            );
         }
 
         return redirect()->back()->with('success', 'Ticket status updated everywhere successfully.');

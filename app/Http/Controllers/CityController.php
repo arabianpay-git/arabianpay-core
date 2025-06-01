@@ -45,6 +45,16 @@ class CityController extends Controller
             'name' => $request->name,
         ]);
 
+        // log the creation of the city
+        $city->logModelAction(
+            event: 'create',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new city: {$city->name} in state ID {$city->state_id}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         $this->storeOrUpdateTranslations($city, $request);
 
         return redirect()->route('cities.index')->with('success', 'City created successfully.');
@@ -74,6 +84,16 @@ class CityController extends Controller
             'name' => $request->name['en'],
         ]);
 
+        // log the update of the city
+        $city->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated city: {$city->name} [{$city->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         $this->storeOrUpdateTranslations($city, $request);
 
         return redirect()->route('cities.index')->with('success', 'City updated successfully.');
@@ -81,6 +101,16 @@ class CityController extends Controller
 
     public function destroy(City $city)
     {
+        // log the deletion of the city
+        $city->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted city: {$city->name} [{$city->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+        // Delete the city
         $city->delete();
 
         return redirect()->route('cities.index')->with('success', 'City deleted successfully.');

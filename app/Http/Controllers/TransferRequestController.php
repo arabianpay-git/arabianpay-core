@@ -59,6 +59,20 @@ class TransferRequestController extends Controller
             }
 
             DB::commit();
+            // Log the transfer request creation
+            auth()->user()->logModelAction(
+                event: 'create_transfer_request',
+                description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a transfer request for model: {$modelClass} with ID: {$modelId}",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                    'transfer_request_id' => $transferRequest->id,
+                    'model_type' => $modelClass,
+                    'model_id' => $modelId,
+                    'to_user_id' => $request->to_user_id,
+                    'description' => $request->description,
+                ],
+            );
 
             return redirect()->back()->with('success', 'Transfer request sent successfully.');
         } catch (\Exception $e) {
@@ -81,7 +95,7 @@ class TransferRequestController extends Controller
         DB::beginTransaction();
         try {
             $modelClass = $data['model_type'];
-
+            $batch_uuid = (string) \Str::uuid(); // Generate a new UUID for the batch
             foreach ($data['model_ids'] as $modelId) {
                 // Create each TransferRequest
                 TransferRequest::create([
@@ -102,6 +116,20 @@ class TransferRequestController extends Controller
                         $modelInstance->save();
                     }
                 }
+
+                // Log the transfer request creation
+                auth()->user()->logModelAction(
+                    event: 'create_transfer_request',
+                    description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a bulk transfer request for model: {$modelClass} with ID: {$modelId}",
+                    properties: [
+                        'ip' => request()->ip(),
+                        'batch_uuid' => $batch_uuid, // Generate a new UUID for the batch
+                        'model_type' => $modelClass,
+                        'model_id' => $modelId,
+                        'to_user_id' => $data['to_user_id'],
+                        'description' => $data['description'],
+                    ],
+                );
             }
 
             DB::commit();

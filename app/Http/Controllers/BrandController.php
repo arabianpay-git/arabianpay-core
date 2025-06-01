@@ -6,6 +6,7 @@ use App\Models\Brand;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Str;
 
 class BrandController extends Controller
 {
@@ -43,6 +44,17 @@ class BrandController extends Controller
             ]);
 
             DB::commit();
+
+            // Log the creation of the brand
+            $batchUuid = (string) Str::uuid();
+            $brand->logModelAction(
+                event: 'create',
+                description: auth()->user()->first_name . " " . auth()->user()->last_name . " created brand: {$brand->name} [{$brand->id}]",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                ],
+            );
 
             return redirect()->route('brands.index')->with('success', 'Brand created successfully.');
         } catch (\Exception $e) {
@@ -88,6 +100,16 @@ class BrandController extends Controller
         $this->storeOrUpdateTranslations($brand, $request);
 
         DB::commit();
+        //Log the update of the brand
+        $batchUuid = (string) Str::uuid();
+        $brand->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name." ".auth()->user()->last_name." updated brand: {$brand->name} [$brand->id]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
 
         return redirect()->route('brands.index')->with('success', 'Brand updated successfully.');
         // } catch (\Exception $e) {
@@ -98,6 +120,16 @@ class BrandController extends Controller
 
     public function destroy(Brand $brand)
     {
+        // log the deletion of the brand
+        $batchUuid = (string) Str::uuid();
+        $brand->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted brand: {$brand->name} [{$brand->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
         $brand->delete();
         return redirect()->route('brands.index')->with('success', 'Brand deleted successfully.');
     }

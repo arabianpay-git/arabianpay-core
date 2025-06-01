@@ -29,6 +29,16 @@ class RoleController extends Controller
             'guard_name' => 'web'
         ]);
 
+        // Log the creation of the role
+        auth()->user()->logModelAction(
+            event: 'create',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new role: {$request->name}",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->route('roles.index')->with('success', 'Role created successfully.');
     }
 
@@ -51,12 +61,32 @@ class RoleController extends Controller
             'guard_name' => 'web'
         ]);
 
+        // Log the update of the role
+        auth()->user()->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated the role: {$role->name} [{$role->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+
         return redirect()->route('roles.index')->with('success', 'Role updated successfully.');
     }
 
     public function destroy($id)
     {
         $role = Role::findOrFail($id);
+
+        // log the deletion of the role
+        auth()->user()->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted the role: {$role->name} [{$role->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
         $role->delete();
 
         return redirect()->route('roles.index')->with('success', 'Role deleted successfully.');

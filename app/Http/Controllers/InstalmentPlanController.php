@@ -46,6 +46,20 @@ class InstalmentPlanController extends Controller
             'status' => $request->status,
         ]);
 
+        // log the creation of the instalment plan
+        $batchUuid = (string) \Str::uuid();
+        $instalmentPlan = InstalmentPlan::latest()->first();
+        $instalmentPlan->logModelAction(
+            event: 'create',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created instalment plan: {$instalmentPlan->name} [{$instalmentPlan->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid,
+            ]
+        );
+
+
+
         return redirect()->route('instalment-plans.index')->with('success', 'Instalment Plan created successfully.');
     }
 
@@ -86,6 +100,17 @@ class InstalmentPlanController extends Controller
             'status' => $request->status,
         ]);
 
+        // log the update of the instalment plan
+        $batchUuid = (string) \Str::uuid();
+        $instalmentPlan->logModelAction(
+            event: 'update',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated instalment plan: {$instalmentPlan->name} [{$instalmentPlan->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid,
+            ]
+        );
+
         $this->storeOrUpdateTranslations($instalmentPlan, $request);
 
         return redirect()->route('instalment-plans.index')->with('success', 'Instalment Plan updated successfully.');
@@ -94,6 +119,18 @@ class InstalmentPlanController extends Controller
     public function destroy($id)
     {
         $instalmentPlan = InstalmentPlan::find($id);
+
+        //log the deletion of the instalment plan
+        $batchUuid = (string) \Str::uuid();
+        $instalmentPlan->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted instalment plan: {$instalmentPlan->name} [{$instalmentPlan->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid,
+            ]
+        );
+        // Delete the instalment plan
         $instalmentPlan->delete();
 
         return redirect()->route('instalment-plans.index')->with('success', 'Instalment Plan deleted successfully.');

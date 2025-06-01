@@ -42,6 +42,16 @@ class BusinessCategoryController extends Controller
 
             DB::commit();
 
+            // log the creation of the business category
+            $category->logModelAction(
+                event: 'create',
+                description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new business category: {$category->name}",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                ],
+            );
+
             return redirect()->route('business-categories.index')->with('success', 'Business Category created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -82,6 +92,16 @@ class BusinessCategoryController extends Controller
 
             DB::commit();
 
+            // log the update of the business category
+            $businessCategory->logModelAction(
+                event: 'update',
+                description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated business category: {$businessCategory->name} [{$businessCategory->id}]",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                ],
+            );
+
             return redirect()->route('business-categories.index')->with('success', 'Business Category updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -91,6 +111,16 @@ class BusinessCategoryController extends Controller
 
     public function destroy(BusinessCategory $businessCategory)
     {
+        // log the deletion of the business category
+        $businessCategory->logModelAction(
+            event: 'delete',
+            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted business category: {$businessCategory->name} [{$businessCategory->id}]",
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+            ],
+        );
+        // Delete the business category
         $businessCategory->delete();
         return redirect()->route('business-categories.index')->with('success', 'Business Category deleted successfully.');
     }
