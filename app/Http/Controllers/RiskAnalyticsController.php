@@ -10,6 +10,7 @@ use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Http;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RiskAnalyticsController extends Controller
@@ -181,7 +182,7 @@ class RiskAnalyticsController extends Controller
         $crIdRaw = $idMatchScore + $idExpiryScore + $crExpiryScore + $industryScore + $activityScore;
         $crIdScore = min($crIdRaw / 100, 1) * 25;
 
-        // Location Risk Score (max 15)
+        // Location Risk Score (max 10)
         $city = strtolower($decodedCrData['headquarterCityName'] ?? '');
 
         $cityTierMap = [
@@ -212,7 +213,7 @@ class RiskAnalyticsController extends Controller
             $defaultRateScore = 0;
         }
 
-        $locationScore = round($cityTierScore + $economicActivityScore + $defaultRateScore, 2);
+        $locationScore = round(($cityTierScore + $economicActivityScore + $defaultRateScore) * (10 / 15), 2);
 
         $location = [
             'city' => ucwords($city),
@@ -220,6 +221,11 @@ class RiskAnalyticsController extends Controller
             'activity_score' => $economicActivityScore,
             'default_rate_score' => $defaultRateScore,
         ];
+
+        // Get Google reviews with (max weight 5)
+        $businessName = $decodedCrData['name'] ?? null;
+
+        $googleRating = $this->getOverallRating($businessName);
 
         // Initialize flagged and manual_reason
         $flagged = false;
@@ -240,7 +246,8 @@ class RiskAnalyticsController extends Controller
             + round($repaymentScore, 2)
             + round($industryScore, 2)
             + round($locationScore, 2)
-            + round($riskScore, 2);
+            + round($riskScore, 2)
+            + round($googleRating['result']['rating'] ?? null, 2);
 
         return (object)[
             'id' => $userId,
@@ -266,9 +273,42 @@ class RiskAnalyticsController extends Controller
             'flagged' => $flagged ?? false,
             'risk_score' => $riskScore ?? 0,
             'reason' => $manual_reason,
+            'google_rating' => $googleRating,
             'total_score' => $totalScore,
         ];
     }
+
+    private function getOverallRating($businessName = null)
+    {
+        if (!$businessName) {
+            return null;
+        }
+
+        // Step 1: Get Place ID
+        $searchResponse = Http::get('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', [
+            'input' => $businessName,
+            'inputtype' => 'textquery',
+            'fields' => 'place_id',
+            'key' => env('GOOGLE_PLACE_API_KEY'),
+        ]);
+
+        $placeId = $searchResponse['candidates'][0]['place_id'] ?? null;
+
+        if (!$placeId) {
+            return null;
+        }
+
+        // Step 2: Get Rating
+        $detailsResponse = Http::get('https://maps.googleapis.com/maps/api/place/details/json', [
+            'place_id' => $placeId,
+            'fields' => 'rating',
+            'key' => env('GOOGLE_PLACE_API_KEY'),
+        ]);
+
+        return $detailsResponse ?? 0;
+    }
+
+
 
     public function exportCsv(Request $request)
     {

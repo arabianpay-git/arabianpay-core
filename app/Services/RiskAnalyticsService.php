@@ -8,6 +8,7 @@ use App\Models\BusinessType;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Support\Facades\Http;
 
 class RiskAnalyticsService
 {
@@ -44,6 +45,7 @@ class RiskAnalyticsService
         // Repayment and industry scores
         $repaymentData = $this->calculateRepaymentScore($user);
         $locationData = $this->calculateLocationScore($decodedCrData);
+        $googleData = $this->calculateGoogleScore($decodedCrData['name'] ?? null);
 
         // Manual risk adjustments
         $manualRisk = $this->getManualRisk($user->id);
@@ -51,7 +53,7 @@ class RiskAnalyticsService
         // Final score calculation
         $totalScore = $crIdScore + $posScore + $repaymentData['score'] +
             $repaymentData['industry_score'] + $locationData['score'] +
-            $manualRisk['score'];
+            $manualRisk['score'] + $googleData;
 
         return (object) array_merge([
             'id' => $user->id,
@@ -219,7 +221,7 @@ class RiskAnalyticsService
             default => 0
         };
 
-        $totalScore = round($tierScore + $activityScore + $defaultScore, 2);
+        $totalScore = round(($tierScore + $activityScore + $defaultScore) * (10 / 15), 2);
 
         return [
             'score' => $totalScore,
@@ -230,6 +232,36 @@ class RiskAnalyticsService
                 'default_rate_score' => $defaultScore,
             ]
         ];
+    }
+
+    private function calculateGoogleScore($businessName = null)
+    {
+        if (!$businessName) {
+            return null;
+        }
+
+        // Step 1: Get Place ID
+        $searchResponse = Http::get('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', [
+            'input' => $businessName,
+            'inputtype' => 'textquery',
+            'fields' => 'place_id',
+            'key' => env('GOOGLE_PLACE_API_KEY'),
+        ]);
+
+        $placeId = $searchResponse['candidates'][0]['place_id'] ?? null;
+
+        if (!$placeId) {
+            return null;
+        }
+
+        // Step 2: Get Rating
+        $detailsResponse = Http::get('https://maps.googleapis.com/maps/api/place/details/json', [
+            'place_id' => $placeId,
+            'fields' => 'rating',
+            'key' => env('GOOGLE_PLACE_API_KEY'),
+        ]);
+
+        return $detailsResponse['result']['rating'] ?? 0;
     }
 
     private function getManualRisk(int $userId): array

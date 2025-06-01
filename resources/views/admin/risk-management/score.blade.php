@@ -67,11 +67,12 @@
                                         <tr>
                                             <th class="w-[60px] text-center">User ID</th>
                                             <th class="text-center">User Name</th>
-                                            <th class="text-center">CR & ID Validation</th>
+                                            <th class="w-[200px] text-center">CR & ID Validation</th>
                                             <th class="text-center">POS Revenue</th>
                                             <th class="text-center">Repayment Delays</th>
                                             <th class="text-center">Industory Category</th>
-                                            <th class="text-left">Location Risk</th>
+                                            <th class="w-[120px] text-left">Location Risk</th>
+                                            <th class="text-left">Google Reviews</th>
                                             <th class="text-left">Risk Score</th>
                                             <th class="text-left">Action</th>
                                         </tr>
@@ -167,6 +168,10 @@
                                                             — Risk Score: {{ $item->location_score ?? 0 }}
                                                         </small>
                                                     </div>
+                                                </td>
+
+                                                <td>
+                                                    Overall {{ $item->google_rating['result']['rating'] ?? 0 }}/5
                                                 </td>
 
                                                 <td>

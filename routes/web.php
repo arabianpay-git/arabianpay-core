@@ -317,3 +317,7 @@ Route::group([
             });
         });
 });
+
+
+Route::get('/google-reviews', [ReportController::class, 'index'])->name('google.reviews.form');
+Route::post('/google-reviews', [ReportController::class, 'getReviews'])->name('google.reviews.fetch');
