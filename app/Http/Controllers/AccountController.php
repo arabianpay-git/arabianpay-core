@@ -99,7 +99,7 @@ class AccountController extends Controller
     public function log($id)
     {
         $customer = Customer::with('user')->where('user_id', $id)->firstOrFail();
-        
+
         $logs = Activity::where('subject_type', Customer::class)
             ->where('subject_id', $customer->id)
             ->orderBy('created_at', 'desc')
