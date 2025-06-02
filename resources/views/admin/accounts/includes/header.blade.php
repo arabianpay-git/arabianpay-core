@@ -178,32 +178,42 @@
             </button>
         </div>
         <form action="{{ route('updateSupplierStatusApprove', ['id' => $merchant->user_id]) }}" method="POST"
-            class="modal-body p-5">
+            class="modal-body p-5" enctype="multipart/form-data">
             @csrf
             @method('PUT')
+
             <input type="hidden" name="status" value="approved">
+
             @php
                 $service = new App\Services\RiskAnalyticsService();
                 $user = App\Models\User::find($merchant->user_id);
                 $riskScore = $service->calculateForUser($user);
             @endphp
+
             <input type="hidden" name="fahman_score" value="{{ $riskScore->total_score }}">
 
             <div class="mb-4">
                 <label for="commission" class="block text-sm font-medium text-gray-700">Commission Percentage</label>
                 <input type="number" name="commission" id="commission" class="input" step="0.01"
-                    min="0" max="100">
+                    min="0" max="100" value="{{ old('commission') }}" required>
+            </div>
+
+            <div class="mb-4">
+                <label for="payment_schedule" class="block text-sm font-medium text-gray-700">Payment Schedule
+                    (Days)</label>
+                <input type="number" name="payment_schedule" id="payment_schedule" class="input" step="1"
+                    min="0" max="100" value="{{ old('payment_schedule') }}" required>
             </div>
 
             <div class="mb-4">
                 <label for="reason" class="block text-sm font-medium text-gray-700">Reason to Approve</label>
-                <textarea name="reason" id="reason" rows="3" class="textarea"></textarea>
+                <textarea name="reason" id="reason" rows="3" class="textarea" required>{{ old('reason') }}</textarea>
             </div>
 
             <div class="mb-4">
                 <div class="flex items-center w-full max-w-md relative">
                     <!-- Hidden file input -->
-                    <input type="file" name="contract" id="contract" class="hidden" />
+                    <input type="file" name="contract" id="contract" class="hidden">
 
                     <!-- Button to trigger file input -->
                     <button type="button"
@@ -212,10 +222,9 @@
                         <i class="ki-filled ki-folder text-xl"></i>
                     </button>
 
-                    <!-- Readonly input to show filename -->
-                    <input type="text" id="fileNameDisplay" name="contract" class="input w-full pl-12"
-                        placeholder="Click to select media" readonly value="{{ old('contract') }}"
-                        style="padding-inline-start: 2.75rem;" />
+                    <!-- Readonly input to show selected filename -->
+                    <input type="text" id="fileNameDisplay" class="input w-full pl-12"
+                        placeholder="Click to select media" readonly style="padding-inline-start: 2.75rem;">
                 </div>
             </div>
 
@@ -223,6 +232,7 @@
                 <button type="submit" class="btn btn-primary">Submit Approval</button>
             </div>
         </form>
+
     </div>
 </div>
 

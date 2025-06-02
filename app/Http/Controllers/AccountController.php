@@ -550,11 +550,17 @@ class AccountController extends Controller
 
     public function updateSupplierStatusApprove(Request $request, $id)
     {
+        $merchant = Merchant::where('user_id', $id)->firstOrFail();
+
+        // if ($merchant->status == 'approved') {
+        //     return redirect()->back()->with('error', 'This supplier has already been approved.');
+        // }
+
         $request->validate([
             'commission' => 'required|numeric|min:0|max:100',
             'reason' => 'nullable|string|max:1000',
             'contract' => 'required|file|mimes:pdf,jpg,jpeg,png',
-            'fahman_score' => 'nullable|integer|min:0|max:100',
+            'payment_schedule' => 'required|integer|min:0|max:100',
         ]);
 
         DB::transaction(function () use ($request, $id) {
@@ -564,13 +570,14 @@ class AccountController extends Controller
                 $contractPath = Storage::url($path);
             }
 
-            $approval = Approval::create([
+            Approval::create([
                 'user_id' => $id,
                 'employee_id' => Auth::id(),
                 'commission' => $request->commission,
                 'reason' => $request->reason,
                 'contract' => $contractPath,
                 'fahman_score' => $request->fahman_score,
+                'payment_schedule' => $request->payment_schedule,
             ]);
 
             $merchant = Merchant::where('user_id', $id)->firstOrFail();

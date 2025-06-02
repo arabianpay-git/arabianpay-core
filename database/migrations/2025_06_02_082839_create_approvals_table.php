@@ -18,6 +18,7 @@ return new class extends Migration
             $table->decimal('commission', 8, 2)->nullable();
             $table->text('reason')->nullable();
             $table->string('contract')->nullable();
+            $table->integer('payment_schedule')->nullable();
             $table->integer('fahman_score')->nullable();
             $table->timestamps();
         });

@@ -1,16 +1,30 @@
-<script src="https://code.jquery.com/jquery-3.7.1.min.js" integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.7.1.min.js"
+    integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
 <script src="{{ asset('assets/js/core.bundle.js') }}"></script>
 <script src="{{ asset('assets/vendors/apexcharts/apexcharts.min.js') }}"></script>
 <script src="{{ asset('assets/js/widgets/general.js') }}"></script>
 <script src="{{ asset('assets/js/layouts/demo1.js') }}"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-@if(session('success'))
+@if (session('success'))
     <script>
         Swal.fire({
             icon: 'success',
             title: 'Success!',
             text: "{{ session('success') }}",
+            confirmButtonColor: '#3085d6',
+            timer: 3000,
+            timerProgressBar: true
+        });
+    </script>
+@endif
+
+@if (session('error'))
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error!',
+            text: "{{ session('error') }}",
             confirmButtonColor: '#3085d6',
             timer: 3000,
             timerProgressBar: true
@@ -36,7 +50,7 @@
 <!-- Tabs JS -->
 <script>
     document.querySelectorAll('.tab-btn').forEach(btn => {
-        btn.addEventListener('click', function () {
+        btn.addEventListener('click', function() {
             document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
             document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
 

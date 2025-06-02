@@ -32,29 +32,6 @@
                                         </button>
                                     </form>
                                 </div>
-
-                                <div class="flex gap-2 lg:gap-3">
-                                    <a href="{{ route('credit.exportCsv', request()->only('search')) }}"
-                                        class="btn btn-sm btn-outline btn-success flex items-center"
-                                        title="{{ __('Export CSV') }}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round"
-                                                d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M4 12h16M4 8h16M4 4h16" />
-                                        </svg>
-                                        {{ __('Export CSV') }}
-                                    </a>
-
-                                    <a href="{{ route('credit.exportPdf', request()->only('search')) }}"
-                                        class="btn btn-sm btn-outline btn-danger flex items-center"
-                                        title="{{ __('Export PDF') }}">
-                                        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
-                                            viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-                                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
-                                        </svg>
-                                        {{ __('Export PDF') }}
-                                    </a>
-                                </div>
                             </div>
 
                         </div>
