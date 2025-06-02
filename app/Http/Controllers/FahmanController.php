@@ -65,6 +65,18 @@ class FahmanController extends Controller
 
         $merchant = Merchant::findOrFail($id);
         $riskScore = $riskAnalyticsService->calculateForUser($merchant->user);
+        $sectorRisk = strtolower(string: $merchant->businessType->risk_level ?? 'medium');
+
+        $riskMap = [
+            'low' => 1.5,
+            'medium-low' => 1.2,
+            'medium' => 1,
+            'high' => 0.8,
+            'very high' => 0.5,
+        ];
+        $sectorAvg = $riskMap[$sectorRisk] ?? 1;
+
+        //dd($merchant->businessType->risk_level);
         $score = $riskScore->total_score;
 
         $fahmanAdvice = match (true) {
@@ -95,7 +107,7 @@ class FahmanController extends Controller
             ],
         };
         
-        return view('admin.accounts.partials.fahamn_supplier_results', compact('riskScore',  'fahmanAdvice'));
+        return view('admin.accounts.partials.fahamn_supplier_results', compact('riskScore',  'fahmanAdvice','sectorAvg'));
     }
 
     public function fahmanDetails($id, CreditAssessmentService $creditService)
