@@ -106,8 +106,14 @@ class FahmanController extends Controller
                 'message' => 'Fahman advises against working with this supplier at this time. Their data indicates high instability.',
             ],
         };
+    $average = Product::selectRaw('user_id, AVG(est_shipping_days) as avg_shipping_days')
+        ->where('user_id', $merchant->user_id)
+        ->groupBy('user_id')
+        ->first(); // returns one row
+
+        $PayDate = $average->avg_shipping_days ?? 0 + (100 - $score) * 0.1;
         
-        return view('admin.accounts.partials.fahamn_supplier_results', compact('riskScore',  'fahmanAdvice','sectorAvg'));
+        return view('admin.accounts.partials.fahamn_supplier_results', compact('riskScore',  'fahmanAdvice','sectorAvg', 'PayDate'));
     }
 
     public function fahmanDetails($id, CreditAssessmentService $creditService)

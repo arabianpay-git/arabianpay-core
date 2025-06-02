@@ -32,6 +32,8 @@
 
             // Ensure result is between 1 and 10
             $commissionPercentage = min(10, max(1, $rawCommission));
+
+            
             
         @endphp
             <!-- Commission Cards -->
@@ -43,7 +45,7 @@
                         <div>
                             <h6 class="text-sm text-muted mb-1">Settlement Date (Payment)</h6>
                             <div class="text-lg font-bold text-gray-800">
-                                3 Days
+                                {{ round($PayDate) }} Days
                             </div>
                         </div>
                     </div>
