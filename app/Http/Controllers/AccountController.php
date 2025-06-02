@@ -545,16 +545,17 @@ class AccountController extends Controller
     public function supplierCompliance($id)
     {
         $merchant = Merchant::where('user_id', $id)->with('user')->firstOrFail();
-        return view('admin.accounts.supplier-compliance', compact('merchant'));
+        $contract = Approval::where('user_id', $id)->select('contract')->firstOrFail();
+        return view('admin.accounts.supplier-compliance', compact('merchant', 'contract'));
     }
 
     public function updateSupplierStatusApprove(Request $request, $id)
     {
         $merchant = Merchant::where('user_id', $id)->firstOrFail();
 
-        // if ($merchant->status == 'approved') {
-        //     return redirect()->back()->with('error', 'This supplier has already been approved.');
-        // }
+        if ($merchant->status == 'approved') {
+            return redirect()->back()->with('error', 'This supplier has already been approved.');
+        }
 
         $request->validate([
             'commission' => 'required|numeric|min:0|max:100',

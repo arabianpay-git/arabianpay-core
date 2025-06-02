@@ -11,11 +11,13 @@ class SupportTicket extends Model
     use HasFactory;
     use LogsModelActions;
 
-        protected static $logAttributes = ['status', 'amount', 'due_date'];
-        protected static $logOnlyDirty = true; // Save only changed attributes
-        protected static $logName = 'support_ticket'; // Custom log name
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'support_ticket';
+
     protected $fillable = [
         'user_id',
+        'assigned_to',
         'ticket_number',
         'subject',
         'details',
@@ -27,6 +29,12 @@ class SupportTicket extends Model
     protected $casts = [
         'files' => 'array',
     ];
+
+    // In SupportTicket model
+    public function assigned()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
 
     public function user()
     {

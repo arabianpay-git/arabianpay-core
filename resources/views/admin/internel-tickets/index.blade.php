@@ -13,13 +13,11 @@
                         Support Tickets
                     </h1>
                 </div>
-                @if (Route::is('internelTickets'))
-                    <div class="flex items-center gap-2.5">
-                        <a class="btn btn-sm btn-light" href="{{ route('ticketCreate') }}">
-                            {{ __('Create New Ticket') }}
-                        </a>
-                    </div>
-                @endif
+                <div class="flex items-center gap-2.5">
+                    <a class="btn btn-sm btn-light" href="{{ route('ticketCreate') }}">
+                        {{ __('Create New Ticket') }}
+                    </a>
+                </div>
             </div>
         </div>
         <!-- End of Container -->
@@ -50,17 +48,6 @@
                                             <th class="w-[60px] text-center">
                                                 No
                                             </th>
-                                            @if ($tickets->first()?->assigned_to)
-                                                <th class="text-left">
-                                                    <span class="sort asc">
-                                                        <span class="sort-label font-normal text-gray-700">
-                                                            {{ __('Assigned To') }}
-                                                        </span>
-                                                        <span class="sort-icon"> </span>
-                                                    </span>
-                                                </th>
-                                            @endif
-
                                             <th class="text-left">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
@@ -115,13 +102,6 @@
                                         @foreach ($tickets as $index => $item)
                                             <tr>
                                                 <td class="text-center">{{ $index + 1 }}</td>
-
-                                                @if ($item->assigned)
-                                                    <td>
-                                                        {{ $item->assigned->first_name . ' ' . ($item->assigned->last_name ?? '') }}
-                                                    </td>
-                                                @endif
-
                                                 <td>{{ Str::limit($item->subject, 50) }}</td>
                                                 <td>{{ Str::limit($item->details, 100) }}</td>
                                                 <td>{{ Str::limit($item->reply ?? '-', 50) }}</td>
