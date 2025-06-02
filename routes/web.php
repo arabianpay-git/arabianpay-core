@@ -148,6 +148,8 @@ Route::group([
             //
             Route::get('fahman-results/{id}', [FahmanController::class, 'fahmanResults'])->name('fahmanResults');
             Route::get('fahman-details/{id}', [FahmanController::class, 'fahmanDetails']);
+            Route::get('fahman-supplier-results/{id}', [FahmanController::class, 'fahmanSupplierResults'])->name('fahmanSupplierResults');
+            Route::get('fahman-supplier-details/{id}', [FahmanController::class, 'fahmanSupplierDetails']);
 
             Route::controller(AccountController::class)->group(function () {
                 Route::get('customers',            'customers')->name('customers');

@@ -27,10 +27,13 @@
         @php
             $score = $riskScore->total_score;
 
-            // Commission increases as risk score increases
-            $commissionPercentage = 10 - round($score / 10); // 
+            // تحويل الدرجة (0–100) إلى نسبة عمولة بين 1% و10%
+            $commissionPercentage = 10 - round($score / 10); // كلما زادت المخاطرة، زادت العمولة
             $commissionPercentage = max(1, min($commissionPercentage, 10)); // تأمين بين 1 و10
 
+            // مثال: إن أردت ضربها في قيمة طلب (مثلاً 100,000 ريال)
+            $sampleOrderAmount = 100000;
+            $calculatedCommission = ($commissionPercentage / 100) * $sampleOrderAmount;
         @endphp
             <!-- Commission Cards -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">

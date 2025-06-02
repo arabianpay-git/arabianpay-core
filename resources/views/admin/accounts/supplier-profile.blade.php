@@ -590,6 +590,130 @@
         <!-- end: grid -->
     </div>
     <!-- End of Container -->
+        <div class="modal modal-open:!flex" data-modal="true" data-modal-disable-scroll="false" id="modal_fahman">
+            <div class="modal-content modal-center max-w-[500px] w-full" id="modal_fahman_content">
+                <div class="modal-header p-0 border-0">
+                    <!-- Container -->
+                    <div class="container-fixed">
+                        <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+                            <div class="flex items-center justify-between flex-wrap grow gap-5">
+                                <div class="flex flex-col justify-center gap-2">
+                                    <h1 class="text-xl pt-5 font-semibold leading-none text-gray-900">
+                                        Fahman
+                                    </h1>
+                                    <div class="flex items-center gap-2 text-sm font-normal text-gray-700">
+                                        The Friendly FinAdvisor
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2.5">
+                                    <a class="btn btn-sm btn-light" data-modal-dismiss="true" href="#">
+                                        Close
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End of Container -->
+                </div>
+                <div class="modal-body scrollable-y py-0 mb-5 ps-6 pe-3 me-3" id="modal_fahman_body"
+                    style="margin: auto">
+                    <img src="{{ asset('assets/media/waiting.gif') }}" alt="" style="margin: auto;width:200px">
+                    <div class="text-center mt-5">
+                        <h3 class="text-lg font-semibold text-gray-900">Loading...</h3>
+                        <p class="text-sm text-gray-600">Customer data is being analyzed.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="modal modal-open:!flex" data-modal="true" data-modal-disable-scroll="false" id="fahmanSupplierDetailsModal">
+            <div class="modal-content modal-center w-full" id="fahman-supplier-details-body">
+                <div class="modal-header p-0 border-0">
+                    <!-- Container -->
+                    <div class="container-fixed">
+                        <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+                            <div class="flex items-center justify-between flex-wrap grow gap-5">
+                                <div class="flex flex-col justify-center gap-2">
+                                    <h1 class="text-xl pt-5 font-semibold leading-none text-gray-900">
+                                        Fahman
+                                    </h1>
+                                    <div class="flex items-center gap-2 text-sm font-normal text-gray-700">
+                                        The Friendly FinAdvisor
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                    <!-- End of Container -->
+                </div>
+                <div class="modal-body scrollable-y py-0 mb-5 ps-6 pe-3 me-3" id="modal_settings_body"
+                    style="margin: auto">
+                    <img src="{{ asset('assets/media/waiting.gif') }}" alt="" style="margin: auto;width:200px">
+                    <div class="text-center mt-5">
+                        <h3 class="text-lg font-semibold text-gray-900">Loading...</h3>
+                        <p class="text-sm text-gray-600">Customer data is being analyzed.</p>
+                    </div>
+                </div>
+
+            </div>
+        </div>
+
+    <script>
+        window.onload = () => {
+            const modalEl = KTDom.getElement('#modal_fahman');
+            const modal = KTModal.getInstance(modalEl);
+            modal?.show();
+        };
+    </script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const fahmanBody = document.getElementById("modal_fahman_body");
+            // Fetch the initial data for fahman results
+            const url = "{{ url('admin/fahman-supplier-results/' . $merchant->id) }}";
+            setTimeout(() => {
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        fahmanBody.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error("Failed to get data:", error);
+                        fahmanBody.innerHTML = `
+                        <span>
+                            Failed to get data
+                        </span>
+                    `;
+                    });
+            }, 3000); // 3000 milliseconds = 3 seconds
+        });
+    </script>
+    <script>
+        function showSupplierRiskDetails() {
+            const modalElF = KTDom.getElement('#fahmanSupplierDetailsModal');
+            const modalF = KTModal.getInstance(modalElF);
+
+            modalF?.show();
+            const detailsBody = document.getElementById('fahman-supplier-details-body');
+
+            // عرض المودال
+            //modal.show();
+            const url = "{{ url('admin/fahman-supplier-details/' . $merchant->id) }}";
+            // تحميل التفاصيل
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    console.log(html);
+                    detailsBody.innerHTML = html;
+                })
+                .catch(error => {
+                    console.error(error);
+                    detailsBody.innerHTML = `<div class="text-danger">Failed to load details</div>`;
+                });
+        }
+    </script>
 </main>
 
 
