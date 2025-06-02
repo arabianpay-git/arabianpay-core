@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{BusinessCategory, Customer, CustomerCreditLimit, Merchant, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, Transaction, Wallet};
+use App\Models\{Approval, BusinessCategory, Customer, CustomerCreditLimit, Merchant, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, Transaction, Wallet};
 use App\Services\CreditAssessmentService;
 use App\Services\RiskAnalyticsService;
 use App\Traits\EmailSender;
@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
 
@@ -560,9 +561,72 @@ class AccountController extends Controller
         return view('admin.accounts.supplier-compliance', compact('merchant'));
     }
 
+    public function updateSupplierStatusApprove(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'commission' => 'nullable|numeric|min:0|max:100',
+            'reason' => 'nullable|string|max:1000',
+            'contract' => 'nullable|file|mimes:pdf,jpg,jpeg,png',
+            'fahman_score' => 'nullable|integer|min:0|max:100',
+        ]);
+
+        $contractPath = null;
+        if ($request->hasFile('contract')) {
+            $path = $request->file('contract')->store('contracts', 'public');
+            $contractPath = Storage::url($path); // This generates the full URL (e.g., /storage/contracts/filename.pdf)
+        }
+
+        $approval = Approval::create([
+            'user_id' => $request->user_id,
+            'employee_id' => Auth::id(),
+            'commission' => $request->commission,
+            'reason' => $request->reason,
+            'contract' => $contractPath,
+            'fahman_score' => $request->fahman_score,
+        ]);
+
+        $merchant = Merchant::where('user_id', $request->user_id)->firstOrFail();
+        $oldStatus = $merchant->status;
+        $merchant->status = 'approved';
+        $merchant->save();
+
+        $this->sendEmail(
+            'emails.welcome_account_approved',
+            $merchant->user->email,
+            'Account Approved',
+            [
+                'name' => $merchant->user->first_name . " " . $merchant->user->last_name,
+            ]
+        );
+
+
+        $this->sendSms(
+            $merchant->user->phone_number,
+            'Welcome to ArabianPay! Your account has been approved.'
+        );
+
+        // Log the activity
+        $batchUuid = (string) Str::uuid();
+
+        $merchant->logModelAction(
+            event: 'update',
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " update Supplier: {$merchant->user->first_name} {$merchant->user->last_name} [$merchant->id] status from $oldStatus to {$merchant->status}",
+            properties: [
+                'old_status' => $oldStatus,
+                'new_status' => $merchant->status,
+                'reason' => $reason ?? null, // reson can be optional
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+            ],
+        );
+
+        return redirect()->back()->with('success', 'Approval submitted successfully.');
+    }
 
     public function updateSupplierStatus(Request $request, $id)
     {
+        dd('ok');
         $status = $request->validate([
             'status' => 'required|in:approved,suspended,pending,blacklisted',
         ])['status'];
@@ -588,24 +652,6 @@ class AccountController extends Controller
                 'batch_uuid' => $batchUuid, // Add batch UUID for consistency
             ],
         );
-
-        if ($status === 'approved') {
-
-            $this->sendEmail(
-                'emails.welcome_account_approved',
-                $merchant->user->email,
-                'Account Approved',
-                [
-                    'name' => $merchant->user->first_name . " " . $merchant->user->last_name,
-                ]
-            );
-
-
-            $this->sendSms(
-                $merchant->user->phone_number,
-                'Welcome to ArabianPay! Your account has been approved.'
-            );
-        }
 
         return back()->with('success', 'Status updated successfully!');
     }
