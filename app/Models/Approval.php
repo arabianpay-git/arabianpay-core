@@ -13,6 +13,7 @@ class Approval extends Model
         'reason',
         'contract',
         'fahman_score',
+        'payment_schedule',
     ];
 
     // Relationships

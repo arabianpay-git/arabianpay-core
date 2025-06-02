@@ -191,7 +191,7 @@ Route::group([
                 Route::get('score-engine', 'score')->name('risk.score');
                 Route::post('score-update', 'scoreUpdate')->name('risk.scoreUpdate')->middleware(EnsureOtpVerified::class);
                 Route::get('export/pdf', 'exportPdf')->name('risk.exportPdf');
-                Route::get('export/csv', 'exportCsv')->name('risk.exportCsv');
+                Route::get('export/csv', 'exportCsv')->withoutMiddleware([PreventBackHistory::class])->name('risk.exportCsv');
             });
 
             //
