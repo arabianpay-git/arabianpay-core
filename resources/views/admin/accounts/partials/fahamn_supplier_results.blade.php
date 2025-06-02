@@ -57,7 +57,7 @@
                         <div>
                             <h6 class="text-sm text-muted mb-1">Commission Percentage</h6>
                             <div class="text-2xl font-bold text-gray-800">
-                                {{ $commissionPercentage }}%
+                                {{ number_format($commissionPercentage,2) }}%
                             </div>
                         </div>
                     </div>
