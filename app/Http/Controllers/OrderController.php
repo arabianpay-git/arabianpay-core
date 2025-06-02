@@ -183,18 +183,21 @@ class OrderController extends Controller
             ->map(function (array $item) {
                 $product = Product::find($item['product_id']);
 
-                if ($product) {
-                    $price   = data_get($item, 'attributes.0.price') ?: $product->unit_price;
-                    $quantity = $item['quantity'];
-
-                    return [
-                        'product'    => $product,
-                        'quantity'   => $quantity,
-                        'price'      => $price,
-                        'attributes' => $item['attributes'] ?? [],
-                        'total'      => $price * $quantity,
-                    ];
+                if (!$product) {
+                    return null;
                 }
-            });
+
+                $price = data_get($item, 'attributes.0.price', $product->unit_price);
+                $quantity = $item['quantity'];
+
+                return [
+                    'product'    => $product,
+                    'quantity'   => $quantity,
+                    'price'      => $price,
+                    'attributes' => $item['attributes'] ?? [],
+                    'total'      => $price * $quantity,
+                ];
+            })
+            ->filter(); // Remove any nulls if product was not found
     }
 }
