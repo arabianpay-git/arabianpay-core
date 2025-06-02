@@ -1,11 +1,8 @@
-{{-- resources/views/admin/products/bulk-upload.blade.php --}}
 @extends('layouts.base')
 
 @section('content')
     @push('styles')
         <style>
-            /* In your main CSS file (e.g. app.css) */
-
             .drag-handle {
                 position: absolute;
                 top: 0.25rem;
@@ -17,9 +14,7 @@
                 justify-content: center;
                 border-radius: 9999px;
                 background-color: #e5e7eb;
-                /* gray-200 */
                 color: #6b7280;
-                /* gray-500 */
                 box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
                 cursor: grab;
                 opacity: 0;
@@ -33,27 +28,18 @@
 
             .drag-handle:hover {
                 background-color: #d1d5db;
-                /* gray-300 */
                 color: #374151;
-                /* gray-700 */
             }
 
-
-
-            /* Highlight a cell as a drop target */
             .drop-target {
                 border: 2px dashed #3B82F6;
-                /* Tailwind’s blue-500 */
                 background-color: #EFF6FF;
-                /* Tailwind’s blue-50 */
             }
         </style>
     @endpush
+
     <main class="grow content pt-5" id="content" role="content">
-        <!-- Container -->
         <div class="container-fixed" id="content_container"></div>
-        <!-- End of Container -->
-        <!-- Container -->
         <div class="container-fixed">
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
@@ -124,13 +110,13 @@
                                                         xmlns="http://www.w3.org/2000/svg">
                                                         <path
                                                             d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506
-                                                                                                                                                                                                                                                                                                                        18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937
-                                                                                                                                                                                                                                                                                                                        39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z"
                                                             fill=""></path>
                                                         <path
                                                             d="M16.25 2.89711C19.8081 0.842838 24.1919 0.842837 27.75 2.89711L37.4006 8.46891C40.9587 10.5232 43.1506 14.3196 43.1506
-                                                                                                                                                                                                                                                                                                                        18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937
-                                                                                                                                                                                                                                                                                                                        39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                            39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z"
                                                             stroke=""></path>
                                                     </svg>
                                                     <div
@@ -156,46 +142,35 @@
                                             </div>
                                         </div>
                                     </div>
-
                                 </div>
                             @endif
                             <form action="{{ route('products.bulk-upload') }}" method="POST" enctype="multipart/form-data"
                                 class="space-y-6">
                                 @csrf
 
-                                <!-- File Upload Field -->
-                                <div>
-                                    <label for="file" class="block text-sm font-semibold text-gray-800 mb-2">
-                                        {{ __('Upload CSV File') }} <span class="text-danger">*</span>
-                                    </label>
-                                    <input type="file" name="file" id="file" accept=".csv,.xlsx,text/csv"
-                                        class="block w-full file:border-0 file:px-4 file:py-2 file:bg-blue-600 file:text-white file:font-medium file:rounded-lg hover:file:bg-blue-700 border border-gray-300 rounded-lg text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 p-2.5">
+                                <div class="flex items-center w-full max-w-md relative">
+                                    <button type="button" id="selectFileBtn"
+                                        class="absolute top-0 bottom-0 px-3 flex items-center justify-center hover:bg-primary-light hover:text-primary text-gray-500 rounded-r">
+                                        <i class="ki-filled ki-folder text-xl"></i>
+                                    </button>
+
+                                    <input type="text" id="fileNameDisplay" class="input w-full"
+                                        placeholder="{{ __('Click to select excel file') }}" readonly
+                                        style="padding-inline-start: 2.75rem;">
+
+                                    <input type="file" id="fileInput" name="file" class="hidden"
+                                        accept=".csv,.txt,.xlsx">
+
                                     @error('file')
                                         <div class="text-red-600 text-sm mt-1">{{ $message }}</div>
                                     @enderror
                                 </div>
-
-                                <!-- Submit & Link -->
                                 <div class="flex items-center gap-4 mt-4">
                                     <button type="submit" class="btn btn-sm btn-outline btn-primary">
                                         <i class="ki-filled ki-exit-up"></i>
                                         {{ __('Upload Now') }}
                                     </button>
                                 </div>
-
-                                <!-- Success Message -->
-                                @if (session('success'))
-                                    <div class="mt-4 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
-                                        <strong>{{ __('Success:') }}</strong> {{ session('success') }}
-                                    </div>
-                                @endif
-
-                                <!-- Error Message -->
-                                @if ($errors->any())
-                                    <div class="mt-4 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
-                                        <strong>{{ __('Error:') }}</strong> {{ $errors->first('file') }}
-                                    </div>
-                                @endif
                             </form>
 
                         </div>
@@ -218,14 +193,17 @@
                                         <table class="min-w-full border border-gray-300 bg-white" id="editable-table">
                                             <thead class="bg-gray-100 text-gray-700 text-sm font-semibold">
                                                 <tr>
-                                                    @foreach ($header as $col)
-                                                        <th class="border px-4 py-2">
-                                                            {{ __(ucwords(str_replace('_', ' ', $col))) }}
-                                                        </th>
-                                                    @endforeach
-                                                    <th class="border px-4 py-2">{{ __('Category') }}</th>
-                                                    <th class="border px-4 py-2">{{ __('Brand') }}</th>
-                                                    <th class="border px-4 py-2">{{ __('Thumbnail') }}</th>
+                                                    <th class="border px-4 py-2" data-col="0">{{ __('Name') }}</th>
+                                                    <th class="border px-4 py-2" data-col="1">{{ __('Unit Price') }}
+                                                    </th>
+                                                    <th class="border px-4 py-2" data-col="2">{{ __('Description') }}
+                                                    </th>
+                                                    <th class="border px-4 py-2" data-col="3">{{ __('Unit') }}</th>
+                                                    <th class="border px-4 py-2" data-col="4">{{ __('Stock') }}</th>
+                                                    <th class="border px-4 py-2" data-col="5">{{ __('Category') }}</th>
+                                                    <th class="border px-4 py-2" data-col="6">{{ __('Brand') }}</th>
+                                                    <th class="border px-4 py-2" data-col="7">{{ __('Thumbnail') }}
+                                                    </th>
                                                 </tr>
                                             </thead>
                                             <tbody id="editable-table-body">
@@ -235,28 +213,25 @@
                                                             <td class="cell-wrapper border px-4 py-2 group relative"
                                                                 data-row="{{ $rowIndex }}"
                                                                 data-col="{{ $colIndex }}">
-                                                                <!-- Drag handle appears on hover -->
-                                                                <span class="drag-handle" title="Drag cell"
+                                                                <span class="drag-handle" title="Drag column"
                                                                     draggable="true">⠿</span>
 
-                                                                <!-- Actual editable content -->
                                                                 <div class="cell-content" contenteditable="true"
                                                                     data-input-name="products[{{ $rowIndex }}][{{ $col }}]">
                                                                     {{ $row[$col] ?? '' }}
                                                                 </div>
-
-                                                                <!-- Hidden input for form submission -->
                                                                 <input type="hidden"
                                                                     name="products[{{ $rowIndex }}][{{ $col }}]"
                                                                     value="{{ $row[$col] ?? '' }}">
                                                             </td>
                                                         @endforeach
 
-                                                        {{-- Category --}}
-                                                        <td class="border px-4 py-2">
+                                                        <td class="border px-4 py-2" data-col="{{ count($header) }}">
                                                             <select name="products[{{ $rowIndex }}][category_id]"
-                                                                class="w-full text-sm rounded border-gray-300">
-                                                                <option value="">Select Category</option>
+                                                                class="w-full text-sm rounded border-gray-300 select"
+                                                                required>
+                                                                <option value="">{{ __('Select Category') }}
+                                                                </option>
                                                                 @foreach ($categories as $category)
                                                                     <option value="{{ $category->id }}"
                                                                         {{ old("products.$rowIndex.category_id") == $category->id ? 'selected' : '' }}>
@@ -266,11 +241,11 @@
                                                             </select>
                                                         </td>
 
-                                                        {{-- Brand --}}
-                                                        <td class="border px-4 py-2">
+                                                        <td class="border px-4 py-2" data-col="{{ count($header) + 1 }}">
                                                             <select name="products[{{ $rowIndex }}][brand_id]"
-                                                                class="w-full text-sm rounded border-gray-300">
-                                                                <option value="">Select Brand</option>
+                                                                class="w-full text-sm rounded border-gray-300 select"
+                                                                required>
+                                                                <option value="">{{ __('Select Brand') }}</option>
                                                                 @foreach ($brands as $brand)
                                                                     <option value="{{ $brand->id }}"
                                                                         {{ old("products.$rowIndex.brand_id") == $brand->id ? 'selected' : '' }}>
@@ -280,8 +255,7 @@
                                                             </select>
                                                         </td>
 
-                                                        {{-- Thumbnail --}}
-                                                        <td class="border px-4 py-2">
+                                                        <td class="border px-4 py-2" data-col="{{ count($header) + 2 }}">
                                                             @include('media.single', [
                                                                 'name' => "products[$rowIndex][thumbnail]",
                                                                 'label' => '',
@@ -295,11 +269,12 @@
                                             </tbody>
                                         </table>
 
-                                        <div class="mt-4 p-2">
-                                            <button type="submit" class="btn btn-sm btn-primary">
-                                                {{ __('Submit') }}
+                                        <div class="mt-4 p-2 flex justify-end" style="margin-right: 10px;">
+                                            <button type="submit" class="btn btn-sm btn-outline btn-primary">
+                                                {{ __('Submit Product') }}
                                             </button>
                                         </div>
+
                                     </form>
                                 </div>
                             </div>
@@ -409,65 +384,127 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            let draggedCell = null; // the <td> containing the cell being dragged
-            let draggedContent = null; // the <span class="cell-content"> inside draggedCell
+            let draggedColIndex = null;
+            let currentTargetCol = null;
 
-            // 1) Attach dragstart to each handle
-            document.querySelectorAll('.drag-handle').forEach(handle => {
+            // 1) Attach dragstart to every .drag-handle INSIDE <tbody> cells
+            document.querySelectorAll('#editable-table-body .drag-handle').forEach(handle => {
                 handle.addEventListener('dragstart', (e) => {
-                    // Find the parent <td> of this handle
-                    draggedCell = handle.closest('td');
-                    draggedContent = draggedCell.querySelector('.cell-content');
+                    const td = handle.closest('td');
+                    draggedColIndex = parseInt(td.getAttribute('data-col'));
                     e.dataTransfer.effectAllowed = 'move';
                 });
             });
 
-            // 2) Attach dragover, dragleave, drop, dragend to every <td>
+            // 2) Attach dragover, dragleave, drop, dragend to every <td> in tbody
             const allCells = document.querySelectorAll('#editable-table-body td');
 
             allCells.forEach(cell => {
                 cell.addEventListener('dragover', (e) => {
-                    e.preventDefault(); // allow dropping
-                    if (cell !== draggedCell) {
-                        cell.classList.add('drop-target');
+                    e.preventDefault();
+                    const targetColIndex = parseInt(cell.getAttribute('data-col'));
+                    if (targetColIndex !== draggedColIndex) {
+                        if (currentTargetCol !== targetColIndex) {
+                            // Remove highlight from previous column (if any)
+                            if (currentTargetCol !== null) {
+                                document.querySelectorAll(
+                                    `#editable-table-body td[data-col='${currentTargetCol}']`
+                                ).forEach(td => td.classList.remove('drop-target'));
+                            }
+                            // Add highlight to all cells in new target column
+                            document.querySelectorAll(
+                                `#editable-table-body td[data-col='${targetColIndex}']`
+                            ).forEach(td => td.classList.add('drop-target'));
+                            currentTargetCol = targetColIndex;
+                        }
                         e.dataTransfer.dropEffect = 'move';
                     }
                 });
 
-                cell.addEventListener('dragleave', () => {
-                    cell.classList.remove('drop-target');
+                cell.addEventListener('dragleave', (e) => {
+                    const related = e.relatedTarget;
+                    const leavingCol = parseInt(cell.getAttribute('data-col'));
+                    if (leavingCol === currentTargetCol) {
+                        // Check if moving to another cell in same column
+                        if (!related || !related.closest || !related.closest('td') || parseInt(
+                                related.closest('td').getAttribute('data-col')) !== leavingCol) {
+                            document.querySelectorAll(
+                                `#editable-table-body td[data-col='${currentTargetCol}']`
+                            ).forEach(td => td.classList.remove('drop-target'));
+                            currentTargetCol = null;
+                        }
+                    }
                 });
 
                 cell.addEventListener('drop', (e) => {
                     e.preventDefault();
-                    cell.classList.remove('drop-target');
+                    if (currentTargetCol !== null) {
+                        document.querySelectorAll(
+                            `#editable-table-body td[data-col='${currentTargetCol}']`
+                        ).forEach(td => td.classList.remove('drop-target'));
+                        currentTargetCol = null;
+                    }
 
-                    if (!draggedCell || cell === draggedCell) {
-                        draggedCell = null;
+                    const targetColIndex = parseInt(cell.getAttribute('data-col'));
+                    if (draggedColIndex === null || targetColIndex === draggedColIndex) {
+                        draggedColIndex = null;
                         return;
                     }
 
-                    const targetContent = cell.querySelector('.cell-content');
-                    if (draggedContent && targetContent) {
-                        // Swap innerHTML of the content spans
-                        const temp = targetContent.innerHTML;
-                        targetContent.innerHTML = draggedContent.innerHTML;
-                        draggedContent.innerHTML = temp;
-                    }
+                    // Swap every <td> in every <tr> between those two columns in <tbody> only
+                    document.querySelectorAll('#editable-table-body tr').forEach(row => {
+                        const sourceTd = row.querySelector(
+                            `td[data-col='${draggedColIndex}']`);
+                        const targetTd = row.querySelector(
+                            `td[data-col='${targetColIndex}']`);
+                        if (sourceTd && targetTd) {
+                            const sourceContentDiv = sourceTd.querySelector(
+                                '.cell-content');
+                            const targetContentDiv = targetTd.querySelector(
+                                '.cell-content');
+                            const tempContent = targetContentDiv.innerHTML;
+                            targetContentDiv.innerHTML = sourceContentDiv.innerHTML;
+                            sourceContentDiv.innerHTML = tempContent;
 
-                    draggedCell = null;
-                    draggedContent = null;
+                            const sourceHidden = sourceTd.querySelector(
+                                'input[type="hidden"]');
+                            const targetHidden = targetTd.querySelector(
+                                'input[type="hidden"]');
+                            const tempHiddenVal = targetHidden.value;
+                            targetHidden.value = sourceHidden.value;
+                            sourceHidden.value = tempHiddenVal;
+                        }
+                    });
+
+                    // Finally, swap the data-col attributes on the affected <td> elements
+                    document.querySelectorAll('#editable-table-body tr').forEach(row => {
+                        row.querySelectorAll('td').forEach(td => {
+                            const thisCol = parseInt(td.getAttribute('data-col'));
+                            if (thisCol === draggedColIndex) {
+                                td.setAttribute('data-col', targetColIndex);
+                            } else if (thisCol === targetColIndex) {
+                                td.setAttribute('data-col', draggedColIndex);
+                            }
+                        });
+                    });
+
+                    draggedColIndex = null;
                 });
 
                 cell.addEventListener('dragend', () => {
-                    // Remove drop-target class from all cells
+                    if (currentTargetCol !== null) {
+                        document.querySelectorAll(
+                            `#editable-table-body td[data-col='${currentTargetCol}']`
+                        ).forEach(td => td.classList.remove('drop-target'));
+                        currentTargetCol = null;
+                    }
                     allCells.forEach(c => c.classList.remove('drop-target'));
-                    draggedCell = null;
-                    draggedContent = null;
+                    draggedColIndex = null;
                 });
             });
         });
     </script>
+
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             document.querySelectorAll('.cell-content').forEach(function(editableSpan) {
@@ -480,6 +517,27 @@
                         hiddenInput.value = value;
                     }
                 });
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const fileInput = document.getElementById('fileInput');
+            const fileNameDisplay = document.getElementById('fileNameDisplay');
+            const selectFileBtn = document.getElementById('selectFileBtn');
+
+            // Trigger file input when button or input is clicked
+            selectFileBtn.addEventListener('click', () => fileInput.click());
+            fileNameDisplay.addEventListener('click', () => fileInput.click());
+
+            // Show selected file name
+            fileInput.addEventListener('change', () => {
+                if (fileInput.files.length > 0) {
+                    fileNameDisplay.value = fileInput.files[0].name;
+                } else {
+                    fileNameDisplay.value = '';
+                }
             });
         });
     </script>

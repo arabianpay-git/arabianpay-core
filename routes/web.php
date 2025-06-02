@@ -62,6 +62,9 @@ Route::group([
         Route::get('/', function () {
             return redirect('/login');
         });
+        Route::get('/register', function () {
+            return redirect('/login');
+        });
         Route::get('/get-states/{country}',  'getStates');
         Route::get('/get-cities/{state}',    'getCities');
     });
@@ -318,9 +321,14 @@ Route::group([
             //
             Route::controller(SupportTicketController::class)->group(function () {
                 Route::get('support-tickets', 'index')->name('tickets');
+                Route::get('support-tickets-create', 'create')->name('ticketCreate');
+                Route::post('support-tickets-store', 'store')->name('ticketStore');
                 Route::get('support-ticket/{id}', 'show')->name('showTickets');
                 Route::post('/support-ticket/{ticket}/reply', 'reply')->name('ticketReply');
                 Route::post('/tickets/{id}/update-status', 'updateStatus')->name('ticketUpdateStatus');
+
+                // internel tickets
+                Route::get('internel-tickets', 'internelTickets')->name('internelTickets');
             });
 
             //

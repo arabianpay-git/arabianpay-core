@@ -36,6 +36,11 @@
                             @php
                                 $compliance = [
                                     [
+                                        'title' => 'Supplier Contract',
+                                        'file' => $contract->contract,
+                                        'status' => 'submitted',
+                                    ],
+                                    [
                                         'title' => 'ID Document',
                                         'file' => $merchant->id_document,
                                         'status' => $merchant->id_status,

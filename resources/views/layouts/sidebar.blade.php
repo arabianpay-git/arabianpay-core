@@ -4,7 +4,10 @@
     $hasNewCustomers = App\Models\Customer::where('status', 'pending')->exists();
     $hasNewSuppliers = App\Models\Merchant::where('status', 'pending')->exists();
     $hasNewProduct = App\Models\Product::where('approved', 'pending')->exists();
-    $hasNewTicket = App\Models\SupportTicket::where('status', 'active')->exists();
+    $hasNewTicket = App\Models\SupportTicket::where('status', 'active')->whereNull('assigned_to')->exists();
+    $hasNewInternelTicket = App\Models\SupportTicket::where('status', 'active')
+        ->where('assigned_to', Auth::id())
+        ->exists();
 @endphp
 
 <div class="sidebar dark:bg-coal-600 bg-light border-e border-e-gray-200 dark:border-e-coal-100 fixed top-0 bottom-0 z-20 hidden lg:flex flex-col items-stretch shrink-0"
@@ -1351,6 +1354,28 @@
                             </div>
                         </a>
                     </div>
+
+                    <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+                        <a href="{{ route('internelTickets') }}">
+                            <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                                tabindex="0">
+                                <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                    <i class="ki-filled ki-messages text-lg"> </i>
+                                </span>
+                                <span
+                                    class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                    Internel Ticket
+                                </span>
+                                @if ($hasNewInternelTicket)
+                                    <span class="menu-badge me-[-10px]">
+                                        <span class="badge badge-success badge-xs">
+                                            New
+                                        </span>
+                                    </span>
+                                @endif
+                            </div>
+                        </a>
+                    </div>
                 @endcan
 
                 @can('package.manage')
@@ -1666,7 +1691,7 @@
                         </div>
                     </a>
                 </div>
-                
+
                 @canany([
                     // Supplier Management
                     'supplier_entitlement.manage',
