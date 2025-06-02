@@ -98,22 +98,24 @@ if (! function_exists('map_product_details')) {
             // find product
             $product = Product::find($item['product_id']);
 
-            // price: first attribute price or fallback to unit_price
-            $price = collect($item['attributes'] ?? [])
-                ->pluck('price')
-                ->first()
-                ?: $product->unit_price
-                ?: 0;
+            if ($product) {
+                // price: first attribute price or fallback to unit_price
+                $price = collect($item['attributes'] ?? [])
+                    ->pluck('price')
+                    ->first()
+                    ?: $product->unit_price
+                    ?: 0;
 
-            $quantity = $item['quantity'] ?? 0;
+                $quantity = $item['quantity'] ?? 0;
 
-            return (object)[
-                'product'    => $product,
-                'quantity'   => $quantity,
-                'price'      => $price,
-                'attributes' => $item['attributes'] ?? [],
-                'total'      => $price * $quantity,
-            ];
+                return (object)[
+                    'product'    => $product,
+                    'quantity'   => $quantity,
+                    'price'      => $price,
+                    'attributes' => $item['attributes'] ?? [],
+                    'total'      => $price * $quantity,
+                ];
+            }
         });
     }
 
