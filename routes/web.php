@@ -177,7 +177,7 @@ Route::group([
                 Route::get('supplier-products/{id}', 'supplierProducts')->name('supplierProducts');
                 Route::get('supplier-sales/{id}', 'supplierSales')->name('supplierSales');
                 Route::put('supplier-status/{id}', 'updateSupplierStatus')->name('updateSupplierStatus');
-                Route::put('supplier-status/approve', 'updateSupplierStatusApprove')->name('updateSupplierStatusApprove');
+                Route::put('supplier-status/approve/{id}', 'updateSupplierStatusApprove')->name('updateSupplierStatusApprove');
                 Route::get('supplier-compliance/{id}', 'supplierCompliance')->name('supplierCompliance');
 
                 Route::get('customers-statics',    'customersStatics')->name('customers.statics');

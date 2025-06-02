@@ -7,7 +7,9 @@ use App\Models\Product;
 use App\Models\ShopSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -160,12 +162,12 @@ class OrderController extends Controller
         $order->update($request->only(['delivery_status', 'general_status']));
 
         // Log the status update
-        auth()->user()->logModelAction(
+        Auth::user()->logModelAction(
             event: 'update_status',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated order status for order ID: {$order->id}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated order status for order ID: {$order->id}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -180,16 +182,19 @@ class OrderController extends Controller
         return collect(json_decode($order->product_details, true))
             ->map(function (array $item) {
                 $product = Product::find($item['product_id']);
-                $price   = data_get($item, 'attributes.0.price') ?: $product->unit_price;
-                $quantity = $item['quantity'];
 
-                return [
-                    'product'    => $product,
-                    'quantity'   => $quantity,
-                    'price'      => $price,
-                    'attributes' => $item['attributes'] ?? [],
-                    'total'      => $price * $quantity,
-                ];
+                if ($product) {
+                    $price   = data_get($item, 'attributes.0.price') ?: $product->unit_price;
+                    $quantity = $item['quantity'];
+
+                    return [
+                        'product'    => $product,
+                        'quantity'   => $quantity,
+                        'price'      => $price,
+                        'attributes' => $item['attributes'] ?? [],
+                        'total'      => $price * $quantity,
+                    ];
+                }
             });
     }
 }

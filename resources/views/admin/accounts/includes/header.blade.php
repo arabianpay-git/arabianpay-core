@@ -177,11 +177,17 @@
                 <i class="ki-filled ki-cross"></i>
             </button>
         </div>
-        <form action="{{ route('updateSupplierStatus', ['id' => $merchant->user_id]) }}" method="POST"
+        <form action="{{ route('updateSupplierStatusApprove', ['id' => $merchant->user_id]) }}" method="POST"
             class="modal-body p-5">
             @csrf
             @method('PUT')
             <input type="hidden" name="status" value="approved">
+            @php
+                $service = new App\Services\RiskAnalyticsService();
+                $user = App\Models\User::find($merchant->user_id);
+                $riskScore = $service->calculateForUser($user);
+            @endphp
+            <input type="hidden" name="fahman_score" value="{{ $riskScore->total_score }}">
 
             <div class="mb-4">
                 <label for="commission" class="block text-sm font-medium text-gray-700">Commission Percentage</label>
