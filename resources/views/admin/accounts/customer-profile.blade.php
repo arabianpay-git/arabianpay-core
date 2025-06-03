@@ -430,6 +430,7 @@
                 </div>
             </div>
         </div>
+
         <script>
             window.onload = () => {
                 const modalEl = KTDom.getElement('#modal_settings');

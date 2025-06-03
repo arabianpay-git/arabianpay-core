@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\{Approval, BusinessCategory, Customer, CustomerCreditLimit, Merchant, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, Transaction, Wallet};
 use App\Services\CreditAssessmentService;
 use App\Services\RiskAnalyticsService;
+use App\Services\WathqService;
 use App\Traits\EmailSender;
 use App\Traits\SmsSender;
 use Carbon\Carbon;
@@ -19,12 +20,14 @@ use Spatie\Activitylog\Models\Activity;
 class AccountController extends Controller
 {
     use SmsSender, EmailSender;
-    /**
-     * Shared calculation for total order amount.
-     *
-     * @param \Illuminate\Support\Collection|array $orders
-     * @return float
-     */
+
+    protected $wathqService;
+
+    public function __construct(WathqService $wathqService)
+    {
+        $this->wathqService = $wathqService;
+    }
+
     private function calculateTotalOrderAmount($orders): float
     {
         $total = 0;
@@ -140,8 +143,12 @@ class AccountController extends Controller
         }
 
         if (empty($customer->cr_data) && $customer->cr_number) {
-            $customer->cr_data = app('App\Services\WathqService')->fetchCrData($customer->cr_number);
-            $customer->save();
+            $wathqData = $this->wathqService->fetchCrData($customer->cr_number);
+
+            if ($wathqData) {
+                $customer->cr_data = $wathqData;
+                $customer->save();
+            }
         }
 
         return view('admin.accounts.customer-profile', compact('customer', 'data', 'riskScore'));
@@ -425,8 +432,13 @@ class AccountController extends Controller
         ];
 
         if (empty($merchant->goverment_data) && $merchant->cr_number) {
-            $merchant->goverment_data = app('App\Services\WathqService')->fetchCrData($merchant->cr_number);
-            $merchant->save();
+
+            $wathqData = $this->wathqService->fetchCrData($merchant->cr_number);
+
+            if ($wathqData) {
+                $merchant->goverment_data = $wathqData;
+                $merchant->save();
+            }
         }
 
         $supplierBank = SupplierBank::where('user_id', $merchant->user_id)->first();
@@ -637,7 +649,6 @@ class AccountController extends Controller
 
     public function updateSupplierStatus(Request $request, $id)
     {
-        dd('ok');
         $status = $request->validate([
             'status' => 'required|in:approved,suspended,pending,blacklisted',
         ])['status'];
@@ -753,7 +764,7 @@ class AccountController extends Controller
 
             $totalAmount       = $base + $commissionAmount + $commissionTaxAmt;
 
-            $supplierDue = \App\Models\Wallet::where('seller_id', $order->seller_id)
+            $supplierDue = Wallet::where('seller_id', $order->seller_id)
                 ->where('order_id', $order->id)
                 ->where('transaction_type', 'seller_payment')
                 ->sum('balance_after');
@@ -808,7 +819,6 @@ class AccountController extends Controller
         $businessAge  = $this->formatBusinessAge($startDate);
 
         // 4) Placeholder credit score calculation
-        //    TODO: Replace this with your real algorithm/service call
         $creditScore = $service->assess($id);
 
         // 5) Determine risk level based on score
