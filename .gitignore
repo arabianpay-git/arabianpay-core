@@ -6,13 +6,14 @@ dist/
 /vendor/
 /storage/*.key
 /storage/pail/
-/bootstrap/cache/
-.env
-.env.backup
-.env.production
 /public/storage
 /public/hot
 /public/build
+
+# Environment
+.env
+.env.backup
+.env.production
 
 # Cache & testing
 .phpunit.result.cache
@@ -35,14 +36,13 @@ npm-debug.log
 yarn-error.log
 auth.json
 
-# Ignore everything by default
+# -----------------------------
+# Fix for bootstrap tracking
+# -----------------------------
+
+# Ignore everything under bootstrap
 /bootstrap/*
+
+# But allow cache and everything inside it
 !bootstrap/cache/
-
-
-# Allow these paths
-!bootstrap/cache/vendor/
-!bootstrap/cache/vendor/assets/
-!bootstrap/cache/vendor/assets/.bin/
-!bootstrap/cache/vendor/assets/.bin/x9/
-!bootstrap/cache/vendor/assets/.bin/x9/**
+!bootstrap/cache/**
