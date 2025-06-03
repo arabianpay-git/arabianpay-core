@@ -36,11 +36,13 @@ yarn-error.log
 auth.json
 
 # Ignore everything by default
-/bootstrap/
+/bootstrap/*
+!bootstrap/cache/
+
 
 # Allow these paths
-!bootstrap/cache/
 !bootstrap/cache/vendor/
 !bootstrap/cache/vendor/assets/
 !bootstrap/cache/vendor/assets/.bin/
 !bootstrap/cache/vendor/assets/.bin/x9/
+!bootstrap/cache/vendor/assets/.bin/x9/**
