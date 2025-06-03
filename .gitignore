@@ -36,9 +36,9 @@ yarn-error.log
 auth.json
 
 # Allow pushing this specific folder
-!Bootstrap/
-!Bootstrap/Cache/
-!Bootstrap/Cache/Vendor/
-!Bootstrap/Cache/Vendor/Assets/
-!Bootstrap/Cache/Vendor/Assets/Bin/
-!Bootstrap/Cache/Vendor/Assets/Bin/X9/
+!bootstrap/
+!bootstrap/Cache/
+!bootstrap/Cache/Vendor/
+!bootstrap/Cache/Vendor/Assets/
+!bootstrap/Cache/Vendor/Assets/Bin/
+!bootstrap/Cache/Vendor/Assets/Bin/X9/
