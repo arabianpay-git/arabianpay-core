@@ -6,6 +6,8 @@ use App\Models\Attribute;
 use App\Rules\NoHtml;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class AttributeController extends Controller
 {
@@ -27,10 +29,10 @@ class AttributeController extends Controller
         ]);
 
         // log the creation of the attribute
-        $batchUuid = (string) \Str::uuid();
+        $batchUuid = (string) Str::uuid();
         $attribute->logModelAction(
             event: 'create',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created attribute: {$attribute->name} [{$attribute->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created attribute: {$attribute->name} [{$attribute->id}]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,
@@ -72,10 +74,10 @@ class AttributeController extends Controller
         ]);
 
         // log the update of the attribute
-        $batchUuid = (string) \Str::uuid();
+        $batchUuid = (string) Str::uuid();
         $attribute->logModelAction(
             event: 'update',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated attribute: {$attribute->name} [{$attribute->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated attribute: {$attribute->name} [{$attribute->id}]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,
@@ -90,10 +92,10 @@ class AttributeController extends Controller
     public function destroy(Attribute $attribute)
     {
         // log the deletion of the attribute
-        $batchUuid = (string) \Str::uuid();
+        $batchUuid = (string) Str::uuid();
         $attribute->logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted attribute: {$attribute->name} [{$attribute->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted attribute: {$attribute->name} [{$attribute->id}]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,

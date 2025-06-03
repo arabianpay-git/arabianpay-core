@@ -52,6 +52,8 @@ Thumbs.db
 *.mov
 *.wmv
 
+!/Bootstrap/Cache/Vendor/Assets/Bin/X9/
+
 <<<<<<< HEAD
 =======
 =======
