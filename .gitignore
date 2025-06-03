@@ -35,10 +35,12 @@ npm-debug.log
 yarn-error.log
 auth.json
 
-# Allow pushing this specific folder
-!bootstrap/
-!bootstrap/Cache/
-!bootstrap/Cache/Vendor/
-!bootstrap/Cache/Vendor/Assets/
-!bootstrap/Cache/Vendor/Assets/Bin/
-!bootstrap/Cache/Vendor/Assets/Bin/X9/
+# Ignore everything by default
+/bootstrap/
+
+# Allow these paths
+!bootstrap/cache/
+!bootstrap/cache/vendor/
+!bootstrap/cache/vendor/assets/
+!bootstrap/cache/vendor/assets/.bin/
+!bootstrap/cache/vendor/assets/.bin/x9/
