@@ -10,22 +10,11 @@
     <script>
         Swal.fire({
             icon: 'success',
-            title: 'Success!',
+            title: 'Success',
             text: "{{ session('success') }}",
-            confirmButtonColor: '#3085d6',
-            timer: 3000,
-            timerProgressBar: true
-        });
-    </script>
-@endif
-
-@if (session('error'))
-    <script>
-        Swal.fire({
-            icon: 'error',
-            title: 'Error!',
-            text: "{{ session('error') }}",
-            confirmButtonColor: '#3085d6',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
             timer: 3000,
             timerProgressBar: true
         });
@@ -36,16 +25,31 @@
     <script>
         Swal.fire({
             icon: 'error',
-            title: 'Validation Errors!',
+            title: 'Validation Errors!Error',
             html: `{!! implode('<br>', $errors->all()) !!}`,
-            confirmButtonColor: '#d33',
-            // timer: 5000,
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
             timerProgressBar: true
         });
     </script>
 @endif
 
-
+@if (session('error'))
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: "{{ session('error') }}",
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true
+        });
+    </script>
+@endif
 
 <!-- Tabs JS -->
 <script>
