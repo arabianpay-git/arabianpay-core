@@ -35,6 +35,34 @@
                 border: 2px dashed #3B82F6;
                 background-color: #EFF6FF;
             }
+
+            .remove-col {
+                position: absolute;
+                top: 0.25rem;
+                right: 0.25rem;
+                width: 1.5rem;
+                height: 1.5rem;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 9999px;
+                background-color: #fee2e2;
+                color: #dc2626;
+                box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+                cursor: pointer;
+                opacity: 0;
+                transition: opacity 0.2s ease, background-color 0.2s, color 0.2s;
+                z-index: 10;
+            }
+
+            .cell-wrapper:hover .remove-col {
+                opacity: 1;
+            }
+
+            .remove-col:hover {
+                background-color: #fecaca;
+                color: #b91c1c;
+            }
         </style>
     @endpush
 
@@ -110,13 +138,13 @@
                                                         xmlns="http://www.w3.org/2000/svg">
                                                         <path
                                                             d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z"
                                                             fill=""></path>
                                                         <path
                                                             d="M16.25 2.89711C19.8081 0.842838 24.1919 0.842837 27.75 2.89711L37.4006 8.46891C40.9587 10.5232 43.1506 14.3196 43.1506
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                            39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z"
                                                             stroke=""></path>
                                                     </svg>
                                                     <div
@@ -144,6 +172,7 @@
                                     </div>
                                 </div>
                             @endif
+
                             <form action="{{ route('products.bulk-upload') }}" method="POST" enctype="multipart/form-data"
                                 class="space-y-6">
                                 @csrf
@@ -213,13 +242,17 @@
                                                             <td class="cell-wrapper border px-4 py-2 group relative"
                                                                 data-row="{{ $rowIndex }}"
                                                                 data-col="{{ $colIndex }}">
+
                                                                 <span class="drag-handle" title="Drag column"
                                                                     draggable="true">⠿</span>
+
+                                                                <span class="remove-col" title="Remove column">✖</span>
 
                                                                 <div class="cell-content" contenteditable="true"
                                                                     data-input-name="products[{{ $rowIndex }}][{{ $col }}]">
                                                                     {{ $row[$col] ?? '' }}
                                                                 </div>
+
                                                                 <input type="hidden"
                                                                     name="products[{{ $rowIndex }}][{{ $col }}]"
                                                                     value="{{ $row[$col] ?? '' }}">
@@ -269,6 +302,24 @@
                                             </tbody>
                                         </table>
 
+                                        <div class="w-full mt-4 p-4">
+                                            <div class="w-full">
+                                                <select class="w-full border border-gray-300 rounded px-3 py-2"
+                                                    name="user_id" id="user_id" required>
+                                                    <option value="">{{ __('Select Merchant') }}</option>
+                                                    @foreach ($merchants as $merchant)
+                                                        <option value="{{ $merchant->id }}"
+                                                            {{ old('user_id') == $merchant->id ? 'selected' : '' }}>
+                                                            {{ $merchant->business_name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                            </div>
+                                            @error('user_id')
+                                                <span class="text-danger text-sm">{{ $message }}</span>
+                                            @enderror
+                                        </div>
+
                                         <div class="mt-4 p-2 flex justify-end" style="margin-right: 10px;">
                                             <button type="submit" class="btn btn-sm btn-outline btn-primary">
                                                 {{ __('Submit Product') }}
@@ -304,7 +355,7 @@
                                     </thead>
                                     <tbody>
                                         <tr>
-                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">name <span
+                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">Product Name <span
                                                     class="text-danger">*</span></td>
                                             <td class="px-4 py-3 text-sm text-gray-700">
                                                 {{ __('The product’s display name.') }} <br>
@@ -312,39 +363,16 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">unit_price <span
+                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">Unit Price <span
                                                     class="text-danger">*</span></td>
                                             <td class="px-4 py-3 text-sm text-gray-700">
                                                 {{ __('Selling price for one unit (decimal).') }}<br>
                                                 <strong>{{ __('Example:') }}</strong> <code>100.00</code>
                                             </td>
                                         </tr>
+
                                         <tr>
-                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">purchase_price <span
-                                                    class="text-danger">*</span></td>
-                                            <td class="px-4 py-3 text-sm text-gray-700">
-                                                {{ __('Cost price you paid (decimal).') }}<br>
-                                                <strong>{{ __('Example:') }}</strong> <code>70.00</code>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">category_name <span
-                                                    class="text-danger">*</span></td>
-                                            <td class="px-4 py-3 text-sm text-gray-700">
-                                                {{ __('Must match an existing Category’s') }} <code>name</code><br>
-                                                <strong>{{ __('Example:') }}</strong> <code>Clothing</code>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">brand_name<span
-                                                    class="text-danger">*</span></td>
-                                            <td class="px-4 py-3 text-sm text-gray-700">
-                                                {{ __('Must match an existing Brand’s') }} <code>name</code><br>
-                                                <strong>{{ __('Example:') }}</strong> <code>Nike</code>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">description</td>
+                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">Description</td>
                                             <td class="px-4 py-3 text-sm text-gray-700">
                                                 {{ __('A brief description or details about the product (optional).') }}<br>
                                                 <strong>{{ __('Example:') }}</strong> <code>High quality cotton
@@ -352,7 +380,7 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">unit<span
+                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">Unit<span
                                                     class="text-danger">*</span></td>
                                             <td class="px-4 py-3 text-sm text-gray-700">
                                                 {{ __('The unit of measurement for the product.') }}<br>
@@ -361,7 +389,7 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">stock<span
+                                            <td class="px-4 py-3 text-sm font-medium text-gray-800">Stock<span
                                                     class="text-danger">*</span></td>
                                             <td class="px-4 py-3 text-sm text-gray-700">
                                                 {{ __('Initial stock quantity available for the product.') }}<br>
@@ -520,6 +548,22 @@
             });
         });
     </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.remove-col').forEach(icon => {
+                icon.addEventListener('click', function(e) {
+                    e.stopPropagation();
+
+                    const td = this.closest('td');
+                    const colIndex = td.getAttribute('data-col');
+
+                    document.querySelectorAll(`#editable-table-body td[data-col="${colIndex}"]`)
+                        .forEach(cell => cell.remove());
+                });
+            });
+        });
+    </script>
+
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
@@ -538,6 +582,16 @@
                 } else {
                     fileNameDisplay.value = '';
                 }
+            });
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            new Choices('#user_id', {
+                searchEnabled: true,
+                itemSelectText: '',
+                shouldSort: false
             });
         });
     </script>

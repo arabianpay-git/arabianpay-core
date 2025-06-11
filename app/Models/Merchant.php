@@ -10,9 +10,10 @@ class Merchant extends Model
 {
     use LogsModelActions;
 
-        protected static $logAttributes = ['status', 'amount', 'due_date'];
-        protected static $logOnlyDirty = true; // Save only changed attributes
-        protected static $logName = 'merchant'; // Custom log name
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'merchant';
+
     protected $fillable = [
         'assigned_to',
         'user_id',

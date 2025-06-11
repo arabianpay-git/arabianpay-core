@@ -31,7 +31,7 @@ return new class extends Migration
             $table->longText('description')->nullable();
 
             $table->decimal('unit_price', 10, 2);
-            $table->decimal('purchase_price', 10, 2);
+            $table->decimal('purchase_price', 10, 2)->nullable();
             $table->decimal('discount', 10, 2)->nullable();
             $table->enum('discount_type', ['percent', 'amount'])->nullable();
             $table->timestamp('discount_start_date')->nullable();
