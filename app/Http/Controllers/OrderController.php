@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Order;
 use App\Models\Product;
+use App\Models\RefundRequest;
 use App\Models\ShopSetting;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
@@ -110,7 +111,9 @@ class OrderController extends Controller
 
         $productDetails = $this->mapProductDetails($order);
 
-        return view('admin.orders.details', compact('order', 'productDetails'));
+        $refundRequest = RefundRequest::where('order_id', $id)->first();
+
+        return view('admin.orders.details', compact('order', 'productDetails', 'refundRequest'));
     }
 
     /** Download invoice PDF */
@@ -162,7 +165,7 @@ class OrderController extends Controller
         $order->update($request->only(['delivery_status', 'general_status']));
 
         // Log the status update
-        Auth::user()->logModelAction(
+        Auth::logModelAction(
             event: 'update_status',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated order status for order ID: {$order->id}",
             properties: [
@@ -198,6 +201,6 @@ class OrderController extends Controller
                     'total'      => $price * $quantity,
                 ];
             })
-            ->filter(); // Remove any nulls if product was not found
+            ->filter();
     }
 }

@@ -45,7 +45,6 @@ class SupportTicketController extends Controller
         return view('admin.support-ticket.show', compact('ticket', 'activityData'));
     }
 
-
     public function create()
     {
         return view('admin.support-ticket.create');
@@ -83,7 +82,6 @@ class SupportTicketController extends Controller
             'reply' => $validated['reply'],
         ]);
 
-        // Log the reply action
         $ticket->logModelAction(
             event: 'reply',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " replied to ticket: {$ticket->ticket_number} [{$ticket->id}]",
@@ -105,7 +103,9 @@ class SupportTicketController extends Controller
 
         $tickets = SupportTicket::where('ticket_number', $ticket_number)->get();
 
-        if (!$tickets->first() || $tickets->first()->user_id !== Auth::id()) {
+        $ticket = $tickets->first();
+
+        if (!$ticket || ($ticket->user_id !== Auth::id() && Auth::user()->user_type !== 'admin')) {
             return redirect()->back()->with('error', 'You are not authorized to update this ticket status.');
         }
 

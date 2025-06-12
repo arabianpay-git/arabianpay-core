@@ -136,13 +136,21 @@
                                                         </select>
                                                     </form>
 
-                                                    <button
-                                                        class="btn btn-sm btn-icon btn-clear btn-info transfer-requests-btn"
-                                                        data-modal-toggle="#transfer_detail"
-                                                        data-model-id="{{ $request->id }}"
-                                                        data-model-type="App\Models\RefundRequest">
-                                                        <i class="ki-filled ki-disconnect"></i>
-                                                    </button>
+
+                                                    <div class="flex gap-1 justify-center mt-2">
+                                                        <button
+                                                            class="btn btn-sm btn-icon btn-clear btn-info transfer-requests-btn"
+                                                            data-modal-toggle="#transfer_detail"
+                                                            data-model-id="{{ $request->id }}"
+                                                            data-model-type="App\Models\RefundRequest">
+                                                            <i class="ki-filled ki-disconnect"></i>
+                                                        </button>
+
+                                                        <a class="btn btn-sm btn-icon btn-clear btn-primary"
+                                                            href="{{ route('orders.details', ['id' => $request->order->id]) }}">
+                                                            <i class="ki-filled ki-eye"> </i>
+                                                        </a>
+                                                    </div>
                                                 </td>
 
                                             </tr>

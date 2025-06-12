@@ -70,6 +70,15 @@
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
+                                                        Categories
+                                                    </span>
+                                                    <span class="sort-icon"> </span>
+                                                </span>
+                                            </th>
+
+                                            <th class="">
+                                                <span class="sort asc">
+                                                    <span class="sort-label font-normal text-gray-700">
                                                         Risk Level
                                                     </span>
                                                     <span class="sort-icon"> </span>
@@ -128,6 +137,15 @@
                                                 </td>
 
                                                 <td>{{ $item->name }}</td>
+
+                                                <td>
+                                                    @foreach ($item->businessCategories as $category)
+                                                        <span
+                                                            class="badge badge-sm badge-primary badge-outline me-1 mb-1 inline-block">
+                                                            {{ $category->name }}
+                                                        </span>
+                                                    @endforeach
+                                                </td>
 
                                                 @php
                                                     $riskLabels = [

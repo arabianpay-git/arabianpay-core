@@ -4,14 +4,16 @@ namespace App\Http\Controllers;
 
 use App\Models\BusinessType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class BusinessTypeController extends Controller
 {
     public function index(Request $request)
     {
-        $businessTypes = BusinessType::select('business_types.*')->paginate(10);
+        $businessTypes = BusinessType::with('businessCategories')->select('business_types.*')->paginate(10);
         return view('admin.business_types.index', compact('businessTypes'));
     }
 
@@ -47,10 +49,10 @@ class BusinessTypeController extends Controller
             // log the creation of the business type
             $businessType->logModelAction(
                 event: 'create',
-                description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new business type: {$businessType->name}",
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new business type: {$businessType->name}",
                 properties: [
                     'ip' => request()->ip(),
-                    'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                    'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
                 ],
             );
 
@@ -101,10 +103,10 @@ class BusinessTypeController extends Controller
             // log the update of the business type
             $businessType->logModelAction(
                 event: 'update',
-                description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated business type: {$businessType->name} [{$businessType->id}]",
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated business type: {$businessType->name} [{$businessType->id}]",
                 properties: [
                     'ip' => request()->ip(),
-                    'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                    'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
                 ],
             );
 
@@ -120,10 +122,10 @@ class BusinessTypeController extends Controller
         // log the deletion of the business type
         $businessType->logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted business type: {$businessType->name} [{$businessType->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted business type: {$businessType->name} [{$businessType->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
             ],
         );
         $businessType->delete();

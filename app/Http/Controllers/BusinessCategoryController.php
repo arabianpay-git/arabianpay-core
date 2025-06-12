@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Models\BusinessCategory;
+use App\Models\BusinessType;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class BusinessCategoryController extends Controller
 {
@@ -17,7 +20,8 @@ class BusinessCategoryController extends Controller
 
     public function create()
     {
-        return view('admin.business_categories.create');
+        $businessTypes = BusinessType::orderBy('name', 'ASC')->get();
+        return view('admin.business_categories.create', compact('businessTypes'));
     }
 
     public function store(Request $request)
@@ -31,6 +35,7 @@ class BusinessCategoryController extends Controller
 
         try {
             $category = BusinessCategory::create([
+                'business_type_id' => $request->business_type_id,
                 'name' => $request->name,
                 'order_level' => $request->order_level,
                 'banner' => $request->banner,
@@ -45,10 +50,10 @@ class BusinessCategoryController extends Controller
             // log the creation of the business category
             $category->logModelAction(
                 event: 'create',
-                description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new business category: {$category->name}",
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new business category: {$category->name}",
                 properties: [
                     'ip' => request()->ip(),
-                    'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                    'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
                 ],
             );
 
@@ -61,7 +66,8 @@ class BusinessCategoryController extends Controller
 
     public function edit(BusinessCategory $businessCategory)
     {
-        return view('admin.business_categories.edit', compact('businessCategory'));
+        $businessTypes = BusinessType::orderBy('name', 'ASC')->get();
+        return view('admin.business_categories.edit', compact('businessCategory', 'businessTypes'));
     }
 
     public function update(Request $request, BusinessCategory $businessCategory)
@@ -95,10 +101,10 @@ class BusinessCategoryController extends Controller
             // log the update of the business category
             $businessCategory->logModelAction(
                 event: 'update',
-                description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated business category: {$businessCategory->name} [{$businessCategory->id}]",
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated business category: {$businessCategory->name} [{$businessCategory->id}]",
                 properties: [
                     'ip' => request()->ip(),
-                    'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                    'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
                 ],
             );
 
@@ -114,10 +120,10 @@ class BusinessCategoryController extends Controller
         // log the deletion of the business category
         $businessCategory->logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted business category: {$businessCategory->name} [{$businessCategory->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted business category: {$businessCategory->name} [{$businessCategory->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
             ],
         );
         // Delete the business category
