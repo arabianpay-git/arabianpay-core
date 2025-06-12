@@ -37,7 +37,7 @@
                                 $compliance = [
                                     [
                                         'title' => 'Supplier Contract',
-                                        'file' => $contract->contract,
+                                        'file' => $contract->contract ?? null,
                                         'status' => 'submitted',
                                     ],
                                     [

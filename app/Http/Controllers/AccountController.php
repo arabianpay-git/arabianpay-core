@@ -571,7 +571,7 @@ class AccountController extends Controller
     public function supplierCompliance($id)
     {
         $merchant = Merchant::where('user_id', $id)->with('user')->firstOrFail();
-        $contract = Approval::where('user_id', $id)->select('contract')->firstOrFail();
+        $contract = Approval::where('user_id', $id)->select('contract')->first();
         return view('admin.accounts.supplier-compliance', compact('merchant', 'contract'));
     }
 
