@@ -46,6 +46,7 @@ use App\Http\Middleware\CheckAdmin;
 use App\Http\Middleware\EnsureOtpVerified;
 use App\Http\Middleware\PreventBackHistory;
 use App\Http\Middleware\SecureHeaders;
+use App\Models\Merchant;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
@@ -461,3 +462,65 @@ function decryptWithArabicSupport($encrypted, $key, $iv)
 
     return $cleaned;
 }
+
+
+
+
+Route::get('/sellers', function () {
+    // Step 1: Get all old users
+    $oldUsers = DB::connection('arabianoay_old')
+        ->table('users')
+        ->get();
+
+    // Step 2: Extract emails from old users
+    $oldEmails = $oldUsers->pluck('email')->filter()->unique();
+
+    // Step 3: Get matching new users by email
+    $newUsers = User::whereIn('email', $oldEmails)->get();
+
+    // Step 4: Map emails to new user IDs
+    $emailToNewUserId = $newUsers->pluck('id', 'email'); // ['email' => id]
+
+    // Step 5: Get sellers from old DB whose user has matching email in new DB
+    $oldSellers = DB::connection('arabianoay_old')
+        ->table('sellers')
+        ->whereIn('user_id', $oldUsers->pluck('id'))
+        ->get();
+
+    $migratedSellers = [];
+
+    foreach ($oldSellers as $oldSeller) {
+        // Get the old user
+        $oldUser = $oldUsers->firstWhere('id', $oldSeller->user_id);
+        if (!$oldUser) {
+            continue;
+        }
+
+        // Get new user_id from matching email
+        $newUserId = $emailToNewUserId[$oldUser->email] ?? null;
+
+        if (!$newUserId) {
+            continue;
+        }
+
+        // Create and save new Merchant
+        $newSeller = new Merchant();
+        $newSeller->user_id = $newUserId;
+        $newSeller->cr_number = $oldSeller->cr_number;
+        $newSeller->goverment_data = json_decode($oldSeller->cr_data);
+        $newSeller->vat_register_number = $oldSeller->cr_data;
+        $newSeller->owner_iqama_number = $oldSeller->id_number;
+        $newSeller->save();
+
+        $submitBusinessNameForNewUser = User::find($newUserId);
+        $submitBusinessNameForNewUser->business_name = $oldSeller->business_owner;
+        $submitBusinessNameForNewUser->save();
+
+        $migratedSellers[] = $newSeller;
+    }
+
+    return response()->json([
+        'migrated_sellers_count' => count($migratedSellers),
+        'migrated_sellers' => $migratedSellers,
+    ]);
+});

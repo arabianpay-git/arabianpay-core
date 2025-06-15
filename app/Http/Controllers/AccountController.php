@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
+use Spatie\Activitylog\Models\Activity;
 
 class AccountController extends Controller
 {
@@ -98,6 +99,18 @@ class AccountController extends Controller
         }
 
         return view('admin.accounts.customer', compact('customers', 'totalOrderAmount'));
+    }
+
+    public function log($id)
+    {
+        $customer = Customer::with('user')->where('user_id', $id)->firstOrFail();
+
+        $logs = Activity::where('subject_type', Customer::class)
+            ->where('subject_id', $customer->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(5);
+
+        return view('admin.accounts.customer-log', compact('customer', 'logs'));
     }
 
     public function customerBusiness()

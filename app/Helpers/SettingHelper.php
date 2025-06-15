@@ -195,3 +195,44 @@ if (!function_exists('getImageUrl')) {
         }
     }
 }
+
+use App\Services\CreditAssessmentService;
+
+if (! function_exists('get_credit_score')) {
+    /**
+     * Get credit score for a given user id.
+     *
+     * @param int $userId
+     * @return array
+     */
+    function get_credit_score(int $userId): array
+    {
+        $service = new CreditAssessmentService();
+        $result = $service->assess($userId);
+        return $result['creditScore'] ?? [];
+    }
+}
+
+use App\Services\RiskAnalyticsService;
+
+/**
+ * Get risk score object for a given user or user ID
+ *
+ * @param int|User $userOrId
+ * @return object|null
+ */
+function get_risk_score($userOrId)
+{
+    $service = app(RiskAnalyticsService::class);
+
+    if ($userOrId instanceof User) {
+        $user = $userOrId;
+    } else {
+        $user = User::find($userOrId);
+        if (!$user) {
+            return null;
+        }
+    }
+
+    return $service->calculateForUser($user);
+}

@@ -64,7 +64,6 @@
                                                         </div>
                                                     </td>
 
-
                                                     <td>{{ number_format($item->creditLimit ?? 0, 2) }}</td>
 
                                                     <td>{{ number_format($item->total_used ?? 0, 2) }}</td>

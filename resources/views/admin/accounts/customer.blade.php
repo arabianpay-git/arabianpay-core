@@ -159,10 +159,20 @@
                                                     </div>
                                                 </td>
 
+                                                @php
+                                                    $creditScore = get_credit_score($item->user?->id);
+                                                    $riskScore = get_risk_score($item->user?->id);
+                                                    $oldCreditLimit = 20000;
+                                                    $finalScore =
+                                                        $creditScore['compositeScore'] *
+                                                        ($riskScore->total_score / 100);
+
+                                                    $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
+                                                @endphp
                                                 <td>
                                                     <div class="whitespace-nowrap">
                                                         <span class="icon-saudi_riyal"></span>
-                                                        {{ number_format(get_setting('credit_limit', 0) - $totalOrderAmount, 2) }}
+                                                        {{ number_format($newCreditLimit) }}
                                                         <small class="text-gray-500">(Available)</small>
                                                         <br>
                                                         <small class="text-gray-500">
@@ -174,7 +184,6 @@
                                                 </td>
 
                                                 <td>
-                                                    <!-- Badge for Status -->
                                                     <span
                                                         class="badge badge-sm badge-outline 
                                                     @if ($item->status == 'approved') badge-success
