@@ -21,6 +21,7 @@ class Merchant extends Model
         'business_category_id',
         'goverment_data',
         'cr_number',
+        'pos_revenue',
         'registration_number_form',
         'vat_register',
         'vat_register_number',
