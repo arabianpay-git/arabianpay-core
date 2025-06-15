@@ -6,11 +6,9 @@ use App\Http\Requests\BulkProductUploadRequest;
 use App\Models\Brand;
 use App\Models\Category;
 use App\Models\Product;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 class ProductBulkUploadController extends Controller
@@ -67,11 +65,13 @@ class ProductBulkUploadController extends Controller
 
         $categories = Category::orderBy('name')->get();
         $brands = Brand::orderBy('name')->get();
+        $merchants = User::where('user_type', 'merchant')->select('id', 'business_name')->get();
         return view('admin.products.bulk-upload', compact(
             'parsedData',
             'header',
             'categories',
-            'brands'
+            'brands',
+            'merchants'
         ));
     }
 
@@ -81,7 +81,6 @@ class ProductBulkUploadController extends Controller
             'products' => ['required', 'array'],
             'products.*.name' => ['required', 'string', 'max:255'],
             'products.*.unit_price' => ['required', 'numeric', 'min:0'],
-            'products.*.purchase_price' => ['required', 'numeric', 'min:0'],
             'products.*.description' => ['nullable', 'string'],
             'products.*.unit' => ['required', 'string', 'max:50'],
             'products.*.stock' => ['nullable', 'integer', 'min:0'],
@@ -94,7 +93,6 @@ class ProductBulkUploadController extends Controller
             Product::create([
                 'name' => $product['name'],
                 'unit_price' => $product['unit_price'],
-                'purchase_price' => $product['purchase_price'],
                 'description' => $product['description'] ?? null,
                 'unit' => $product['unit'],
                 'current_stock' => $product['stock'] ?? 0,
@@ -102,7 +100,7 @@ class ProductBulkUploadController extends Controller
                 'brand_id' => $product['brand_id'] ?? null,
                 'thumbnail' => $product['thumbnail'] ?? null,
                 'added_by'       => Auth::user()->user_type ?? 'admin',
-                'user_id'        => $product['user_id'] ?? Auth::id(),
+                'user_id'        => $request->user_id ?? Auth::id(),
                 'published'      => 'published',
                 'approved'       => 'approved',
             ]);

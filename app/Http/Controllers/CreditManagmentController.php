@@ -49,17 +49,17 @@ class CreditManagmentController extends Controller
         return $total;
     }
 
-    public function creditProfile(Request $request)
+    private function getCustomersWithCreditData($search = null, $perPage = 10)
     {
         $query = User::where('user_type', 'user');
 
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('first_name', 'like', "%{$request->search}%")
-                    ->orWhere('last_name', 'like', "%{$request->search}%")
-                    ->orWhere('email', 'like', "%{$request->search}%")
-                    ->orWhere('phone_number', 'like', "%{$request->search}%")
-                    ->orWhere('iqama', 'like', "%{$request->search}%");
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('first_name', 'like', "%{$search}%")
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%")
+                    ->orWhere('phone_number', 'like', "%{$search}%")
+                    ->orWhere('iqama', 'like', "%{$search}%");
             });
         }
 
@@ -68,7 +68,7 @@ class CreditManagmentController extends Controller
             'orders' => function ($q) {
                 $q->where('delivery_status', 'delivered');
             },
-        ])->paginate(10);
+        ])->paginate($perPage);
 
         foreach ($customers as $customer) {
             $orders = $customer->orders ?? collect();
@@ -97,33 +97,24 @@ class CreditManagmentController extends Controller
             $customer->credit_score = round($creditScore);
         }
 
-        return view('admin.credit-managment.profiles', compact('customers'));
+        return $customers;
     }
 
+    public function creditProfile(Request $request)
+    {
+        $search = $request->input('search');
+        $customers = $this->getCustomersWithCreditData($search, 10);
+        return view('admin.credit-managment.profiles', compact('customers'));
+    }
 
     public function creditLimit(Request $request)
     {
         $search = $request->input('search');
+        $creditLimits = $this->getCustomersWithCreditData($search, 10);
 
-        $creditLimits = CustomerCreditLimit::whereHas('user', function ($query) use ($search) {
-            $query->where('user_type', 'user');
-
-            if ($search) {
-                $query->where(function ($q) use ($search) {
-                    $q->where('first_name', 'like', "%{$search}%")
-                        ->orWhere('last_name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('phone_number', 'like', "%{$search}%")
-                        ->orWhere('iqama', 'like', "%{$search}%");
-                });
-            }
-        })
-            ->with('user')
-            ->paginate(10)
-            ->appends(['search' => $search]); // keep query string in pagination
-
-        return view('admin.credit-managment.limits', compact('creditLimits'));
+        return view('admin.credit-managment.limits', ['creditLimits' => $creditLimits]);
     }
+
 
     public function repaymentSchedule(Request $request)
     {

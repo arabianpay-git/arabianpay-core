@@ -10,24 +10,17 @@
     <script>
         Swal.fire({
             icon: 'success',
-            title: 'Success!',
+            title: 'Success',
             text: "{{ session('success') }}",
-            confirmButtonColor: '#3085d6',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
             timer: 3000,
-            timerProgressBar: true
-        });
-    </script>
-@endif
-
-@if (session('error'))
-    <script>
-        Swal.fire({
-            icon: 'error',
-            title: 'Error!',
-            text: "{{ session('error') }}",
-            confirmButtonColor: '#3085d6',
-            timer: 3000,
-            timerProgressBar: true
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
         });
     </script>
 @endif
@@ -36,16 +29,39 @@
     <script>
         Swal.fire({
             icon: 'error',
-            title: 'Validation Errors!',
+            title: 'Validation Errors!Error',
             html: `{!! implode('<br>', $errors->all()) !!}`,
-            confirmButtonColor: '#d33',
-            // timer: 5000,
-            timerProgressBar: true
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
         });
     </script>
 @endif
 
-
+@if (session('error'))
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: 'Error',
+            text: "{{ session('error') }}",
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+    </script>
+@endif
 
 <!-- Tabs JS -->
 <script>

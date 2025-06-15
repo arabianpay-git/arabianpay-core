@@ -52,6 +52,11 @@ class BusinessType extends Model
         return $this->hasMany(BusinessTypeTranslation::class);
     }
 
+    public function businessCategories()
+    {
+        return $this->hasMany(BusinessCategory::class, 'business_type_id');
+    }
+
     public function customers()
     {
         return $this->hasMany(Customer::class);

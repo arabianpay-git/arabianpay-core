@@ -50,7 +50,7 @@ class ProductController extends Controller
             'categories' => Category::orderBy('name')->get(),
             'brands' => Brand::orderBy('name')->get(),
             'attributes' => Attribute::orderBy('name')->get(),
-            'merchants' => User::where('user_type', 'merchant')->get(),
+            'merchants' => User::where('user_type', 'merchant')->select('id', 'business_name')->get(),
         ]);
     }
 

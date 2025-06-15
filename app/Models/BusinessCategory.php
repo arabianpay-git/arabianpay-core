@@ -17,6 +17,7 @@ class BusinessCategory extends Model
     protected static $logName = 'business_category'; // Custom log name
 
     protected $fillable = [
+        'business_type_id',
         'name',
         'slug',
         'order_level',
@@ -30,6 +31,11 @@ class BusinessCategory extends Model
     public function translations()
     {
         return $this->hasMany(BusinessCategoryTranslation::class);
+    }
+
+    public function businessType()
+    {
+        return $this->belongsTo(BusinessType::class, 'business_type_id');
     }
 
     protected static function booted()

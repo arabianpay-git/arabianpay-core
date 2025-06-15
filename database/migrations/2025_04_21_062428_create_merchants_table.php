@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('business_category_id')->nullable();
             $table->json('goverment_data')->nullable();
             $table->string('cr_number')->unique()->nullable();
+            $table->string('pos_revenue')->nullable();
             $table->text('registration_number_form')->nullable();
             $table->boolean('vat_register')->nullable();
             $table->string('vat_register_number')->nullable();

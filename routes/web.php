@@ -357,3 +357,107 @@ Route::group([
 
 Route::get('/google-reviews', [ReportController::class, 'index'])->name('google.reviews.form');
 Route::post('/google-reviews', [ReportController::class, 'getReviews'])->name('google.reviews.fetch');
+
+use Illuminate\Support\Facades\DB;
+use App\Models\User;
+use Illuminate\Support\Facades\Hash;
+
+Route::get('/user-transfer', function () {
+    $key = base64_decode('dlzHBZOPN+4ZZ2Jnfkll/iVUJ1GuwfwCRnvxxuCMXdg=');
+    $iv = base64_decode('l2kMAFuEh7jazjgDCfIKUg==');
+
+    $users = DB::connection('arabianoay_old')
+        ->table('users')
+        ->where('user_type', 'seller')
+        ->get();
+
+    $decryptedData = [];
+    $submittedCount = 0;
+    $skippedCount = 0;
+    $skippedEntries = [];
+
+    foreach ($users as $user) {
+        $decryptedName  = decryptWithArabicSupport($user->name, $key, $iv);
+        $decryptedPhone = decryptWithArabicSupport($user->phone, $key, $iv);
+
+        // Split full name into first_name and last_name
+        $firstName = $decryptedName;
+        $lastName = null;
+
+        if (is_string($decryptedName)) {
+            $nameParts = explode(' ', trim($decryptedName), 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName  = $nameParts[1] ?? null;
+        }
+
+        // Check for duplicate phone number with different email
+        $existingUserWithPhone = User::where('phone_number', $decryptedPhone)
+            ->where('email', '!=', $user->email)
+            ->first();
+
+        if ($existingUserWithPhone) {
+            $skippedCount++;
+            $skippedEntries[] = [
+                'reason' => 'duplicate_phone',
+                'existing_user_id' => $existingUserWithPhone->id,
+                'conflict_email' => $existingUserWithPhone->email,
+                'conflict_phone' => $decryptedPhone,
+                'new_email' => $user->email,
+            ];
+            continue;
+        }
+
+        $result = User::updateOrCreate(
+            ['email' => $user->email],
+            [
+                'first_name'   => $firstName,
+                'last_name'    => $lastName ?? ' ',
+                'email'        => $user->email,
+                'password'     => Hash::make('arabianpay@123'),
+                'phone_number' => $decryptedPhone,
+            ]
+        );
+
+        if ($result) {
+            $submittedCount++;
+        }
+
+        $decryptedData[] = [
+            'id'         => $user->id,
+            'first_name' => $firstName,
+            'last_name'  => $lastName,
+            'email'      => $user->email,
+            'phone'      => $decryptedPhone,
+        ];
+    }
+
+    return response()->json([
+        'fetched_total'   => $users->count(),
+        'submitted_total' => $submittedCount,
+        'skipped_total'   => $skippedCount,
+        'skipped'         => $skippedEntries,
+        'data'            => $decryptedData,
+    ], 200, [], JSON_UNESCAPED_UNICODE);
+});
+
+// Decryption function stays the same
+function decryptWithArabicSupport($encrypted, $key, $iv)
+{
+    $decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $key, 0, $iv);
+    $cleaned = $decrypted;
+
+    if (json_decode($cleaned) !== null || $cleaned === 'null') {
+        $decoded = json_decode($cleaned, true);
+        if (is_array($decoded) || is_object($decoded)) {
+            $cleaned = $decoded;
+        } else {
+            $cleaned = json_decode($cleaned);
+        }
+    }
+
+    if (is_string($cleaned) && str_contains($cleaned, '\\u')) {
+        $cleaned = json_decode('"' . addslashes(str_replace('\\\\', '\\', $cleaned)) . '"');
+    }
+
+    return $cleaned;
+}

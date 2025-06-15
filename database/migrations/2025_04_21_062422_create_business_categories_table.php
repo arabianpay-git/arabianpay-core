@@ -13,6 +13,7 @@ return new class extends Migration
     {
         Schema::create('business_categories', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('business_type_id')->constrained('business_types')->onDelete('cascade');
             $table->string('name')->unique();
             $table->string('slug');
             $table->string('order_level');

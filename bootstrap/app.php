@@ -1,10 +1,9 @@
 <?php
 
 use App\Http\Middleware\SecureHeaders;
-use Bepsvpt\SecureHeaders\SecureHeadersMiddleware;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
-use Illuminate\Foundation\Http\Middleware\VerifyCsrfToken;
+use Illuminate\Routing\Middleware\ThrottleRequests;
 use Mcamara\LaravelLocalization\Middleware\LocaleSessionRedirect;
 use Spatie\Permission\Middleware\PermissionMiddleware;
 use Spatie\Permission\Middleware\RoleMiddleware;
@@ -20,6 +19,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->append(SecureHeaders::class);
         return [
             LocaleSessionRedirect::class,
+            ThrottleRequests::class,
             RoleMiddleware::class,
             PermissionMiddleware::class,
         ];

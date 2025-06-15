@@ -157,3 +157,41 @@ if (! function_exists('map_product_details')) {
         }
     }
 }
+
+
+use Illuminate\Support\Facades\Storage;
+
+if (!function_exists('getImageUrl')) {
+    function getImageUrl($path)
+    {
+        // Local path check
+        if (Storage::disk('public')->exists($path)) {
+            return asset($path);
+        }
+
+        // Check if exists on partners subdomain
+        $partnersUrl = 'https://partners.araboanpay.com/' . $path;
+        if (urlExists($partnersUrl)) {
+            return $partnersUrl;
+        }
+
+        // Fallback: core domain
+        $coreUrl = 'https://core.araboanpay.com/' . $path;
+        if (urlExists($coreUrl)) {
+            return $coreUrl;
+        }
+
+        // Optional fallback image
+        return asset('images/no-image.png');
+    }
+
+    function urlExists($url)
+    {
+        try {
+            $headers = get_headers($url);
+            return strpos($headers[0], '200') !== false;
+        } catch (\Exception $e) {
+            return false;
+        }
+    }
+}

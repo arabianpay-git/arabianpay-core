@@ -46,7 +46,7 @@
                                                 <th>Limit Arabinpay Befor</th>
                                                 <th>Simah Limit</th>
                                                 <th>Created At</th>
-                                                <th>Action</th>
+                                                {{-- <th>Action</th> --}}
                                             </tr>
                                         </thead>
                                         <tbody>
@@ -55,20 +55,20 @@
                                                     <td class="text-center">{{ $loop->iteration }}</td>
                                                     <td>
                                                         <div class="whitespace-nowrap">
-                                                            {{ $item->user->first_name }} {{ $item->user->last_name }}
+                                                            {{ $item->first_name }} {{ $item->last_name }}
                                                             <br>
                                                             <small class="text-gray-500">
-                                                                — {{ $item->user->business_name ?? '-' }}
+                                                                — {{ $item->business_name ?? '-' }}
                                                             </small>
                                                         </div>
                                                     </td>
-                                                    <td>{{ number_format($item->limit_arabianpay_after, 2) ?? '—' }}</td>
-                                                    <td>{{ number_format($item->limit_arabianpay_before, 2) ?? '—' }}</td>
-                                                    <td>{{ number_format($item->simah_limit, 2) ?? '—' }}</td>
+                                                    <td>{{ number_format($item->limit_remaining ?? 0, 2) }}</td>
+                                                    <td>{{ number_format($item->creditLimit ?? 0, 2) }}</td>
+                                                    <td>600 (static)</td>
 
                                                     <td>{{ $item->created_at->format('d M Y') }}</td>
 
-                                                    <td>
+                                                    {{-- <td>
                                                         <div class="flex gap-1">
                                                             <a class="btn btn-sm btn-icon btn-clear btn-primary"
                                                                 data-modal-toggle="#limit_update_modal"
@@ -79,7 +79,7 @@
                                                                 <i class="ki-filled ki-notepad-edit"></i>
                                                             </a>
                                                         </div>
-                                                    </td>
+                                                    </td> --}}
                                                 </tr>
                                             @endforeach
 

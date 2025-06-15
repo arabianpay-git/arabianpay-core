@@ -1,5 +1,5 @@
 <div class="modal" data-modal="true" id="transfer_request_bulk">
-    <div class="modal-content max-w-[600px] top-[15%]">
+    <div class="modal-content max-w-[600px] top-[10%]">
         <div class="modal-header py-4 px-5">
             <h1>{{ __('Bulk Transfer Request') }}</h1>
             <button class="btn btn-sm btn-icon btn-light btn-clear" data-modal-dismiss="true">
@@ -89,4 +89,18 @@
             });
         });
     </script>
+@endpush
+@push('styles')
+    <style>
+        /* Choices.js dropdown scroll fix */
+        .choices__list--dropdown {
+            max-height: 200px !important;
+            overflow-y: auto !important;
+        }
+
+        .choices__list--dropdown,
+        .choices__list[aria-expanded] {
+            position: relative;
+        }
+    </style>
 @endpush

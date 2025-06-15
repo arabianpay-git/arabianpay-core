@@ -218,13 +218,38 @@
                             </div>
                         </div>
                     </div>
-
-
-
                 </div>
 
 
                 <div class="col-span-1 lg:col-span-1">
+                    @if ($refundRequest)
+                        <div class="card grow shadow-lg rounded-lg bg-white mb-4">
+                            <div class="card-header flex justify-between items-center p-4 border-b">
+                                <h3 class="card-title font-semibold text-xl text-gray-800">
+                                    {{ __('Refund Request') }}
+                                </h3>
+                            </div>
+                            <div class="card-body pt-4 pb-3">
+                                <form action="{{ route('refund-requests.update-status', $order->id) }}" method="POST"
+                                    id="statusForm-{{ $order->id }}">
+                                    @csrf
+                                    @method('PATCH')
+                                    <select name="refund_status" class="select"
+                                        onchange="document.getElementById('statusForm-{{ $order->id }}').submit()">
+                                        <option value="pending"
+                                            {{ $order->refund_status == 'pending' ? 'selected' : '' }}>
+                                            {{ __('Pending') }}</option>
+                                        <option value="approved"
+                                            {{ $order->refund_status == 'approved' ? 'selected' : '' }}>
+                                            {{ __('Approved') }}</option>
+                                        <option value="rejected"
+                                            {{ $order->refund_status == 'rejected' ? 'selected' : '' }}>
+                                            {{ __('Rejected') }}</option>
+                                    </select>
+                                </form>
+                            </div>
+                        </div>
+                    @endif
                     <div class="card grow shadow-lg rounded-lg bg-white">
                         <div class="card-header flex justify-between items-center p-4 border-b">
                             <h3 class="card-title font-semibold text-xl text-gray-800">
