@@ -217,7 +217,27 @@
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">Confirmation Date</td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ !empty($g['status']['confirmationDate']['gregorian']) ? \Carbon\Carbon::parse($g['status']['confirmationDate']['gregorian'])->format('d M Y') : '-' }}
+                                                    @php
+                                                        $gregorian =
+                                                            $g['status']['confirmationDate']['gregorian'] ?? null;
+                                                        $hijri = $g['status']['confirmationDate']['hijri'] ?? null;
+
+                                                        // Use API conversion if Gregorian missing but Hijri is present
+                                                        if (empty($gregorian) && !empty($hijri)) {
+                                                            $converted = hijriToGregorian($hijri); // ← uses the API helper
+                                                            $gregorian = $converted?->format('Y-m-d');
+                                                        }
+                                                    @endphp
+
+                                                    @if (!empty($gregorian))
+                                                        {{ \Carbon\Carbon::parse($gregorian)->format('d M Y') }}
+                                                        <br />
+                                                        {{ $hijri }}
+                                                    @elseif (!empty($hijri))
+                                                        {{ $hijri }}
+                                                    @else
+                                                        -
+                                                    @endif
                                                 </td>
                                             </tr>
                                             <tr>
@@ -688,7 +708,8 @@
             </div>
         </div>
 
-        <div class="modal modal-open:!flex" data-modal="true" data-modal-disable-scroll="false" id="fahmanSupplierDetailsModal">
+        <div class="modal modal-open:!flex" data-modal="true" data-modal-disable-scroll="false"
+            id="fahmanSupplierDetailsModal">
             <div class="modal-content modal-center w-full" id="fahman-supplier-details-body">
                 <div class="modal-header p-0 border-0">
                     <!-- Container -->
@@ -721,60 +742,60 @@
             </div>
         </div>
 
-    <script>
-        window.onload = () => {
-            const modalEl = KTDom.getElement('#modal_fahman');
-            const modal = KTModal.getInstance(modalEl);
-            modal?.show();
-        };
-    </script>
+        <script>
+            window.onload = () => {
+                const modalEl = KTDom.getElement('#modal_fahman');
+                const modal = KTModal.getInstance(modalEl);
+                modal?.show();
+            };
+        </script>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function() {
-            const fahmanBody = document.getElementById("modal_fahman_body");
-            // Fetch the initial data for fahman results
-            const url = "{{ url('admin/fahman-supplier-results/' . $merchant->id) }}";
-            setTimeout(() => {
-                fetch(url)
-                    .then(response => response.text())
-                    .then(html => {
-                        fahmanBody.innerHTML = html;
-                    })
-                    .catch(error => {
-                        console.error("Failed to get data:", error);
-                        fahmanBody.innerHTML = `
+        <script>
+            document.addEventListener("DOMContentLoaded", function() {
+                const fahmanBody = document.getElementById("modal_fahman_body");
+                // Fetch the initial data for fahman results
+                const url = "{{ url('admin/fahman-supplier-results/' . $merchant->id) }}";
+                setTimeout(() => {
+                    fetch(url)
+                        .then(response => response.text())
+                        .then(html => {
+                            fahmanBody.innerHTML = html;
+                        })
+                        .catch(error => {
+                            console.error("Failed to get data:", error);
+                            fahmanBody.innerHTML = `
                         <span>
                             Failed to get data
                         </span>
                     `;
+                        });
+                }, 3000); // 3000 milliseconds = 3 seconds
+            });
+        </script>
+        <script>
+            function showSupplierRiskDetails() {
+                const modalElF = KTDom.getElement('#fahmanSupplierDetailsModal');
+                const modalF = KTModal.getInstance(modalElF);
+
+                modalF?.show();
+                const detailsBody = document.getElementById('fahman-supplier-details-body');
+
+                // عرض المودال
+                //modal.show();
+                const url = "{{ url('admin/fahman-supplier-details/' . $merchant->id) }}";
+                // تحميل التفاصيل
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        console.log(html);
+                        detailsBody.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error(error);
+                        detailsBody.innerHTML = `<div class="text-danger">Failed to load details</div>`;
                     });
-            }, 3000); // 3000 milliseconds = 3 seconds
-        });
-    </script>
-    <script>
-        function showSupplierRiskDetails() {
-            const modalElF = KTDom.getElement('#fahmanSupplierDetailsModal');
-            const modalF = KTModal.getInstance(modalElF);
-
-            modalF?.show();
-            const detailsBody = document.getElementById('fahman-supplier-details-body');
-
-            // عرض المودال
-            //modal.show();
-            const url = "{{ url('admin/fahman-supplier-details/' . $merchant->id) }}";
-            // تحميل التفاصيل
-            fetch(url)
-                .then(response => response.text())
-                .then(html => {
-                    console.log(html);
-                    detailsBody.innerHTML = html;
-                })
-                .catch(error => {
-                    console.error(error);
-                    detailsBody.innerHTML = `<div class="text-danger">Failed to load details</div>`;
-                });
-        }
-    </script>
+            }
+        </script>
     </main>
 
 

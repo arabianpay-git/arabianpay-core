@@ -4,8 +4,6 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Models\RiskScore;
-use App\Models\BusinessType;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;

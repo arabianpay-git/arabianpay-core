@@ -71,7 +71,7 @@
                                         'status' => null,
                                     ],
                                     [
-                                        'title' => 'Exchange Policy File',
+                                        'title' => 'Delivery Policy File',
                                         'file' => $merchant->exchange_policy_file,
                                         'status' => null,
                                     ],

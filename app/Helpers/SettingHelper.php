@@ -236,3 +236,58 @@ function get_risk_score($userOrId)
 
     return $service->calculateForUser($user);
 }
+
+use Carbon\Carbon;
+use Illuminate\Support\Facades\Http;  // ← ADDED
+
+/**
+ * Convert a Hijri (Islamic) date to a Gregorian date via Aladhan API.
+ *
+ * Supports either:
+ *   hijriToGregorian(1446, 1, 9)
+ * or
+ *   hijriToGregorian('1446/01/09')
+ *
+ * @param  int|string  $hYearOrDate  Hijri year or date string "YYYY/MM/DD"
+ * @param  int|null    $hMonth       Hijri month (1–12)
+ * @param  int|null    $hDay         Hijri day (1–30)
+ * @param  int         $adjustment   Optional day-adjustment for Hijri date
+ * @return \Carbon\Carbon|null       Gregorian Carbon date or null on failure
+ */
+if (! function_exists('hijriToGregorian')) {  // ← ADDED
+    function hijriToGregorian($hYearOrDate, int $hMonth = null, int $hDay = null, int $adjustment = 0): ?Carbon
+    {
+        // parse "YYYY/MM/DD" string if given
+        if (is_string($hYearOrDate)) {
+            [$hYear, $hMonth, $hDay] = array_map('intval', explode('/', $hYearOrDate));
+        } else {
+            $hYear = $hYearOrDate;
+        }
+
+        // build API date in DD-MM-YYYY
+        $dateParam = sprintf('%02d-%02d-%04d', $hDay, $hMonth, $hYear);
+
+        // call Aladhan API
+        $response = Http::timeout(5)                                      // ← ADDED: short timeout
+            ->get('https://api.aladhan.com/v1/hToG', [
+                'date'       => $dateParam,
+                'adjustment' => $adjustment,               // ← ADDED
+            ]);
+
+        if (! $response->successful()) {
+            return null; // or throw exception if you prefer
+        }
+
+        $data = $response->json('data');
+
+        // grab the gregorian date string "DD-MM-YYYY"
+        $gregDate = $data['gregorian']['date'] ?? null;
+
+        if (! $gregDate) {
+            return null;
+        }
+
+        // parse and return Carbon instance
+        return Carbon::createFromFormat('d-m-Y', $gregDate);
+    }  // ← ADDED
+}

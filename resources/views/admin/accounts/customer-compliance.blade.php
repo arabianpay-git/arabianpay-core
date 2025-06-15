@@ -66,7 +66,7 @@
                                         'status' => null,
                                     ],
                                     [
-                                        'title' => 'Exchange Policy File',
+                                        'title' => 'Delivery Policy File',
                                         'file' => $customer->exchange_policy_file,
                                         'status' => null,
                                     ],

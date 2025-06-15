@@ -47,6 +47,7 @@ use App\Http\Middleware\EnsureOtpVerified;
 use App\Http\Middleware\PreventBackHistory;
 use App\Http\Middleware\SecureHeaders;
 use App\Models\Merchant;
+use App\Models\SupplierBank;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
@@ -464,24 +465,20 @@ function decryptWithArabicSupport($encrypted, $key, $iv)
 }
 
 
-
-
 Route::get('/sellers', function () {
-    // Step 1: Get all old users
-    $oldUsers = DB::connection('arabianoay_old')
-        ->table('users')
-        ->get();
+    // Step 1: Get all users from old DB
+    $oldUsers = DB::connection('arabianoay_old')->table('users')->get();
 
-    // Step 2: Extract emails from old users
+    // Step 2: Get unique emails from old users
     $oldEmails = $oldUsers->pluck('email')->filter()->unique();
 
-    // Step 3: Get matching new users by email
+    // Step 3: Get users from new DB whose emails match old ones
     $newUsers = User::whereIn('email', $oldEmails)->get();
 
     // Step 4: Map emails to new user IDs
-    $emailToNewUserId = $newUsers->pluck('id', 'email'); // ['email' => id]
+    $emailToNewUserId = $newUsers->pluck('id', 'email'); // [email => id]
 
-    // Step 5: Get sellers from old DB whose user has matching email in new DB
+    // Step 5: Get all sellers from old DB
     $oldSellers = DB::connection('arabianoay_old')
         ->table('sellers')
         ->whereIn('user_id', $oldUsers->pluck('id'))
@@ -490,37 +487,170 @@ Route::get('/sellers', function () {
     $migratedSellers = [];
 
     foreach ($oldSellers as $oldSeller) {
-        // Get the old user
+        // Match the old user
         $oldUser = $oldUsers->firstWhere('id', $oldSeller->user_id);
-        if (!$oldUser) {
-            continue;
-        }
+        if (!$oldUser) continue;
 
-        // Get new user_id from matching email
+        // Find corresponding new user ID
         $newUserId = $emailToNewUserId[$oldUser->email] ?? null;
+        if (!$newUserId) continue;
 
-        if (!$newUserId) {
+        // Skip if merchant with this CR already exists
+        if (
+            Merchant::where('cr_number', $oldSeller->cr_number)->exists() ||
+            Merchant::where('owner_iqama_number', $oldSeller->id_number)->exists()
+        ) {
             continue;
         }
 
-        // Create and save new Merchant
-        $newSeller = new Merchant();
-        $newSeller->user_id = $newUserId;
-        $newSeller->cr_number = $oldSeller->cr_number;
-        $newSeller->goverment_data = json_decode($oldSeller->cr_data);
-        $newSeller->vat_register_number = $oldSeller->cr_data;
-        $newSeller->owner_iqama_number = $oldSeller->id_number;
-        $newSeller->save();
 
-        $submitBusinessNameForNewUser = User::find($newUserId);
-        $submitBusinessNameForNewUser->business_name = $oldSeller->business_owner;
-        $submitBusinessNameForNewUser->save();
+        // Step 6: Create new Merchant record
+        $newMerchant = new Merchant();
+        $newMerchant->user_id = $newUserId;
+        $newMerchant->cr_number = $oldSeller->cr_number;
+        $newMerchant->goverment_data = is_string($oldSeller->cr_data) ? $oldSeller->cr_data : json_encode($oldSeller->cr_data);
+        $newMerchant->vat_register_number = $oldSeller->vat_cr;
+        $newMerchant->return_day_count = $oldSeller->return_days ?? 0;
+        $newMerchant->exchange_day_count = $oldSeller->exchange_days ?? 0;
+        $newMerchant->cancel_day_count = 0;
+        $newMerchant->term_status = 'accepted';
+        $newMerchant->status = 'pending';
+        $newMerchant->owner_iqama_number = $oldSeller->id_number;
+        $newMerchant->save();
 
-        $migratedSellers[] = $newSeller;
+        // Step 7: Update business name in new user
+        $user = User::find($newUserId);
+        if ($user) {
+            $user->business_name = $oldSeller->business_owner;
+            $user->save();
+        }
+
+        // Step 8: Create new SupplierBank record
+        $bank = new SupplierBank();
+        $bank->user_id = $newUserId;
+        $bank->bank_name = $oldSeller->bank_id ?? 'N/A';
+        $bank->account_name = $oldSeller->beneficiary_name ?? 'N/A';
+        $bank->iban = $oldSeller->account_ibn ?? 'N/A';
+        $bank->save();
+
+        // Add to migrated list
+        $migratedSellers[] = $newMerchant;
     }
 
+    // Step 9: Return result
     return response()->json([
         'migrated_sellers_count' => count($migratedSellers),
         'migrated_sellers' => $migratedSellers,
     ]);
+});
+
+
+Route::get('/cr_data', function () {
+
+    dd(hijriToGregorian('1446/01/09'));
+    $merchants = Merchant::WhereNotIn('id', [1, 12, 15, 17, 19])->get();
+
+    foreach ($merchants as $merchant) {
+        if (!$merchant->goverment_data) {
+            continue; // skip if no data
+        }
+
+        $old = json_decode($merchant->goverment_data, true);
+        if (!$old) {
+            continue; // skip if invalid JSON
+        }
+
+        // Map old to new format (same mapping you gave)
+        $newFormat = [
+            "name" => $old['crName'] ?? null,
+            "isMain" => true,
+
+            "status" => [
+                "id" => $old['status']['id'] ?? null,
+                "name" => $old['status']['nameEn'] ?? null,
+                "deletionDate" => $old['status']['deletionDate'] ?? [],
+                "suspensionDate" => $old['status']['suspensionDate'] ?? [],
+                "confirmationDate" => [
+                    "hijri" => $old['expiryDate'] ?? null,
+                    "gregorian" => hijriToGregorian($old['expiryDate']),
+                ],
+                "reactivationDate" => $old['status']['reactivationDate'] ?? [],
+            ],
+
+            "capital" => [
+                "share" => $old['capital']['share'] ?? null,
+                "paidAmount" => $old['capital']['paidAmount'] ?? null,
+                "announcedAmount" => $old['capital']['announcedAmount'] ?? null,
+                "subscribedAmount" => $old['capital']['subscribedAmount'] ?? null,
+            ],
+
+            "parties" => $old['parties'] ?? [],
+
+            "crNumber" => $old['crNumber'] ?? null,
+
+            "crCapital" => $old['capital']['paidAmount'] ?? null,
+
+            "eCommerce" => $old['isEcommerce'] ?? false,
+
+            "versionNo" => null,
+
+            "activities" => $old['activities'] ?? [],
+
+            "entityType" => $old['businessType'] ?? [],
+
+            "fiscalYear" => $old['fiscalYear'] ?? null,
+
+            "management" => null,
+
+            "nameLangId" => null,
+
+            "contactInfo" => [
+                "email" => $old['address']['general']['email'] ?? null,
+                "phoneNo" => $old['address']['general']['telephone1'] ?? null,
+                "address" => $old['address']['general']['address'] ?? null,
+                "website" => $old['address']['general']['website'] ?? null,
+                "zipcode" => $old['address']['general']['zipcode'] ?? null,
+                "postalBox1" => $old['address']['general']['postalBox1'] ?? null,
+                "postalBox2" => $old['address']['general']['postalBox2'] ?? null,
+            ],
+
+            "hasEcommerce" => $old['isEcommerce'] ?? false,
+
+            "mainCrNumber" => $old['crMainNumber'] ?? null,
+
+            "nameLangDesc" => null,
+
+            "isLicenseBased" => false,
+
+            "issueDateHijri" => $old['issueDate'] ?? null,
+
+            "companyDuration" => null,
+
+            "crNationalNumber" => $old['crMainNumber'],
+
+            "headquarterCityId" => $old['location']['id'] ?? null,
+
+            "licenseIssuerName" => null,
+
+            "issueDateGregorian" => null,
+
+            "headquarterCityName" => $old['location']['name'] ?? null,
+
+            "inLiquidationProcess" => false,
+
+            "mainCrNationalNumber" => $old['crMainEntityNumber'],
+
+            "partnersNationalityId" => null,
+
+            "PartnersNationalityName" => null,
+
+            "licenseIssuerNationalNumber" => null,
+        ];
+
+        // Save the new format JSON back to the database
+        $merchant->goverment_data = json_encode($newFormat);
+        $merchant->save();
+    }
+
+    return response()->json(['message' => 'All merchants government_data updated successfully']);
 });
