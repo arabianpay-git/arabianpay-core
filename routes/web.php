@@ -46,6 +46,7 @@ use App\Http\Middleware\CheckAdmin;
 use App\Http\Middleware\EnsureOtpVerified;
 use App\Http\Middleware\PreventBackHistory;
 use App\Http\Middleware\SecureHeaders;
+use App\Models\Customer;
 use App\Models\Merchant;
 use App\Models\SupplierBank;
 use Illuminate\Routing\Middleware\ThrottleRequests;
@@ -364,7 +365,7 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
-Route::get('/user-transfer', function () {
+Route::get('/merchant-transfer', function () {
     $key = base64_decode('dlzHBZOPN+4ZZ2Jnfkll/iVUJ1GuwfwCRnvxxuCMXdg=');
     $iv = base64_decode('l2kMAFuEh7jazjgDCfIKUg==');
 
@@ -464,7 +465,6 @@ function decryptWithArabicSupport($encrypted, $key, $iv)
     return $cleaned;
 }
 
-
 Route::get('/sellers', function () {
     // Step 1: Get all users from old DB
     $oldUsers = DB::connection('arabianoay_old')->table('users')->get();
@@ -543,7 +543,6 @@ Route::get('/sellers', function () {
         'migrated_sellers' => $migratedSellers,
     ]);
 });
-
 
 Route::get('/cr_data', function () {
 
@@ -653,4 +652,174 @@ Route::get('/cr_data', function () {
     }
 
     return response()->json(['message' => 'All merchants government_data updated successfully']);
+});
+
+use Illuminate\Support\Str;
+
+Route::get('/customer-transfer', function () {
+    $key = base64_decode('dlzHBZOPN+4ZZ2Jnfkll/iVUJ1GuwfwCRnvxxuCMXdg=');
+    $iv = base64_decode('l2kMAFuEh7jazjgDCfIKUg==');
+
+    $users = DB::connection('arabianoay_old')
+        ->table('users')
+        ->where('user_type', 'customer')
+        ->get();
+
+    $decryptedData = [];
+    $submittedCount = 0;
+    $skippedCount = 0;
+    $skippedEntries = [];
+
+    foreach ($users as $user) {
+        $decryptedName  = decryptWithArabicSupport($user->name, $key, $iv);
+        $decryptedPhone = decryptWithArabicSupport($user->phone, $key, $iv);
+
+        // Split full name into first_name and last_name
+        $firstName = $decryptedName;
+        $lastName = null;
+
+        if (is_string($decryptedName)) {
+            $nameParts = explode(' ', trim($decryptedName), 2);
+            $firstName = $nameParts[0] ?? '';
+            $lastName  = $nameParts[1] ?? null;
+        }
+
+        // Check for duplicate phone number with different email
+        $existingUserWithPhone = User::where('phone_number', $decryptedPhone)
+            ->where('email', '!=', $user->email)
+            ->first();
+
+        if ($existingUserWithPhone) {
+            $skippedCount++;
+            $skippedEntries[] = [
+                'reason' => 'duplicate_phone',
+                'existing_user_id' => $existingUserWithPhone->id,
+                'conflict_email' => $existingUserWithPhone->email,
+                'conflict_phone' => $decryptedPhone,
+                'new_email' => $user->email,
+            ];
+            continue;
+        }
+
+        $email = $user?->email;
+
+        if (empty($email)) {
+            // fallback to firstname based email
+            $baseEmail = Str::slug($firstName, '_') . '@arabianpay.net';
+            $email = $baseEmail;
+            $counter = 1;
+
+            // keep increasing suffix until unique email is found
+            while (User::where('email', $email)->exists()) {
+                $email = Str::slug($firstName, '_') . $counter . '@arabianpay.net';
+                $counter++;
+            }
+        }
+
+        $result = User::updateOrCreate(
+            ['email' => $user->email],
+            [
+                'first_name'   => $firstName,
+                'last_name'    => $lastName ?? ' ',
+                'email'        => $email,
+                'password'     => Hash::make('arabianpay@123'),
+                'phone_number' => $decryptedPhone,
+            ]
+        );
+
+        if ($result) {
+            $submittedCount++;
+        }
+
+        $decryptedData[] = [
+            'id'         => $user->id,
+            'first_name' => $firstName,
+            'last_name'  => $lastName,
+            'email'      => $user->email,
+            'phone'      => $decryptedPhone,
+        ];
+    }
+
+    return response()->json([
+        'fetched_total'   => $users->count(),
+        'submitted_total' => $submittedCount,
+        'skipped_total'   => $skippedCount,
+        'skipped'         => $skippedEntries,
+        'data'            => $decryptedData,
+    ], 200, [], JSON_UNESCAPED_UNICODE);
+});
+
+Route::get('/customers', function () {
+    // Step 1: Get all users from old DB
+    $oldUsers = DB::connection('arabianoay_old')->table('users')->where('user_type', 'customer')->get();
+
+    // Step 2: Get unique emails from old users
+    $oldEmails = $oldUsers->pluck('email')->filter()->unique();
+
+    // Step 3: Get users from new DB whose emails match old ones
+    $newUsers = User::whereIn('email', $oldEmails)->get();
+
+    // Step 4: Map emails to new user IDs
+    $emailToNewUserId = $newUsers->pluck('id', 'email'); // [email => id]
+
+    // Step 5: Get all sellers from old DB
+    $oldCustomers = DB::connection('arabianoay_old')
+        ->table('customers')
+        ->whereIn('user_id', $oldUsers->pluck('id'))
+        ->get();
+
+    $migratedSellers = [];
+
+    foreach ($oldCustomers as $oldCustomer) {
+        // Match the old user
+        $oldUser = $oldUsers->firstWhere('id', $oldCustomer->user_id);
+        if (!$oldUser) continue;
+
+        // Find corresponding new user ID
+        $newUserId = $emailToNewUserId[$oldUser->email] ?? null;
+        if (!$newUserId) continue;
+
+        // Skip if merchant with this CR already exists
+        if (
+            Customer::where('cr_number', $oldCustomer->cr_number)->exists() ||
+            Customer::where('id_number', $oldCustomer->id_number)->exists() ||
+            Customer::where('tax_number', $oldCustomer->tax_number)->exists()
+        ) {
+            continue;
+        }
+
+        // Step 6: Create new Merchant record
+        $newCustomer = new Customer();
+        $newCustomer->user_id = $newUserId;
+        $newCustomer->package_id = 1;
+        $newCustomer->id_number = $oldCustomer->id_number;
+        $newCustomer->cr_number = $oldCustomer->cr_number;
+        $newCustomer->cr_data = is_string($oldCustomer->cr_data) ? $oldCustomer->cr_data : json_encode($oldCustomer->cr_data);
+        $newCustomer->tax_number = $oldCustomer->tax_number;
+        $newCustomer->check_nafath = $oldCustomer->check_nafath ?? 0;
+        $newCustomer->nafath_data = $oldCustomer->data;
+        $newCustomer->date_of_birth = $oldCustomer->date_of_birth;
+        $newCustomer->purchasing_volume = $oldCustomer->purchasing_volume;
+        $newCustomer->purchasing_natures = $oldCustomer->purchasing_natures;
+        $newCustomer->other_purchasing_natures = $oldCustomer->other_purchasing_natures;
+        $newCustomer->status = 'pending';
+
+        $newCustomer->save();
+
+        // Step 7: Update business name in new user
+        $user = User::find($newUserId);
+        if ($user) {
+            $user->business_name = $oldCustomer->trade_name;
+            $user->save();
+        }
+
+        // Add to migrated list
+        $migratedCustomers[] = $newCustomer;
+    }
+
+    // Step 9: Return result
+    return response()->json([
+        'migrated_customer_count' => count($migratedCustomers),
+        'migrated_customers' => $migratedCustomers,
+    ]);
 });

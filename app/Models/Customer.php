@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Models;
+
 use App\Traits\LogsModelActions;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -11,9 +12,9 @@ class Customer extends Model
     use HasFactory;
     use LogsModelActions;
 
-        protected static $logAttributes = ['status', 'amount', 'due_date'];
-        protected static $logOnlyDirty = true; // Save only changed attributes
-        protected static $logName = 'customer'; // Custom log name
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'customer';
 
     protected $fillable = [
         'assigned_to',

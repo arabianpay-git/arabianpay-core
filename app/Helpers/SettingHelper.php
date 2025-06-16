@@ -254,7 +254,7 @@ use Illuminate\Support\Facades\Http;  // ← ADDED
  * @param  int         $adjustment   Optional day-adjustment for Hijri date
  * @return \Carbon\Carbon|null       Gregorian Carbon date or null on failure
  */
-if (! function_exists('hijriToGregorian')) {  // ← ADDED
+if (! function_exists('hijriToGregorian')) {
     function hijriToGregorian($hYearOrDate, int $hMonth = null, int $hDay = null, int $adjustment = 0): ?Carbon
     {
         // parse "YYYY/MM/DD" string if given
@@ -268,10 +268,10 @@ if (! function_exists('hijriToGregorian')) {  // ← ADDED
         $dateParam = sprintf('%02d-%02d-%04d', $hDay, $hMonth, $hYear);
 
         // call Aladhan API
-        $response = Http::timeout(5)                                      // ← ADDED: short timeout
+        $response = Http::timeout(5)
             ->get('https://api.aladhan.com/v1/hToG', [
                 'date'       => $dateParam,
-                'adjustment' => $adjustment,               // ← ADDED
+                'adjustment' => $adjustment,
             ]);
 
         if (! $response->successful()) {
@@ -287,7 +287,6 @@ if (! function_exists('hijriToGregorian')) {  // ← ADDED
             return null;
         }
 
-        // parse and return Carbon instance
         return Carbon::createFromFormat('d-m-Y', $gregDate);
-    }  // ← ADDED
+    }
 }
