@@ -86,6 +86,7 @@ class AccountController extends Controller
             ->when($user->user_type !== 'admin', function ($query) use ($user) {
                 $query->where('assigned_to', $user->id);
             })
+            ->orderByDesc('created_at')
             ->orderByRaw('ISNULL(assigned_to) DESC')
             ->paginate(10);
 
@@ -373,15 +374,17 @@ class AccountController extends Controller
         $user = currentUser();
 
         $merchants = Merchant::with('user', 'businessType', 'assigned')
-            ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to')
+            ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to', 'created_at')
             ->when($user->user_type !== 'admin', function ($query) use ($user) {
                 $query->where('assigned_to', $user->id);
             })
+            ->orderByDesc('created_at')
             ->orderByRaw('ISNULL(assigned_to) DESC')
             ->paginate(10);
 
         return view('admin.accounts.suppliers', compact('merchants'));
     }
+
 
     public function supplierProducts($id)
     {

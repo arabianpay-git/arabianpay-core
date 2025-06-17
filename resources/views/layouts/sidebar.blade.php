@@ -187,18 +187,20 @@
                                                 </a>
                                             </div>
                                         @endcan
-                                        <div class="menu-item">
-                                            <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                                href="{{ route('productsBulkUpload') }}" tabindex="0">
-                                                <span
-                                                    class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
-                                                </span>
-                                                <span
-                                                    class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Bulk Import Product
-                                                </span>
-                                            </a>
-                                        </div>
+                                        @can('product.create')
+                                            <div class="menu-item">
+                                                <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
+                                                    href="{{ route('productsBulkUpload') }}" tabindex="0">
+                                                    <span
+                                                        class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+                                                    </span>
+                                                    <span
+                                                        class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                                        Bulk Import Product
+                                                    </span>
+                                                </a>
+                                            </div>
+                                        @endcan
                                         @can('product.read')
                                             <div class="menu-item">
                                                 <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
@@ -364,53 +366,6 @@
                                     </div>
                                 @endcan
 
-                                {{-- <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
-                                    <div class="menu-link border border-transparent grow cursor-pointer gap-[14px] ps-[10px] pe-[10px] py-[8px]" tabindex="0">
-                                        <span
-                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
-                                        >
-                                        </span>
-                                        <span class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                            Bulk Import / Export
-                                        </span>
-                                        <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
-                                            <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
-                                            <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex"> </i>
-                                        </span>
-                                    </div>
-                                    <div class="menu-accordion gap-0.5 relative before:absolute before:start-[32px] ps-[22px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
-                                        <div class="menu-item">
-                                            <a
-                                                class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                                href="html/demo1/public-profile/projects/3-columns.html"
-                                                tabindex="0"
-                                            >
-                                                <span
-                                                    class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
-                                                >
-                                                </span>
-                                                <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Import
-                                                </span>
-                                            </a>
-                                        </div>
-                                        <div class="menu-item">
-                                            <a
-                                                class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                                href="html/demo1/public-profile/projects/2-columns.html"
-                                                tabindex="0"
-                                            >
-                                                <span
-                                                    class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
-                                                >
-                                                </span>
-                                                <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Export
-                                                </span>
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div> --}}
                                 @canany(['statics.product', 'statics.category', 'statics.brand', 'statics.reviews'])
                                     <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                                         <div class="menu-link border border-transparent grow cursor-pointer gap-[14px] ps-[10px] pe-[10px] py-[8px]"
@@ -789,6 +744,7 @@
                                     </div>
                                 </div>
                             @endcan
+
                             @can('supplier_and_sales.view')
                                 <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                                     <div class="menu-link border border-transparent grow cursor-pointer gap-[14px] ps-[10px] pe-[10px] py-[8px]"
@@ -874,6 +830,7 @@
                                     </div>
                                 </div>
                             @endcan
+
                             @can('customer_and_sales.view')
                                 <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                                     <div class="menu-link border border-transparent grow cursor-pointer gap-[14px] ps-[10px] pe-[10px] py-[8px]"
@@ -959,75 +916,10 @@
                                     </div>
                                 </div>
                             @endcan
-
-                            {{-- <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
-                            <div class="menu-link border border-transparent grow cursor-pointer gap-[14px] ps-[10px] pe-[10px] py-[8px]" tabindex="0">
-                                <span
-                                    class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
-                                >
-                                </span>
-                                <span class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                    Financial Details
-                                </span>
-                                <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
-                                    <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
-                                    <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex"> </i>
-                                </span>
-                            </div>
-                            <div class="menu-accordion gap-0.5 relative before:absolute before:start-[32px] ps-[22px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
-                                <div class="menu-item">
-                                    <a
-                                        class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/projects/2-columns.html"
-                                        tabindex="0"
-                                    >
-                                        <span
-                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
-                                        >
-                                        </span>
-                                        <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Users Card
-                                        </span>
-                                    </a>
-                                </div>
-
-                                <div class="menu-item">
-                                    <a
-                                        class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/projects/2-columns.html"
-                                        tabindex="0"
-                                    >
-                                        <span
-                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
-                                        >
-                                        </span>
-                                        <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Currency
-                                        </span>
-                                    </a>
-                                </div>
-
-                                <div class="menu-item">
-                                    <a
-                                        class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[5px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/projects/2-columns.html"
-                                        tabindex="0"
-                                    >
-                                        <span
-                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"
-                                        >
-                                        </span>
-                                        <span class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Vat & Tax
-                                        </span>
-                                    </a>
-                                </div>
-                            </div>
-                        </div> --}}
-
                         </div>
                     </div>
                 @endcanany
+
                 @can('risk.managment')
                     <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
@@ -1223,7 +1115,6 @@
                         </div>
                     </div>
                 @endcan
-
 
                 @can('plan.read')
                     <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
