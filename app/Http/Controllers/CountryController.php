@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Country;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class CountryController extends Controller
 {
@@ -35,10 +37,10 @@ class CountryController extends Controller
         // log the creation of the country
         $country->logModelAction(
             event: 'create',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created country: {$country->name} [{$country->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created country: {$country->name} [{$country->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -77,10 +79,10 @@ class CountryController extends Controller
         // log the update of the country
         $country->logModelAction(
             event: 'update',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated country: {$country->name} [{$country->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated country: {$country->name} [{$country->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -94,10 +96,10 @@ class CountryController extends Controller
         // log the deletion of the country
         $country->logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted country: {$country->name} [{$country->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted country: {$country->name} [{$country->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
         $country->delete();

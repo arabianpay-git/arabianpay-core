@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\InstalmentPlan;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
 
 class InstalmentPlanController extends Controller
 {
@@ -47,11 +49,11 @@ class InstalmentPlanController extends Controller
         ]);
 
         // log the creation of the instalment plan
-        $batchUuid = (string) \Str::uuid();
+        $batchUuid = (string) Str::uuid();
         $instalmentPlan = InstalmentPlan::latest()->first();
         $instalmentPlan->logModelAction(
             event: 'create',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created instalment plan: {$instalmentPlan->name} [{$instalmentPlan->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created instalment plan: {$instalmentPlan->name} [{$instalmentPlan->id}]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,
@@ -101,10 +103,10 @@ class InstalmentPlanController extends Controller
         ]);
 
         // log the update of the instalment plan
-        $batchUuid = (string) \Str::uuid();
+        $batchUuid = (string) Str::uuid();
         $instalmentPlan->logModelAction(
             event: 'update',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated instalment plan: {$instalmentPlan->name} [{$instalmentPlan->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated instalment plan: {$instalmentPlan->name} [{$instalmentPlan->id}]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,
@@ -121,10 +123,10 @@ class InstalmentPlanController extends Controller
         $instalmentPlan = InstalmentPlan::find($id);
 
         //log the deletion of the instalment plan
-        $batchUuid = (string) \Str::uuid();
+        $batchUuid = (string) Str::uuid();
         $instalmentPlan->logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted instalment plan: {$instalmentPlan->name} [{$instalmentPlan->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted instalment plan: {$instalmentPlan->name} [{$instalmentPlan->id}]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,

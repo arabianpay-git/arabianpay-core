@@ -4,9 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Str;
+use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
@@ -54,7 +55,7 @@ class CategoryController extends Controller
             $batchUuid = (string) Str::uuid();
             $category->logModelAction(
                 event: 'create',
-                description: auth()->user()->first_name." ".auth()->user()->last_name." created category: {$category->name} [$category->id]",
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " created category: {$category->name} [$category->id]",
                 properties: [
                     'reason' => $request->input('reason', null), // reson can be optional
                     'ip' => request()->ip(),
@@ -113,7 +114,7 @@ class CategoryController extends Controller
             $batchUuid = (string) Str::uuid();
             $category->logModelAction(
                 event: 'update',
-                description: auth()->user()->first_name." ".auth()->user()->last_name." updated category: {$category->name} [$category->id]",
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated category: {$category->name} [$category->id]",
                 properties: [
                     'ip' => request()->ip(),
                     'batch_uuid' => $batchUuid, // Add batch UUID for consistency
@@ -133,7 +134,7 @@ class CategoryController extends Controller
         $batchUuid = (string) Str::uuid();
         $category->logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name." ".auth()->user()->last_name." delete category: {$category->name} [$category->id]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " delete category: {$category->name} [$category->id]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid, // Add batch UUID for consistency

@@ -12,8 +12,9 @@ class Media extends Model
     use LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed attributes
-    protected static $logName = 'media'; // Custom log name
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'media';
+
     protected $fillable = [
         'user_id',
         'name',

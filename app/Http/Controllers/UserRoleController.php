@@ -4,7 +4,9 @@ namespace App\Http\Controllers;
 
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class UserRoleController extends Controller
 {
@@ -31,12 +33,12 @@ class UserRoleController extends Controller
         $user->syncRoles([$role->name]);
 
         // Log the role update
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'update_role',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated role for user: {$user->first_name} {$user->last_name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated role for user: {$user->first_name} {$user->last_name}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 

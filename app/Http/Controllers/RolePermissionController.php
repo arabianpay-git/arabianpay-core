@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Str;
 
 class RolePermissionController extends Controller
 {
@@ -38,12 +40,12 @@ class RolePermissionController extends Controller
         $role->syncPermissions($request->permissions ?? []);
 
         // Log the assignment of permissions
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'assign_permissions',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " assigned permissions to role: {$role->name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " assigned permissions to role: {$role->name}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -77,12 +79,12 @@ class RolePermissionController extends Controller
         $role->syncPermissions($request->permissions ?? []);
 
         // Log the update of permissions
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'update',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated permissions for role: {$role->name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated permissions for role: {$role->name}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -94,12 +96,12 @@ class RolePermissionController extends Controller
     {
         $role = Role::findOrFail($roleId);
         // Log the removal of permissions
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'remove_permissions',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " removed permissions from role: {$role->name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " removed permissions from role: {$role->name}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
         $role->syncPermissions([]);

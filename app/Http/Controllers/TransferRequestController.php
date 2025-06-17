@@ -7,6 +7,7 @@ use App\Models\TransferRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
 
 class TransferRequestController extends Controller
 {
@@ -60,12 +61,12 @@ class TransferRequestController extends Controller
 
             DB::commit();
             // Log the transfer request creation
-            auth()->user()->logModelAction(
+            Auth::logModelAction(
                 event: 'create_transfer_request',
-                description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a transfer request for model: {$modelClass} with ID: {$modelId}",
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a transfer request for model: {$modelClass} with ID: {$modelId}",
                 properties: [
                     'ip' => request()->ip(),
-                    'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                    'batch_uuid' => (string) Str::uuid(),
                     'transfer_request_id' => $transferRequest->id,
                     'model_type' => $modelClass,
                     'model_id' => $modelId,
@@ -95,7 +96,7 @@ class TransferRequestController extends Controller
         DB::beginTransaction();
         try {
             $modelClass = $data['model_type'];
-            $batch_uuid = (string) \Str::uuid(); // Generate a new UUID for the batch
+            $batch_uuid = (string) Str::uuid();
             foreach ($data['model_ids'] as $modelId) {
                 // Create each TransferRequest
                 TransferRequest::create([
@@ -118,12 +119,12 @@ class TransferRequestController extends Controller
                 }
 
                 // Log the transfer request creation
-                auth()->user()->logModelAction(
+                Auth::logModelAction(
                     event: 'create_transfer_request',
-                    description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a bulk transfer request for model: {$modelClass} with ID: {$modelId}",
+                    description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a bulk transfer request for model: {$modelClass} with ID: {$modelId}",
                     properties: [
                         'ip' => request()->ip(),
-                        'batch_uuid' => $batch_uuid, // Generate a new UUID for the batch
+                        'batch_uuid' => $batch_uuid,
                         'model_type' => $modelClass,
                         'model_id' => $modelId,
                         'to_user_id' => $data['to_user_id'],

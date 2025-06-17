@@ -6,6 +6,8 @@ use App\Models\State;
 use App\Models\Country;
 use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Str;
 
 class StateController extends Controller
 {
@@ -45,10 +47,10 @@ class StateController extends Controller
         // log the creation of the state
         $state->logModelAction(
             event: 'create',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new state: {$state->name} in country ID {$state->country_id}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new state: {$state->name} in country ID {$state->country_id}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -85,10 +87,10 @@ class StateController extends Controller
         // log the update of the state
         $state->logModelAction(
             event: 'update',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated state: {$state->name} in country ID {$state->country_id}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated state: {$state->name} in country ID {$state->country_id}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -103,10 +105,10 @@ class StateController extends Controller
         // log the deletion of the state
         $state->logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted state: {$state->name} in country ID {$state->country_id}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted state: {$state->name} in country ID {$state->country_id}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
         // Delete the state

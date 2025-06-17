@@ -8,6 +8,7 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Str;
 
 class CouponController extends Controller
 {
@@ -69,7 +70,7 @@ class CouponController extends Controller
         Coupon::create($validated);
 
         // Log the creation of the coupon
-        $batchUuid = (string) \Str::uuid();
+        $batchUuid = (string) Str::uuid();
         $coupon = Coupon::latest()->first();
         $coupon->logModelAction(
             event: 'create',
@@ -159,7 +160,7 @@ class CouponController extends Controller
         $coupon->update($validated);
 
         // Log the update of the coupon
-        $batchUuid = (string) \Str::uuid();
+        $batchUuid = (string) Str::uuid();
         $coupon->logModelAction(
             event: 'update',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated coupon: {$coupon->code} [{$coupon->id}]",
@@ -176,7 +177,7 @@ class CouponController extends Controller
     public function destroy(Coupon $coupon)
     {
         // Log the deletion of the coupon
-        $batchUuid = (string) \Str::uuid();
+        $batchUuid = (string) Str::uuid();
         $coupon->logModelAction(
             event: 'delete',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted coupon: {$coupon->code} [{$coupon->id}]",
@@ -187,7 +188,7 @@ class CouponController extends Controller
         );
         // End of logging
         $coupon->delete();
-        
+
         return redirect()->back()->with('success', 'Coupon deleted successfully!');
     }
 

@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
+use Illuminate\Support\Str;
 
 class RoleController extends Controller
 {
@@ -29,13 +31,12 @@ class RoleController extends Controller
             'guard_name' => 'web'
         ]);
 
-        // Log the creation of the role
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'create',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new role: {$request->name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new role: {$request->name}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -61,13 +62,12 @@ class RoleController extends Controller
             'guard_name' => 'web'
         ]);
 
-        // Log the update of the role
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'update',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated the role: {$role->name} [{$role->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated the role: {$role->name} [{$role->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -78,13 +78,12 @@ class RoleController extends Controller
     {
         $role = Role::findOrFail($id);
 
-        // log the deletion of the role
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted the role: {$role->name} [{$role->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted the role: {$role->name} [{$role->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
         $role->delete();

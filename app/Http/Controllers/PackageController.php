@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Package;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
@@ -37,10 +38,10 @@ class PackageController extends Controller
         $batchUuid = (string) Str::uuid();
         $package->logModelAction(
             event: 'create',
-            description: auth()->user()->first_name." ".auth()->user()->last_name." created package: {$package->name} [$package->id]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created package: {$package->name} [$package->id]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                'batch_uuid' => $batchUuid,
             ],
         );
 
@@ -82,10 +83,10 @@ class PackageController extends Controller
         $batchUuid = (string) Str::uuid();
         $package->logModelAction(
             event: 'update',
-            description: auth()->user()->first_name." ".auth()->user()->last_name." updated package: {$package->name} [$package->id]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated package: {$package->name} [$package->id]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                'batch_uuid' => $batchUuid,
             ],
         );
 
@@ -100,10 +101,10 @@ class PackageController extends Controller
         $batchUuid = (string) Str::uuid();
         $package->logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name." ".auth()->user()->last_name." deleted package: {$package->name} [$package->id]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted package: {$package->name} [$package->id]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                'batch_uuid' => $batchUuid,
             ],
         );
         // Delete the package

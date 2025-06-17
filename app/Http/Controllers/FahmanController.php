@@ -6,12 +6,8 @@ use App\Models\Customer;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\Product;
-use App\Models\Transaction;
-use App\Models\Wallet;
 use App\Services\CreditAssessmentService;
 use App\Services\RiskAnalyticsService;
-use Illuminate\Support\Arr;
-use Carbon\Carbon;
 
 class FahmanController extends Controller
 {
@@ -106,14 +102,14 @@ class FahmanController extends Controller
                 'message' => 'Fahman advises against working with this supplier at this time. Their data indicates high instability.',
             ],
         };
-    $average = Product::selectRaw('user_id, AVG(est_shipping_days) as avg_shipping_days')
-        ->where('user_id', $merchant->user_id)
-        ->groupBy('user_id')
-        ->first(); // returns one row
+        $average = Product::selectRaw('user_id, AVG(est_shipping_days) as avg_shipping_days')
+            ->where('user_id', $merchant->user_id)
+            ->groupBy('user_id')
+            ->first(); // returns one row
 
         $PayDate = $average->avg_shipping_days ?? 0 + (100 - $score) * 0.1;
-        
-        return view('admin.accounts.partials.fahamn_supplier_results', compact('riskScore',  'fahmanAdvice','sectorAvg', 'PayDate'));
+
+        return view('admin.accounts.partials.fahamn_supplier_results', compact('riskScore',  'fahmanAdvice', 'sectorAvg', 'PayDate'));
     }
 
     public function fahmanDetails($id, CreditAssessmentService $creditService)
@@ -155,12 +151,12 @@ class FahmanController extends Controller
         return view('admin.accounts.partials.fahman_details', compact('scoreComponents', 'scoreMaxValues', 'interpretations', 'customer'));
     }
 
-     public function fahmanSupplierDetails($id, RiskAnalyticsService $riskAnalyticsService)
+    public function fahmanSupplierDetails($id, RiskAnalyticsService $riskAnalyticsService)
     {
 
         $merchant = Merchant::findOrFail($id);
         $riskScore = $riskAnalyticsService->calculateForUser($merchant->user);
-        
+
         return view('admin.accounts.partials.fahamn_supplier_details', compact('riskScore'));
     }
 }

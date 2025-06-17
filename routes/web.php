@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\{
+    ActivityLogsController,
     AccountController,
     AttributeController,
     AttributeValueController,
@@ -16,6 +17,7 @@ use App\Http\Controllers\{
     CustomerAndSalesController,
     DashboardController,
     EmployeeController,
+    FahmanController,
     InstalmentPlanController,
     MediaController,
     OrderController,
@@ -40,15 +42,18 @@ use App\Http\Controllers\{
     TransferRequestController,
     UserRoleController,
 };
-use App\Http\Controllers\ActivityLogsController;
-use App\Http\Controllers\FahmanController;
-use App\Http\Middleware\CheckAdmin;
-use App\Http\Middleware\EnsureOtpVerified;
-use App\Http\Middleware\PreventBackHistory;
-use App\Http\Middleware\SecureHeaders;
-use App\Models\Customer;
-use App\Models\Merchant;
-use App\Models\SupplierBank;
+use App\Http\Middleware\{
+    CheckAdmin,
+    EnsureOtpVerified,
+    PreventBackHistory,
+    SecureHeaders
+};
+use App\Models\{
+    Customer,
+    Media,
+    Merchant,
+    SupplierBank,
+};
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
@@ -821,5 +826,91 @@ Route::get('/customers', function () {
     return response()->json([
         'migrated_customer_count' => count($migratedCustomers),
         'migrated_customers' => $migratedCustomers,
+    ]);
+});
+
+Route::get('/media', function () {
+    // Step 1: Get all old users with type customer or seller
+    $oldUsers = DB::connection('arabianoay_old')
+        ->table('users')
+        ->whereIn('user_type', ['customer', 'seller'])
+        ->get();
+
+    // Step 2: Get unique emails from old users
+    $oldEmails = $oldUsers->pluck('email')->filter()->unique();
+
+    // Step 3: Get users from new DB whose emails match old ones
+    $newUsers = User::whereIn('email', $oldEmails)->get();
+
+    // Step 4: Map emails to new user IDs
+    $emailToNewUserId = $newUsers->pluck('id', 'email'); // [email => id]
+
+    // Step 5: Get all document uploads of those users
+    $oldMedia = DB::connection('arabianoay_old')
+        ->table('uploads')
+        ->whereIn('user_id', $oldUsers->pluck('id'))
+        ->where('type', 'document')
+        ->get();
+
+    $migratedData = [];
+
+    foreach ($oldMedia as $old) {
+        // Find old user from $oldUsers using user_id
+        $oldUser = $oldUsers->firstWhere('id', $old->user_id);
+
+        // Skip if no user or email not found
+        if (!$oldUser || !$oldUser->email) {
+            continue;
+        }
+
+        // Get new user ID by email
+        $newUserId = $emailToNewUserId[$oldUser->email] ?? null;
+
+        if ($newUserId) {
+            $newMedia = new Media();
+            $newMedia->name = $old->file_original_name;
+            $newMedia->file_name = $old->file_name;
+            $newMedia->user_id = $newUserId;
+            $newMedia->size = $old->file_size;
+            $newMedia->mime_type = $old->extension;
+            $newMedia->disk = 'public';
+            $newMedia->folder = 'media';
+            $newMedia->save();
+
+            $migratedData[] = $newMedia;
+        }
+    }
+
+    return response()->json([
+        'total_old_media' => count($oldMedia),
+        'migrated_count' => count($migratedData),
+    ]);
+});
+
+Route::get('/banks', function () {
+    // Get all SupplierBanks
+    $userBanks = SupplierBank::get();
+
+    // Get old bank names from old DB
+    $oldBanks = DB::connection('arabianoay_old')->table('banks')->get()->keyBy('id');
+
+    $updated = [];
+
+    foreach ($userBanks as $bank) {
+        // Check if bank_name is numeric (i.e., an ID)
+        if (is_numeric($bank->bank_name)) {
+            $oldBank = $oldBanks[$bank->bank_name] ?? null;
+
+            if ($oldBank && !empty($oldBank->name)) {
+                $bank->bank_name = $oldBank->name_en;
+                $bank->save();
+                $updated[] = $bank;
+            }
+        }
+    }
+
+    return response()->json([
+        'updated_count' => count($updated),
+        'updated_items' => $updated,
     ]);
 });

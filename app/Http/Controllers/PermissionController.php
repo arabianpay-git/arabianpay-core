@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Permission;
+use Illuminate\Support\Str;
 
 class PermissionController extends Controller
 {
@@ -30,12 +32,12 @@ class PermissionController extends Controller
         ]);
 
         // Log the creation of the permission
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'create',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new permission: {$request->name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new permission: {$request->name}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -62,12 +64,12 @@ class PermissionController extends Controller
         ]);
 
         // Log the update of the permission
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'update',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated the permission: {$request->name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated the permission: {$request->name}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -78,12 +80,12 @@ class PermissionController extends Controller
     {
         $permission = Permission::findOrFail($id);
         // log the deletion of the permission
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted the permission: {$permission->name} [{$permission->id}]",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted the permission: {$permission->name} [{$permission->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
         $permission->delete();

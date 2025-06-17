@@ -7,7 +7,9 @@ use App\Models\Country;
 use App\Models\State;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Str;
 
 class EmployeeController extends Controller
 {
@@ -50,12 +52,12 @@ class EmployeeController extends Controller
         ]);
 
         // Log the creation of the employee
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'create',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " created a new employee: {$request->first_name} {$request->last_name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new employee: {$request->first_name} {$request->last_name}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -109,12 +111,12 @@ class EmployeeController extends Controller
         $employee->update($data);
 
         // Log the update of the employee
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'update',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " updated employee: {$request->first_name} {$request->last_name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated employee: {$request->first_name} {$request->last_name}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -125,12 +127,12 @@ class EmployeeController extends Controller
     {
         abort_unless($employee->role === 'employee', 404);
         // log the deletion of the employee
-        auth()->user()->logModelAction(
+        Auth::logModelAction(
             event: 'delete',
-            description: auth()->user()->first_name . " " . auth()->user()->last_name . " deleted employee: {$employee->first_name} {$employee->last_name}",
+            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted employee: {$employee->first_name} {$employee->last_name}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) \Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
         $employee->delete();

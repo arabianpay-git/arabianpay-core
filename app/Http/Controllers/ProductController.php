@@ -81,7 +81,7 @@ class ProductController extends Controller
                 properties: [
                     'reason' => $request->input('reason', null), // reson can be optional
                     'ip' => request()->ip(),
-                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                    'batch_uuid' => $batchUuid,
                 ],
             );
 
@@ -182,7 +182,7 @@ class ProductController extends Controller
                 properties: [
                     'reason' => $reason ?? null, // reson can be optional
                     'ip' => request()->ip(),
-                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                    'batch_uuid' => $batchUuid,
                 ],
             );
 
@@ -221,7 +221,7 @@ class ProductController extends Controller
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted product: {$product->name} [$product->id]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                'batch_uuid' => $batchUuid,
             ],
         );
 
