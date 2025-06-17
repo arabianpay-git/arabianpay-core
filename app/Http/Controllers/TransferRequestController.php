@@ -61,7 +61,7 @@ class TransferRequestController extends Controller
 
             DB::commit();
             // Log the transfer request creation
-            Auth::logModelAction(
+            Auth::user()->logModelAction(
                 event: 'create_transfer_request',
                 description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a transfer request for model: {$modelClass} with ID: {$modelId}",
                 properties: [
@@ -119,7 +119,7 @@ class TransferRequestController extends Controller
                 }
 
                 // Log the transfer request creation
-                Auth::logModelAction(
+                Auth::user()->logModelAction(
                     event: 'create_transfer_request',
                     description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a bulk transfer request for model: {$modelClass} with ID: {$modelId}",
                     properties: [

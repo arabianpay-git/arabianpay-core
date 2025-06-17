@@ -33,7 +33,7 @@ class UserRoleController extends Controller
         $user->syncRoles([$role->name]);
 
         // Log the role update
-        Auth::logModelAction(
+        Auth::user()->logModelAction(
             event: 'update_role',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated role for user: {$user->first_name} {$user->last_name}",
             properties: [

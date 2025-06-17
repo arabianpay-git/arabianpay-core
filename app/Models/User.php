@@ -16,8 +16,12 @@ class User extends Authenticatable implements MustVerifyEmail
 {
     use HasApiTokens, HasRoles, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable;
     use \App\Traits\LogsModelActions;
+
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true; // Save only changed users
+    protected static $logName = 'user'; // Custom log name
     /**
-     * The attributes that are mass assignable.
+     * The users that are mass assignable.
      *
      * @var array<int, string>
      */

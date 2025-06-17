@@ -52,7 +52,7 @@ class EmployeeController extends Controller
         ]);
 
         // Log the creation of the employee
-        Auth::logModelAction(
+        Auth::user()->logModelAction(
             event: 'create',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new employee: {$request->first_name} {$request->last_name}",
             properties: [
@@ -111,7 +111,7 @@ class EmployeeController extends Controller
         $employee->update($data);
 
         // Log the update of the employee
-        Auth::logModelAction(
+        Auth::user()->logModelAction(
             event: 'update',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated employee: {$request->first_name} {$request->last_name}",
             properties: [
@@ -127,7 +127,7 @@ class EmployeeController extends Controller
     {
         abort_unless($employee->role === 'employee', 404);
         // log the deletion of the employee
-        Auth::logModelAction(
+        Auth::user()->logModelAction(
             event: 'delete',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted employee: {$employee->first_name} {$employee->last_name}",
             properties: [
