@@ -86,7 +86,7 @@ class AccountController extends Controller
             ->when($user->user_type !== 'admin', function ($query) use ($user) {
                 $query->where('assigned_to', $user->id);
             })
-            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->orderByRaw('ISNULL(assigned_to) DESC')
             ->paginate(10);
 
@@ -378,7 +378,7 @@ class AccountController extends Controller
             ->when($user->user_type !== 'admin', function ($query) use ($user) {
                 $query->where('assigned_to', $user->id);
             })
-            ->orderByDesc('created_at')
+            ->orderByDesc('id')
             ->orderByRaw('ISNULL(assigned_to) DESC')
             ->paginate(10);
 
