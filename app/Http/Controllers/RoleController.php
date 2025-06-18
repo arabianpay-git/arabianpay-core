@@ -31,7 +31,9 @@ class RoleController extends Controller
             'guard_name' => 'web'
         ]);
 
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'create',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new role: {$request->name}",
             properties: [
@@ -62,7 +64,9 @@ class RoleController extends Controller
             'guard_name' => 'web'
         ]);
 
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'update',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated the role: {$role->name} [{$role->id}]",
             properties: [
@@ -78,7 +82,9 @@ class RoleController extends Controller
     {
         $role = Role::findOrFail($id);
 
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'delete',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted the role: {$role->name} [{$role->id}]",
             properties: [

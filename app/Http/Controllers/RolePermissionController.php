@@ -40,7 +40,9 @@ class RolePermissionController extends Controller
         $role->syncPermissions($request->permissions ?? []);
 
         // Log the assignment of permissions
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'assign_permissions',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " assigned permissions to role: {$role->name}",
             properties: [
@@ -79,7 +81,9 @@ class RolePermissionController extends Controller
         $role->syncPermissions($request->permissions ?? []);
 
         // Log the update of permissions
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'update',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated permissions for role: {$role->name}",
             properties: [
@@ -96,7 +100,9 @@ class RolePermissionController extends Controller
     {
         $role = Role::findOrFail($roleId);
         // Log the removal of permissions
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'remove_permissions',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " removed permissions from role: {$role->name}",
             properties: [

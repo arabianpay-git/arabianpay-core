@@ -32,7 +32,9 @@ class PermissionController extends Controller
         ]);
 
         // Log the creation of the permission
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'create',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new permission: {$request->name}",
             properties: [
@@ -64,7 +66,9 @@ class PermissionController extends Controller
         ]);
 
         // Log the update of the permission
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'update',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated the permission: {$request->name}",
             properties: [
@@ -80,7 +84,9 @@ class PermissionController extends Controller
     {
         $permission = Permission::findOrFail($id);
         // log the deletion of the permission
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'delete',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted the permission: {$permission->name} [{$permission->id}]",
             properties: [

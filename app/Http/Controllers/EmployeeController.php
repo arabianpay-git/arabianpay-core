@@ -52,7 +52,9 @@ class EmployeeController extends Controller
         ]);
 
         // Log the creation of the employee
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'create',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new employee: {$request->first_name} {$request->last_name}",
             properties: [
@@ -64,22 +66,18 @@ class EmployeeController extends Controller
         return redirect()->route('employees.index')->with('success', 'Employee created successfully.');
     }
 
-    public function show(User $employee)
-    {
-        abort_unless($employee->user_type === 'employee', 404);
-        return view('admin.employees.show', compact('employee'));
-    }
+    // public function show(User $employee)
+    // {
+    //     return view('admin.employees.show', compact('employee'));
+    // }
 
     public function edit(User $employee)
     {
-        abort_unless($employee->user_type === 'employee', 404);
         return view('admin.employees.edit', compact('employee'));
     }
 
     public function update(Request $request, User $employee)
     {
-        abort_unless($employee->user_type === 'employee', 404);
-
         $request->validate([
             'first_name'    => 'required|string|max:255',
             'last_name'     => 'required|string|max:255',
@@ -111,7 +109,9 @@ class EmployeeController extends Controller
         $employee->update($data);
 
         // Log the update of the employee
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'update',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated employee: {$request->first_name} {$request->last_name}",
             properties: [
@@ -125,9 +125,11 @@ class EmployeeController extends Controller
 
     public function destroy(User $employee)
     {
-        abort_unless($employee->role === 'employee', 404);
+
         // log the deletion of the employee
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'delete',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted employee: {$employee->first_name} {$employee->last_name}",
             properties: [
@@ -136,6 +138,6 @@ class EmployeeController extends Controller
             ],
         );
         $employee->delete();
-        return redirect()->route('employees.index')->with('success', 'Employee deleted successfully.');
+        return back()->with('success', 'Employee deleted successfully.');
     }
 }

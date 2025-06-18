@@ -75,48 +75,50 @@
         });
     });
 </script>
+
 <script>
     $(document).on('click', '.delete-btn', function(e) {
         e.preventDefault();
 
-        var url = $(this).attr('href');
+        const url = $(this).attr('href');
 
         Swal.fire({
             title: 'Are you sure?',
-            text: 'You won\'t be able to revert this!',
+            text: "You won't be able to revert this!",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonText: 'Yes, delete it!',
             cancelButtonText: 'No, keep it'
         }).then((result) => {
             if (result.isConfirmed) {
-                $.ajax({
-                    url: url,
-                    type: 'POST',
-                    data: {
-                        '_method': 'DELETE',
-                        '_token': $('meta[name="csrf-token"]').attr('content')
-                    },
-                    success: function(response) {
-                        Swal.fire(
-                            'Deleted!',
-                            'The country has been deleted.',
-                            'success'
-                        );
-                        location.reload();
-                    },
-                    error: function(response) {
-                        Swal.fire(
-                            'Error!',
-                            'Something went wrong.',
-                            'error'
-                        );
-                    }
+                // Create a hidden form dynamically
+                const form = $('<form>', {
+                    method: 'POST',
+                    action: url
                 });
+
+                // Add CSRF token input
+                const token = $('meta[name="csrf-token"]').attr('content');
+                form.append($('<input>', {
+                    type: 'hidden',
+                    name: '_token',
+                    value: token
+                }));
+
+                // Add _method input to spoof DELETE
+                form.append($('<input>', {
+                    type: 'hidden',
+                    name: '_method',
+                    value: 'DELETE'
+                }));
+
+                // Append form to body and submit
+                form.appendTo('body').submit();
             }
         });
     });
 </script>
+
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
 

@@ -165,7 +165,9 @@ class OrderController extends Controller
         $order->update($request->only(['delivery_status', 'general_status']));
 
         // Log the status update
-        Auth::user()->logModelAction(
+        /** @var \App\Models\User $user */
+        $user = Auth::user();
+        $user->logModelAction(
             event: 'update_status',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated order status for order ID: {$order->id}",
             properties: [
