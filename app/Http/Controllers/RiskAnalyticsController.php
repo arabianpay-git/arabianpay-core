@@ -224,7 +224,7 @@ class RiskAnalyticsController extends Controller
         $cacheKey = 'google_rating_' . md5(strtolower(trim($businessName)));
         $cachedRating = cache($cacheKey);
         if (!$cachedRating && $businessName) {
-            dispatch(fn() => app(self::class)->fetchAndCacheGoogleRating($businessName))->afterResponse();
+            app(self::class)->fetchAndCacheGoogleRating($businessName);
         }
 
         $googleRating = $cachedRating ?? ['result' => ['rating' => null]];
