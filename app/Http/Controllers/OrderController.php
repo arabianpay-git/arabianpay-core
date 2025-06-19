@@ -104,7 +104,7 @@ class OrderController extends Controller
         $user = currentUser();
 
         // Fetch order without access filter
-        $order = Order::with(['user', 'seller', 'pickupPoint', 'assigned'])
+        $order = Order::with(['user', 'seller', 'pickupPoint', 'assigned', 'refund'])
             ->when($user->user_type !== 'admin', function ($query) use ($user) {
                 $query->where('assigned_to', $user->id);
             })->find($id);
