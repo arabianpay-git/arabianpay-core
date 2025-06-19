@@ -301,6 +301,180 @@
                                         </tbody>
                                     </table>
                                 </div>
+                                {{-- @dd($g['parties']) --}}
+
+                                <h1 class="text-xl card-title pt-5 pb-3">Activities</h1>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 pb-3">
+                                    @foreach (array_chunk($g['activities'], 2) as $chunk)
+                                        @foreach ($chunk as $index => $activity)
+                                            <div class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                                                <div class="bg-gray-100 px-4 py-3">
+                                                    <h3 class="text-base font-semibold text-gray-800">
+                                                        Activity #{{ $loop->parent->index * 2 + $index + 1 }}
+                                                    </h3>
+                                                </div>
+                                                <div class="overflow-x-auto">
+                                                    <table class="table-auto w-full text-sm">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Activity ID</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $activity['id'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Activity Name</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $activity['name'] ?? '-' }}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endforeach
+                                </div>
+
+                                <h1 class="text-xl card-title pt-5 pb-3">Parties</h1>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 pb-3">
+                                    @foreach (array_chunk($g['parties'], 2) as $chunk)
+                                        @foreach ($chunk as $index => $party)
+                                            <div class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                                                <div class="bg-gray-100 px-4 py-3">
+                                                    <h3 class="text-base font-semibold text-gray-800">
+                                                        Partner #{{ $loop->parent->index * 2 + $index + 1 }} —
+                                                        {{ $party['name'] }}
+                                                    </h3>
+                                                </div>
+                                                <div class="overflow-x-auto">
+                                                    <table class="table-auto w-full text-sm">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Name</td>
+                                                                <td class="text-gray-900 py-2 px-4">{{ $party['name'] }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Identity ID</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['identity']['id'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Identity Type</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['identity']['typeName'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Nationality</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['nationality']['name'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Type</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['typeName'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Partnership</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    @foreach ($party['partnership'] as $p)
+                                                                        {{ $p['name'] }}@if (!$loop->last)
+                                                                            ,
+                                                                        @endif
+                                                                    @endforeach
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Cash Contribution</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['partnerShare']['cashContributionCount'] ?? 0 }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">In-Kind Contribution
+                                                                </td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['partnerShare']['inKindContributionCount'] ?? 0 }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Total Contribution</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['partnerShare']['totalContributionCount'] ?? 0 }}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endforeach
+                                </div>
+
+                                <h1 class="text-xl card-title pt-5 pb-3">Managers</h1>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 pb-3">
+                                    @foreach (array_chunk($g['management']['managers'], 2) as $chunk)
+                                        @foreach ($chunk as $index => $manager)
+                                            <div class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                                                <div class="bg-gray-100 px-4 py-3">
+                                                    <h3 class="text-base font-semibold text-gray-800">
+                                                        Manager #{{ $loop->parent->index * 2 + $index + 1 }} —
+                                                        {{ $manager['name'] }}
+                                                    </h3>
+                                                </div>
+                                                <div class="overflow-x-auto">
+                                                    <table class="table-auto w-full text-sm">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Name</td>
+                                                                <td class="text-gray-900 py-2 px-4">{{ $manager['name'] }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Identity ID</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $manager['identity']['id'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Identity Type</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $manager['identity']['typeName'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Nationality</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $manager['nationality']['name'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Type</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $manager['typeName'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Position(s)</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    @foreach ($manager['positions'] as $position)
+                                                                        {{ $position['name'] }}@if (!$loop->last)
+                                                                            ,
+                                                                        @endif
+                                                                    @endforeach
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">Is Licensed?</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $manager['isLicensed'] ? 'Yes' : 'No' }}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endforeach
+                                </div>
                             @endif
                         </div>
                     </div>

@@ -39,28 +39,24 @@ class RiskAnalyticsController extends Controller
             });
         }
 
-        $users = $usersQuery->get();
-
-        $risks = $users->map(function ($user) {
+        $users = $usersQuery->paginate(10);
+        $risks = $users->getCollection()->map(function ($user) {
             return $this->calculateRiskForUser($user);
         });
+
+        $paginatedRisks = new LengthAwarePaginator(
+            $risks,
+            $users->total(),
+            $users->perPage(),
+            $users->currentPage(),
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
 
         if ($order === 'asc') {
             $risks = $risks->sortBy('total_score')->values();
         } else {
             $risks = $risks->sortByDesc('total_score')->values();
         }
-
-        $currentPage = LengthAwarePaginator::resolveCurrentPage();
-        $perPage = 10;
-
-        $paginatedRisks = new LengthAwarePaginator(
-            $risks->slice(($currentPage - 1) * $perPage, $perPage)->values(),
-            $risks->count(),
-            $perPage,
-            $currentPage,
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
 
         return view('admin.risk-management.score', ['risks' => $paginatedRisks]);
     }
@@ -73,7 +69,7 @@ class RiskAnalyticsController extends Controller
         // Fetch CR & ID data based on user type
         if ($user->user_type === 'merchant') {
             $govData = Merchant::where('user_id', $userId)
-                ->select('goverment_data', 'cr_number', 'owner_iqama_number')
+                ->select('goverment_data', 'cr_number', 'pos_revenue', 'owner_iqama_number')
                 ->first();
 
             $crData = $govData->goverment_data ?? null;
@@ -140,7 +136,7 @@ class RiskAnalyticsController extends Controller
 
 
         // POS Revenue Score (dummy example - replace with real data)
-        $monthlyPos = 30000;
+        $monthlyPos = $govData->pos_revenue ?? 0;
         $posScore = min($monthlyPos / 50000, 1) * 25;
 
         // Repayment Delay Score and Industry Risk Score
@@ -225,7 +221,14 @@ class RiskAnalyticsController extends Controller
         // Get Google reviews with (max weight 5)
         $businessName = $decodedCrData['name'] ?? null;
 
-        $googleRating = $this->getOverallRating($businessName);
+        $cacheKey = 'google_rating_' . md5(strtolower(trim($businessName)));
+        $cachedRating = cache($cacheKey);
+        if (!$cachedRating && $businessName) {
+            dispatch(fn() => app(self::class)->fetchAndCacheGoogleRating($businessName))->afterResponse();
+        }
+
+        $googleRating = $cachedRating ?? ['result' => ['rating' => null]];
+
 
         // Initialize flagged and manual_reason
         $flagged = false;
@@ -278,37 +281,37 @@ class RiskAnalyticsController extends Controller
         ];
     }
 
-    private function getOverallRating($businessName = null)
+    private function fetchAndCacheGoogleRating($businessName)
     {
-        if (!$businessName) {
-            return null;
+        try {
+            $searchResponse = Http::get('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', [
+                'input' => $businessName,
+                'inputtype' => 'textquery',
+                'fields' => 'place_id',
+                'key' => env('GOOGLE_PLACE_API_KEY'),
+            ]);
+
+            $placeId = $searchResponse['candidates'][0]['place_id'] ?? null;
+
+            if (!$placeId) {
+                return null;
+            }
+
+            $detailsResponse = Http::get('https://maps.googleapis.com/maps/api/place/details/json', [
+                'place_id' => $placeId,
+                'fields' => 'rating',
+                'key' => env('GOOGLE_PLACE_API_KEY'),
+            ]);
+
+            $rating = $detailsResponse['result']['rating'] ?? null;
+
+            if ($rating !== null) {
+                cache()->put('google_rating_' . md5(strtolower(trim($businessName))), ['result' => ['rating' => $rating]], now()->addDays(7));
+            }
+        } catch (\Throwable $e) {
+            logger()->error('Google rating fetch failed: ' . $e->getMessage());
         }
-
-        // Step 1: Get Place ID
-        $searchResponse = Http::get('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', [
-            'input' => $businessName,
-            'inputtype' => 'textquery',
-            'fields' => 'place_id',
-            'key' => env('GOOGLE_PLACE_API_KEY'),
-        ]);
-
-        $placeId = $searchResponse['candidates'][0]['place_id'] ?? null;
-
-        if (!$placeId) {
-            return null;
-        }
-
-        // Step 2: Get Rating
-        $detailsResponse = Http::get('https://maps.googleapis.com/maps/api/place/details/json', [
-            'place_id' => $placeId,
-            'fields' => 'rating',
-            'key' => env('GOOGLE_PLACE_API_KEY'),
-        ]);
-
-        return $detailsResponse ?? 0;
     }
-
-
 
     public function exportCsv(Request $request)
     {
