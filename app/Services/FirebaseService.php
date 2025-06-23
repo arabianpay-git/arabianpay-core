@@ -55,10 +55,10 @@ class FirebaseService
         array $data = []
     ): void {
         try {
-            $deviceTokenQuery = DeviceToken::where('user_id', $userId)->latest()->first();
-            $deviceToken = $deviceTokenQuery->token ?? null;
-            if (!$deviceToken) {
-                $this->logger->info("No FCM device token found for user ID {$userId}");
+            $deviceTokens = DeviceToken::where('user_id', $userId)->pluck('token');
+
+            if ($deviceTokens->isEmpty()) {
+                $this->logger->info("No FCM device tokens found for user ID {$userId}");
                 return;
             }
 
@@ -67,7 +67,15 @@ class FirebaseService
                 'body' => $body,
             ], $data);
 
-            $this->sendNotification($deviceToken, $title, $body, $payloadData['click_action'] ?? null, $payloadData);
+            foreach ($deviceTokens as $deviceToken) {
+                $this->sendNotification(
+                    $deviceToken,
+                    $title,
+                    $body,
+                    $payloadData['click_action'] ?? null,
+                    $payloadData
+                );
+            }
         } catch (\Throwable $e) {
             $this->logger->error("FCM notification failed for user ID {$userId}: " . $e->getMessage());
         }

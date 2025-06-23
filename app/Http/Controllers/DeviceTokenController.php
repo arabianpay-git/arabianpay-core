@@ -15,11 +15,30 @@ class DeviceTokenController extends Controller
 
         $user = $request->user();
 
-        DeviceToken::updateOrCreate(
-            ['user_id' => $user->id, 'token' => $request->token],
-            []
-        );
+        // Check if token already exists
+        $existingToken = DeviceToken::where('user_id', $user->id)
+            ->where('token', $request->token)
+            ->first();
 
-        return response()->json(['message' => 'Device token saved']);
+        if (!$existingToken) {
+            // Get token count
+            $tokenCount = DeviceToken::where('user_id', $user->id)->count();
+
+            // If more than 4 already exist, delete the oldest
+            if ($tokenCount >= 5) {
+                DeviceToken::where('user_id', $user->id)
+                    ->oldest()
+                    ->first()
+                    ?->delete();
+            }
+
+            // Store new token
+            DeviceToken::create([
+                'user_id' => $user->id,
+                'token' => $request->token,
+            ]);
+        }
+
+        return response()->json(['message' => 'Token stored.']);
     }
 }
