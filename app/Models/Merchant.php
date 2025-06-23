@@ -20,6 +20,8 @@ class Merchant extends Model
         'business_type_id',
         'business_category_id',
         'goverment_data',
+        'is_manager',
+        'manager_approval',
         'cr_number',
         'pos_revenue',
         'registration_number_form',

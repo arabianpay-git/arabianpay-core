@@ -1,0 +1,19 @@
+{
+  "name": "Your App Name",
+  "short_name": "App",
+  "start_url": "/",
+  "display": "standalone",
+  "gcm_sender_id": "561424805381",
+  "icons": [
+    {
+      "src": "https://core.arabianpay.net/assets/media/images/ap.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://core.arabianpay.net/assets/media/images/ap.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}

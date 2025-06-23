@@ -1,5 +1,14 @@
 <script src="https://code.jquery.com/jquery-3.7.1.min.js"
     integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+
+<!-- Your page content -->
+
+<!-- Scripts at the end, before </body> -->
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-messaging-compat.js"></script>
+<script src="{{ asset('assets/js/firebase-notifications.js') }}"></script>
+
+
 <script src="{{ asset('assets/js/core.bundle.js') }}"></script>
 <script src="{{ asset('assets/vendors/apexcharts/apexcharts.min.js') }}"></script>
 <script src="{{ asset('assets/js/widgets/general.js') }}"></script>

@@ -17,6 +17,8 @@ return new class extends Migration
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('business_type_id')->nullable()->constrained('business_types')->onDelete('cascade');
             $table->string('business_category_id')->nullable();
+            $table->string('is_manager')->nullable();
+            $table->text('manager_approval')->nullable();
             $table->json('goverment_data')->nullable();
             $table->string('cr_number')->unique()->nullable();
             $table->string('pos_revenue')->nullable();

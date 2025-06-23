@@ -86,6 +86,13 @@
                                         'status' => null,
                                     ],
                                 ];
+                                if ($merchant->is_manager) {
+                                    $compliance[] = [
+                                        'title' => 'Company Approval Letter for Manager',
+                                        'file' => $merchant->manager_approval,
+                                        'status' => null,
+                                    ];
+                                }
                             @endphp
 
                             @foreach ($compliance as $item)

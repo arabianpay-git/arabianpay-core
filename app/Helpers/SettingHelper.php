@@ -290,3 +290,37 @@ if (! function_exists('hijriToGregorian')) {
         return Carbon::createFromFormat('d-m-Y', $gregDate);
     }
 }
+
+
+if (!function_exists('mediaURL')) {
+    function mediaURL($path)
+    {
+        $path = ltrim($path, '/');
+        $relativePath = str_replace('storage/', '', $path);
+
+        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($relativePath)) {
+            return asset($path);
+        }
+
+        $partnersUrl = 'https://partners.arabianpay.net/' . $path;
+
+        if (url_exists($partnersUrl)) {
+            return $partnersUrl;
+        }
+
+        return asset($path);
+    }
+}
+
+function url_exists($url)
+{
+    $ch = curl_init($url);
+    curl_setopt($ch, CURLOPT_NOBODY, true);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
+    curl_exec($ch);
+    $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+    curl_close($ch);
+
+    return ($responseCode >= 200 && $responseCode < 400);
+}

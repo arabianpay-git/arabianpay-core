@@ -2,8 +2,16 @@
     <div class="flex flex-col items-center gap-2 lg:gap-3.5 py-4 lg:pt-5 lg:pb-10">
         <div
             class="flex items-center justify-center rounded-full border-2 border-success-clarity size-[100px] shrink-0 bg-light">
+            @php
+                $shopLogo = \App\Models\ShopSetting::where('user_id', $merchant->user_id)->first();
 
-            <img class="size-[70px]" src="{{ asset('assets/media/images/ap.png') }}" />
+                $logoPath =
+                    $shopLogo && mediaURL($shopLogo->logo)
+                        ? mediaURL($shopLogo->logo)
+                        : asset('assets/media/images/ap.png');
+            @endphp
+            <img class="size-[70px]" src="{{ $logoPath }}" alt="Shop Logo" />
+
         </div>
         <div class="flex items-center gap-1.5">
             <div class="text-lg leading-5 font-semibold text-gray-900">

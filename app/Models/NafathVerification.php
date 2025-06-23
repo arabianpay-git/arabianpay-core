@@ -16,6 +16,7 @@ class NafathVerification extends Model
         'error_code',
         'nafath_response',
         'wathiq_status',
+        'reject_reason',
         'verified_at',
     ];
 

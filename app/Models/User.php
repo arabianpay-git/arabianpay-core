@@ -210,4 +210,9 @@ class User extends Authenticatable implements MustVerifyEmail
     {
         return $this->hasMany(TransferRequest::class, 'to_user_id');
     }
+
+    public function deviceTokens()
+    {
+        return $this->hasMany(DeviceToken::class);
+    }
 }

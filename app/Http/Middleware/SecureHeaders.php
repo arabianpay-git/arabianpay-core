@@ -46,15 +46,18 @@ class SecureHeaders
         // Content Security Policy (CSP)
         $csp = implode(' ', [
             "default-src 'self';",
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://cdn.jsdelivr.net;",
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://cdn.jsdelivr.net https://www.gstatic.com https://www.googleapis.com;",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net;",
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net;",
-            "img-src 'self' data:;",
-            "connect-src 'self';",
+            "img-src 'self' data: https://core.arabianpay.net;",
+            "connect-src 'self' https://fcm.googleapis.com https://firebase.googleapis.com https://www.googleapis.com https://www.gstatic.com https://firebaseinstallations.googleapis.com https://fcmregistrations.googleapis.com;",
+            "frame-src https://www.gstatic.com;",
             "frame-ancestors 'none';",
             "base-uri 'self';",
             "form-action 'self';",
         ]);
+
+
         $response->headers->set('Content-Security-Policy', $csp);
 
         return $response;

@@ -2,13 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Approval, BusinessCategory, Customer, CustomerCreditLimit, Merchant, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, Transaction, Wallet};
+use App\Models\{Approval, BusinessCategory, CrValidation, Customer, CustomerCreditLimit, Merchant, NafathVerification, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, Transaction, User, Wallet};
 use App\Services\CreditAssessmentService;
+use App\Services\FirebaseService;
 use App\Services\RiskAnalyticsService;
 use App\Services\WathqService;
 use App\Traits\EmailSender;
 use App\Traits\SmsSender;
 use Carbon\Carbon;
+use Illuminate\Encryption\Encrypter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -22,10 +24,13 @@ class AccountController extends Controller
     use SmsSender, EmailSender;
 
     protected $wathqService;
+    protected $firebase;
 
-    public function __construct(WathqService $wathqService)
+
+    public function __construct(WathqService $wathqService, FirebaseService $firebase)
     {
         $this->wathqService = $wathqService;
+        $this->firebase = $firebase;
     }
 
     private function calculateTotalOrderAmount($orders): float
@@ -662,19 +667,29 @@ class AccountController extends Controller
 
         $merchant->update(['status' => $status]);
 
+        $description = Auth::user()->first_name . " " . Auth::user()->last_name . " update Supplier: {$merchant->user->first_name} {$merchant->user->last_name} [$merchant->id] status from $oldStatus to {$merchant->status}";
         // Log the activity
         $batchUuid = (string) Str::uuid();
 
         $merchant->logModelAction(
             event: 'update',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " update Supplier: {$merchant->user->first_name} {$merchant->user->last_name} [$merchant->id] status from $oldStatus to {$merchant->status}",
+            description: $description,
             properties: [
                 'old_status' => $oldStatus,
                 'new_status' => $merchant->status,
-                'reason' => $reason ?? null, // reson can be optional
+                'reason' => $reason ?? null,
                 'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                'batch_uuid' => $batchUuid,
             ],
+        );
+
+        $this->firebase->sendCustomNotification(
+            Auth::user()->id,
+            'Customer Status Update',
+            $description,
+            [
+                'click_action' => route('suppliers'),
+            ]
         );
 
         return back()->with('success', 'Status updated successfully!');
@@ -1056,5 +1071,36 @@ class AccountController extends Controller
             'supplierScore' => round($supplierScore, 2),
             'compositeScore' => round($compositeScore, 2),
         ];
+    }
+
+    public function nafath()
+    {
+        $nafathRecords = NafathVerification::orderBy('id', 'desc')->paginate(10);
+
+        $phoneNumbers = $nafathRecords->pluck('phone_number')->filter()->unique()->toArray();
+
+        $users = User::whereIn('phone_number', $phoneNumbers)
+            ->get()
+            ->keyBy('phone_number');
+
+        $emails = $users->pluck('email')->unique()->toArray();
+
+        $crValidations = CrValidation::whereIn('email', $emails)
+            ->get()
+            ->keyBy('email');
+
+        // Attach cr_data to each Nafath record based on user email
+        $nafathRecords->getCollection()->transform(function ($item) use ($users, $crValidations) {
+            $phone = $item->phone_number;
+
+            $user = $phone && isset($users[$phone]) ? $users[$phone] : null;
+            $email = $user ? $user->email : null;
+
+            $item->cr_data = $email && isset($crValidations[$email]) ? $crValidations[$email]->cr_data : null;
+
+            return $item;
+        });
+
+        return view('admin.accounts.nafath', ['nafath' => $nafathRecords]);
     }
 }

@@ -10,7 +10,19 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@emran-alhaddad/saudi-riyal-font/index.css">
 
+<style>
+    @font-face {
+        font-family: 'IBMPlexSansArabic';
+        src: url('/assets/css/IBMPlexSansArabic-Regular.ttf') format('truetype');
+        font-weight: normal;
+        font-style: normal;
+        font-display: swap;
+    }
 
+    :lang(ar) {
+        font-family: 'IBMPlexSansArabic', sans-serif;
+    }
+</style>
 @stack('styles')
 
 <style>

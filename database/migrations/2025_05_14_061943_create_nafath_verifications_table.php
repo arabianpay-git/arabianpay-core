@@ -22,6 +22,7 @@ return new class extends Migration
             $table->string('error_code')->nullable();
             $table->json('nafath_response')->nullable();
             $table->string('wathiq_status')->nullable();
+            $table->string('reject_reason')->nullable();
             $table->timestamp('verified_at')->nullable();
             $table->timestamps();
         });

@@ -141,8 +141,6 @@ class MediaController extends Controller
         ]);
     }
 
-
-
     public function bulkDelete(Request $request)
     {
         $request->validate([
@@ -155,7 +153,7 @@ class MediaController extends Controller
         $mediaItems = Media::whereIn('id', $ids)->get();
 
         foreach ($mediaItems as $media) {
-            // Log the delete action
+
             $media->logModelAction(
                 event: 'delete',
                 description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted a file: {$media->name} [{$media->id}]",
@@ -164,7 +162,7 @@ class MediaController extends Controller
                     'batch_uuid' => (string) Str::uuid(),
                 ]
             );
-            // Delete the file from storage
+
             Storage::disk('public')->delete('media/' . $media->file_name);
 
             $media->delete();

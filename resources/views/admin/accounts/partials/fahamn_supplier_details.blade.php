@@ -37,7 +37,7 @@
                 ];
             @endphp
             <div class="grid grid-cols-1 md:grid-cols-2 gap-1">
-                @foreach($breakdown as $label => $value)
+                @foreach ($breakdown as $label => $value)
                     @php
                         $max = $maxScores[$label] ?? 25;
                         $avg = ($value / $max) * 100;
@@ -60,7 +60,8 @@
                     <div class="card p-1">
                         <div class="flex flex-wrap justify-between items-center gap-2">
                             <div class="flex items-center gap-4">
-                                <div class="flex justify-center items-center size-8 shrink-0 rounded-full ring-1 ring-gray-300 bg-gray-100">
+                                <div
+                                    class="flex justify-center items-center size-8 shrink-0 rounded-full ring-1 ring-gray-300 bg-gray-100">
                                     <i class="ki-filled ki-information-2 text-{{ $color }}"></i>
                                 </div>
                                 <div class="flex justify-center items-center size-8 shrink-0 rounded-full bg-gray-100">
@@ -69,7 +70,8 @@
                                     <span class="text-grey-700 font-semibold text-2sm">{{ $max }}</span>
                                 </div>
                                 <div class="grid grid-col gap-1">
-                                    <a class="text-base font-medium text-gray-900 hover:text-primary-active mb-px" href="#">
+                                    <a class="text-base font-medium text-gray-900 hover:text-primary-active mb-px"
+                                        href="#">
                                         {{ $label }}
                                     </a>
                                     <span class="text-2sm text-gray-700">
@@ -96,20 +98,29 @@
             @endphp
             <!--
             <ul class="list-group list-group-flush">
-                @foreach($locationData as $label => $value)
-                    <li class="list-group-item p-1 border rounded mb-1 d-flex justify-between align-items-center">
+                @foreach ($locationData as $label => $value)
+<li class="list-group-item p-1 border rounded mb-1 d-flex justify-between align-items-center">
                         <div class="text-base text-gray-700 font-semibold">{{ $label }}</div>
                         <div class="text-gray-900">{{ $value }}</div>
                     </li>
-                @endforeach
+@endforeach
             </ul>
         -->
-                    <!-- 🧮 Total Score -->
+            <!-- 🧮 Total Score -->
             <div class="border-t pt-3 mt-3">
                 <h5 class="text-lg font-semibold text-gray-800">🧮 Total Score</h5>
                 @php
                     $total = $riskScore->total_score;
-                    $scoreColor = $total >= 90 ? 'success' : ($total >= 75 ? 'primary' : ($total >= 60 ? 'warning' : ($total >= 40 ? 'danger' : 'dark')));
+                    $scoreColor =
+                        $total >= 90
+                            ? 'success'
+                            : ($total >= 75
+                                ? 'primary'
+                                : ($total >= 60
+                                    ? 'warning'
+                                    : ($total >= 40
+                                        ? 'danger'
+                                        : 'dark')));
                 @endphp
                 <span class="text-3xl font-bold text-{{ $scoreColor }}">
                     {{ $total }}

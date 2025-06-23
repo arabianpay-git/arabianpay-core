@@ -16,8 +16,10 @@ use App\Http\Controllers\{
     CreditManagmentController,
     CustomerAndSalesController,
     DashboardController,
+    DeviceTokenController,
     EmployeeController,
     FahmanController,
+    FirebaseController,
     InstalmentPlanController,
     MediaController,
     OrderController,
@@ -83,6 +85,9 @@ Route::group([
     Route::prefix('admin')
         ->middleware(['auth:sanctum', PreventBackHistory::class, SecureHeaders::class, CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
         ->group(function () {
+
+            Route::post('/device-token', [DeviceTokenController::class, 'store']);
+
 
             //
             // Dashboard
@@ -195,6 +200,8 @@ Route::group([
 
                 Route::get('customers-statics',    'customersStatics')->name('customers.statics');
                 Route::get('suppliers-statics',    'suppliersStatics')->name('suppliers.statics');
+
+                Route::get('nafath', 'nafath')->name('nafath');
             });
 
             //
@@ -361,6 +368,16 @@ Route::group([
             });
         });
 });
+
+//
+// Firebase Realtime Notification
+//
+
+Route::post('/send-fcm', [FirebaseController::class, 'sendNotification']);
+
+Route::get('/fcm-test', function () {
+    return view('fcm');
+})->name('fcm');
 
 
 Route::get('/google-reviews', [ReportController::class, 'index'])->name('google.reviews.form');
