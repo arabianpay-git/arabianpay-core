@@ -5,10 +5,11 @@ namespace App\Models;
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Merchant extends Model
 {
-    use LogsModelActions;
+    use LogsModelActions, EncryptsAttributes;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
     protected static $logOnlyDirty = true;
@@ -42,6 +43,17 @@ class Merchant extends Model
         'owner_iqama_image',
         'term_status',
         'status',
+    ];
+
+    protected $encryptableAttributes = [
+        'cr_number',
+        'pos_revenue',
+        'vat_register_number',
+        'return_day_count',
+        'exchange_day_count',
+        'cancel_day_count',
+        'owner_name',
+        'owner_iqama_number',
     ];
 
     protected $casts = [

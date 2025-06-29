@@ -5,14 +5,15 @@ namespace App\Models;
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class InstalmentPlan extends Model
 {
-    use LogsModelActions;
+    use LogsModelActions, EncryptsAttributes;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed attributes
-    protected static $logName = 'instalment_plan'; // Custom log name
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'instalment_plan';
     protected $fillable = [
         'uuid',
         'name',
@@ -25,6 +26,16 @@ class InstalmentPlan extends Model
         'transaction_fee',
         'installments',
         'status'
+    ];
+
+    protected $encryptableAttributes = [
+        'name',
+        'duration',
+        'finance_limit',
+        'patch_days',
+        'late_fee',
+        'transaction_fee',
+        'installments',
     ];
 
     protected static function booted()

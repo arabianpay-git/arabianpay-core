@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('code')->unique();
             $table->string('slug');
             $table->json('details');
-            $table->decimal('discount', 10, 2)->nullable();
+            $table->string('discount')->nullable();
             $table->enum('discount_type', ['percent', 'amount'])->default('percent');
             $table->timestamp('start_date')->nullable();
             $table->timestamp('end_date')->nullable();

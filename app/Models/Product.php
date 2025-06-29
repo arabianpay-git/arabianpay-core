@@ -5,15 +5,16 @@ namespace App\Models;
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Product extends Model
 {
-    use LogsModelActions;
+    use LogsModelActions, EncryptsAttributes;
 
-        protected static $logAttributes = ['status', 'amount', 'due_date'];
-        protected static $logOnlyDirty = true; // Save only changed attributes
-        protected static $logName = 'product'; // Custom log name
-        
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'product';
+
     protected $fillable = [
         'name',
         'slug',
@@ -38,7 +39,6 @@ class Product extends Model
         'choice_options',
         'published',
         'approved',
-        'reson_reject',
         'featured',
         'stock_visibility_state',
         'current_stock',
@@ -59,6 +59,17 @@ class Product extends Model
         'refundable',
         'rating',
         'views',
+        'reason_reject',
+    ];
+
+    protected $encryptableAttributes = [
+        'name',
+        'sku',
+        'short_description',
+        'description',
+        'reason_reject',
+        'unit',
+        'est_shipping_days',
     ];
 
     protected $casts = [

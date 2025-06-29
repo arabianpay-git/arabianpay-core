@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Approval;
 use App\Models\CustomerCreditLimit;
 use App\Models\Product;
 use App\Models\Setting;
@@ -41,10 +42,10 @@ if (!function_exists('get_credit_limit')) {
 }
 
 if (!function_exists('get_seller_commission')) {
-    function get_seller_commission($user_id, $default = 0.00)
+    function get_seller_commission($user_id, $default = 5.00)
     {
-        $creditLimit = CustomerCreditLimit::where('user_id', $user_id)->latest()->first();
-        return $creditLimit ? $creditLimit->comission : $default;
+        $commission = Approval::where('user_id', $user_id)->latest()->first();
+        return $commission ? $commission->comission : $default;
     }
 }
 

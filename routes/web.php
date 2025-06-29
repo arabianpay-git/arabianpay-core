@@ -387,389 +387,389 @@ use Illuminate\Support\Facades\DB;
 use App\Models\User;
 use Illuminate\Support\Facades\Hash;
 
-Route::get('/merchant-transfer', function () {
-    $key = base64_decode('dlzHBZOPN+4ZZ2Jnfkll/iVUJ1GuwfwCRnvxxuCMXdg=');
-    $iv = base64_decode('l2kMAFuEh7jazjgDCfIKUg==');
-
-    $users = DB::connection('arabianoay_old')
-        ->table('users')
-        ->where('user_type', 'seller')
-        ->get();
-
-    $decryptedData = [];
-    $submittedCount = 0;
-    $skippedCount = 0;
-    $skippedEntries = [];
-
-    foreach ($users as $user) {
-        $decryptedName  = decryptWithArabicSupport($user->name, $key, $iv);
-        $decryptedPhone = decryptWithArabicSupport($user->phone, $key, $iv);
-
-        // Split full name into first_name and last_name
-        $firstName = $decryptedName;
-        $lastName = null;
-
-        if (is_string($decryptedName)) {
-            $nameParts = explode(' ', trim($decryptedName), 2);
-            $firstName = $nameParts[0] ?? '';
-            $lastName  = $nameParts[1] ?? null;
-        }
-
-        // Check for duplicate phone number with different email
-        $existingUserWithPhone = User::where('phone_number', $decryptedPhone)
-            ->where('email', '!=', $user->email)
-            ->first();
-
-        if ($existingUserWithPhone) {
-            $skippedCount++;
-            $skippedEntries[] = [
-                'reason' => 'duplicate_phone',
-                'existing_user_id' => $existingUserWithPhone->id,
-                'conflict_email' => $existingUserWithPhone->email,
-                'conflict_phone' => $decryptedPhone,
-                'new_email' => $user->email,
-            ];
-            continue;
-        }
-
-        $result = User::updateOrCreate(
-            ['email' => $user->email],
-            [
-                'first_name'   => $firstName,
-                'last_name'    => $lastName ?? ' ',
-                'email'        => $user->email,
-                'password'     => Hash::make('arabianpay@123'),
-                'phone_number' => $decryptedPhone,
-            ]
-        );
-
-        if ($result) {
-            $submittedCount++;
-        }
-
-        $decryptedData[] = [
-            'id'         => $user->id,
-            'first_name' => $firstName,
-            'last_name'  => $lastName,
-            'email'      => $user->email,
-            'phone'      => $decryptedPhone,
-        ];
-    }
-
-    return response()->json([
-        'fetched_total'   => $users->count(),
-        'submitted_total' => $submittedCount,
-        'skipped_total'   => $skippedCount,
-        'skipped'         => $skippedEntries,
-        'data'            => $decryptedData,
-    ], 200, [], JSON_UNESCAPED_UNICODE);
-});
-
-// Decryption function stays the same
-function decryptWithArabicSupport($encrypted, $key, $iv)
-{
-    $decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $key, 0, $iv);
-    $cleaned = $decrypted;
-
-    if (json_decode($cleaned) !== null || $cleaned === 'null') {
-        $decoded = json_decode($cleaned, true);
-        if (is_array($decoded) || is_object($decoded)) {
-            $cleaned = $decoded;
-        } else {
-            $cleaned = json_decode($cleaned);
-        }
-    }
-
-    if (is_string($cleaned) && str_contains($cleaned, '\\u')) {
-        $cleaned = json_decode('"' . addslashes(str_replace('\\\\', '\\', $cleaned)) . '"');
-    }
-
-    return $cleaned;
-}
-
-Route::get('/sellers', function () {
-    // Step 1: Get all users from old DB
-    $oldUsers = DB::connection('arabianoay_old')->table('users')->get();
-
-    // Step 2: Get unique emails from old users
-    $oldEmails = $oldUsers->pluck('email')->filter()->unique();
-
-    // Step 3: Get users from new DB whose emails match old ones
-    $newUsers = User::whereIn('email', $oldEmails)->get();
-
-    // Step 4: Map emails to new user IDs
-    $emailToNewUserId = $newUsers->pluck('id', 'email'); // [email => id]
-
-    // Step 5: Get all sellers from old DB
-    $oldSellers = DB::connection('arabianoay_old')
-        ->table('sellers')
-        ->whereIn('user_id', $oldUsers->pluck('id'))
-        ->get();
-
-    $migratedSellers = [];
-
-    foreach ($oldSellers as $oldSeller) {
-        // Match the old user
-        $oldUser = $oldUsers->firstWhere('id', $oldSeller->user_id);
-        if (!$oldUser) continue;
-
-        // Find corresponding new user ID
-        $newUserId = $emailToNewUserId[$oldUser->email] ?? null;
-        if (!$newUserId) continue;
-
-        // Skip if merchant with this CR already exists
-        if (
-            Merchant::where('cr_number', $oldSeller->cr_number)->exists() ||
-            Merchant::where('owner_iqama_number', $oldSeller->id_number)->exists()
-        ) {
-            continue;
-        }
-
-
-        // Step 6: Create new Merchant record
-        $newMerchant = new Merchant();
-        $newMerchant->user_id = $newUserId;
-        $newMerchant->cr_number = $oldSeller->cr_number;
-        $newMerchant->goverment_data = is_string($oldSeller->cr_data) ? $oldSeller->cr_data : json_encode($oldSeller->cr_data);
-        $newMerchant->vat_register_number = $oldSeller->vat_cr;
-        $newMerchant->return_day_count = $oldSeller->return_days ?? 0;
-        $newMerchant->exchange_day_count = $oldSeller->exchange_days ?? 0;
-        $newMerchant->cancel_day_count = 0;
-        $newMerchant->term_status = 'accepted';
-        $newMerchant->status = 'pending';
-        $newMerchant->owner_iqama_number = $oldSeller->id_number;
-        $newMerchant->save();
-
-        // Step 7: Update business name in new user
-        $user = User::find($newUserId);
-        if ($user) {
-            $user->business_name = $oldSeller->business_owner;
-            $user->save();
-        }
-
-        // Step 8: Create new SupplierBank record
-        $bank = new SupplierBank();
-        $bank->user_id = $newUserId;
-        $bank->bank_name = $oldSeller->bank_id ?? 'N/A';
-        $bank->account_name = $oldSeller->beneficiary_name ?? 'N/A';
-        $bank->iban = $oldSeller->account_ibn ?? 'N/A';
-        $bank->save();
+// Route::get('/merchant-transfer', function () {
+//     $key = base64_decode('dlzHBZOPN+4ZZ2Jnfkll/iVUJ1GuwfwCRnvxxuCMXdg=');
+//     $iv = base64_decode('l2kMAFuEh7jazjgDCfIKUg==');
+
+//     $users = DB::connection('arabianoay_old')
+//         ->table('users')
+//         ->where('user_type', 'seller')
+//         ->get();
+
+//     $decryptedData = [];
+//     $submittedCount = 0;
+//     $skippedCount = 0;
+//     $skippedEntries = [];
+
+//     foreach ($users as $user) {
+//         $decryptedName  = decryptWithArabicSupport($user->name, $key, $iv);
+//         $decryptedPhone = decryptWithArabicSupport($user->phone, $key, $iv);
+
+//         // Split full name into first_name and last_name
+//         $firstName = $decryptedName;
+//         $lastName = null;
+
+//         if (is_string($decryptedName)) {
+//             $nameParts = explode(' ', trim($decryptedName), 2);
+//             $firstName = $nameParts[0] ?? '';
+//             $lastName  = $nameParts[1] ?? null;
+//         }
+
+//         // Check for duplicate phone number with different email
+//         $existingUserWithPhone = User::where('phone_number', $decryptedPhone)
+//             ->where('email', '!=', $user->email)
+//             ->first();
+
+//         if ($existingUserWithPhone) {
+//             $skippedCount++;
+//             $skippedEntries[] = [
+//                 'reason' => 'duplicate_phone',
+//                 'existing_user_id' => $existingUserWithPhone->id,
+//                 'conflict_email' => $existingUserWithPhone->email,
+//                 'conflict_phone' => $decryptedPhone,
+//                 'new_email' => $user->email,
+//             ];
+//             continue;
+//         }
+
+//         $result = User::updateOrCreate(
+//             ['email' => $user->email],
+//             [
+//                 'first_name'   => $firstName,
+//                 'last_name'    => $lastName ?? ' ',
+//                 'email'        => $user->email,
+//                 'password'     => Hash::make('arabianpay@123'),
+//                 'phone_number' => $decryptedPhone,
+//             ]
+//         );
+
+//         if ($result) {
+//             $submittedCount++;
+//         }
+
+//         $decryptedData[] = [
+//             'id'         => $user->id,
+//             'first_name' => $firstName,
+//             'last_name'  => $lastName,
+//             'email'      => $user->email,
+//             'phone'      => $decryptedPhone,
+//         ];
+//     }
+
+//     return response()->json([
+//         'fetched_total'   => $users->count(),
+//         'submitted_total' => $submittedCount,
+//         'skipped_total'   => $skippedCount,
+//         'skipped'         => $skippedEntries,
+//         'data'            => $decryptedData,
+//     ], 200, [], JSON_UNESCAPED_UNICODE);
+// });
+
+// // Decryption function stays the same
+// function decryptWithArabicSupport($encrypted, $key, $iv)
+// {
+//     $decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $key, 0, $iv);
+//     $cleaned = $decrypted;
+
+//     if (json_decode($cleaned) !== null || $cleaned === 'null') {
+//         $decoded = json_decode($cleaned, true);
+//         if (is_array($decoded) || is_object($decoded)) {
+//             $cleaned = $decoded;
+//         } else {
+//             $cleaned = json_decode($cleaned);
+//         }
+//     }
+
+//     if (is_string($cleaned) && str_contains($cleaned, '\\u')) {
+//         $cleaned = json_decode('"' . addslashes(str_replace('\\\\', '\\', $cleaned)) . '"');
+//     }
+
+//     return $cleaned;
+// }
+
+// Route::get('/sellers', function () {
+//     // Step 1: Get all users from old DB
+//     $oldUsers = DB::connection('arabianoay_old')->table('users')->get();
+
+//     // Step 2: Get unique emails from old users
+//     $oldEmails = $oldUsers->pluck('email')->filter()->unique();
+
+//     // Step 3: Get users from new DB whose emails match old ones
+//     $newUsers = User::whereIn('email', $oldEmails)->get();
+
+//     // Step 4: Map emails to new user IDs
+//     $emailToNewUserId = $newUsers->pluck('id', 'email'); // [email => id]
+
+//     // Step 5: Get all sellers from old DB
+//     $oldSellers = DB::connection('arabianoay_old')
+//         ->table('sellers')
+//         ->whereIn('user_id', $oldUsers->pluck('id'))
+//         ->get();
+
+//     $migratedSellers = [];
+
+//     foreach ($oldSellers as $oldSeller) {
+//         // Match the old user
+//         $oldUser = $oldUsers->firstWhere('id', $oldSeller->user_id);
+//         if (!$oldUser) continue;
+
+//         // Find corresponding new user ID
+//         $newUserId = $emailToNewUserId[$oldUser->email] ?? null;
+//         if (!$newUserId) continue;
+
+//         // Skip if merchant with this CR already exists
+//         if (
+//             Merchant::where('cr_number', $oldSeller->cr_number)->exists() ||
+//             Merchant::where('owner_iqama_number', $oldSeller->id_number)->exists()
+//         ) {
+//             continue;
+//         }
+
+
+//         // Step 6: Create new Merchant record
+//         $newMerchant = new Merchant();
+//         $newMerchant->user_id = $newUserId;
+//         $newMerchant->cr_number = $oldSeller->cr_number;
+//         $newMerchant->goverment_data = is_string($oldSeller->cr_data) ? $oldSeller->cr_data : json_encode($oldSeller->cr_data);
+//         $newMerchant->vat_register_number = $oldSeller->vat_cr;
+//         $newMerchant->return_day_count = $oldSeller->return_days ?? 0;
+//         $newMerchant->exchange_day_count = $oldSeller->exchange_days ?? 0;
+//         $newMerchant->cancel_day_count = 0;
+//         $newMerchant->term_status = 'accepted';
+//         $newMerchant->status = 'pending';
+//         $newMerchant->owner_iqama_number = $oldSeller->id_number;
+//         $newMerchant->save();
+
+//         // Step 7: Update business name in new user
+//         $user = User::find($newUserId);
+//         if ($user) {
+//             $user->business_name = $oldSeller->business_owner;
+//             $user->save();
+//         }
+
+//         // Step 8: Create new SupplierBank record
+//         $bank = new SupplierBank();
+//         $bank->user_id = $newUserId;
+//         $bank->bank_name = $oldSeller->bank_id ?? 'N/A';
+//         $bank->account_name = $oldSeller->beneficiary_name ?? 'N/A';
+//         $bank->iban = $oldSeller->account_ibn ?? 'N/A';
+//         $bank->save();
 
-        // Add to migrated list
-        $migratedSellers[] = $newMerchant;
-    }
+//         // Add to migrated list
+//         $migratedSellers[] = $newMerchant;
+//     }
 
-    // Step 9: Return result
-    return response()->json([
-        'migrated_sellers_count' => count($migratedSellers),
-        'migrated_sellers' => $migratedSellers,
-    ]);
-});
+//     // Step 9: Return result
+//     return response()->json([
+//         'migrated_sellers_count' => count($migratedSellers),
+//         'migrated_sellers' => $migratedSellers,
+//     ]);
+// });
 
-Route::get('/cr_data', function () {
+// Route::get('/cr_data', function () {
 
-    dd(hijriToGregorian('1446/01/09'));
-    $merchants = Merchant::WhereNotIn('id', [1, 12, 15, 17, 19])->get();
+//     dd(hijriToGregorian('1446/01/09'));
+//     $merchants = Merchant::WhereNotIn('id', [1, 12, 15, 17, 19])->get();
 
-    foreach ($merchants as $merchant) {
-        if (!$merchant->goverment_data) {
-            continue; // skip if no data
-        }
+//     foreach ($merchants as $merchant) {
+//         if (!$merchant->goverment_data) {
+//             continue; // skip if no data
+//         }
 
-        $old = json_decode($merchant->goverment_data, true);
-        if (!$old) {
-            continue; // skip if invalid JSON
-        }
+//         $old = json_decode($merchant->goverment_data, true);
+//         if (!$old) {
+//             continue; // skip if invalid JSON
+//         }
 
-        // Map old to new format (same mapping you gave)
-        $newFormat = [
-            "name" => $old['crName'] ?? null,
-            "isMain" => true,
+//         // Map old to new format (same mapping you gave)
+//         $newFormat = [
+//             "name" => $old['crName'] ?? null,
+//             "isMain" => true,
 
-            "status" => [
-                "id" => $old['status']['id'] ?? null,
-                "name" => $old['status']['nameEn'] ?? null,
-                "deletionDate" => $old['status']['deletionDate'] ?? [],
-                "suspensionDate" => $old['status']['suspensionDate'] ?? [],
-                "confirmationDate" => [
-                    "hijri" => $old['expiryDate'] ?? null,
-                    "gregorian" => hijriToGregorian($old['expiryDate']),
-                ],
-                "reactivationDate" => $old['status']['reactivationDate'] ?? [],
-            ],
+//             "status" => [
+//                 "id" => $old['status']['id'] ?? null,
+//                 "name" => $old['status']['nameEn'] ?? null,
+//                 "deletionDate" => $old['status']['deletionDate'] ?? [],
+//                 "suspensionDate" => $old['status']['suspensionDate'] ?? [],
+//                 "confirmationDate" => [
+//                     "hijri" => $old['expiryDate'] ?? null,
+//                     "gregorian" => hijriToGregorian($old['expiryDate']),
+//                 ],
+//                 "reactivationDate" => $old['status']['reactivationDate'] ?? [],
+//             ],
 
-            "capital" => [
-                "share" => $old['capital']['share'] ?? null,
-                "paidAmount" => $old['capital']['paidAmount'] ?? null,
-                "announcedAmount" => $old['capital']['announcedAmount'] ?? null,
-                "subscribedAmount" => $old['capital']['subscribedAmount'] ?? null,
-            ],
+//             "capital" => [
+//                 "share" => $old['capital']['share'] ?? null,
+//                 "paidAmount" => $old['capital']['paidAmount'] ?? null,
+//                 "announcedAmount" => $old['capital']['announcedAmount'] ?? null,
+//                 "subscribedAmount" => $old['capital']['subscribedAmount'] ?? null,
+//             ],
 
-            "parties" => $old['parties'] ?? [],
+//             "parties" => $old['parties'] ?? [],
 
-            "crNumber" => $old['crNumber'] ?? null,
+//             "crNumber" => $old['crNumber'] ?? null,
 
-            "crCapital" => $old['capital']['paidAmount'] ?? null,
+//             "crCapital" => $old['capital']['paidAmount'] ?? null,
 
-            "eCommerce" => $old['isEcommerce'] ?? false,
+//             "eCommerce" => $old['isEcommerce'] ?? false,
 
-            "versionNo" => null,
+//             "versionNo" => null,
 
-            "activities" => $old['activities'] ?? [],
+//             "activities" => $old['activities'] ?? [],
 
-            "entityType" => $old['businessType'] ?? [],
+//             "entityType" => $old['businessType'] ?? [],
 
-            "fiscalYear" => $old['fiscalYear'] ?? null,
+//             "fiscalYear" => $old['fiscalYear'] ?? null,
 
-            "management" => null,
+//             "management" => null,
 
-            "nameLangId" => null,
+//             "nameLangId" => null,
 
-            "contactInfo" => [
-                "email" => $old['address']['general']['email'] ?? null,
-                "phoneNo" => $old['address']['general']['telephone1'] ?? null,
-                "address" => $old['address']['general']['address'] ?? null,
-                "website" => $old['address']['general']['website'] ?? null,
-                "zipcode" => $old['address']['general']['zipcode'] ?? null,
-                "postalBox1" => $old['address']['general']['postalBox1'] ?? null,
-                "postalBox2" => $old['address']['general']['postalBox2'] ?? null,
-            ],
+//             "contactInfo" => [
+//                 "email" => $old['address']['general']['email'] ?? null,
+//                 "phoneNo" => $old['address']['general']['telephone1'] ?? null,
+//                 "address" => $old['address']['general']['address'] ?? null,
+//                 "website" => $old['address']['general']['website'] ?? null,
+//                 "zipcode" => $old['address']['general']['zipcode'] ?? null,
+//                 "postalBox1" => $old['address']['general']['postalBox1'] ?? null,
+//                 "postalBox2" => $old['address']['general']['postalBox2'] ?? null,
+//             ],
 
-            "hasEcommerce" => $old['isEcommerce'] ?? false,
+//             "hasEcommerce" => $old['isEcommerce'] ?? false,
 
-            "mainCrNumber" => $old['crMainNumber'] ?? null,
+//             "mainCrNumber" => $old['crMainNumber'] ?? null,
 
-            "nameLangDesc" => null,
+//             "nameLangDesc" => null,
 
-            "isLicenseBased" => false,
+//             "isLicenseBased" => false,
 
-            "issueDateHijri" => $old['issueDate'] ?? null,
+//             "issueDateHijri" => $old['issueDate'] ?? null,
 
-            "companyDuration" => null,
+//             "companyDuration" => null,
 
-            "crNationalNumber" => $old['crMainNumber'],
+//             "crNationalNumber" => $old['crMainNumber'],
 
-            "headquarterCityId" => $old['location']['id'] ?? null,
+//             "headquarterCityId" => $old['location']['id'] ?? null,
 
-            "licenseIssuerName" => null,
+//             "licenseIssuerName" => null,
 
-            "issueDateGregorian" => null,
+//             "issueDateGregorian" => null,
 
-            "headquarterCityName" => $old['location']['name'] ?? null,
+//             "headquarterCityName" => $old['location']['name'] ?? null,
 
-            "inLiquidationProcess" => false,
+//             "inLiquidationProcess" => false,
 
-            "mainCrNationalNumber" => $old['crMainEntityNumber'],
+//             "mainCrNationalNumber" => $old['crMainEntityNumber'],
 
-            "partnersNationalityId" => null,
+//             "partnersNationalityId" => null,
 
-            "PartnersNationalityName" => null,
+//             "PartnersNationalityName" => null,
 
-            "licenseIssuerNationalNumber" => null,
-        ];
+//             "licenseIssuerNationalNumber" => null,
+//         ];
 
-        // Save the new format JSON back to the database
-        $merchant->goverment_data = json_encode($newFormat);
-        $merchant->save();
-    }
+//         // Save the new format JSON back to the database
+//         $merchant->goverment_data = json_encode($newFormat);
+//         $merchant->save();
+//     }
 
-    return response()->json(['message' => 'All merchants government_data updated successfully']);
-});
+//     return response()->json(['message' => 'All merchants government_data updated successfully']);
+// });
 
 use Illuminate\Support\Str;
 
-Route::get('/customer-transfer', function () {
-    $key = base64_decode('dlzHBZOPN+4ZZ2Jnfkll/iVUJ1GuwfwCRnvxxuCMXdg=');
-    $iv = base64_decode('l2kMAFuEh7jazjgDCfIKUg==');
+// Route::get('/customer-transfer', function () {
+//     $key = base64_decode('dlzHBZOPN+4ZZ2Jnfkll/iVUJ1GuwfwCRnvxxuCMXdg=');
+//     $iv = base64_decode('l2kMAFuEh7jazjgDCfIKUg==');
 
-    $users = DB::connection('arabianoay_old')
-        ->table('users')
-        ->where('user_type', 'customer')
-        ->get();
+//     $users = DB::connection('arabianoay_old')
+//         ->table('users')
+//         ->where('user_type', 'customer')
+//         ->get();
 
-    $decryptedData = [];
-    $submittedCount = 0;
-    $skippedCount = 0;
-    $skippedEntries = [];
+//     $decryptedData = [];
+//     $submittedCount = 0;
+//     $skippedCount = 0;
+//     $skippedEntries = [];
 
-    foreach ($users as $user) {
-        $decryptedName  = decryptWithArabicSupport($user->name, $key, $iv);
-        $decryptedPhone = decryptWithArabicSupport($user->phone, $key, $iv);
+//     foreach ($users as $user) {
+//         $decryptedName  = decryptWithArabicSupport($user->name, $key, $iv);
+//         $decryptedPhone = decryptWithArabicSupport($user->phone, $key, $iv);
 
-        // Split full name into first_name and last_name
-        $firstName = $decryptedName;
-        $lastName = null;
+//         // Split full name into first_name and last_name
+//         $firstName = $decryptedName;
+//         $lastName = null;
 
-        if (is_string($decryptedName)) {
-            $nameParts = explode(' ', trim($decryptedName), 2);
-            $firstName = $nameParts[0] ?? '';
-            $lastName  = $nameParts[1] ?? null;
-        }
+//         if (is_string($decryptedName)) {
+//             $nameParts = explode(' ', trim($decryptedName), 2);
+//             $firstName = $nameParts[0] ?? '';
+//             $lastName  = $nameParts[1] ?? null;
+//         }
 
-        // Check for duplicate phone number with different email
-        $existingUserWithPhone = User::where('phone_number', $decryptedPhone)
-            ->where('email', '!=', $user->email)
-            ->first();
+//         // Check for duplicate phone number with different email
+//         $existingUserWithPhone = User::where('phone_number', $decryptedPhone)
+//             ->where('email', '!=', $user->email)
+//             ->first();
 
-        if ($existingUserWithPhone) {
-            $skippedCount++;
-            $skippedEntries[] = [
-                'reason' => 'duplicate_phone',
-                'existing_user_id' => $existingUserWithPhone->id,
-                'conflict_email' => $existingUserWithPhone->email,
-                'conflict_phone' => $decryptedPhone,
-                'new_email' => $user->email,
-            ];
-            continue;
-        }
+//         if ($existingUserWithPhone) {
+//             $skippedCount++;
+//             $skippedEntries[] = [
+//                 'reason' => 'duplicate_phone',
+//                 'existing_user_id' => $existingUserWithPhone->id,
+//                 'conflict_email' => $existingUserWithPhone->email,
+//                 'conflict_phone' => $decryptedPhone,
+//                 'new_email' => $user->email,
+//             ];
+//             continue;
+//         }
 
-        $email = $user?->email;
+//         $email = $user?->email;
 
-        if (empty($email)) {
-            // fallback to firstname based email
-            $baseEmail = Str::slug($firstName, '_') . '@arabianpay.net';
-            $email = $baseEmail;
-            $counter = 1;
+//         if (empty($email)) {
+//             // fallback to firstname based email
+//             $baseEmail = Str::slug($firstName, '_') . '@arabianpay.net';
+//             $email = $baseEmail;
+//             $counter = 1;
 
-            // keep increasing suffix until unique email is found
-            while (User::where('email', $email)->exists()) {
-                $email = Str::slug($firstName, '_') . $counter . '@arabianpay.net';
-                $counter++;
-            }
-        }
+//             // keep increasing suffix until unique email is found
+//             while (User::where('email', $email)->exists()) {
+//                 $email = Str::slug($firstName, '_') . $counter . '@arabianpay.net';
+//                 $counter++;
+//             }
+//         }
 
-        $result = User::updateOrCreate(
-            ['email' => $user->email],
-            [
-                'first_name'   => $firstName,
-                'last_name'    => $lastName ?? ' ',
-                'email'        => $email,
-                'password'     => Hash::make('arabianpay@123'),
-                'phone_number' => $decryptedPhone,
-            ]
-        );
+//         $result = User::updateOrCreate(
+//             ['email' => $user->email],
+//             [
+//                 'first_name'   => $firstName,
+//                 'last_name'    => $lastName ?? ' ',
+//                 'email'        => $email,
+//                 'password'     => Hash::make('arabianpay@123'),
+//                 'phone_number' => $decryptedPhone,
+//             ]
+//         );
 
-        if ($result) {
-            $submittedCount++;
-        }
+//         if ($result) {
+//             $submittedCount++;
+//         }
 
-        $decryptedData[] = [
-            'id'         => $user->id,
-            'first_name' => $firstName,
-            'last_name'  => $lastName,
-            'email'      => $user->email,
-            'phone'      => $decryptedPhone,
-        ];
-    }
+//         $decryptedData[] = [
+//             'id'         => $user->id,
+//             'first_name' => $firstName,
+//             'last_name'  => $lastName,
+//             'email'      => $user->email,
+//             'phone'      => $decryptedPhone,
+//         ];
+//     }
 
-    return response()->json([
-        'fetched_total'   => $users->count(),
-        'submitted_total' => $submittedCount,
-        'skipped_total'   => $skippedCount,
-        'skipped'         => $skippedEntries,
-        'data'            => $decryptedData,
-    ], 200, [], JSON_UNESCAPED_UNICODE);
-});
+//     return response()->json([
+//         'fetched_total'   => $users->count(),
+//         'submitted_total' => $submittedCount,
+//         'skipped_total'   => $skippedCount,
+//         'skipped'         => $skippedEntries,
+//         'data'            => $decryptedData,
+//     ], 200, [], JSON_UNESCAPED_UNICODE);
+// });
 
 Route::get('/customers', function () {
     // Step 1: Get all users from old DB
@@ -923,6 +923,127 @@ Route::get('/banks', function () {
                 $bank->save();
                 $updated[] = $bank;
             }
+        }
+    }
+
+    return response()->json([
+        'updated_count' => count($updated),
+        'updated_items' => $updated,
+    ]);
+});
+
+
+Route::get('/unencrypted-users', function () {
+
+    $users = DB::connection('arabianpay_unencrypted')->table('users')->get();
+
+    $updated = [];
+
+    foreach ($users as $user) {
+
+        $newUser = User::find($user->id);
+
+
+        if ($newUser) {
+            $newUser->first_name = $user->first_name;
+            $newUser->last_name = $user->last_name;
+            $newUser->user_type = $user->user_type;
+            $newUser->email = $user->email;
+            $newUser->business_name = $user->business_name;
+            $newUser->phone_number = $user->phone_number;
+            $newUser->email_verified_at = $user->email_verified_at;
+            $newUser->save(); // Save changes to DB
+            $updated[] = $newUser;
+        }
+    }
+
+    return response()->json([
+        'updated_count' => count($updated),
+        'updated_items' => $updated,
+    ]);
+});
+
+Route::get('/unencrypted-merchants', function () {
+
+    $users = DB::connection('arabianpay_unencrypted')->table('merchants')->get();
+
+    $updated = [];
+
+    foreach ($users as $user) {
+
+        $newUser = Merchant::where('user_id', $user->user_id)->first();
+
+        if ($newUser) {
+            $newUser->cr_number = $user->cr_number;
+            $newUser->pos_revenue = $user->pos_revenue;
+            $newUser->vat_register_number = $user->vat_register_number;
+            $newUser->return_day_count = $user->return_day_count;
+            $newUser->exchange_day_count = $user->exchange_day_count;
+            $newUser->cancel_day_count = $user->cancel_day_count;
+            $newUser->owner_name = $user->owner_name;
+            $newUser->owner_iqama_number = $user->owner_iqama_number;
+            $newUser->save(); // Save changes to DB
+            $updated[] = $newUser;
+        }
+    }
+
+    return response()->json([
+        'updated_count' => count($updated),
+        'updated_items' => $updated,
+    ]);
+});
+
+Route::get('/unencrypted-customers', function () {
+
+    $users = DB::connection('arabianpay_unencrypted')->table('customers')->get();
+
+    $updated = [];
+
+    foreach ($users as $user) {
+
+        $newUser = Customer::where('user_id', $user->user_id)->first();
+
+        if ($newUser) {
+            $newUser->id_number = $user->id_number;
+            $newUser->id_owner = $user->id_owner;
+            $newUser->cr_number = $user->cr_number;
+            $newUser->tax_number = $user->tax_number;
+            $newUser->purchasing_volume = $user->purchasing_volume;
+            $newUser->purchasing_natures = $user->purchasing_natures;
+            $newUser->other_purchasing_natures = $user->other_purchasing_natures;
+            $newUser->save(); // Save changes to DB
+            $updated[] = $newUser;
+        }
+    }
+
+    return response()->json([
+        'updated_count' => count($updated),
+        'updated_items' => $updated,
+    ]);
+});
+
+// L2NobGZBMkdockppdzFvM1plaTR4QT09
+
+Route::get('/old-categories', function () {
+
+    $users = DB::connection('arabianpay_odl')->table('customers')->get();
+
+    $updated = [];
+
+    foreach ($users as $user) {
+
+        $newUser = Customer::where('user_id', $user->user_id)->first();
+
+        if ($newUser) {
+            $newUser->id_number = $user->id_number;
+            $newUser->id_owner = $user->id_owner;
+            $newUser->cr_number = $user->cr_number;
+            $newUser->tax_number = $user->tax_number;
+            $newUser->purchasing_volume = $user->purchasing_volume;
+            $newUser->purchasing_natures = $user->purchasing_natures;
+            $newUser->other_purchasing_natures = $user->other_purchasing_natures;
+            $newUser->save(); // Save changes to DB
+            $updated[] = $newUser;
         }
     }
 

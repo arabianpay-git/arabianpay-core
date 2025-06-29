@@ -10,6 +10,7 @@
         "astrotomic/laravel-translatable": "^11.16",
         "barryvdh/laravel-dompdf": "^3.1",
         "endroid/qr-code": "^6.0",
+        "joelwmale/laravel-encryption": "^2.1",
         "kreait/firebase-php": "^7.19",
         "kreait/laravel-firebase": "^6.1",
         "laravel/framework": "^12.0",

@@ -15,7 +15,7 @@ class FirebaseService
 
     public function __construct(LoggerInterface $logger)
     {
-        $factory = (new Factory)->withServiceAccount(base_path(env('FIREBASE_CREDENTIALS')));
+        $factory = (new Factory)->withServiceAccount(storage_path('app/firebase/arabianpay-b76ba-firebase-adminsdk-fbsvc-5a6b74b662.json'));
         $this->messaging = $factory->createMessaging();
         $this->logger = $logger;
     }

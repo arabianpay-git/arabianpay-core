@@ -6,15 +6,11 @@ use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class BusinessType extends Model
 {
-    use HasFactory;
-    use LogsModelActions;
-
-    protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed attributes
-    protected static $logName = 'business_type'; // Custom log name
+    use HasFactory, LogsModelActions, EncryptsAttributes;
 
     protected $fillable = [
         'name',
@@ -26,9 +22,12 @@ class BusinessType extends Model
         'featured'
     ];
 
-    protected array $translatable = [
-        'name',
-    ];
+    protected $encryptableAttributes = ['name'];
+    protected array $translatable = ['name'];
+
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'business_type';
 
     protected static function booted()
     {
@@ -46,6 +45,26 @@ class BusinessType extends Model
             }
         });
     }
+
+    public function getAttribute($key)
+    {
+        $value = parent::getAttribute($key);
+
+        if (!in_array($key, $this->translatable)) {
+            return $value;
+        }
+
+        $locale = app()->getLocale();
+
+        if ($locale === 'en') {
+            return $value;
+        }
+
+        $translation = $this->translations->where('locale', $locale)->first();
+
+        return $translation?->$key ?? $value;
+    }
+
 
     public function translations()
     {

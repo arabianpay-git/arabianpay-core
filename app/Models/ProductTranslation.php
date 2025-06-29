@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class ProductTranslation extends Model
 {
+    use EncryptsAttributes;
     public $timestamps = false;
 
     protected $fillable = [
@@ -13,12 +15,20 @@ class ProductTranslation extends Model
         'locale',
         'name',
         'unit',
-        'reson_reject',
+        'reason_reject',
         'meta_title',
         'meta_description',
         'short_description',
         'description',
         'tags',
+    ];
+
+    protected $encryptableAttributes = [
+        'name',
+        'short_description',
+        'description',
+        'reason_reject',
+        'unit',
     ];
 
     protected $casts = [

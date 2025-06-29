@@ -5,14 +5,12 @@ namespace App\Models;
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Category extends Model
 {
-    use LogsModelActions;
+    use LogsModelActions, EncryptsAttributes;
 
-    protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed attributes
-    protected static $logName = 'category'; // Custom log name
     protected $fillable = [
         'parent_id',
         'name',
@@ -25,6 +23,8 @@ class Category extends Model
         'meta_description',
     ];
 
+    protected $encryptableAttributes = ['name'];
+
     protected array $translatable = [
         'name',
         'meta_title',
@@ -32,6 +32,10 @@ class Category extends Model
     ];
 
     protected $with = ['translations'];
+
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'category';
 
     protected static function booted()
     {

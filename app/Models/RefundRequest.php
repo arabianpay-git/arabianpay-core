@@ -13,8 +13,8 @@ class RefundRequest extends Model
     use LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed attributes
-    protected static $logName = 'refund_request'; // Custom log name
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'refund_request';
 
     protected $fillable = [
         'assigned_to',

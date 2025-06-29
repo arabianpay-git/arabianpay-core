@@ -5,14 +5,16 @@ namespace App\Models;
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Brand extends Model
 {
-    use LogsModelActions;
+    use LogsModelActions, EncryptsAttributes;
 
-    protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed attributes
-    protected static $logName = 'brand'; // Custom log name
+    protected $encryptableAttributes = [
+        'name',
+    ];
+
     protected $fillable = [
         'name',
         'slug',
@@ -29,7 +31,9 @@ class Brand extends Model
         'meta_description',
     ];
 
-    protected $with = ['translations'];
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'brand';
 
     protected static function booted()
     {

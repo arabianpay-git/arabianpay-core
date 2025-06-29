@@ -27,7 +27,7 @@ class RefundRequestController extends Controller
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated refund request status to {$refundRequest->refund_status} for order ID {$refundRequest->order_id}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 

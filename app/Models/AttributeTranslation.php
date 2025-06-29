@@ -3,9 +3,11 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class AttributeTranslation extends Model
 {
+    use EncryptsAttributes;
     public $timestamps = false;
 
     protected $fillable = [
@@ -13,6 +15,8 @@ class AttributeTranslation extends Model
         'locale',
         'name',
     ];
+
+    protected $encryptableAttributes = ['name'];
 
     public function attribute()
     {

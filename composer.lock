@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "43849d8120ef5893fd82b46170d690be",
+    "content-hash": "27234bdff35e499cd1fcabb32e7d96be",
     "packages": [
         {
             "name": "astrotomic/laravel-translatable",
@@ -2565,6 +2565,75 @@
                 }
             ],
             "time": "2025-02-03T10:55:03+00:00"
+        },
+        {
+            "name": "joelwmale/laravel-encryption",
+            "version": "2.1.4",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/joelwmale/laravel-encryption.git",
+                "reference": "f32d3b55435865b86bf3e5f638f4688e150fe663"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/joelwmale/laravel-encryption/zipball/f32d3b55435865b86bf3e5f638f4688e150fe663",
+                "reference": "f32d3b55435865b86bf3e5f638f4688e150fe663",
+                "shasum": ""
+            },
+            "require": {
+                "ext-json": "*",
+                "illuminate/support": "^8.0|^9.0|^10.0|^11.0|^12.0",
+                "nesbot/carbon": "^2.0|^3.0",
+                "php": "^8.1|^8.2|^8.3|^8.4"
+            },
+            "require-dev": {
+                "laravel/pint": "^1.0",
+                "nunomaduro/collision": "^7.8",
+                "nunomaduro/larastan": "^2.0.1",
+                "orchestra/testbench": "^8.13",
+                "pestphp/pest": "^2.24",
+                "pestphp/pest-plugin-arch": "^2.0",
+                "pestphp/pest-plugin-laravel": "^2.2"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "aliases": {
+                        "LaravelEncryption": "Joelwmale\\LaravelEncryption\\LaravelEncryptionFacade"
+                    },
+                    "providers": [
+                        "Joelwmale\\LaravelEncryption\\LaravelEncryptionServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Joelwmale\\LaravelEncryption\\": "src"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "authors": [
+                {
+                    "name": "Joel Male",
+                    "email": "joel@joelmale.com",
+                    "role": "Developer"
+                }
+            ],
+            "description": "A package to easily encrypt & decrypt model fields in Laravel using OpenSSL.",
+            "homepage": "https://github.com/joelwmale/laravel-encryption",
+            "keywords": [
+                "joelwmale",
+                "laravel-encryption"
+            ],
+            "support": {
+                "issues": "https://github.com/joelwmale/laravel-encryption/issues",
+                "source": "https://github.com/joelwmale/laravel-encryption/tree/2.1.4"
+            },
+            "abandoned": true,
+            "time": "2025-05-01T04:46:30+00:00"
         },
         {
             "name": "kreait/firebase-php",

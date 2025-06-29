@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class ProductAttribute extends Model
 {
-    protected $table = 'product_attribute'; // Specify the table if it's not the plural form of the model name
+    protected $table = 'product_attribute';
 
     protected $fillable = [
         'product_id',
@@ -14,8 +14,6 @@ class ProductAttribute extends Model
         'attribute_value_id',
     ];
 
-    // Define relationships if necessary
-    // For example, if you want to get related product and attribute:
     public function product()
     {
         return $this->belongsTo(Product::class);

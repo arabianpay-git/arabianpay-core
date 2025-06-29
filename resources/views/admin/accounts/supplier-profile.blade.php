@@ -378,11 +378,15 @@
                                                             <tr>
                                                                 <td class="text-gray-600 py-2 px-4">Partnership</td>
                                                                 <td class="text-gray-900 py-2 px-4">
-                                                                    @foreach ($party['partnership'] as $p)
-                                                                        {{ $p['name'] }}@if (!$loop->last)
-                                                                            ,
-                                                                        @endif
-                                                                    @endforeach
+                                                                    @if (!empty($party['partnership']) && is_array($party['partnership']))
+                                                                        @foreach ($party['partnership'] as $p)
+                                                                            {{ $p['name'] }}@if (!$loop->last)
+                                                                                ,
+                                                                            @endif
+                                                                        @endforeach
+                                                                    @else
+                                                                        <span class="text-gray-400">N/A</span>
+                                                                    @endif
                                                                 </td>
                                                             </tr>
                                                             <tr>
@@ -415,66 +419,79 @@
                                 <h1 class="text-xl card-title pt-5 pb-3">Managers</h1>
 
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 pb-3">
-                                    @foreach (array_chunk($g['management']['managers'], 2) as $chunk)
-                                        @foreach ($chunk as $index => $manager)
-                                            <div class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-                                                <div class="bg-gray-100 px-4 py-3">
-                                                    <h3 class="text-base font-semibold text-gray-800">
-                                                        Manager #{{ $loop->parent->index * 2 + $index + 1 }} —
-                                                        {{ $manager['name'] }}
-                                                    </h3>
-                                                </div>
-                                                <div class="overflow-x-auto">
-                                                    <table class="table-auto w-full text-sm">
-                                                        <tbody>
-                                                            <tr>
-                                                                <td class="text-gray-600 py-2 px-4">Name</td>
-                                                                <td class="text-gray-900 py-2 px-4">{{ $manager['name'] }}
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="text-gray-600 py-2 px-4">Identity ID</td>
-                                                                <td class="text-gray-900 py-2 px-4">
-                                                                    {{ $manager['identity']['id'] ?? '-' }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="text-gray-600 py-2 px-4">Identity Type</td>
-                                                                <td class="text-gray-900 py-2 px-4">
-                                                                    {{ $manager['identity']['typeName'] ?? '-' }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="text-gray-600 py-2 px-4">Nationality</td>
-                                                                <td class="text-gray-900 py-2 px-4">
-                                                                    {{ $manager['nationality']['name'] ?? '-' }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="text-gray-600 py-2 px-4">Type</td>
-                                                                <td class="text-gray-900 py-2 px-4">
-                                                                    {{ $manager['typeName'] ?? '-' }}</td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="text-gray-600 py-2 px-4">Position(s)</td>
-                                                                <td class="text-gray-900 py-2 px-4">
-                                                                    @foreach ($manager['positions'] as $position)
-                                                                        {{ $position['name'] }}@if (!$loop->last)
-                                                                            ,
+                                    @if (!empty($g['management']['managers']) && is_array($g['management']['managers']))
+                                        @foreach (array_chunk($g['management']['managers'], 2) as $chunk)
+                                            @foreach ($chunk as $index => $manager)
+                                                <div class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                                                    <div class="bg-gray-100 px-4 py-3">
+                                                        <h3 class="text-base font-semibold text-gray-800">
+                                                            Manager #{{ $loop->parent->index * 2 + $index + 1 }} —
+                                                            {{ $manager['name'] ?? '-' }}
+                                                        </h3>
+                                                    </div>
+                                                    <div class="overflow-x-auto">
+                                                        <table class="table-auto w-full text-sm">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">Name</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ $manager['name'] ?? '-' }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">Identity ID</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ $manager['identity']['id'] ?? '-' }}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">Identity Type</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ $manager['identity']['typeName'] ?? '-' }}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">Nationality</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ $manager['nationality']['name'] ?? '-' }}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">Type</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ $manager['typeName'] ?? '-' }}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">Position(s)</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        @if (!empty($manager['positions']) && is_array($manager['positions']))
+                                                                            @foreach ($manager['positions'] as $position)
+                                                                                {{ $position['name'] ?? '-' }}@if (!$loop->last)
+                                                                                    ,
+                                                                                @endif
+                                                                            @endforeach
+                                                                        @else
+                                                                            <span class="text-gray-400">-</span>
                                                                         @endif
-                                                                    @endforeach
-                                                                </td>
-                                                            </tr>
-                                                            <tr>
-                                                                <td class="text-gray-600 py-2 px-4">Is Licensed?</td>
-                                                                <td class="text-gray-900 py-2 px-4">
-                                                                    {{ $manager['isLicensed'] ? 'Yes' : 'No' }}
-                                                                </td>
-                                                            </tr>
-                                                        </tbody>
-                                                    </table>
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">Is Licensed?</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ isset($manager['isLicensed']) ? ($manager['isLicensed'] ? 'Yes' : 'No') : '-' }}
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
                                                 </div>
-                                            </div>
+                                            @endforeach
                                         @endforeach
-                                    @endforeach
+                                    @else
+                                        <p class="text-gray-500 col-span-2">No manager data available.</p>
+                                    @endif
                                 </div>
+
                             @endif
                         </div>
                     </div>

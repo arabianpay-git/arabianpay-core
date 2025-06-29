@@ -128,11 +128,12 @@
             <table class="header-table">
                 <tr>
                     <td class="company-logo" style="width: 50%;">
-                        <img src="{{ public_path($store->logo) }}" alt="{{ $store->name }}">
+                        <img src="{{ public_path($store?->logo ?? 'assets/media/images/logo.png') }}"
+                            alt="{{ $store->name ?? 'Arabianpay' }}">
                         <div class="company-details">
-                            <div>{{ $store->name }}</div>
-                            <div>{{ $store->address }}</div>
-                            <div>Phone: {{ $store->phone_number }}</div>
+                            <div>{{ $store->name ?? 'Arabianpay' }}</div>
+                            <div>{{ $store->address ?? 'King Fahd Rd, Al Olaya, Riyadh 12311' }}</div>
+                            <div>Phone: {{ $store->phone_number ?? '053 724 8366' }}</div>
                             <div>Email: {{ Auth::user()->email }}</div>
                         </div>
                     </td>

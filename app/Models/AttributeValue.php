@@ -3,14 +3,18 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class AttributeValue extends Model
 {
+    use EncryptsAttributes;
+
     protected $fillable = [
         'attribute_id',
         'value',
         'color_code',
     ];
+    protected $encryptableAttributes = ['value', 'color_code'];
 
     protected array $translatable = ['value'];
 

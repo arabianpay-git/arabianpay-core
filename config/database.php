@@ -112,7 +112,7 @@ return [
             // 'trust_server_certificate' => env('DB_TRUST_SERVER_CERTIFICATE', 'false'),
         ],
 
-        'arabianoay_old' => [
+        'arabianpay_old' => [
             'driver' => 'mysql',
             'host' => env('DB_OLD_HOST', '127.0.0.1'),
             'port' => env('DB_OLD_PORT', '3306'),

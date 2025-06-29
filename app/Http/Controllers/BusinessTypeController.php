@@ -13,7 +13,7 @@ class BusinessTypeController extends Controller
 {
     public function index(Request $request)
     {
-        $businessTypes = BusinessType::with('businessCategories')->select('business_types.*')->paginate(10);
+        $businessTypes = BusinessType::with(['businessCategories'])->select('business_types.*')->orderBy('id', 'desc')->paginate(10);
         return view('admin.business_types.index', compact('businessTypes'));
     }
 
@@ -52,7 +52,7 @@ class BusinessTypeController extends Controller
                 description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new business type: {$businessType->name}",
                 properties: [
                     'ip' => request()->ip(),
-                    'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
+                    'batch_uuid' => (string) Str::uuid(),
                 ],
             );
 
@@ -106,7 +106,7 @@ class BusinessTypeController extends Controller
                 description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated business type: {$businessType->name} [{$businessType->id}]",
                 properties: [
                     'ip' => request()->ip(),
-                    'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
+                    'batch_uuid' => (string) Str::uuid(),
                 ],
             );
 
@@ -125,7 +125,7 @@ class BusinessTypeController extends Controller
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted business type: {$businessType->name} [{$businessType->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
         $businessType->delete();

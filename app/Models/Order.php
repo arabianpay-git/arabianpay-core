@@ -6,10 +6,11 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Order extends Model
 {
-    use HasFactory;
+    use HasFactory, EncryptsAttributes;
 
     protected $fillable = [
         'assigned_to',
@@ -39,11 +40,29 @@ class Order extends Model
         'general_status'
     ];
 
+    protected $encryptableAttributes = [
+        'shipping_first_name',
+        'shipping_last_name',
+        'shipping_address_line1',
+        'shipping_address_line2',
+        'shipping_city',
+        'shipping_state',
+        'shipping_country',
+        'shipping_postal_code',
+        'shipping_type',
+        'order_from',
+        'payment_type',
+        'shipping_cost',
+        'grand_total',
+        'coupon_discount',
+        'code',
+        'tracking',
+    ];
+
     protected $casts = [
         'payment_details' => 'array',
     ];
 
-    // Define relationships (e.g., user, seller, pickup_point)
 
     public function assigned()
     {

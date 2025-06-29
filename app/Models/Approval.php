@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Approval extends Model
 {
+    use EncryptsAttributes;
+
     protected $fillable = [
         'user_id',
         'employee_id',
@@ -16,7 +19,13 @@ class Approval extends Model
         'payment_schedule',
     ];
 
-    // Relationships
+    protected $encryptableAttributes = [
+        'commission',
+        'reason',
+        'fahman_score',
+        'payment_schedule',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

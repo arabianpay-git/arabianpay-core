@@ -6,15 +6,15 @@ use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Coupon extends Model
 {
-    use HasFactory;
-    use LogsModelActions;
+    use HasFactory, LogsModelActions, EncryptsAttributes;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed attributes
-    protected static $logName = 'coupon'; // Custom log name
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'coupon';
 
     protected $fillable = [
         'user_id',
@@ -30,8 +30,10 @@ class Coupon extends Model
         'end_date',
     ];
 
+    protected $encryptableAttributes = ['code', 'discount'];
+
     protected $casts = [
-        'details' => 'array',
+        'details' => 'json',
         'start_date' => 'datetime',
         'end_date' => 'datetime',
     ];

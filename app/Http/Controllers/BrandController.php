@@ -13,7 +13,7 @@ class BrandController extends Controller
 {
     public function index(Request $request)
     {
-        $brands = Brand::with('translations')->select('brands.*')->paginate(10);
+        $brands = Brand::select('brands.*')->paginate(10);
         return view('admin.brands.index', compact('brands'));
     }
 
@@ -71,7 +71,6 @@ class BrandController extends Controller
 
     public function update(Request $request, Brand $brand)
     {
-        // dd($request->all());
         $request->validate([
             'name.en' => [
                 'required',

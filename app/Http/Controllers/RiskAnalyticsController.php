@@ -11,6 +11,7 @@ use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RiskAnalyticsController extends Controller
@@ -219,16 +220,18 @@ class RiskAnalyticsController extends Controller
         ];
 
         // Get Google reviews with (max weight 5)
-        $businessName = $decodedCrData['name'] ?? null;
+        // $businessName = $decodedCrData['name'] ?? null;
+        $businessName = 'arabianpay';
 
         $cacheKey = 'google_rating_' . md5(strtolower(trim($businessName)));
         $cachedRating = cache($cacheKey);
+
         if (!$cachedRating && $businessName) {
-            app(self::class)->fetchAndCacheGoogleRating($businessName);
+            $liveRating = app(self::class)->fetchAndCacheGoogleRating($businessName);
+            $googleRating = ['result' => ['rating' => $liveRating]];
+        } else {
+            $googleRating = $cachedRating ?? ['result' => ['rating' => null]];
         }
-
-        $googleRating = $cachedRating ?? ['result' => ['rating' => null]];
-
 
         // Initialize flagged and manual_reason
         $flagged = false;
@@ -281,7 +284,7 @@ class RiskAnalyticsController extends Controller
         ];
     }
 
-    private function fetchAndCacheGoogleRating($businessName)
+    private function fetchAndCacheGoogleRating(string $businessName): ?float
     {
         try {
             $searchResponse = Http::get('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', [
@@ -291,9 +294,15 @@ class RiskAnalyticsController extends Controller
                 'key' => env('GOOGLE_PLACE_API_KEY'),
             ]);
 
+            if (!$searchResponse->successful()) {
+                Log::error("Google FindPlace API failed: " . $searchResponse->body());
+                return null;
+            }
+
             $placeId = $searchResponse['candidates'][0]['place_id'] ?? null;
 
             if (!$placeId) {
+                Log::warning("No place_id found for: {$businessName}");
                 return null;
             }
 
@@ -303,15 +312,27 @@ class RiskAnalyticsController extends Controller
                 'key' => env('GOOGLE_PLACE_API_KEY'),
             ]);
 
+            if (!$detailsResponse->successful()) {
+                Log::error("Google Place Details API failed for place_id: {$placeId}. Response: " . $detailsResponse->body());
+                return null;
+            }
+
             $rating = $detailsResponse['result']['rating'] ?? null;
 
             if ($rating !== null) {
-                cache()->put('google_rating_' . md5(strtolower(trim($businessName))), ['result' => ['rating' => $rating]], now()->addDays(7));
+                $cacheKey = 'google_rating_' . md5(strtolower(trim($businessName)));
+                cache()->put($cacheKey, ['result' => ['rating' => $rating]], now()->addDays(7));
+                return $rating;
+            } else {
+                Log::info("No rating found in Place Details for: {$businessName}");
+                return null;
             }
         } catch (\Throwable $e) {
-            logger()->error('Google rating fetch failed: ' . $e->getMessage());
+            Log::error('Google rating fetch exception: ' . $e->getMessage());
+            return null;
         }
     }
+
 
     public function exportCsv(Request $request)
     {

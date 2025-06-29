@@ -4,18 +4,21 @@ namespace App\Models;
 
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Country extends Model
 {
-    use LogsModelActions;
+    use LogsModelActions, EncryptsAttributes;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed attributes
-    protected static $logName = 'country'; // Custom log name
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'country';
     protected $fillable = [
         'name',
         'code',
     ];
+    protected $encryptableAttributes = ['name'];
+
 
     protected array $translatable = ['name'];
 

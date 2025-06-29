@@ -3,12 +3,15 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class CategoryTranslation extends Model
 {
-    public $timestamps = false;
+    use EncryptsAttributes;
 
+    public $timestamps = false;
     protected $fillable = ['locale', 'name', 'meta_title', 'meta_description'];
+    protected $encryptableAttributes = ['name'];
 
     public function category()
     {

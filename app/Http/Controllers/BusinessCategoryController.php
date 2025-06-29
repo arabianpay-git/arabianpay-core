@@ -14,7 +14,7 @@ class BusinessCategoryController extends Controller
 {
     public function index()
     {
-        $businessCategories = BusinessCategory::paginate(10);
+        $businessCategories = BusinessCategory::OrderBy('id', 'desc')->paginate(10);
         return view('admin.business_categories.index', compact('businessCategories'));
     }
 
@@ -53,7 +53,7 @@ class BusinessCategoryController extends Controller
                 description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new business category: {$category->name}",
                 properties: [
                     'ip' => request()->ip(),
-                    'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
+                    'batch_uuid' => (string) Str::uuid(),
                 ],
             );
 
@@ -104,7 +104,7 @@ class BusinessCategoryController extends Controller
                 description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated business category: {$businessCategory->name} [{$businessCategory->id}]",
                 properties: [
                     'ip' => request()->ip(),
-                    'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
+                    'batch_uuid' => (string) Str::uuid(),
                 ],
             );
 
@@ -123,7 +123,7 @@ class BusinessCategoryController extends Controller
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted business category: {$businessCategory->name} [{$businessCategory->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
         // Delete the business category

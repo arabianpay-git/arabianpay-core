@@ -15,11 +15,11 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->constrained()->onDelete('cascade');
             $table->foreignId('employee_id')->constrained('users')->onDelete('cascade');
-            $table->decimal('commission', 8, 2)->nullable();
+            $table->string('commission')->nullable();
             $table->text('reason')->nullable();
             $table->string('contract')->nullable();
-            $table->integer('payment_schedule')->nullable();
-            $table->integer('fahman_score')->nullable();
+            $table->string('payment_schedule')->nullable();
+            $table->string('fahman_score')->nullable();
             $table->timestamps();
         });
     }

@@ -6,15 +6,11 @@ use App\Traits\LogsModelActions;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Customer extends Model
 {
-    use HasFactory;
-    use LogsModelActions;
-
-    protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true;
-    protected static $logName = 'customer';
+    use HasFactory, LogsModelActions, EncryptsAttributes;
 
     protected $fillable = [
         'assigned_to',
@@ -36,6 +32,16 @@ class Customer extends Model
         'status',
     ];
 
+    protected $encryptableAttributes = [
+        'id_number',
+        'id_owner',
+        'cr_number',
+        'tax_number',
+        'purchasing_volume',
+        'purchasing_natures',
+        'other_purchasing_natures',
+    ];
+
     protected $casts = [
         'cr_data' => 'array',
         'check_nafath' => 'boolean',
@@ -43,6 +49,9 @@ class Customer extends Model
         'date_of_birth' => 'date',
     ];
 
+    protected static $logAttributes = ['status', 'amount', 'due_date'];
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'customer';
 
     public function businessType()
     {

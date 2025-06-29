@@ -59,13 +59,13 @@
                     <div class="card-body">
                         <div data-datatable="true" data-datatable-city-save="false" id="team_crew_table">
                             <div class="scrollable-x-auto">
-                                <table class="table table-auto table-border" data-datatable-table="true">
+                                <table class="table table-auto table-border">
                                     <thead>
                                         <tr>
-                                            <th class="w-[60px] text-center">ID</th>
+                                            <th>ID</th>
+                                            <th>Name</th>
                                             <th>National Id</th>
                                             <th>Phone Number</th>
-                                            <th>Transaction Id</th>
                                             <th>Nafath Status</th>
                                             <th>Nafath Response</th>
                                             <th>Wathiq Status</th>
@@ -75,9 +75,20 @@
                                         </tr>
                                     </thead>
                                     <tbody>
+
                                         @foreach ($nafath as $item)
                                             <tr>
                                                 <td class="text-center">{{ $item->id }}</td>
+                                                <td>
+                                                    @php
+                                                        $nafathData = $item->nafath_response;
+                                                        $id =
+                                                            is_array($nafathData) && isset($nafathData['full_name#en'])
+                                                                ? $nafathData['full_name#en']
+                                                                : '--';
+                                                    @endphp
+                                                    {{ $id }}
+                                                </td>
                                                 <td>
                                                     @php
                                                         $nafathData = $item->nafath_response;
@@ -89,9 +100,8 @@
                                                     {{ $id }}
                                                 </td>
 
-
                                                 <td>{{ $item->phone_number }}</td>
-                                                <td>{{ $item->trans_id }}</td>
+
                                                 <td>
                                                     <span
                                                         class="badge badge-sm badge-outline 

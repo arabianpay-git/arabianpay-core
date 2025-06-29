@@ -20,7 +20,7 @@ class OrderSeeder extends Seeder
         $pickupPoints = PickupPoint::all();
         $products = Product::all();
 
-        for ($i = 0; $i < 2; $i++) {
+        for ($i = 0; $i < 3; $i++) {
             $user = $users->random();
             $seller = $sellers->random();
             $pickupPoint = $pickupPoints->random();

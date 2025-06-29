@@ -33,13 +33,13 @@ return new class extends Migration
             $table->string('shipping_type')->nullable();
             $table->string('order_from')->nullable();
             $table->string('payment_type')->nullable();
-            $table->decimal('shipping_cost', 10, 2)->nullable();
+            $table->string('shipping_cost')->nullable();
             $table->enum('payment_status', ['pending', 'completed', 'failed', 'refunded'])->default('pending');
             $table->json('payment_details')->nullable();
 
             // Financial details
-            $table->decimal('grand_total', 10, 2)->nullable();
-            $table->decimal('coupon_discount', 10, 2)->nullable();
+            $table->string('grand_total')->nullable();
+            $table->string('coupon_discount')->nullable();
             $table->string('code')->nullable();
             $table->string('invoice_number')->nullable();
             $table->string('tracking')->nullable();

@@ -53,7 +53,7 @@ class CityController extends Controller
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new city: {$city->name} in state ID {$city->state_id}",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -92,7 +92,7 @@ class CityController extends Controller
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated city: {$city->name} [{$city->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
 
@@ -109,7 +109,7 @@ class CityController extends Controller
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted city: {$city->name} [{$city->id}]",
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => (string) Str::uuid(), // Generate a new UUID for the batch
+                'batch_uuid' => (string) Str::uuid(),
             ],
         );
         // Delete the city

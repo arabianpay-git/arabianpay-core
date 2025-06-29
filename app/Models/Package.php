@@ -13,8 +13,8 @@ class Package extends Model
     use LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed attributes
-    protected static $logName = 'package'; // Custom log name
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'package';
 
     protected $fillable = [
         'name',

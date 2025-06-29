@@ -171,8 +171,10 @@
                                                             class="badge badge-sm badge-outline badge-info">{{ ucfirst($item->payment_status) }}</span>
                                                     @endif
                                                 </td>
-                                                <td class="text-center">{{ number_format($item->grand_total, 2) }}</td>
-                                                <td class="text-center">{{ number_format($item->coupon_discount, 2) }}</td>
+                                                <td class="text-center">{{ number_format((float) $item->grand_total, 2) }}
+                                                </td>
+                                                <td class="text-center">
+                                                    {{ number_format((float) $item->coupon_discount, 2) }}</td>
                                                 <td class="text-center">
                                                     @if ($item->delivery_status == 'delivered')
                                                         <span

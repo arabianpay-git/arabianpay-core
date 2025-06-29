@@ -3,9 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class CaseManagement extends Model
 {
+    use EncryptsAttributes;
+
     protected $table = 'case_management';
 
     protected $fillable = [
@@ -16,6 +19,15 @@ class CaseManagement extends Model
         'priority',
         'due_date',
         'documents',
+    ];
+
+    protected $encryptableAttributes = [
+        'title',
+        'description',
+    ];
+
+    protected $encryptableCasts = [
+        'due_date' => 'datetime',
     ];
 
     protected $casts = [

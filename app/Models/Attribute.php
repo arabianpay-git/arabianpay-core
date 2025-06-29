@@ -4,17 +4,19 @@ namespace App\Models;
 
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Attribute extends Model
 {
-    use LogsModelActions;
+    use LogsModelActions, EncryptsAttributes;
+
+    protected $fillable = ['name'];
+    protected $encryptableAttributes = ['name'];
+    protected array $translatable = ['name'];
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed attributes
-    protected static $logName = 'attribute'; // Custom log name
-    protected $fillable = ['name'];
-
-    protected array $translatable = ['name'];
+    protected static $logOnlyDirty = true;
+    protected static $logName = 'attribute';
 
     public function translations()
     {
