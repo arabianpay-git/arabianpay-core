@@ -1042,7 +1042,7 @@ Route::get('/old-categories', function () {
             $newUser->purchasing_volume = $user->purchasing_volume;
             $newUser->purchasing_natures = $user->purchasing_natures;
             $newUser->other_purchasing_natures = $user->other_purchasing_natures;
-            $newUser->save(); // Save changes to DB
+            $newUser->save();
             $updated[] = $newUser;
         }
     }

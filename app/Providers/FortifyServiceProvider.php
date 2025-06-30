@@ -7,10 +7,12 @@ use App\Actions\Fortify\ResetUserPassword;
 use App\Actions\Fortify\UpdateUserPassword;
 use App\Actions\Fortify\UpdateUserProfileInformation;
 use App\Models\LoginAttempt;
+use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Str;
@@ -31,6 +33,17 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+
+        Fortify::authenticateUsing(function ($request) {
+
+            $user = User::whereEncrypted('email', $request->email)->first();
+
+            if ($user && Hash::check($request->password, $user->password)) {
+                return $user;
+            }
+
+            return null;
+        });
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);
