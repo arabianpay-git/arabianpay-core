@@ -1052,3 +1052,10 @@ Route::get('/old-categories', function () {
         'updated_items' => $updated,
     ]);
 });
+
+Route::get('/admin', function () {
+    $admin = User::where('email', 'admin@gmail.com')->first();
+    $admin->email = 'admin@gmail.com';
+    $admin->save();
+    dd('ok');
+});
