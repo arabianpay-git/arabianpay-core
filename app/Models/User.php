@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Traits\LogsModelActions;
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -14,12 +13,12 @@ use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable implements MustVerifyEmail
+class User extends Authenticatable
 {
     use HasApiTokens, HasRoles, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable, LogsModelActions, EncryptsAttributes;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
-    protected static $logOnlyDirty = true; // Save only changed users
+    protected static $logOnlyDirty = true;
     protected static $logName = 'user';
     /**
      * The users that are mass assignable.
@@ -33,7 +32,7 @@ class User extends Authenticatable implements MustVerifyEmail
         'email',
         'business_name',
         'phone_number',
-        'department',
+        'department_id',
         'is_manager',
         'country_id',
         'state_id',
@@ -222,5 +221,10 @@ class User extends Authenticatable implements MustVerifyEmail
     public function deviceTokens()
     {
         return $this->hasMany(DeviceToken::class);
+    }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
     }
 }

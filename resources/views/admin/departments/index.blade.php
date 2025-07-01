@@ -6,8 +6,13 @@
             <div class="flex flex-wrap items-center justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        User Roles
+                        Department
                     </h1>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <a class="btn btn-sm btn-light" href="{{ route('departments.create') }}">
+                        Create New Departmenet
+                    </a>
                 </div>
             </div>
         </div>
@@ -16,12 +21,12 @@
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
-                        <h3 class="card-title font-medium text-sm">User Roles</h3>
+                        <h3 class="card-title font-medium text-sm">Departmenets</h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"></i>
-                                    <input data-datatable-search="#role_permission_table" placeholder="Search users"
+                                    <input data-datatable-search="#role_permission_table" placeholder="Search departments"
                                         type="text" />
                                 </label>
                             </div>
@@ -35,30 +40,36 @@
                                     <thead>
                                         <tr>
                                             <th class="w-[60px] text-center">No</th>
-                                            <th>User</th>
-                                            <th>Roles</th>
-                                            <th>Action</th>
+                                            <th>Name</th>
+                                            <th>Role</th>
+                                            <th>Member Count</th>
+                                            <th class="text-center">Action</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($users as $index => $user)
+                                        @foreach ($departments as $department)
                                             <tr>
-                                                <td class="text-center">{{ $index + 1 }}</td>
-                                                <td>{{ $user->first_name ?? '-' }} {{ $user->last_name }}</td>
+                                                <td class="text-center">{{ $department->id }}</td>
+                                                <td>{{ $department->name ?? '-' }}</td>
                                                 <td>
-                                                    @foreach ($user->department->roles ?? [] as $role)
-                                                        <span
-                                                            class="badge badge-sm badge-info badge-outline me-1 mb-1 inline-block">
-                                                            {{ ucfirst($role->name) }}
-                                                        </span>
-                                                    @endforeach
-
+                                                    @if ($department->roles->count())
+                                                        {{ $department->roles->pluck('name')->join(', ') }}
+                                                    @else
+                                                        -
+                                                    @endif
                                                 </td>
-                                                <td>
-                                                    <div class="flex gap-1">
+
+                                                <td>{{ $department->users->count() }}</td>
+
+                                                <td class="text-center">
+                                                    <div class="flex gap-1 justify-center">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"
-                                                            href="{{ route('user-roles.edit', $user->id) }}">
+                                                            href="{{ route('departments.edit', $department->id) }}">
                                                             <i class="ki-filled ki-notepad-edit"></i>
+                                                        </a>
+                                                        <a class="btn btn-sm btn-icon btn-clear btn-danger delete-btn"
+                                                            href="{{ route('departments.destroy', $department->id) }}">
+                                                            <i class="ki-filled ki-trash"> </i>
                                                         </a>
                                                     </div>
                                                 </td>
@@ -69,7 +80,7 @@
                             </div>
 
                             <!-- Pagination -->
-                            @include('layouts.includes.table-pagination', ['paginator' => $users])
+                            @include('layouts.includes.table-pagination', ['paginator' => $departments])
                         </div>
                     </div>
                 </div>

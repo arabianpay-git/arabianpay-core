@@ -6,7 +6,6 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Session;
 
 class CheckAdmin
 {
@@ -18,8 +17,11 @@ class CheckAdmin
     public function handle(Request $request, Closure $next): Response
     {
         if (Auth::check() && !in_array(Auth::user()->user_type, ['admin', 'employee'])) {
-            Session::flush();
-            return redirect()->route('login');
+            Auth::logout();
+            $request->session()->invalidate();
+            $request->session()->regenerateToken();
+
+            return redirect()->route('login')->withErrors('Access denied.');
         }
 
         return $next($request);

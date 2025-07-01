@@ -66,12 +66,20 @@
 
                                 <!-- Department -->
                                 <div class="w-full mb-4">
-                                    <label class="form-label flex items-center gap-1 max-w-56" for="department">
-                                        Department
+                                    <label class="form-label flex items-center gap-1 max-w-56" for="department_id">
+                                        Department <span class="text-red-600">*</span>
                                     </label>
-                                    <input id="department" class="input @error('department') border-red-500 @enderror"
-                                        name="department" type="text" value="{{ old('department') }}" />
-                                    @error('department')
+                                    <select id="department_id" name="department_id"
+                                        class="select w-full @error('department_id') border-red-500 @enderror">
+                                        <option value="">-- Select Department --</option>
+                                        @foreach ($departments as $department)
+                                            <option value="{{ $department->id }}"
+                                                {{ old('department_id') == $department->id ? 'selected' : '' }}>
+                                                {{ $department->name }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                    @error('department_id')
                                         <span class="text-danger text-sm">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -100,7 +108,7 @@
                                         <label class="form-label text-gray-900">Password</label>
                                         <div class="input flex items-center gap-2" data-toggle-password="true">
                                             <input name="password" placeholder="Enter Password" type="password"
-                                                value="arabianpay@123" required class="flex-1" />
+                                                value="Arabianpay@123" required class="flex-1" />
                                             <button class="btn btn-icon" type="button">
                                                 <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
                                                 <i
@@ -113,7 +121,7 @@
                                         <label class="form-label text-gray-900">Confirm Password</label>
                                         <div class="input flex items-center gap-2" data-toggle-password="true">
                                             <input name="password_confirmation" placeholder="Re-enter Password"
-                                                type="password" value="arabianpay@123" required class="flex-1" />
+                                                type="password" value="Arabianpay@123" required class="flex-1" />
                                             <button class="btn btn-icon" type="button">
                                                 <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
                                                 <i

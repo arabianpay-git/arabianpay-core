@@ -20,7 +20,7 @@ return new class extends Migration
             $table->string('business_name')->unique();
             $table->string('iqama')->nullable()->unique();
             $table->string('phone_number')->unique();
-            $table->string('department')->nullable();
+            $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('cascade');
             $table->boolean('is_manager')->nullable();
             // $table->enum('status', ['active', 'hold', 'suspended'])->default('hold');
 

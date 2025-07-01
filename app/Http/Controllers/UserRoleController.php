@@ -12,7 +12,7 @@ class UserRoleController extends Controller
 {
     public function index()
     {
-        $users = User::with('roles.permissions')->where('user_type', 'employee')->paginate(10);
+        $users = User::with('department')->where('user_type', 'employee')->paginate(10);
         return view('admin.user_roles.index', compact('users'));
     }
 

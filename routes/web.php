@@ -16,6 +16,7 @@ use App\Http\Controllers\{
     CreditManagmentController,
     CustomerAndSalesController,
     DashboardController,
+    DepartmentController,
     DeviceTokenController,
     EmployeeController,
     FahmanController,
@@ -144,6 +145,7 @@ Route::group([
                 'risk-register'     => RiskController::class,
                 'case-management'     => CaseManagementController::class,
                 'activity-logs'     => ActivityLogsController::class,
+                'departments'       => DepartmentController::class,
             ]);
 
             // one-off attribute route

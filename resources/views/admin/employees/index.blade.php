@@ -45,6 +45,7 @@
                                             <th>Email</th>
                                             <th>Phone</th>
                                             <th>Department</th>
+                                            <th>Role</th>
                                             <th class="text-center">Action</th>
                                         </tr>
                                     </thead>
@@ -62,7 +63,14 @@
                                                 </td>
                                                 <td>{{ $employee->email }}</td>
                                                 <td>{{ $employee->phone_number ?? '-' }}</td>
-                                                <td>{{ $employee->department ?? '-' }}</td>
+                                                <td>{{ $employee->department->name ?? '-' }}</td>
+                                                <td>
+                                                    @if ($employee->department && $employee->department->roles->count())
+                                                        {{ $employee->department->roles->pluck('name')->join(', ') }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
                                                 <td class="text-center">
                                                     <div class="flex gap-1 justify-center">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"

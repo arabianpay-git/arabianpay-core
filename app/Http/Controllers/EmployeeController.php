@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\City;
 use App\Models\Country;
+use App\Models\Department;
 use App\Models\State;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -21,7 +22,8 @@ class EmployeeController extends Controller
 
     public function create()
     {
-        return view('admin.employees.create');
+        $departments = Department::orderBy('name', 'asc')->get();
+        return view('admin.employees.create', compact('departments'));
     }
 
     public function store(Request $request)
@@ -31,7 +33,7 @@ class EmployeeController extends Controller
             'last_name'     => 'required|string|max:255',
             'email'         => 'required|email|unique:users,email',
             'phone_number'  => 'required|string|max:20|unique:users,phone_number',
-            'department'    => 'nullable|string|max:100',
+            'department_id'    => 'nullable',
             'is_manager'    => 'nullable|boolean',
             'password'      => 'required|string|min:6|max:18|confirmed',
         ]);
@@ -45,7 +47,7 @@ class EmployeeController extends Controller
             'country_id'    => Country::first()?->id,
             'state_id'      => State::first()?->id,
             'city_id'       => City::first()?->id,
-            'department'    => $request->department,
+            'department_id'    => $request->department_id,
             'is_manager'    => $request->boolean('is_manager'),
             'password'      => Hash::make($request->password),
             'user_type'     => 'employee',
@@ -73,7 +75,8 @@ class EmployeeController extends Controller
 
     public function edit(User $employee)
     {
-        return view('admin.employees.edit', compact('employee'));
+        $departments = Department::orderBy('name')->get();
+        return view('admin.employees.edit', compact('employee', 'departments'));
     }
 
     public function update(Request $request, User $employee)
@@ -83,7 +86,7 @@ class EmployeeController extends Controller
             'last_name'     => 'required|string|max:255',
             'email'         => 'required|email|unique:users,email,' . $employee->id,
             'phone_number'  => 'required|string|max:20|unique:users,phone_number,' . $employee->id,
-            'department'    => 'nullable|string|max:100',
+            'department_id'    => 'nullable|',
             'is_manager'    => 'nullable|boolean',
             'password'      => 'nullable|string|min:6|max:18|confirmed',
         ]);
@@ -97,7 +100,7 @@ class EmployeeController extends Controller
             'country_id'    => Country::first()?->id,
             'state_id'      => State::first()?->id,
             'city_id'       => City::first()?->id,
-            'department'    => $request->department,
+            'department_id'    => $request->department_id,
             'is_manager'    => $request->boolean('is_manager'),
             'user_type'     => 'employee',
         ];
