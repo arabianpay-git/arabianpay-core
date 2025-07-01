@@ -142,15 +142,15 @@ if (! function_exists('map_product_details')) {
                 if ($user->user_type !== 'admin') {
                     if ($user->is_manager) {
                         // Manager: see all employees in their department
-                        $query->where('department', $user->department);
+                        $query->where('department_id', $user->department);
                     } else {
                         // Not manager: see only managers in their department
                         $query->where('is_manager', true)
-                            ->where('department', $user->department);
+                            ->where('department_id', $user->department);
                     }
                 } elseif ($department !== null) {
                     // Admin with department filter
-                    $query->where('department', $department);
+                    $query->where('department_id', $department);
                 }
             }
 
