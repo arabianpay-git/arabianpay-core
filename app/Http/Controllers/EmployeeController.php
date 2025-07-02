@@ -25,69 +25,33 @@ class EmployeeController extends Controller
 
     public function create()
     {
-        $departments = Department::orderBy('name', 'asc')->get();
+        $departments = Department::orderBy('name')->get();
         return view('admin.employees.create', compact('departments'));
     }
 
+    /**
+     * Store a new employee.
+     */
     public function store(Request $request)
     {
-        $request->validate([
-            'first_name'      => 'required|string|max:255',
-            'last_name'       => 'required|string|max:255',
-            'email'           => 'required|email|unique:users,email',
-            'phone_number'    => 'required|string|max:20|unique:users,phone_number',
-            'department_id'   => 'nullable|exists:departments,id',
-            'is_manager'      => 'nullable|boolean',
-            'password'        => 'required|string|min:6|max:18|confirmed',
-            'role_id'         => 'required|exists:roles,id',
-            'permission_ids'  => 'nullable|array',
-            'permission_ids.*' => 'exists:permissions,id',
-        ]);
+        $this->validateRequest($request);
 
-        $user = User::create([
-            'first_name'    => $request->first_name,
-            'last_name'     => $request->last_name,
-            'email'         => $request->email,
-            'phone_number'  => $request->phone_number,
-            'business_name' => $request->first_name . $request->email,
-            'country_id'    => Country::first()?->id,
-            'state_id'      => State::first()?->id,
-            'city_id'       => City::first()?->id,
-            'department_id' => $request->department_id,
-            'is_manager'    => $request->boolean('is_manager'),
-            'password'      => Hash::make($request->password),
-            'user_type'     => 'employee',
-        ]);
+        $user = $this->createUser($request);
 
-        // Assign single role
         $role = Role::findOrFail($request->role_id);
         $user->syncRoles([$role->name]);
 
-        // Assign direct permissions if provided
-        if ($request->filled('permission_ids')) {
-            $permissions = Permission::whereIn('id', $request->permission_ids)->pluck('name')->toArray();
-            $user->syncPermissions($permissions);
-        }
-
-        // Log the creation of the employee
-        /** @var \App\Models\User $authUser */
-        $authUser = Auth::user();
-        $authUser->logModelAction(
-            event: 'create',
-            description: "{$authUser->first_name} {$authUser->last_name} created a new employee: {$request->first_name} {$request->last_name}",
-            properties: [
-                'ip' => request()->ip(),
-                'batch_uuid' => (string) Str::uuid(),
-            ],
+        $finalPermissions = $this->getValidPermissions(
+            $request->department_id,
+            $role,
+            $request->permission_ids ?? []
         );
+        $user->syncPermissions($finalPermissions);
+
+        $this->logAction('create', $user, $request);
 
         return redirect()->route('employees.index')->with('success', 'Employee created successfully.');
     }
-
-    // public function show(User $employee)
-    // {
-    //     return view('admin.employees.show', compact('employee'));
-    // }
 
     public function edit(User $employee)
     {
@@ -95,36 +59,102 @@ class EmployeeController extends Controller
         return view('admin.employees.edit', compact('employee', 'departments'));
     }
 
+    /**
+     * Update an existing employee.
+     */
     public function update(Request $request, User $employee)
     {
-        $request->validate([
-            'first_name'      => 'required|string|max:255',
-            'last_name'       => 'required|string|max:255',
-            'email'           => 'required|email|unique:users,email,' . $employee->id,
-            'phone_number'    => 'required|string|max:20|unique:users,phone_number,' . $employee->id,
-            'department_id'   => 'nullable|exists:departments,id',
-            'is_manager'      => 'nullable|boolean',
-            'password'        => 'nullable|string|min:6|max:18|confirmed',
-            'role_id'         => 'required|exists:roles,id',
-            'permission_ids'  => 'nullable|array',
-            'permission_ids.*' => 'exists:permissions,id',
-        ]);
+        $this->validateRequest($request, $employee->id);
 
-        // Check permissions belong to the department
+        // Validate manual permissions against department
         if ($request->filled('permission_ids') && $request->department_id) {
-            $departmentPermissionIds = DB::table('department_has_permissions')
-                ->where('department_id', $request->department_id)
-                ->pluck('permission_id')
-                ->toArray();
-
-            $invalidPermissions = array_diff($request->permission_ids, $departmentPermissionIds);
-            if (!empty($invalidPermissions)) {
+            if (!$this->validatePermissionsBelongToDepartment($request->permission_ids, $request->department_id)) {
                 return back()->withErrors([
                     'permission_ids' => 'Some selected permissions are not valid for the chosen department.'
                 ])->withInput();
             }
         }
 
+        $employee->update($this->getUserDataFromRequest($request));
+
+        $role = Role::findOrFail($request->role_id);
+        $employee->syncRoles([$role->name]);
+
+        $finalPermissions = $this->getValidPermissions(
+            $request->department_id,
+            $role,
+            $request->permission_ids ?? []
+        );
+        $employee->syncPermissions($finalPermissions);
+
+        $this->logAction('update', $employee, $request);
+
+        return redirect()->route('employees.index')->with('success', 'Employee updated successfully.');
+    }
+
+    /**
+     * Delete employee.
+     */
+    public function destroy(User $employee)
+    {
+        $this->logAction('delete', $employee, request());
+
+        $employee->delete();
+
+        return back()->with('success', 'Employee deleted successfully.');
+    }
+
+    /**
+     * Return roles and permissions for a department.
+     */
+    public function getDepartmentAccess(Department $department)
+    {
+        $roles = $department->roles()->with('permissions:id,name')->select('id', 'name')->get();
+        $permissions = $department->permissions()->select('id', 'name')->get();
+
+        return response()->json([
+            'roles' => $roles,
+            'permissions' => $permissions,
+        ]);
+    }
+
+    /**
+     * Validate incoming request for store/update.
+     */
+    private function validateRequest(Request $request, ?int $userId = null): void
+    {
+        $rules = [
+            'first_name'      => 'required|string|max:255',
+            'last_name'       => 'required|string|max:255',
+            'email'           => 'required|email|unique:users,email' . ($userId ? ',' . $userId : ''),
+            'phone_number'    => 'required|string|max:20|unique:users,phone_number' . ($userId ? ',' . $userId : ''),
+            'department_id'   => 'nullable|exists:departments,id',
+            'is_manager'      => 'nullable|boolean',
+            'password'        => $userId ? 'nullable|string|min:6|max:18|confirmed' : 'required|string|min:6|max:18|confirmed',
+            'role_id'         => 'required|exists:roles,id',
+            'permission_ids'  => 'nullable|array',
+            'permission_ids.*' => 'exists:permissions,id',
+        ];
+
+        $request->validate($rules);
+    }
+
+    /**
+     * Create user from request data.
+     */
+    private function createUser(Request $request): User
+    {
+        return User::create(array_merge(
+            $this->getUserDataFromRequest($request),
+            ['password' => Hash::make($request->password), 'user_type' => 'employee']
+        ));
+    }
+
+    /**
+     * Extract user data fields from request.
+     */
+    private function getUserDataFromRequest(Request $request): array
+    {
         $data = [
             'first_name'    => $request->first_name,
             'last_name'     => $request->last_name,
@@ -136,66 +166,89 @@ class EmployeeController extends Controller
             'city_id'       => City::first()?->id,
             'department_id' => $request->department_id,
             'is_manager'    => $request->boolean('is_manager'),
-            'user_type'     => 'employee',
         ];
 
         if ($request->filled('password')) {
             $data['password'] = Hash::make($request->password);
         }
 
-        $employee->update($data);
+        $data['user_type'] = 'employee';
 
-        // Sync role (single role)
-        $role = Role::find($request->role_id);
-        $employee->syncRoles($role ? [$role->name] : []);
+        return $data;
+    }
 
-        // Sync permissions
-        $permissions = Permission::whereIn('id', $request->permission_ids ?? [])->pluck('name')->toArray();
-        $employee->syncPermissions($permissions);
+    /**
+     * Validate manual permissions belong to the department.
+     */
+    private function validatePermissionsBelongToDepartment(array $permissionIds, int $departmentId): bool
+    {
+        $departmentPermissionIds = DB::table('department_has_permissions')
+            ->where('department_id', $departmentId)
+            ->pluck('permission_id')
+            ->toArray();
 
-        // Log the update of the employee
+        return empty(array_diff($permissionIds, $departmentPermissionIds));
+    }
+
+    /**
+     * Get valid permissions intersection of department and role, merged with manual valid permissions.
+     *
+     * @param int|null $departmentId
+     * @param Role $role
+     * @param array $manualPermissionIds
+     * @return array
+     */
+    private function getValidPermissions(?int $departmentId, Role $role, array $manualPermissionIds): array
+    {
+        if (!$departmentId) {
+            return [];
+        }
+
+        $departmentPermissionIds = DB::table('department_has_permissions')
+            ->where('department_id', $departmentId)
+            ->pluck('permission_id')
+            ->toArray();
+
+        $rolePermissionIds = $role->permissions()->pluck('id')->toArray();
+
+        // Intersection of role's permissions and department's permissions
+        $validRolePermissions = array_intersect($departmentPermissionIds, $rolePermissionIds);
+
+        // Filter manual permissions to valid ones
+        $validManualPermissions = array_intersect($manualPermissionIds, $validRolePermissions);
+
+        // Combine unique permission ids
+        $finalPermissionIds = array_unique(array_merge($validRolePermissions, $validManualPermissions));
+
+        return Permission::whereIn('id', $finalPermissionIds)->pluck('name')->toArray();
+    }
+
+    /**
+     * Log employee actions.
+     *
+     * @param string $event
+     * @param User $employee
+     * @param Request $request
+     */
+    private function logAction(string $event, User $employee, Request $request): void
+    {
         /** @var \App\Models\User $authUser */
         $authUser = Auth::user();
+
+        $desc = match ($event) {
+            'create' => "{$authUser->first_name} {$authUser->last_name} created a new employee: {$employee->first_name} {$employee->last_name}",
+            'update' => "{$authUser->first_name} {$authUser->last_name} updated employee: {$employee->first_name} {$employee->last_name}",
+            'delete' => "{$authUser->first_name} {$authUser->last_name} deleted employee: {$employee->first_name} {$employee->last_name}",
+            default => '',
+        };
+
         $authUser->logModelAction(
-            event: 'update',
-            description: "{$authUser->first_name} {$authUser->last_name} updated employee: {$request->first_name} {$request->last_name}",
+            event: $event,
+            description: $desc,
             properties: [
-                'ip' => request()->ip(),
+                'ip' => $request->ip(),
                 'batch_uuid' => (string) Str::uuid(),
             ],
         );
-
-        return redirect()->route('employees.index')->with('success', 'Employee updated successfully.');
-    }
-
-
-
-    public function destroy(User $employee)
-    {
-
-        // log the deletion of the employee
-        /** @var \App\Models\User $user */
-        $user = Auth::user();
-        $user->logModelAction(
-            event: 'delete',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted employee: {$employee->first_name} {$employee->last_name}",
-            properties: [
-                'ip' => request()->ip(),
-                'batch_uuid' => (string) Str::uuid(),
-            ],
-        );
-        $employee->delete();
-        return back()->with('success', 'Employee deleted successfully.');
-    }
-
-    public function getDepartmentAccess(Department $department)
-    {
-        $roles = $department->roles()->with('permissions:id,name')->select('id', 'name')->get();
-        $permissions = $department->permissions()->select('id', 'name')->get();
-
-        return response()->json([
-            'roles' => $roles,
-            'permissions' => $permissions,
-        ]);
     }
 }

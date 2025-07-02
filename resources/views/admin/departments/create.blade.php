@@ -105,7 +105,7 @@
                                                         {{ \Illuminate\Support\Str::headline(str_replace('.', ' ', $actionName)) }}
                                                     </span>
                                                     <label class="switch">
-                                                        <input type="checkbox" name="permissions[]" class="perm-checkbox"
+                                                        <input type="checkbox" name="permissions[]"
                                                             value="{{ $perm->id }}" {{ $isChecked ? 'checked' : '' }}>
                                                     </label>
                                                 </div>
@@ -132,7 +132,7 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script>
-        const roleSelect = new Choices('#role', {
+        new Choices('#role', {
             removeItemButton: true,
             placeholder: true,
             placeholderValue: 'Select Roles',
@@ -140,31 +140,13 @@
             searchResultLimit: 10,
             renderChoiceLimit: 10
         });
-
-        // Inject server-side map: role_id => [permission_ids]
-        const rolePermissionsMap = @json($roles->mapWithKeys(fn($r) => [$r->id => $r->permissions->pluck('id')])->toArray());
-
-        // Listen for changes on the Choices.js select
-        roleSelect.passedElement.element.addEventListener('change', function() {
-            const selectedRoles = roleSelect.getValue(true).map(id => parseInt(id));
-            const permissionCheckboxes = document.querySelectorAll('input.perm-checkbox');
-
-            const selectedPerms = new Set();
-            selectedRoles.forEach(roleId => {
-                const perms = rolePermissionsMap[roleId] || [];
-                perms.forEach(p => selectedPerms.add(p));
-            });
-
-            permissionCheckboxes.forEach(cb => {
-                cb.checked = selectedPerms.has(parseInt(cb.value));
-            });
-        });
-
-        // Select All switch handler
+    </script>
+    <script>
         document.querySelectorAll('.select-all-perms').forEach(checkbox => {
             checkbox.addEventListener('change', function() {
                 const targetGroup = this.getAttribute('data-target');
                 const checkboxes = document.querySelectorAll(`.${targetGroup} input[type="checkbox"]`);
+
                 checkboxes.forEach(cb => cb.checked = this.checked);
             });
         });

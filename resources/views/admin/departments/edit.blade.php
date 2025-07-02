@@ -149,13 +149,12 @@
         // Map of role IDs to their permission IDs (server rendered)
         const rolePermissionsMap = @json($roles->mapWithKeys(fn($r) => [$r->id => $r->permissions->pluck('id')])->toArray());
 
-        console.warn(rolePermissionsMap);
-
         // Auto-select permissions based on selected roles
-        roleSelect.passedElement.element.addEventListener('change', function() {
-            const selectedRoles = roleSelect.getValue(true).map(id => parseInt(id));
+        document.getElementById('role').addEventListener('change', function() {
+            const selectedRoles = Array.from(this.selectedOptions).map(opt => parseInt(opt.value));
             const permissionCheckboxes = document.querySelectorAll('.perm-checkbox');
 
+            // Get unique permission IDs for all selected roles
             const selectedPerms = new Set();
             selectedRoles.forEach(roleId => {
                 const perms = rolePermissionsMap[roleId] || [];
@@ -166,7 +165,6 @@
                 cb.checked = selectedPerms.has(parseInt(cb.dataset.permissionId));
             });
         });
-
 
         // Select all toggle
         document.querySelectorAll('.select-all-perms').forEach(checkbox => {

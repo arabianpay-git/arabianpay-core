@@ -101,9 +101,17 @@ Route::group([
             //
             // Role and Permission
             //
+            Route::get('/permissions-by-department/{department}/{role}', [RolePermissionController::class, 'getPermissionsByDepartment']);
+            Route::get('role-permissions/{role}/{department}/edit', [RolePermissionController::class, 'edit'])->name('role-permissions.edit');
+            Route::put('role-permissions/{role}/{department}', [RolePermissionController::class, 'update'])->name('role-permissions.update');
+            Route::delete('role-permissions/{role}/{department}', [RolePermissionController::class, 'destroy'])->name('role-permissions.destroy');
+            Route::get('role-permissions/create', [RolePermissionController::class, 'create'])->name('role-permissions.create');
+            Route::post('role-permissions', [RolePermissionController::class, 'store'])->name('role-permissions.store');
+            Route::get('role-permissions', [RolePermissionController::class, 'index'])->name('role-permissions.index');
+
             Route::resource('roles', RoleController::class);
             Route::resource('permissions', PermissionController::class);
-            Route::resource('role-permissions', RolePermissionController::class);
+            // Route::resource('role-permissions', RolePermissionController::class);
             Route::get('user-roles', [UserRoleController::class, 'index'])->name('user-roles.index');
             Route::get('user-roles/create', [UserRoleController::class, 'create'])->name('user-roles.create');
             Route::post('user-roles', [UserRoleController::class, 'store'])->name('user-roles.store');

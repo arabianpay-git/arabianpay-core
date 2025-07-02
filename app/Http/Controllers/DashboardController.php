@@ -26,6 +26,7 @@ class DashboardController extends Controller
     }
     public function index(Request $request)
     {
+        // dd(Auth::user()->getAllPermissions()->toArray());
         $dateRange = $request->input('date_range', '12M');
 
         // 1. Loan Performance Charts

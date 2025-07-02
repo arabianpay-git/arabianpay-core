@@ -30,10 +30,6 @@
         .choices {
             position: relative !important;
         }
-
-        .choices__inner {
-            overflow: auto;
-        }
     </style>
 @endpush
 
@@ -139,16 +135,6 @@
                                             <span class="text-danger text-sm">{{ $message }}</span>
                                         @enderror
                                     </div>
-
-                                </div>
-
-                                <div class="w-full">
-                                    <label class="form-label" for="permission_ids">Permissions</label>
-                                    <select name="permission_ids[]" id="permission_ids" class="select w-full"
-                                        multiple></select>
-                                    @error('permission_ids')
-                                        <span class="text-danger text-sm">{{ $message }}</span>
-                                    @enderror
                                 </div>
 
                                 <div class="w-full">
@@ -169,7 +155,6 @@
                                     @enderror
                                 </div>
 
-
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="flex flex-col gap-1">
                                         <label class="form-label text-gray-900">Password</label>
@@ -177,8 +162,7 @@
                                             <input name="password" placeholder="Enter Password (leave blank to keep)"
                                                 type="password" class="flex-1" />
                                             <button class="btn btn-icon" type="button">
-                                                <i
-                                                    class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
+                                                <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
                                                 <i
                                                     class="ki-filled ki-eye-slash text-gray-500 hidden toggle-password-active:block"></i>
                                             </button>
@@ -218,6 +202,7 @@
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script>
+        // Password visibility toggle
         document.querySelectorAll('[data-toggle-password="true"]').forEach(wrapper => {
             const input = wrapper.querySelector('input');
             const toggleButton = wrapper.querySelector('button');
@@ -234,33 +219,18 @@
         });
 
         const roleSelect = document.getElementById('role_id'); // plain <select>
-        const permissionSelect = document.getElementById('permission_ids');
         const departmentSelect = document.getElementById('department_id');
 
         let rolePermissionsMap = {};
-
-        const permissionChoices = new Choices(permissionSelect, {
-            removeItemButton: true,
-            placeholderValue: 'Select Permissions',
-            searchPlaceholderValue: 'Search Permissions...',
-            allowHTML: false,
-            silent: true,
-        });
 
         function clearRoles() {
             roleSelect.innerHTML = '<option value="">-- Select Role --</option>';
         }
 
-        function clearPermissions() {
-            permissionChoices.clearStore();
-            permissionChoices.clearChoices();
-        }
-
-        function loadDepartmentData(departmentId, selectedRole = null, selectedPermissions = []) {
+        function loadDepartmentData(departmentId, selectedRole = null) {
             if (!departmentId) return;
 
             clearRoles();
-            clearPermissions();
             rolePermissionsMap = {};
 
             fetch(`/admin/departments/${departmentId}/access`, {
@@ -279,58 +249,27 @@
                             option.selected = true;
                         }
                         roleSelect.appendChild(option);
+
+                        // Keep rolePermissionsMap if you want for future use (optional)
                         rolePermissionsMap[role.id] = (role.permissions || []).map(p => p.id);
                     });
-
-                    // Populate permissions
-                    const permissionChoicesArray = data.permissions.map(perm => ({
-                        value: perm.id,
-                        label: perm.name.replaceAll('.', ' ')
-                            .split(' ')
-                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-                            .join(' '),
-                        selected: selectedPermissions.includes(perm.id)
-                    }));
-                    permissionChoices.setChoices(permissionChoicesArray, 'value', 'label', true);
-
-                    // Ensure <select> options are marked as selected
-                    for (const option of permissionSelect.options) {
-                        option.selected = selectedPermissions.includes(parseInt(option.value));
-                    }
-                    permissionSelect.dispatchEvent(new Event('change'));
-
-                    // Auto-select permissions based on selected role
-                    if (selectedRole && rolePermissionsMap[selectedRole]) {
-                        permissionChoices.setChoiceByValue(rolePermissionsMap[selectedRole]);
-                    }
                 })
                 .catch(error => console.error('Fetch error:', error));
         }
 
         // On Department Change
         departmentSelect.addEventListener('change', function() {
-            clearPermissions();
             clearRoles();
             rolePermissionsMap = {};
             loadDepartmentData(this.value);
         });
 
-        // On Role Change
-        roleSelect.addEventListener('change', function() {
-            const selectedRoleId = parseInt(this.value);
-            if (!selectedRoleId || !rolePermissionsMap[selectedRoleId]) return;
-
-            permissionChoices.removeActiveItems();
-            permissionChoices.setChoiceByValue(rolePermissionsMap[selectedRoleId]);
-        });
-
         // On Page Load
         const selectedDepartment = departmentSelect.value;
         const existingRole = @json(old('role_id', $employee->roles->first()?->id ?? null));
-        const existingPermissions = @json(old('permission_ids', $employee->permissions->pluck('id')->toArray()));
 
         if (selectedDepartment) {
-            loadDepartmentData(selectedDepartment, existingRole, existingPermissions);
+            loadDepartmentData(selectedDepartment, existingRole);
         }
     </script>
 @endpush
