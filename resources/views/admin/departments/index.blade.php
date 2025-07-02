@@ -41,8 +41,9 @@
                                         <tr>
                                             <th class="w-[60px] text-center">No</th>
                                             <th>Name</th>
-                                            <th>Role</th>
                                             <th>Member Count</th>
+                                            <th>Role</th>
+                                            <th>Permissions</th>
                                             <th class="text-center">Action</th>
                                         </tr>
                                     </thead>
@@ -51,6 +52,7 @@
                                             <tr>
                                                 <td class="text-center">{{ $department->id }}</td>
                                                 <td>{{ $department->name ?? '-' }}</td>
+                                                <td>{{ $department->users->count() }}</td>
                                                 <td>
                                                     @if ($department->roles->count())
                                                         {{ $department->roles->pluck('name')->join(', ') }}
@@ -59,7 +61,18 @@
                                                     @endif
                                                 </td>
 
-                                                <td>{{ $department->users->count() }}</td>
+                                                <td>
+                                                    @if ($department->permissions->isEmpty())
+                                                        <span class="text-sm text-gray-600">-</span>
+                                                    @else
+                                                        @foreach ($department->permissions as $permission)
+                                                            <span
+                                                                class="badge badge-sm badge-success badge-outline me-1 mb-1 inline-block">
+                                                                {{ \Illuminate\Support\Str::headline(str_replace('.', ' ', $permission->name)) }}
+                                                            </span>
+                                                        @endforeach
+                                                    @endif
+                                                </td>
 
                                                 <td class="text-center">
                                                     <div class="flex gap-1 justify-center">

@@ -46,6 +46,7 @@
                                             <th>Phone</th>
                                             <th>Department</th>
                                             <th>Role</th>
+                                            <th>Permissions</th>
                                             <th class="text-center">Action</th>
                                         </tr>
                                     </thead>
@@ -65,10 +66,22 @@
                                                 <td>{{ $employee->phone_number ?? '-' }}</td>
                                                 <td>{{ $employee->department->name ?? '-' }}</td>
                                                 <td>
-                                                    @if ($employee->department && $employee->department->roles->count())
-                                                        {{ $employee->department->roles->pluck('name')->join(', ') }}
+                                                    @if ($employee && $employee->roles->count())
+                                                        {{ $employee->roles->pluck('name')->join(', ') }}
                                                     @else
                                                         -
+                                                    @endif
+                                                </td>
+                                                <td>
+                                                    @if ($employee->permissions->isEmpty())
+                                                        <span class="text-sm text-gray-600">-</span>
+                                                    @else
+                                                        @foreach ($employee->permissions as $permission)
+                                                            <span
+                                                                class="badge badge-sm badge-success badge-outline me-1 mb-1 inline-block">
+                                                                {{ \Illuminate\Support\Str::headline(str_replace('.', ' ', $permission->name)) }}
+                                                            </span>
+                                                        @endforeach
                                                     @endif
                                                 </td>
                                                 <td class="text-center">

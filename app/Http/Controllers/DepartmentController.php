@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
 class DepartmentController extends Controller
@@ -18,14 +19,19 @@ class DepartmentController extends Controller
     public function create()
     {
         $roles = Role::orderBy('name', 'asc')->get();
-        return view('admin.departments.create', compact('roles'));
+        $permissions = Permission::all()->groupBy(function ($permission) {
+            return explode('.', $permission->name)[0];
+        });
+        return view('admin.departments.create', compact('roles', 'permissions'));
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name' => 'required|string|max:255', // no unique here, because encrypted
-            'role' => 'required|exists:roles,id',
+            'name' => 'required|string|max:255',
+            'role' => 'required|array|min:1',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,id',
         ]);
 
         $name = $request->name;
@@ -40,7 +46,11 @@ class DepartmentController extends Controller
             $department = Department::create(['name' => $name]);
             $department->roles()->attach($request->role);
 
-            return redirect()->route('departments.index')->with('success', 'Department created and role assigned successfully.');
+            if ($request->filled('permissions')) {
+                $department->permissions()->attach($request->permissions);
+            }
+
+            return redirect()->route('departments.index')->with('success', 'Department created with roles and permissions.');
         } catch (\Exception $e) {
             Log::error('Department Store Error: ' . $e->getMessage());
             return back()->withErrors(['error' => 'Something went wrong: ' . $e->getMessage()])->withInput();
@@ -54,17 +64,23 @@ class DepartmentController extends Controller
 
     public function edit(Department $department)
     {
-        $department->load('roles');
+        $department->load('roles', 'permissions');
         $roles = Role::orderBy('name')->get();
+        $permissions = Permission::all()->groupBy(function ($permission) {
+            return explode('.', $permission->name)[0];
+        });
 
-        return view('admin.departments.edit', compact('department', 'roles'));
+        return view('admin.departments.edit', compact('department', 'roles', 'permissions'));
     }
 
     public function update(Request $request, Department $department)
     {
         $request->validate([
             'name' => 'required|string|max:255',
-            'role' => 'required|exists:roles,id',
+            'role' => 'required|array|min:1',
+            'role.*' => 'exists:roles,id',
+            'permissions' => 'nullable|array',
+            'permissions.*' => 'exists:permissions,id',
         ]);
 
         $name = $request->name;
@@ -74,12 +90,13 @@ class DepartmentController extends Controller
             ->exists();
 
         if ($exists) {
-            return back()->withErrors(['name' => 'The department name must be unique.'])->withInput();
+            return back()->withErrors(['error' => 'The department name must be unique.'])->withInput();
         }
 
         try {
             $department->update(['name' => $name]);
-            $department->roles()->sync([$request->role]);
+            $department->roles()->sync($request->role);
+            $department->permissions()->sync($request->permissions ?? []);
 
             return redirect()->route('departments.index')->with('success', 'Department updated successfully.');
         } catch (\Exception $e) {

@@ -1,4 +1,37 @@
 @extends('layouts.base')
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <style>
+        /* Add your custom styles */
+        .choices__inner {
+            min-height: 2.4rem !important;
+            height: 2.4rem !important;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            border-radius: 0.375rem;
+        }
+
+        .choices__input {
+            height: auto !important;
+            margin: 0 !important;
+        }
+
+        .choices__list--multiple .choices__item {
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            padding: 0 7px;
+        }
+
+        .choices__list {
+            position: relative !important;
+            z-index: 9999 !important;
+        }
+
+        .choices {
+            position: relative !important;
+        }
+    </style>
+@endpush
 
 @section('content')
     <main class="grow content pt-5" id="content" role="content">
@@ -30,13 +63,12 @@
                                 <!-- Email -->
                                 <div class="w-full">
                                     <label class="form-label flex items-center gap-1 max-w-56" for="role">
-                                        Role <span class="text-red-600">*</span>
+                                        Roles <span class="text-red-600">*</span>
                                     </label>
-                                    <select name="role" id="role" class="select w-full">
-                                        <option value="">-- Select Role --</option>
+                                    <select name="role[]" id="role" class="select w-full" multiple>
                                         @foreach ($roles as $item)
                                             <option value="{{ $item->id }}"
-                                                {{ old('role') == $item->id ? 'selected' : '' }}>
+                                                {{ collect(old('role', $department->roles->pluck('id') ?? []))->contains($item->id) ? 'selected' : '' }}>
                                                 {{ $item->name }}
                                             </option>
                                         @endforeach
@@ -45,6 +77,42 @@
                                         <span class="text-danger text-sm">{{ $message }}</span>
                                     @enderror
                                 </div>
+
+                                @foreach ($permissions as $subject => $perms)
+                                    <div class="card card-grid min-w-full">
+                                        <div class="card-header border-b border-gray-200 flex items-center justify-between">
+                                            <h3 class="card-title font-medium text-base text-gray-800">
+                                                {{ \Illuminate\Support\Str::headline(str_replace('.', ' ', ucfirst($subject))) }}
+                                            </h3>
+                                            <label class="flex items-center gap-1 text-sm switch">
+                                                <input type="checkbox" class="select-all-perms"
+                                                    data-target="perm-group-{{ $loop->index }}">
+                                                Select All
+                                            </label>
+                                        </div>
+
+                                        <div class="card-body flex flex-wrap gap-7 perm-group-{{ $loop->index }}"
+                                            style="padding: 0.725rem;">
+                                            @foreach ($perms as $perm)
+                                                @php
+                                                    $actionName = Str::headline($perm->name);
+                                                    $isChecked =
+                                                        isset($department) &&
+                                                        $department->permissions->contains($perm->id);
+                                                @endphp
+                                                <div class="flex items-center gap-2 p-2">
+                                                    <span class="text-sm font-medium text-gray-700">
+                                                        {{ \Illuminate\Support\Str::headline(str_replace('.', ' ', $actionName)) }}
+                                                    </span>
+                                                    <label class="switch">
+                                                        <input type="checkbox" name="permissions[]"
+                                                            value="{{ $perm->id }}" {{ $isChecked ? 'checked' : '' }}>
+                                                    </label>
+                                                </div>
+                                            @endforeach
+                                        </div>
+                                    </div>
+                                @endforeach
 
                                 <div class="flex justify-end pt-2.5">
                                     <button type="submit" class="btn btn-primary">
@@ -60,3 +128,27 @@
         <!-- End of Container -->
     </main>
 @endsection
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        new Choices('#role', {
+            removeItemButton: true,
+            placeholder: true,
+            placeholderValue: 'Select Roles',
+            maxItemCount: 10,
+            searchResultLimit: 10,
+            renderChoiceLimit: 10
+        });
+    </script>
+    <script>
+        document.querySelectorAll('.select-all-perms').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                const targetGroup = this.getAttribute('data-target');
+                const checkboxes = document.querySelectorAll(`.${targetGroup} input[type="checkbox"]`);
+
+                checkboxes.forEach(cb => cb.checked = this.checked);
+            });
+        });
+    </script>
+@endpush

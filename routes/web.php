@@ -124,6 +124,8 @@ Route::group([
             Route::post('/products/bulk-upload', [ProductBulkUploadController::class, 'bulkUpload'])->name('products.bulk-upload');
             Route::post('/products/bulk-upload/store', [ProductBulkUploadController::class, 'bulkStore'])->name('productsBulkStore');
 
+            Route::get('/departments/{department}/access', [EmployeeController::class, 'getDepartmentAccess'])
+                ->name('departments.access');
             //
             // Master-data CRUD
             //
@@ -147,6 +149,8 @@ Route::group([
                 'activity-logs'     => ActivityLogsController::class,
                 'departments'       => DepartmentController::class,
             ]);
+
+
 
             // one-off attribute route
             Route::get(

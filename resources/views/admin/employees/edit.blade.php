@@ -1,4 +1,37 @@
 @extends('layouts.base')
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <style>
+        /* Add your custom styles */
+        .choices__inner {
+            min-height: 2.4rem !important;
+            height: 2.4rem !important;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            border-radius: 0.375rem;
+        }
+
+        .choices__input {
+            height: auto !important;
+            margin: 0 !important;
+        }
+
+        .choices__list--multiple .choices__item {
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            padding: 0 7px;
+        }
+
+        .choices__list {
+            position: relative !important;
+            z-index: 9999 !important;
+        }
+
+        .choices {
+            position: relative !important;
+        }
+    </style>
+@endpush
 
 @section('content')
     <main class="grow content pt-5" id="content" role="content">
@@ -70,26 +103,49 @@
                                     @enderror
                                 </div>
 
-                                <!-- Department -->
-                                <div class="w-full mb-4">
-                                    <label class="form-label flex items-center gap-1 max-w-56" for="department_id">
-                                        Department <span class="text-red-600">*</span>
-                                    </label>
-                                    <select id="department_id" name="department_id"
-                                        class="select w-full @error('department_id') border-red-500 @enderror">
-                                        <option value="">-- Select Department --</option>
-                                        @foreach ($departments as $department)
-                                            <option value="{{ $department->id }}"
-                                                {{ old('department_id', $employee->department_id) == $department->id ? 'selected' : '' }}>
-                                                {{ $department->name }}
-                                            </option>
-                                        @endforeach
-                                    </select>
-                                    @error('department_id')
+                                <div class="flex gap-4">
+                                    <div class="w-full">
+                                        <label class="form-label flex items-center gap-1 max-w-56" for="department_id">
+                                            Department <span class="text-red-600">*</span>
+                                        </label>
+                                        <select id="department_id" name="department_id"
+                                            class="select w-full @error('department_id') border-red-500 @enderror">
+                                            <option value="">-- Select Department --</option>
+                                            @foreach ($departments as $department)
+                                                <option value="{{ $department->id }}"
+                                                    {{ old('department_id', $employee->department_id) == $department->id ? 'selected' : '' }}>
+                                                    {{ $department->name }}
+                                                </option>
+                                            @endforeach
+                                        </select>
+                                        @error('department_id')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Role select single select -->
+                                    <div class="w-full">
+                                        <label class="form-label" for="role_id">Role <span
+                                                class="text-red-600">*</span></label>
+                                        <select name="role_id" id="role_id" class="input w-full">
+                                            <option value="">-- Select Role --</option>
+                                        </select>
+
+                                        @error('role_id')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                </div>
+
+                                <div class="w-full">
+                                    <label class="form-label" for="permission_ids">Permissions</label>
+                                    <select name="permission_ids[]" id="permission_ids" class="select w-full"
+                                        multiple></select>
+                                    @error('permission_ids')
                                         <span class="text-danger text-sm">{{ $message }}</span>
                                     @enderror
                                 </div>
-
 
                                 <div class="w-full">
                                     <label for="is_manager" class="form-label">
@@ -117,7 +173,8 @@
                                             <input name="password" placeholder="Enter Password (leave blank to keep)"
                                                 type="password" class="flex-1" />
                                             <button class="btn btn-icon" type="button">
-                                                <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
+                                                <i
+                                                    class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
                                                 <i
                                                     class="ki-filled ki-eye-slash text-gray-500 hidden toggle-password-active:block"></i>
                                             </button>
@@ -130,7 +187,8 @@
                                             <input name="password_confirmation" placeholder="Re-enter Password"
                                                 type="password" class="flex-1" />
                                             <button class="btn btn-icon" type="button">
-                                                <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
+                                                <i
+                                                    class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
                                                 <i
                                                     class="ki-filled ki-eye-slash text-gray-500 hidden toggle-password-active:block"></i>
                                             </button>
@@ -168,6 +226,87 @@
                 eyeOpen.classList.toggle('hidden', !isVisible);
                 eyeSlash.classList.toggle('hidden', isVisible);
             });
+        });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        const roleSelect = document.getElementById('role_id'); // Raw <select> for role (no Choices.js)
+        const permissionSelect = document.getElementById('permission_ids');
+        const departmentSelect = document.getElementById('department_id');
+
+        // Initialize Choices for permission only
+        const permissionChoices = new Choices(permissionSelect, {
+            removeItemButton: true,
+            placeholderValue: 'Select Permissions',
+            searchPlaceholderValue: 'Search Permissions...',
+            allowHTML: false,
+            silent: true,
+        });
+
+        function loadDepartmentData(departmentId, selectedRole = null, selectedPermissions = []) {
+            if (!departmentId) return;
+
+            // Clear raw <select> for role
+            roleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+
+            // Clear permission Choices
+            permissionChoices.clearStore();
+            permissionChoices.clearChoices();
+
+            fetch(`/admin/departments/${departmentId}/access`, {
+                    headers: {
+                        'Accept': 'application/json'
+                    }
+                })
+                .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch'))
+                .then(data => {
+                    // Fill role select manually
+                    data.roles.forEach(role => {
+                        const option = document.createElement('option');
+                        option.value = role.id;
+                        option.text = role.name;
+                        if (parseInt(selectedRole) === role.id) {
+                            option.selected = true;
+                        }
+                        roleSelect.appendChild(option);
+                    });
+
+                    // Trigger raw <select> change for role (important for validation)
+                    roleSelect.dispatchEvent(new Event('change'));
+
+                    // Fill permissions
+                    const permissionChoicesArray = data.permissions.map(perm => ({
+                        value: perm.id,
+                        label: perm.name.replaceAll('.', ' ')
+                            .split(' ')
+                            .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+                            .join(' '),
+                        selected: selectedPermissions.includes(perm.id)
+                    }));
+
+                    permissionChoices.setChoices(permissionChoicesArray, 'value', 'label', true);
+
+                    // Ensure raw <select> options are marked selected
+                    for (const option of permissionSelect.options) {
+                        option.selected = selectedPermissions.includes(parseInt(option.value));
+                    }
+                    permissionSelect.dispatchEvent(new Event('change'));
+                })
+                .catch(error => console.error('Fetch error:', error));
+        }
+
+        // Initial values on page load
+        const selectedDepartment = departmentSelect.value;
+        const existingRole = @json(old('role_id', $employee->roles->first()?->id ?? null));
+        const existingPermissions = @json(old('permission_ids', $employee->permissions->pluck('id')->toArray()));
+
+        if (selectedDepartment) {
+            loadDepartmentData(selectedDepartment, existingRole, existingPermissions);
+        }
+
+        departmentSelect.addEventListener('change', function() {
+            loadDepartmentData(this.value);
         });
     </script>
 @endpush

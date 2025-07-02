@@ -15,6 +15,7 @@ use App\Models\State;
 use App\Models\Wallet;
 use App\Services\RiskAnalyticsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class DashboardController extends Controller
 {
