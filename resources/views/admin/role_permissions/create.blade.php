@@ -8,16 +8,6 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label for="role_id" class="block text-sm font-medium text-gray-700">Select Role</label>
-                        <select name="role_id" id="role_id" class="select w-full mt-1" required>
-                            <option value="">-- Select Role --</option>
-                            @foreach ($roles as $role)
-                                <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div>
                         <label for="department_id" class="block text-sm font-medium text-gray-700">Select Department</label>
                         <select name="department_id" id="department_id" class="select w-full mt-1" required>
                             <option value="">-- Select Department --</option>
@@ -26,12 +16,20 @@
                             @endforeach
                         </select>
                     </div>
+
+                    <div>
+                        <label for="role_id" class="block text-sm font-medium text-gray-700">Select Role</label>
+                        <select name="role_id" id="role_id" class="select w-full mt-1" required disabled>
+                            <option value="">-- Select Role --</option>
+                            {{-- Roles will be loaded dynamically --}}
+                        </select>
+                    </div>
                 </div>
 
                 <div id="permissions_wrapper" class="grid gap-5 pt-6"></div>
 
                 <div class="pt-5">
-                    <button type="submit" class="btn btn-primary">
+                    <button type="submit" class="btn btn-primary" disabled id="submit_btn">
                         Update Permissions
                     </button>
                 </div>
@@ -42,19 +40,56 @@
 
 @push('scripts')
     <script>
-        document.getElementById('department_id').addEventListener('change', function() {
-            const departmentId = this.value;
-            const roleId = document.getElementById('role_id').value;
-            const wrapper = document.getElementById('permissions_wrapper');
-            wrapper.innerHTML = '';
+        const departmentSelect = document.getElementById('department_id');
+        const roleSelect = document.getElementById('role_id');
+        const permissionsWrapper = document.getElementById('permissions_wrapper');
+        const submitBtn = document.getElementById('submit_btn');
 
-            if (departmentId && roleId) {
+        departmentSelect.addEventListener('change', function() {
+            const departmentId = this.value;
+            roleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+            permissionsWrapper.innerHTML = '';
+            submitBtn.disabled = true;
+            roleSelect.disabled = true;
+
+            if (!departmentId) return;
+
+            // Fetch roles assigned to the selected department
+            fetch(`/admin/roles-by-department/${departmentId}`)
+                .then(res => res.json())
+                .then(roles => {
+                    if (roles.length > 0) {
+                        roles.forEach(role => {
+                            const option = document.createElement('option');
+                            option.value = role.id;
+                            option.textContent = role.name.charAt(0).toUpperCase() + role.name.slice(1);
+                            roleSelect.appendChild(option);
+                        });
+                        roleSelect.disabled = false;
+                    } else {
+                        roleSelect.disabled = true;
+                    }
+                });
+        });
+
+        roleSelect.addEventListener('change', function() {
+            const roleId = this.value;
+            const departmentId = departmentSelect.value;
+
+            permissionsWrapper.innerHTML = '';
+            submitBtn.disabled = true;
+
+            if (roleId && departmentId) {
                 fetch(`/admin/permissions-by-department/${departmentId}/${roleId}`)
                     .then(res => res.text())
-                    .then(html => wrapper.innerHTML = html);
+                    .then(html => {
+                        permissionsWrapper.innerHTML = html;
+                        submitBtn.disabled = false;
+                    });
             }
         });
 
+        // Optional: Select All permissions checkbox functionality (keep your existing code)
         document.addEventListener('change', function(e) {
             if (e.target.classList.contains('select-all-perms')) {
                 const targetGroup = e.target.getAttribute('data-target');

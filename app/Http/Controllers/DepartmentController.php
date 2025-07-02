@@ -19,6 +19,8 @@ class DepartmentController extends Controller
     public function create()
     {
         $roles = Role::with('permissions')->orderBy('name', 'asc')->get();
+
+        // Group permissions by their subject (first part before dot)
         $permissions = Permission::all()->groupBy(function ($permission) {
             return explode('.', $permission->name)[0];
         });
@@ -31,6 +33,7 @@ class DepartmentController extends Controller
         $request->validate([
             'name' => 'required|string|max:255',
             'role' => 'required|array|min:1',
+            'role.*' => 'exists:roles,id',
             'permissions' => 'nullable|array',
             'permissions.*' => 'exists:permissions,id',
         ]);
@@ -45,8 +48,11 @@ class DepartmentController extends Controller
 
         try {
             $department = Department::create(['name' => $name]);
+
+            // Attach roles in department_has_roles
             $department->roles()->attach($request->role);
 
+            // Attach permissions in department_has_permissions
             if ($request->filled('permissions')) {
                 $department->permissions()->attach($request->permissions);
             }
@@ -58,6 +64,7 @@ class DepartmentController extends Controller
         }
     }
 
+
     public function show(Department $department)
     {
         return view('admin.departments.show', compact('department'));
@@ -67,6 +74,7 @@ class DepartmentController extends Controller
     {
         $department->load('roles', 'permissions');
         $roles = Role::orderBy('name')->get();
+
         $permissions = Permission::all()->groupBy(function ($permission) {
             return explode('.', $permission->name)[0];
         });
@@ -86,23 +94,25 @@ class DepartmentController extends Controller
 
         $name = $request->name;
 
+        // Unique check except current department
         $exists = Department::whereEncrypted('name', $name)
             ->where('id', '!=', $department->id)
             ->exists();
 
         if ($exists) {
-            return back()->withErrors(['error' => 'The department name must be unique.'])->withInput();
+            return back()->with(['error' => 'The department name must be unique.']);
         }
 
         try {
             $department->update(['name' => $name]);
+
             $department->roles()->sync($request->role);
             $department->permissions()->sync($request->permissions ?? []);
 
             return redirect()->route('departments.index')->with('success', 'Department updated successfully.');
         } catch (\Exception $e) {
             Log::error('Department Update Error: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Department Update Error: ' . $e->getMessage()])->withInput();
+            return back()->with(['error' => 'Department Update Error: ' . $e->getMessage()]);
         }
     }
 
@@ -113,7 +123,7 @@ class DepartmentController extends Controller
             return redirect()->route('departments.index')->with('success', 'Department deleted successfully.');
         } catch (\Exception $e) {
             Log::error('Department Delete Error: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Department Delete Error: ' . $e->getMessage()]);
+            return back()->with(['error' => 'Department Delete Error: ' . $e->getMessage()]);
         }
     }
 }

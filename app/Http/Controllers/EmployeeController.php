@@ -109,14 +109,23 @@ class EmployeeController extends Controller
      */
     public function getDepartmentAccess(Department $department)
     {
-        $roles = $department->roles()->with('permissions:id,name')->select('id', 'name')->get();
-        $permissions = $department->permissions()->select('id', 'name')->get();
+        // Load roles with their permissions (only id and name)
+        $roles = $department->roles()
+            ->select('roles.id', 'roles.name')
+            ->with(['permissions:id,name'])
+            ->get();
+
+        // Load department's own permissions
+        $permissions = $department->permissions()
+            ->select('permissions.id', 'permissions.name')
+            ->get();
 
         return response()->json([
             'roles' => $roles,
             'permissions' => $permissions,
         ]);
     }
+
 
     /**
      * Validate incoming request for store/update.

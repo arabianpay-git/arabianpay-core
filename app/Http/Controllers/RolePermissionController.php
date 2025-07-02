@@ -15,13 +15,10 @@ class RolePermissionController extends Controller
     public function index()
     {
         $roles = Role::with('permissions')->paginate(10);
-
-        // Key departments collection by id for quick access in view
         $departments = Department::all()->keyBy('id');
 
         return view('admin.role_permissions.index', compact('roles', 'departments'));
     }
-
 
     public function create()
     {
@@ -33,22 +30,24 @@ class RolePermissionController extends Controller
 
     public function store(Request $request)
     {
-        $request->validate([
+        $data = $request->validate([
             'role_id' => 'required|exists:roles,id',
             'department_id' => 'required|exists:departments,id',
             'permissions' => 'nullable|array',
             'permissions.*' => 'integer|exists:permissions,id',
         ]);
 
-        $role = Role::findOrFail($request->role_id);
-        $validPermissionIds = $this->getDepartmentPermissionIds($request->department_id);
+        $role = Role::findOrFail($data['role_id']);
+        $validPermissionIds = $this->getDepartmentPermissionIds($data['department_id']);
 
-        $selectedPermissionIds = array_intersect($request->permissions ?? [], $validPermissionIds);
+        // Filter permissions: only allow those permitted by department
+        $selectedPermissionIds = array_intersect($data['permissions'] ?? [], $validPermissionIds);
         $permissionNames = $this->getPermissionNamesByIds($selectedPermissionIds);
 
+        // Sync permissions on role (stored in role_has_permissions)
         $role->syncPermissions($permissionNames);
 
-        $this->logAction('assign_permissions', $role, $request->department_id);
+        $this->logAction('assign_permissions', $role, $data['department_id']);
 
         return redirect()->route('role-permissions.index')->with('success', 'Permissions assigned successfully.');
     }
@@ -64,7 +63,7 @@ class RolePermissionController extends Controller
 
     public function update(Request $request, $roleId, $departmentId)
     {
-        $request->validate([
+        $data = $request->validate([
             'permissions' => 'nullable|array',
             'permissions.*' => 'integer|exists:permissions,id',
         ]);
@@ -72,10 +71,10 @@ class RolePermissionController extends Controller
         $role = Role::findOrFail($roleId);
         $validPermissionIds = $this->getDepartmentPermissionIds($departmentId);
 
-        $selectedPermissionIds = array_intersect($request->permissions ?? [], $validPermissionIds);
+        $selectedPermissionIds = array_intersect($data['permissions'] ?? [], $validPermissionIds);
         $permissionNames = $this->getPermissionNamesByIds($selectedPermissionIds);
 
-        // Remove old department's permissions
+        // Remove old department permissions from role
         $currentPermissionNames = $this->getPermissionNamesByIds($validPermissionIds);
         $role->revokePermissionTo($currentPermissionNames);
 
@@ -100,11 +99,12 @@ class RolePermissionController extends Controller
         return redirect()->back()->with('success', 'Permissions removed for department.');
     }
 
-    // AJAX method to load permissions grouped by prefix for given department and role
+    // AJAX: Get department-scoped permissions grouped by prefix
     public function getPermissionsByDepartment($departmentId, $roleId)
     {
         $departmentPermissionIds = $this->getDepartmentPermissionIds($departmentId);
-        $permissions = Permission::whereIn('id', $departmentPermissionIds)->get()
+        $permissions = Permission::whereIn('id', $departmentPermissionIds)
+            ->get()
             ->groupBy(fn($permission) => explode('.', $permission->name)[0]);
 
         $role = Role::findOrFail($roleId);
@@ -112,7 +112,11 @@ class RolePermissionController extends Controller
         return view('admin.role_permissions._permissions', compact('permissions', 'role'))->render();
     }
 
-    // Helper: Get permission IDs linked to a department
+    // --- Helpers ---
+
+    /**
+     * Get permission IDs allowed for department.
+     */
     private function getDepartmentPermissionIds(int $departmentId): array
     {
         return DB::table('department_has_permissions')
@@ -121,7 +125,9 @@ class RolePermissionController extends Controller
             ->toArray();
     }
 
-    // Helper: Get permission names by IDs
+    /**
+     * Get permission names from IDs.
+     */
     private function getPermissionNamesByIds(array $ids): array
     {
         if (empty($ids)) {
@@ -131,15 +137,21 @@ class RolePermissionController extends Controller
         return Permission::whereIn('id', $ids)->pluck('name')->toArray();
     }
 
-    // Helper: Log model action with user info and ip/batch uuid
+    /**
+     * Log actions with user info.
+     */
     private function logAction(string $event, Role $role, int $departmentId): void
     {
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
+        if (!$user) {
+            return; // no logging if no user context
+        }
+
         $user->logModelAction(
             event: $event,
-            description: "{$user->first_name} {$user->last_name} {$this->getEventDescription($event)} role: {$role->name} from department ID: {$departmentId}",
+            description: "{$user->first_name} {$user->last_name} {$this->getEventDescription($event)} role: {$role->name} for department ID: {$departmentId}",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),
@@ -155,5 +167,13 @@ class RolePermissionController extends Controller
             'remove_permissions' => 'removed permissions for',
             default => $event,
         };
+    }
+
+    public function getRolesByDepartment($departmentId)
+    {
+        $department = Department::with('roles')->findOrFail($departmentId);
+        return response()->json(
+            $department->roles()->select('roles.id', 'roles.name')->get()
+        );
     }
 }
