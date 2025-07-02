@@ -68,7 +68,7 @@
                                     <select name="role[]" id="role" class="select w-full" multiple>
                                         @foreach ($roles as $item)
                                             <option value="{{ $item->id }}"
-                                                {{ collect(old('role', $department->roles->pluck('id') ?? []))->contains($item->id) ? 'selected' : '' }}>
+                                                {{ collect(old('role' ?? []))->contains($item->id) ? 'selected' : '' }}>
                                                 {{ $item->name }}
                                             </option>
                                         @endforeach
