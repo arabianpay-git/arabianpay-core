@@ -52,7 +52,8 @@
                         </div>
                     </div>
                 </a>
-                @canany(['customer.view', 'customer.manage', 'supplier.view', 'supplier.manage'])
+
+                @canany(['customer.view', 'customer.manage', 'supplier.view', 'supplier.manage', 'nafath.view'])
                     <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
@@ -136,7 +137,7 @@
                             @endcan
                         </div>
                     </div>
-                @endcan
+                @endcanany
                 @canany(['product.create', 'product.read', 'product.approval', 'product.reviews', 'category.create',
                     'category.read', 'brand.create', 'brand.read', 'attribute.read', 'statics.product', 'statics.category',
                     'statics.brand', 'statics.reviews'])
