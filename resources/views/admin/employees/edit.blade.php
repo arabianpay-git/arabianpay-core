@@ -30,6 +30,10 @@
         .choices {
             position: relative !important;
         }
+
+        .choices__inner {
+            overflow: auto;
+        }
     </style>
 @endpush
 
@@ -212,6 +216,7 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script>
         document.querySelectorAll('[data-toggle-password="true"]').forEach(wrapper => {
             const input = wrapper.querySelector('input');
@@ -227,15 +232,13 @@
                 eyeSlash.classList.toggle('hidden', isVisible);
             });
         });
-    </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <script>
-        const roleSelect = document.getElementById('role_id'); // Raw <select> for role (no Choices.js)
+        const roleSelect = document.getElementById('role_id'); // plain <select>
         const permissionSelect = document.getElementById('permission_ids');
         const departmentSelect = document.getElementById('department_id');
 
-        // Initialize Choices for permission only
+        let rolePermissionsMap = {};
+
         const permissionChoices = new Choices(permissionSelect, {
             removeItemButton: true,
             placeholderValue: 'Select Permissions',
@@ -244,15 +247,21 @@
             silent: true,
         });
 
+        function clearRoles() {
+            roleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+        }
+
+        function clearPermissions() {
+            permissionChoices.clearStore();
+            permissionChoices.clearChoices();
+        }
+
         function loadDepartmentData(departmentId, selectedRole = null, selectedPermissions = []) {
             if (!departmentId) return;
 
-            // Clear raw <select> for role
-            roleSelect.innerHTML = '<option value="">-- Select Role --</option>';
-
-            // Clear permission Choices
-            permissionChoices.clearStore();
-            permissionChoices.clearChoices();
+            clearRoles();
+            clearPermissions();
+            rolePermissionsMap = {};
 
             fetch(`/admin/departments/${departmentId}/access`, {
                     headers: {
@@ -261,21 +270,19 @@
                 })
                 .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch'))
                 .then(data => {
-                    // Fill role select manually
+                    // Populate roles
                     data.roles.forEach(role => {
                         const option = document.createElement('option');
                         option.value = role.id;
-                        option.text = role.name;
+                        option.textContent = role.name;
                         if (parseInt(selectedRole) === role.id) {
                             option.selected = true;
                         }
                         roleSelect.appendChild(option);
+                        rolePermissionsMap[role.id] = (role.permissions || []).map(p => p.id);
                     });
 
-                    // Trigger raw <select> change for role (important for validation)
-                    roleSelect.dispatchEvent(new Event('change'));
-
-                    // Fill permissions
+                    // Populate permissions
                     const permissionChoicesArray = data.permissions.map(perm => ({
                         value: perm.id,
                         label: perm.name.replaceAll('.', ' ')
@@ -284,19 +291,40 @@
                             .join(' '),
                         selected: selectedPermissions.includes(perm.id)
                     }));
-
                     permissionChoices.setChoices(permissionChoicesArray, 'value', 'label', true);
 
-                    // Ensure raw <select> options are marked selected
+                    // Ensure <select> options are marked as selected
                     for (const option of permissionSelect.options) {
                         option.selected = selectedPermissions.includes(parseInt(option.value));
                     }
                     permissionSelect.dispatchEvent(new Event('change'));
+
+                    // Auto-select permissions based on selected role
+                    if (selectedRole && rolePermissionsMap[selectedRole]) {
+                        permissionChoices.setChoiceByValue(rolePermissionsMap[selectedRole]);
+                    }
                 })
                 .catch(error => console.error('Fetch error:', error));
         }
 
-        // Initial values on page load
+        // On Department Change
+        departmentSelect.addEventListener('change', function() {
+            clearPermissions();
+            clearRoles();
+            rolePermissionsMap = {};
+            loadDepartmentData(this.value);
+        });
+
+        // On Role Change
+        roleSelect.addEventListener('change', function() {
+            const selectedRoleId = parseInt(this.value);
+            if (!selectedRoleId || !rolePermissionsMap[selectedRoleId]) return;
+
+            permissionChoices.removeActiveItems();
+            permissionChoices.setChoiceByValue(rolePermissionsMap[selectedRoleId]);
+        });
+
+        // On Page Load
         const selectedDepartment = departmentSelect.value;
         const existingRole = @json(old('role_id', $employee->roles->first()?->id ?? null));
         const existingPermissions = @json(old('permission_ids', $employee->permissions->pluck('id')->toArray()));
@@ -304,9 +332,5 @@
         if (selectedDepartment) {
             loadDepartmentData(selectedDepartment, existingRole, existingPermissions);
         }
-
-        departmentSelect.addEventListener('change', function() {
-            loadDepartmentData(this.value);
-        });
     </script>
 @endpush

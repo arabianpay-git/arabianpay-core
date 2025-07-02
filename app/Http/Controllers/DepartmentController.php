@@ -18,10 +18,11 @@ class DepartmentController extends Controller
 
     public function create()
     {
-        $roles = Role::orderBy('name', 'asc')->get();
+        $roles = Role::with('permissions')->orderBy('name', 'asc')->get();
         $permissions = Permission::all()->groupBy(function ($permission) {
             return explode('.', $permission->name)[0];
         });
+
         return view('admin.departments.create', compact('roles', 'permissions'));
     }
 

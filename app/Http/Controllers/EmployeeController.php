@@ -190,7 +190,7 @@ class EmployeeController extends Controller
 
     public function getDepartmentAccess(Department $department)
     {
-        $roles = $department->roles()->select('id', 'name')->get();
+        $roles = $department->roles()->with('permissions:id,name')->select('id', 'name')->get();
         $permissions = $department->permissions()->select('id', 'name')->get();
 
         return response()->json([

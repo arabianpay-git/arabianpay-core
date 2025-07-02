@@ -30,6 +30,10 @@
         .choices {
             position: relative !important;
         }
+
+        .choices__inner {
+            overflow: auto;
+        }
     </style>
 @endpush
 @section('content')
@@ -210,10 +214,7 @@
                 eyeSlash.classList.toggle('hidden', isVisible);
             });
         });
-    </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
-    <script>
         const roleSelect = document.getElementById('role_id');
         const permissionSelect = document.getElementById('permission_ids');
         const departmentSelect = document.getElementById('department_id');
@@ -222,7 +223,7 @@
             removeItemButton: true,
             placeholderValue: 'Select Role',
             searchPlaceholderValue: 'Search Roles...',
-            maxItemCount: 1, // single select
+            maxItemCount: 1,
             shouldSort: false,
         });
 
@@ -232,6 +233,8 @@
             searchPlaceholderValue: 'Search Permissions...',
             allowHTML: false,
         });
+
+        let rolePermissionsMap = {};
 
         function clearChoices() {
             roleChoices.clearStore();
@@ -258,24 +261,38 @@
                     return res.json();
                 })
                 .then(data => {
+                    // Map and render roles
                     roleChoices.setChoices(
                         data.roles.map(role => ({
-                            value: role.id,
+                            value: role.id.toString(),
                             label: role.name,
-                            selected: selectedRole == role.id
+                            selected: selectedRole == role.id.toString()
                         })),
                         'value', 'label', true
                     );
 
+                    // Map role-permissions with string ids
+                    rolePermissionsMap = {};
+                    data.roles.forEach(role => {
+                        rolePermissionsMap[role.id.toString()] = (role.permissions || []).map(p => p.id
+                            .toString());
+                    });
+
+                    // Render all permissions with string values
                     permissionChoices.setChoices(
                         data.permissions.map(perm => ({
-                            value: perm.id,
+                            value: perm.id.toString(),
                             label: perm.name.replaceAll('.', ' ').split(' ').map(w => w.charAt(0)
                                 .toUpperCase() + w.slice(1)).join(' '),
-                            selected: selectedPermissions.includes(perm.id)
+                            selected: selectedPermissions.map(String).includes(perm.id.toString())
                         })),
                         'value', 'label', true
                     );
+
+                    // Auto-select permissions if role is preselected
+                    if (selectedRole && rolePermissionsMap[selectedRole.toString()]) {
+                        permissionChoices.setChoiceByValue(rolePermissionsMap[selectedRole.toString()]);
+                    }
                 })
                 .catch(err => console.error('Error loading roles/permissions:', err));
         }
@@ -283,9 +300,24 @@
         departmentSelect.addEventListener('change', function() {
             clearChoices();
             loadDepartmentData(this.value);
+            permissionChoices.enable(); // Keep permissions enabled
         });
 
-        // On page load, load roles/permissions if department is selected with old values
+        roleSelect.addEventListener('change', function() {
+            const selectedRoleId = this.value;
+
+            if (!selectedRoleId || !rolePermissionsMap[selectedRoleId]) {
+                permissionChoices.removeActiveItems();
+                permissionChoices.enable();
+                return;
+            }
+
+            permissionChoices.removeActiveItems();
+            permissionChoices.setChoiceByValue(rolePermissionsMap[selectedRoleId]);
+            permissionChoices.enable(); // Keep enabled so user can add/remove permissions
+        });
+
+        // On page load: load roles and permissions if department selected with old values
         if (departmentSelect.value) {
             const selectedRole = @json(old('role_id'));
             const selectedPermissions = @json(old('permission_ids', []));

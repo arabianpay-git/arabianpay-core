@@ -31,20 +31,20 @@ class RolePermissionController extends Controller
         $request->validate([
             'role_id' => 'required|exists:roles,id',
             'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:permissions,name',
+            'permissions.*' => 'integer|exists:permissions,id', // changed
         ]);
 
         $role = Role::findOrFail($request->role_id);
 
-        // Sync permissions (assign the selected permissions)
-        $role->syncPermissions($request->permissions ?? []);
+        $permissionNames = Permission::whereIn('id', $request->permissions ?? [])->pluck('name')->toArray();
 
-        // Log the assignment of permissions
+        $role->syncPermissions($permissionNames);
+
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $user->logModelAction(
             event: 'assign_permissions',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " assigned permissions to role: {$role->name}",
+            description: "{$user->first_name} {$user->last_name} assigned permissions to role: {$role->name}",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),
@@ -54,7 +54,6 @@ class RolePermissionController extends Controller
         return redirect()->route('role-permissions.index')
             ->with('success', 'Permissions assigned successfully.');
     }
-
 
     public function edit($roleId)
     {
@@ -72,20 +71,20 @@ class RolePermissionController extends Controller
     {
         $request->validate([
             'permissions' => 'nullable|array',
-            'permissions.*' => 'string|exists:permissions,name',
+            'permissions.*' => 'integer|exists:permissions,id', // changed 'string|...name' to 'integer|...id'
         ]);
 
         $role = Role::findOrFail($id);
 
-        // Sync permissions
-        $role->syncPermissions($request->permissions ?? []);
+        $permissionNames = Permission::whereIn('id', $request->permissions ?? [])->pluck('name')->toArray();
 
-        // Log the update of permissions
+        $role->syncPermissions($permissionNames);
+
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $user->logModelAction(
             event: 'update',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated permissions for role: {$role->name}",
+            description: "{$user->first_name} {$user->last_name} updated permissions for role: {$role->name}",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),
