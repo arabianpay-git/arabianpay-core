@@ -159,44 +159,6 @@ if (! function_exists('map_product_details')) {
     }
 }
 
-
-use Illuminate\Support\Facades\Storage;
-
-if (!function_exists('getImageUrl')) {
-    function getImageUrl($path)
-    {
-        // Local path check
-        if (Storage::disk('public')->exists($path)) {
-            return asset($path);
-        }
-
-        // Check if exists on partners subdomain
-        $partnersUrl = 'https://partners.araboanpay.com/' . $path;
-        if (urlExists($partnersUrl)) {
-            return $partnersUrl;
-        }
-
-        // Fallback: core domain
-        $coreUrl = 'https://core.araboanpay.com/' . $path;
-        if (urlExists($coreUrl)) {
-            return $coreUrl;
-        }
-
-        // Optional fallback image
-        return asset('images/no-image.png');
-    }
-
-    function urlExists($url)
-    {
-        try {
-            $headers = get_headers($url);
-            return strpos($headers[0], '200') !== false;
-        } catch (\Exception $e) {
-            return false;
-        }
-    }
-}
-
 use App\Services\CreditAssessmentService;
 
 if (! function_exists('get_credit_score')) {
@@ -292,36 +254,28 @@ if (! function_exists('hijriToGregorian')) {
     }
 }
 
-
-if (!function_exists('mediaURL')) {
-    function mediaURL($path)
+if (! function_exists('supplierMedia')) {
+    /**
+     * Prefix the given path with https://partners.arabianpay.net if not already prefixed,
+     * return default URL if path is empty or null.
+     *
+     * @param string|null $path
+     * @param string|null $defaultUrl Optional default URL if path is missing
+     * @return string|null
+     */
+    function supplierMedia(?string $path, ?string $defaultUrl = null): ?string
     {
-        $path = ltrim($path, '/');
-        $relativePath = str_replace('storage/', '', $path);
-
-        if (\Illuminate\Support\Facades\Storage::disk('public')->exists($relativePath)) {
-            return asset($path);
+        if (!$path) {
+            return $defaultUrl;
         }
 
-        $partnersUrl = 'https://partners.arabianpay.net/' . $path;
+        $prefix = 'https://partners.arabianpay.net';
 
-        if (url_exists($partnersUrl)) {
-            return $partnersUrl;
+        if (str_starts_with($path, 'http')) {
+            // Already a full URL (any domain), return as is
+            return $path;
         }
 
-        return asset($path);
+        return $prefix . $path;
     }
-}
-
-function url_exists($url)
-{
-    $ch = curl_init($url);
-    curl_setopt($ch, CURLOPT_NOBODY, true);
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    curl_setopt($ch, CURLOPT_TIMEOUT, 5);
-    curl_exec($ch);
-    $responseCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-    curl_close($ch);
-
-    return ($responseCode >= 200 && $responseCode < 400);
 }

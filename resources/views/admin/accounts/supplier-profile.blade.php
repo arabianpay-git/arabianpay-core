@@ -526,13 +526,13 @@
                                                     <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
                                                         class="w-10 h-10" />
                                                 @else
-                                                    <img src="{{ asset($merchant->registration_number_form) }}"
+                                                    <img src="{{ supplierMedia($merchant->registration_number_form) }}"
                                                         class="w-10 h-10 object-cover rounded" />
                                                 @endif
 
                                                 <div class="flex flex-col">
                                                     <a target="__blank"
-                                                        href="{{ asset($merchant->registration_number_form) }}"
+                                                        href="{{ supplierMedia($merchant->registration_number_form) }}"
                                                         target="_blank"
                                                         class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
                                                         Registration Form
@@ -557,12 +557,13 @@
                                                     <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
                                                         class="w-10 h-10" />
                                                 @else
-                                                    <img src="{{ asset($merchant->vat_register_file) }}"
+                                                    <img src="{{ supplierMedia($merchant->vat_register_file) }}"
                                                         class="w-10 h-10 object-cover rounded" />
                                                 @endif
 
                                                 <div class="flex flex-col">
-                                                    <a target="__blank" href="{{ asset($merchant->vat_register_file) }}"
+                                                    <a target="__blank"
+                                                        href="{{ supplierMedia($merchant->vat_register_file) }}"
                                                         target="_blank"
                                                         class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
                                                         VAT Register File
@@ -587,12 +588,13 @@
                                                     <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
                                                         class="w-10 h-10" />
                                                 @else
-                                                    <img src="{{ asset($merchant->return_policy_file) }}"
+                                                    <img src="{{ supplierMedia($merchant->return_policy_file) }}"
                                                         class="w-10 h-10 object-cover rounded" />
                                                 @endif
 
                                                 <div class="flex flex-col">
-                                                    <a target="__blank" href="{{ asset($merchant->return_policy_file) }}"
+                                                    <a target="__blank"
+                                                        href="{{ supplierMedia($merchant->return_policy_file) }}"
                                                         target="_blank"
                                                         class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
                                                         Return Policy File
@@ -620,13 +622,13 @@
                                                     <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
                                                         class="w-10 h-10" />
                                                 @else
-                                                    <img src="{{ asset($merchant->exchange_policy_file) }}"
+                                                    <img src="{{ supplierMedia($merchant->exchange_policy_file) }}"
                                                         class="w-10 h-10 object-cover rounded" />
                                                 @endif
 
                                                 <div class="flex flex-col">
                                                     <a target="__blank"
-                                                        href="{{ asset($merchant->exchange_policy_file) }}"
+                                                        href="{{ supplierMedia($merchant->exchange_policy_file) }}"
                                                         target="_blank"
                                                         class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
                                                         Exchange Policy File
@@ -651,12 +653,13 @@
                                                     <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
                                                         class="w-10 h-10" />
                                                 @else
-                                                    <img src="{{ asset($merchant->cancel_policy_file) }}"
+                                                    <img src="{{ supplierMedia($merchant->cancel_policy_file) }}"
                                                         class="w-10 h-10 object-cover rounded" />
                                                 @endif
 
                                                 <div class="flex flex-col">
-                                                    <a target="__blank" href="{{ asset($merchant->cancel_policy_file) }}"
+                                                    <a target="__blank"
+                                                        href="{{ supplierMedia($merchant->cancel_policy_file) }}"
                                                         target="_blank"
                                                         class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
                                                         Cancel Policy File
@@ -681,12 +684,13 @@
                                                     <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
                                                         class="w-10 h-10" />
                                                 @else
-                                                    <img src="{{ asset($merchant->owner_iqama_image) }}"
+                                                    <img src="{{ supplierMedia($merchant->owner_iqama_image) }}"
                                                         class="w-10 h-10 object-cover rounded" />
                                                 @endif
 
                                                 <div class="flex flex-col">
-                                                    <a target="__blank" href="{{ asset($merchant->owner_iqama_image) }}"
+                                                    <a target="__blank"
+                                                        href="{{ supplierMedia($merchant->owner_iqama_image) }}"
                                                         target="_blank"
                                                         class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
                                                         Owner Iqama Image

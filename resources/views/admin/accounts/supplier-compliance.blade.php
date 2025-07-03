@@ -41,40 +41,55 @@
                                         'status' => 'submitted',
                                     ],
                                     [
-                                        'title' => 'CR File',
-                                        'file' => $merchant->registration_number_form,
+                                        'title' => 'ID Document',
+                                        'file' => supplierMedia($merchant->id_document),
+                                        'status' => $merchant->id_status,
+                                    ],
+                                    [
+                                        'title' => 'CR Certificate',
+                                        'file' => supplierMedia($merchant->cr_certificate),
+                                        'status' => $merchant->cr_status,
+                                    ],
+                                    [
+                                        'title' => 'VAT Certificate',
+                                        'file' => supplierMedia($merchant->vat_certificate),
+                                        'status' => $merchant->vat_status,
+                                    ],
+                                    [
+                                        'title' => 'Registration Form',
+                                        'file' => supplierMedia($merchant->registration_number_form),
                                         'status' => null,
                                     ],
                                     [
                                         'title' => 'VAT Register File',
-                                        'file' => $merchant->vat_register_file,
+                                        'file' => supplierMedia($merchant->vat_register_file),
                                         'status' => null,
                                     ],
                                     [
                                         'title' => 'Return Policy File',
-                                        'file' => $merchant->return_policy_file,
+                                        'file' => supplierMedia($merchant->return_policy_file),
                                         'status' => null,
                                     ],
                                     [
                                         'title' => 'Delivery Policy File',
-                                        'file' => $merchant->exchange_policy_file,
+                                        'file' => supplierMedia($merchant->exchange_policy_file),
                                         'status' => null,
                                     ],
                                     [
                                         'title' => 'Cancel Policy File',
-                                        'file' => $merchant->cancel_policy_file,
+                                        'file' => supplierMedia($merchant->cancel_policy_file),
                                         'status' => null,
                                     ],
                                     [
-                                        'title' => 'Owner ID',
-                                        'file' => $merchant->owner_iqama_image,
+                                        'title' => 'Owner Iqama Image',
+                                        'file' => supplierMedia($merchant->owner_iqama_image),
                                         'status' => null,
                                     ],
                                 ];
                                 if ($merchant->is_manager) {
                                     $compliance[] = [
                                         'title' => 'Company Approval Letter for Manager',
-                                        'file' => $merchant->manager_approval,
+                                        'file' => supplierMedia($merchant->manager_approval),
                                         'status' => null,
                                     ];
                                 }

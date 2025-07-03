@@ -6,8 +6,8 @@
                 $shopLogo = \App\Models\ShopSetting::where('user_id', $merchant->user_id)->first();
 
                 $logoPath =
-                    $shopLogo && mediaURL($shopLogo->logo)
-                        ? mediaURL($shopLogo->logo)
+                    $shopLogo && supplierMedia($shopLogo->logo)
+                        ? supplierMedia($shopLogo->logo)
                         : asset('assets/media/images/ap.png');
             @endphp
             <img class="size-[70px]" src="{{ $logoPath }}" alt="Shop Logo" />
