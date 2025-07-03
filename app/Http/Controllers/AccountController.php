@@ -1079,21 +1079,35 @@ class AccountController extends Controller
 
         $phoneNumbers = $nafathRecords->pluck('phone_number')->filter()->unique()->toArray();
 
-        $users = User::whereIn('phone_number', $phoneNumbers)
-            ->get()
-            ->keyBy('phone_number');
+        // Fetch users one by one using whereEncrypted
+        $users = collect();
+        foreach ($phoneNumbers as $phone) {
+            $user = User::whereEncrypted('phone_number', $phone)->first();
+            if ($user) {
+                $users[$phone] = $user;
+            }
+        }
 
+        // Get emails from users
         $emails = $users->pluck('email')->unique()->toArray();
 
-        $crValidations = CrValidation::whereIn('email', $emails)
-            ->get()
-            ->keyBy('email');
+        // Get latest CrValidation for each email using whereEncrypted
+        $crValidations = collect();
+        foreach ($emails as $email) {
+            $latestCr = CrValidation::whereEncrypted('email', $email)
+                ->orderByDesc('id')
+                ->first();
+
+            if ($latestCr) {
+                $crValidations[$email] = $latestCr;
+            }
+        }
 
         // Attach cr_data to each Nafath record based on user email
         $nafathRecords->getCollection()->transform(function ($item) use ($users, $crValidations) {
             $phone = $item->phone_number;
 
-            $user = $phone && isset($users[$phone]) ? $users[$phone] : null;
+            $user = isset($users[$phone]) ? $users[$phone] : null;
             $email = $user ? $user->email : null;
 
             $item->cr_data = $email && isset($crValidations[$email]) ? $crValidations[$email]->cr_data : null;

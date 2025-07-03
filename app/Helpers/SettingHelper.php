@@ -169,7 +169,6 @@ if (!function_exists('getEmployees')) {
     }
 }
 
-
 use App\Services\CreditAssessmentService;
 
 if (! function_exists('get_credit_score')) {
