@@ -119,45 +119,56 @@ if (! function_exists('map_product_details')) {
             }
         });
     }
+}
 
-    if (!function_exists('currentUser')) {
-        function currentUser()
-        {
-            return Auth::user();
-        }
-    }
-
-
-    if (!function_exists('getEmployees')) {
-        function getEmployees($department = null)
-        {
-            $user = Auth::user();
-
-            $query = User::where('user_type', 'employee');
-
-            if ($user) {
-                // Exclude current logged-in user
-                $query->where('id', '!=', $user->id);
-
-                if ($user->user_type !== 'admin') {
-                    if ($user->is_manager) {
-                        // Manager: see all employees in their department
-                        $query->where('department_id', $user->department);
-                    } else {
-                        // Not manager: see only managers in their department
-                        $query->where('is_manager', true)
-                            ->where('department_id', $user->department);
-                    }
-                } elseif ($department !== null) {
-                    // Admin with department filter
-                    $query->where('department_id', $department);
-                }
-            }
-
-            return $query->orderBy('first_name')->get();
-        }
+if (!function_exists('currentUser')) {
+    function currentUser()
+    {
+        return Auth::user();
     }
 }
+
+
+if (!function_exists('getEmployees')) {
+    function getEmployees($department = null)
+    {
+        $user = Auth::user();
+
+        $query = User::where('user_type', 'employee');
+
+        if ($user) {
+            // Exclude self
+            $query->where('id', '!=', $user->id);
+
+            if ($user->user_type === 'admin') {
+                // Admin can see all, or filter by department if given
+                if ($department !== null) {
+                    $query->where('department_id', $department);
+                }
+            } elseif ($user->is_manager) {
+
+                $query->where(function ($q) use ($user) {
+                    $q->where('department_id', $user->department_id)
+                        ->where(function ($q2) {
+                            $q2->where('is_manager', true) // other managers
+                                ->orWhere('user_type', 'admin'); // or admins
+                        })
+                        ->orWhere(function ($q3) use ($user) {
+                            $q3->where('department_id', $user->department_id)
+                                ->where('is_manager', false); // employees
+                        });
+                });
+            } else {
+
+                $query->where('department_id', $user->department_id)
+                    ->where('is_manager', true);
+            }
+        }
+
+        return $query->orderBy('first_name')->get();
+    }
+}
+
 
 use App\Services\CreditAssessmentService;
 
