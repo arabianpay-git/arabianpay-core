@@ -41,22 +41,7 @@
                                         'status' => 'submitted',
                                     ],
                                     [
-                                        'title' => 'ID Document',
-                                        'file' => supplierMedia($merchant->id_document),
-                                        'status' => $merchant->id_status,
-                                    ],
-                                    [
-                                        'title' => 'CR Certificate',
-                                        'file' => supplierMedia($merchant->cr_certificate),
-                                        'status' => $merchant->cr_status,
-                                    ],
-                                    [
-                                        'title' => 'VAT Certificate',
-                                        'file' => supplierMedia($merchant->vat_certificate),
-                                        'status' => $merchant->vat_status,
-                                    ],
-                                    [
-                                        'title' => 'Registration Form',
+                                        'title' => 'CR File',
                                         'file' => supplierMedia($merchant->registration_number_form),
                                         'status' => null,
                                     ],
@@ -81,7 +66,7 @@
                                         'status' => null,
                                     ],
                                     [
-                                        'title' => 'Owner Iqama Image',
+                                        'title' => 'ID Image',
                                         'file' => supplierMedia($merchant->owner_iqama_image),
                                         'status' => null,
                                     ],
