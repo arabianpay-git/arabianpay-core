@@ -141,17 +141,23 @@ class AccountController extends Controller
 
         $customer = Customer::with('user')
             ->where('user_id', $id)
-            ->when($user->user_type !== 'admin', function ($query) use ($user) {
-                $query->where('assigned_to', $user->id);
-            })
+            ->when(
+                !(
+                    ($user->user_type === 'employee' && $user->is_manager) || $user->user_type === 'admin'
+                ),
+                function ($query) use ($user) {
+                    $query->where('assigned_to', $user->id);
+                }
+            )
             ->first();
-
-        $data = $creditService->assess($id);
-        $riskScore = $riskService->calculateForUser($customer->user);
 
         if (!$customer) {
             return redirect()->route('customers')->with('error', __('Customer not found or not assigned to you.'));
         }
+
+        $data = $creditService->assess($id);
+        $riskScore = $riskService->calculateForUser($customer->user);
+
 
         if (empty($customer->cr_data) && $customer->cr_number) {
             $wathqData = $this->wathqService->fetchCrData($customer->cr_number);
@@ -419,16 +425,23 @@ class AccountController extends Controller
     public function supplierProfile($id)
     {
         $user = currentUser();
+
         $merchant = Merchant::where('user_id', $id)
             ->with('user', 'businessType')
-            ->when($user->user_type !== 'admin', function ($query) use ($user) {
-                $query->where('assigned_to', $user->id);
-            })
+            ->when(
+                !(
+                    ($user->user_type === 'employee' && $user->is_manager) || $user->user_type === 'admin'
+                ),
+                function ($query) use ($user) {
+                    $query->where('assigned_to', $user->id);
+                }
+            )
             ->first();
 
         if (!$merchant) {
             return redirect()->route('suppliers')->with('error', __('Supplier not found or not assigned to you.'));
         }
+
         $sellerShop = ShopSetting::where('user_id', $merchant->user_id)
             ->select('address')
             ->first();
