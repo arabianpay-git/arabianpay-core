@@ -17,6 +17,7 @@ return new class extends Migration
             $table->string('bank_name', 255);
             $table->string('account_name', 255);
             $table->string('iban', 34);
+            $table->text('iban_certificate');
             $table->timestamps();
         });
     }

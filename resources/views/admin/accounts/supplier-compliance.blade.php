@@ -70,6 +70,11 @@
                                         'file' => supplierMedia($merchant->owner_iqama_image),
                                         'status' => null,
                                     ],
+                                    [
+                                        'title' => translate('IBAN Certificate'),
+                                        'file' => supplierMedia($supplierBank->iban_certificate),
+                                        'status' => null,
+                                    ],
                                 ];
                                 if ($merchant->is_manager) {
                                     $compliance[] = [
@@ -90,9 +95,41 @@
                                                     class="w-6 h-6">
                                             @endif
 
-                                            <h4 class="text-lg font-medium text-gray-800 dark:text-white">
-                                                {{ $item['title'] }}</h4>
+                                            <div>
+                                                <h4 class="text-lg font-medium text-gray-800 dark:text-white">
+                                                    {{ $item['title'] }}
+                                                </h4>
+
+                                                @if ($item['title'] === translate('Supplier Contract'))
+                                                    @php
+                                                        $startDate = $contract->created_at
+                                                            ? Carbon\Carbon::parse($contract->created_at)->format(
+                                                                'F j, Y, h:i A',
+                                                            )
+                                                            : null;
+                                                        $endDate = $contract->contract_end_date
+                                                            ? Carbon\Carbon::parse(
+                                                                $contract->contract_end_date,
+                                                            )->format('F j, Y, h:i A')
+                                                            : null;
+                                                    @endphp
+
+                                                    @if ($startDate)
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                            Contract Start Date: {{ $startDate }}
+                                                        </p>
+                                                    @endif
+
+                                                    @if ($endDate)
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
+                                                            Contract End Date: {{ $endDate }}
+                                                        </p>
+                                                    @endif
+                                                @endif
+                                            </div>
                                         </div>
+
+
 
                                         @if ($item['file'])
                                             <a href="{{ asset($item['file']) }}" target="_blank"
@@ -100,7 +137,8 @@
                                                 {{ translate('View') }}
                                             </a>
                                         @else
-                                            <span class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>
+                                            <span
+                                                class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>
                                         @endif
                                     </div>
                                 </div>

@@ -551,13 +551,9 @@
                                                     );
                                                 @endphp
 
-                                                @if (strtolower($ext) === 'pdf')
-                                                    <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
-                                                        class="w-10 h-10" />
-                                                @else
-                                                    <img src="{{ supplierMedia($merchant->registration_number_form) }}"
-                                                        class="w-10 h-10 object-cover rounded" />
-                                                @endif
+                                                <img src="{{ asset('assets/media/images/default-pdf.png') }}"
+                                                    class="h-10" />
+
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->registration_number_form) }}"
@@ -581,13 +577,9 @@
                                                     $ext = pathinfo($merchant->vat_register_file, PATHINFO_EXTENSION);
                                                 @endphp
 
-                                                @if (strtolower($ext) === 'pdf')
-                                                    <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
-                                                        class="w-10 h-10" />
-                                                @else
-                                                    <img src="{{ supplierMedia($merchant->vat_register_file) }}"
-                                                        class="w-10 h-10 object-cover rounded" />
-                                                @endif
+                                                <img src="{{ asset('assets/media/images/default-pdf.png') }}"
+                                                    class="h-10" />
+
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->vat_register_file) }}"
@@ -611,13 +603,9 @@
                                                     $ext = pathinfo($merchant->return_policy_file, PATHINFO_EXTENSION);
                                                 @endphp
 
-                                                @if (strtolower($ext) === 'pdf')
-                                                    <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
-                                                        class="w-10 h-10" />
-                                                @else
-                                                    <img src="{{ supplierMedia($merchant->return_policy_file) }}"
-                                                        class="w-10 h-10 object-cover rounded" />
-                                                @endif
+                                                <img src="{{ asset('assets/media/images/default-pdf.png') }}"
+                                                    class="h-10" />
+
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->return_policy_file) }}"
@@ -644,13 +632,8 @@
                                                     );
                                                 @endphp
 
-                                                @if (strtolower($ext) === 'pdf')
-                                                    <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
-                                                        class="w-10 h-10" />
-                                                @else
-                                                    <img src="{{ supplierMedia($merchant->exchange_policy_file) }}"
-                                                        class="w-10 h-10 object-cover rounded" />
-                                                @endif
+                                                <img src="{{ asset('assets/media/images/default-pdf.png') }}"
+                                                    class="h-10" />
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->exchange_policy_file) }}"
@@ -674,13 +657,8 @@
                                                     $ext = pathinfo($merchant->cancel_policy_file, PATHINFO_EXTENSION);
                                                 @endphp
 
-                                                @if (strtolower($ext) === 'pdf')
-                                                    <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
-                                                        class="w-10 h-10" />
-                                                @else
-                                                    <img src="{{ supplierMedia($merchant->cancel_policy_file) }}"
-                                                        class="w-10 h-10 object-cover rounded" />
-                                                @endif
+                                                <img src="{{ asset('assets/media/images/default-pdf.png') }}"
+                                                    class="h-10" />
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->cancel_policy_file) }}"
@@ -704,22 +682,42 @@
                                                     $ext = pathinfo($merchant->owner_iqama_image, PATHINFO_EXTENSION);
                                                 @endphp
 
-                                                @if (strtolower($ext) === 'pdf')
-                                                    <img src="{{ asset('assets/media/file-types/pdf.svg') }}"
-                                                        class="w-10 h-10" />
-                                                @else
-                                                    <img src="{{ supplierMedia($merchant->owner_iqama_image) }}"
-                                                        class="w-10 h-10 object-cover rounded" />
-                                                @endif
+                                                <img src="{{ asset('assets/media/images/default-pdf.png') }}"
+                                                    class="h-10" />
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->owner_iqama_image) }}"
                                                         target="_blank"
                                                         class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
-                                                        {{ translate('Owner Iqama Image') }}
+                                                        {{ translate('Owner ID') }}
                                                     </a>
                                                     <span class="text-xs text-gray-700">
                                                         {{ Carbon\Carbon::parse($merchant->created_at)->format('d M Y h:i A') }}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    @endif
+
+                                    {{-- Iban Certificate --}}
+                                    @if (!empty($supplierBank->iban_certificate))
+                                        <div class="flex items-center gap-3">
+                                            <div class="flex items-center grow gap-2.5">
+                                                @php
+                                                    $ext = pathinfo($merchant->iban_certificate, PATHINFO_EXTENSION);
+                                                @endphp
+
+                                                <img src="{{ asset('assets/media/images/default-pdf.png') }}"
+                                                    class="h-10" />
+
+                                                <div class="flex flex-col">
+                                                    <a href="{{ supplierMedia($merchant->iban_certificate) }}"
+                                                        target="_blank"
+                                                        class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
+                                                        {{ translate('IBAN Certificate') }}
+                                                    </a>
+                                                    <span class="text-xs text-gray-700">
+                                                        {{ Carbon\Carbon::parse($supplierBank->created_at)->format('d M Y h:i A') }}
                                                     </span>
                                                 </div>
                                             </div>
@@ -818,7 +816,7 @@
                                                 {{ translate('Register VAT') }}
                                             </td>
                                             <td class="text-sm text-gray-900 pb-3">
-                                                @if ($merchant->register_vat)
+                                                @if ($merchant->vat_register)
                                                     <span class="badge badge-sm badge-success badge-outline">
                                                         {{ translate('Yes') }}
                                                     </span>
@@ -835,7 +833,7 @@
                                                 {{ translate('VAT Number') }}
                                             </td>
                                             <td class="text-sm text-gray-900 pb-3">
-                                                {{ $merchant->vat_number ?? '-' }}
+                                                {{ $merchant->vat_register_number ?? '-' }}
                                             </td>
                                         </tr>
 

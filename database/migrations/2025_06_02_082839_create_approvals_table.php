@@ -20,6 +20,7 @@ return new class extends Migration
             $table->string('contract')->nullable();
             $table->string('payment_schedule')->nullable();
             $table->string('fahman_score')->nullable();
+            $table->timestamp('contract_end_date');
             $table->timestamps();
         });
     }

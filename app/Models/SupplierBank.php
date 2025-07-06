@@ -14,6 +14,7 @@ class SupplierBank extends Model
         'bank_name',
         'account_name',
         'iban',
+        'iban_certificate',
     ];
 
     protected $encryptableAttributes = [

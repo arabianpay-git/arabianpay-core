@@ -17,6 +17,7 @@ class Approval extends Model
         'contract',
         'fahman_score',
         'payment_schedule',
+        'contract_end_date',
     ];
 
     protected $encryptableAttributes = [

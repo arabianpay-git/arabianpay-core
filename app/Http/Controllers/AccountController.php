@@ -88,9 +88,14 @@ class AccountController extends Controller
             }
         ])
             ->select(['id', 'assigned_to', 'user_id', 'package_id', 'cr_number', 'address', 'purchasing_volume', 'status', 'created_at'])
-            ->when($user->user_type !== 'admin', function ($query) use ($user) {
-                $query->where('assigned_to', $user->id);
-            })
+            ->when(
+                !(
+                    $user->user_type === 'employee' && $user->is_manager
+                ) && $user->user_type !== 'admin',
+                function ($query) use ($user) {
+                    $query->where('assigned_to', $user->id);
+                }
+            )
             ->orderByDesc('id')
             ->orderByRaw('ISNULL(assigned_to) DESC')
             ->paginate(10);
@@ -106,6 +111,7 @@ class AccountController extends Controller
 
         return view('admin.accounts.customer', compact('customers', 'totalOrderAmount'));
     }
+
 
     public function log($id)
     {
@@ -380,16 +386,20 @@ class AccountController extends Controller
 
         $merchants = Merchant::with('user', 'businessType', 'assigned')
             ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to', 'created_at')
-            ->when($user->user_type !== 'admin', function ($query) use ($user) {
-                $query->where('assigned_to', $user->id);
-            })
+            ->when(
+                !(
+                    $user->user_type === 'employee' && $user->is_manager
+                ) && $user->user_type !== 'admin',
+                function ($query) use ($user) {
+                    $query->where('assigned_to', $user->id);
+                }
+            )
             ->orderByDesc('id')
             ->orderByRaw('ISNULL(assigned_to) DESC')
             ->paginate(10);
 
         return view('admin.accounts.suppliers', compact('merchants'));
     }
-
 
     public function supplierProducts($id)
     {
@@ -578,8 +588,9 @@ class AccountController extends Controller
     public function supplierCompliance($id)
     {
         $merchant = Merchant::where('user_id', $id)->with('user')->firstOrFail();
-        $contract = Approval::where('user_id', $id)->select('contract')->first();
-        return view('admin.accounts.supplier-compliance', compact('merchant', 'contract'));
+        $contract = Approval::where('user_id', $id)->select('contract', 'contract_end_date', 'created_at')->first();
+        $supplierBank = SupplierBank::where('user_id', $id)->select('iban_certificate')->first();
+        return view('admin.accounts.supplier-compliance', compact('merchant', 'contract', 'supplierBank'));
     }
 
     public function updateSupplierStatusApprove(Request $request, $id)
@@ -595,6 +606,7 @@ class AccountController extends Controller
             'reason' => 'nullable|string|max:1000',
             'contract' => 'required|file|mimes:pdf,jpg,jpeg,png',
             'payment_schedule' => 'required|integer|min:0|max:100',
+            'contract_end_date' => 'nullable|date_format:Y-m-d H:i:s',
         ]);
 
         DB::transaction(function () use ($request, $id) {
@@ -612,6 +624,7 @@ class AccountController extends Controller
                 'contract' => $contractPath,
                 'fahman_score' => $request->fahman_score,
                 'payment_schedule' => $request->payment_schedule,
+                'contract_end_date' => $request->contract_end_date,
             ]);
 
             $merchant = Merchant::where('user_id', $id)->firstOrFail();
