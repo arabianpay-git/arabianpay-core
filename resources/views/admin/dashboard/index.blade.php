@@ -46,21 +46,24 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        Dashboard
+                        {{ translate('Dashboard') }}
                     </h1>
                     <div class="flex items-center gap-2 text-sm font-normal text-gray-700">
-                        Welcome back! Here’s a quick overview of your application’s performance and recent activity.
+                        {{ translate('Welcome back! Here’s a quick overview of your application’s performance and recent activity.') }}
                     </div>
                 </div>
                 <div class="flex items-center gap-2.5">
                     <div class="flex">
                         <select class="select select-sm w-40" id="loanRange">
-                            <option value="1M" {{ request('date_range') == '1M' ? 'selected' : '' }}>1 Month</option>
-                            <option value="3M" {{ request('date_range') == '3M' ? 'selected' : '' }}>3 Months</option>
-                            <option value="6M" {{ request('date_range') == '6M' ? 'selected' : '' }}>6 Months</option>
+                            <option value="1M" {{ request('date_range') == '1M' ? 'selected' : '' }}>
+                                {{ translate('1 Month') }}</option>
+                            <option value="3M" {{ request('date_range') == '3M' ? 'selected' : '' }}>
+                                {{ translate('3 Months') }}</option>
+                            <option value="6M" {{ request('date_range') == '6M' ? 'selected' : '' }}>
+                                {{ translate('6 Months') }}</option>
                             <option value="12M"
-                                {{ request('date_range') == '12M' || request('date_range') == null ? 'selected' : '' }}>12
-                                Months</option>
+                                {{ request('date_range') == '12M' || request('date_range') == null ? 'selected' : '' }}>
+                                {{ translate('12 Months') }}</option>
                         </select>
                     </div>
                 </div>
@@ -76,8 +79,9 @@
                             <div class="card-body dash-card">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <h4 class="text-sm font-semibold">Active Loans</h4>
-                                        <div class="text-2xl font-bold">{{ number_format($loanData['active_loans']) }}</div>
+                                        <h4 class="text-sm font-semibold">{{ translate('Active Loans') }}</h4>
+                                        <div class="text-2xl font-bold">{{ number_format($loanData['active_loans']) }}
+                                        </div>
                                     </div>
                                     <div class="bg-purple-100 p-3 rounded-full">
                                         <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor"
@@ -97,7 +101,7 @@
                             <div class="card-body dash-card">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <h4 class="text-sm font-semibold">Delinquency Rate</h4>
+                                        <h4 class="text-sm font-semibold">{{ translate('Delinquency Rate') }}</h4>
                                         <div class="text-2xl font-bold">{{ $loanData['overdue_instalments']['rate'] }}%
                                         </div>
                                     </div>
@@ -119,7 +123,7 @@
                             <div class="card-body dash-card">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <h4 class="text-sm font-semibold">Avg. Credit Score</h4>
+                                        <h4 class="text-sm font-semibold">{{ translate('Avg. Credit Score') }}</h4>
                                         <div class="text-2xl font-bold">{{ round($riskData['credit_scores'], 1) }}</div>
                                     </div>
                                     <div class="bg-blue-100 p-3 rounded-full">
@@ -140,7 +144,7 @@
                             <div class="card-body dash-card">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <h4 class="text-sm font-semibold">Current Liquidity</h4>
+                                        <h4 class="text-sm font-semibold">{{ translate('Current Liquidity') }}</h4>
                                         <div class="text-2xl font-bold"><span
                                                 class="icon-saudi_riyal"></span>{{ number_format($financialData['wallet_balances']->last()['balance']) }}
                                         </div>
@@ -163,7 +167,7 @@
                             <div class="card-body dash-card">
                                 <div class="flex items-center justify-between">
                                     <div>
-                                        <h4 class="text-sm font-semibold">Credit Utilization</h4>
+                                        <h4 class="text-sm font-semibold">{{ translate('Credit Utilization') }}</h4>
                                         <div class="text-2xl font-bold">
                                             {{ $riskData['credit_utilization']['utilization_percent'] }}%</div>
                                     </div>
@@ -186,7 +190,7 @@
                         <!-- Row 1: Loan Flow (wide), Payment Status, Risk Exposure -->
                         <div class="card col-span-1 md:col-span-2 lg:col-span-2">
                             <div class="card-header">
-                                <h3 class="card-title">Loan Flow</h3>
+                                <h3 class="card-title">{{ translate('Loan Flow') }}</h3>
                             </div>
 
                             <div id="loanFlowChart"></div>
@@ -194,66 +198,57 @@
 
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Payment Status</h3>
+                                <h3 class="card-title">{{ translate('Payment Status') }}</h3>
                             </div>
                             <div id="paymentStatusChart"></div>
                         </div>
 
-
-
                         <!-- Row 2: Credit Utilization, Revenue Streams (wide), Wallet Balances -->
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Credit Utilization</h3>
+                                <h3 class="card-title">{{ translate('Credit Utilization') }}</h3>
                             </div>
                             <div id="creditUtilizationChart"></div>
                         </div>
 
                         <div class="card col-span-1 md:col-span-2 lg:col-span-2">
                             <div class="card-header">
-                                <h3 class="card-title">Revenue Streams</h3>
+                                <h3 class="card-title">{{ translate('Revenue Streams') }}</h3>
                             </div>
                             <div id="revenueChart"></div>
                         </div>
 
                         <div class="card col-span-1 md:col-span-2 lg:col-span-2">
                             <div class="card-header">
-                                <h3 class="card-title">Wallet Balances</h3>
+                                <h3 class="card-title">{{ translate('Wallet Balances') }}</h3>
                             </div>
                             <div id="walletChart"></div>
                         </div>
 
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Order Status</h3>
+                                <h3 class="card-title">{{ translate('Order Status') }}</h3>
                             </div>
                             <div id="orderStatusChart"></div>
                         </div>
 
-                        {{-- <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Default Rates</h3>
-                        </div>
-                        <div id="defaultRatesChart"></div>
-                    </div> --}}
-
                         <div class="card col-span-3 md:col-span-2 lg:col-span-3">
                             <div class="card-header">
-                                <h3 class="card-title">Risk Exposure</h3>
+                                <h3 class="card-title">{{ translate('Risk Exposure') }}</h3>
                             </div>
                             <div id="riskExposureChart"></div>
                         </div>
 
                         <div class="card col-span-1 md:col-span-2 lg:col-span-2">
                             <div class="card-header">
-                                <h3 class="card-title">Fulfillment Times</h3>
+                                <h3 class="card-title">{{ translate('Fulfillment Times') }}</h3>
                             </div>
                             <div id="fulfillmentChart"></div>
                         </div>
 
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Settlement Status</h3>
+                                <h3 class="card-title">{{ translate('Settlement Status') }}</h3>
                             </div>
                             <div id="settlementChart"></div>
                         </div>
@@ -266,7 +261,7 @@
                         <!-- Category-wise Product Sales -->
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Category-wise Product Sales</h3>
+                                <h3 class="card-title">{{ translate('Category-wise Product Sales') }}</h3>
                             </div>
                             <div id="categorySalesChart"></div>
                         </div>
@@ -274,12 +269,13 @@
                         <!-- Category-wise Product Stock -->
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Category-wise Product Stock</h3>
+                                <h3 class="card-title">{{ translate('Category-wise Product Stock') }}</h3>
                             </div>
                             <div id="categoryStockChart"></div>
                         </div>
                     </div>
                 </div>
+
             </div>
         </div>
     @endsection

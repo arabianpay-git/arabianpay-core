@@ -1,4 +1,5 @@
-@extends('layouts.base') @section('content')
+@extends('layouts.base')
+@section('content')
     @push('styles')
         <style>
             .choices {
@@ -20,7 +21,7 @@
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
                             <h3 class="card-title">
-                                Support Ticket
+                                {{ translate('Support Ticket') }}
                             </h3>
                         </div>
 
@@ -34,19 +35,19 @@
                                 @endphp
                                 <div class="w-full" id="transfer_request_bulk">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
-                                        <label class="form-label">{{ __('Transfer To') }}</label>
+                                        <label class="form-label">{{ translate('Transfer To') }}</label>
                                         <select name="assigned_to" class="select choices" required>
-                                            <option value="">{{ __('Select User') }}</option>
+                                            <option value="">{{ translate('Select User') }}</option>
                                             @foreach ($employees as $user)
                                                 <option value="{{ $user->id }}">
                                                     @if ($user->is_manager)
                                                         - {{ strtoupper($user->first_name) }}
                                                         {{ strtoupper($user->last_name ?? '') }}
-                                                        ({{ __('Manager') }})
+                                                        ({{ translate('Manager') }})
                                                     @else
                                                         -- {{ strtoupper($user->first_name) }}
                                                         {{ strtoupper($user->last_name ?? '') }}
-                                                        ({{ __('Employee') }})
+                                                        ({{ translate('Employee') }})
                                                     @endif
                                                 </option>
                                             @endforeach
@@ -57,7 +58,7 @@
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
                                         <label class="form-label flex items-center gap-1 max-w-56">
-                                            Subject <span class="text-danger">*</span>
+                                            {{ translate('Subject') }} <span class="text-danger">*</span>
                                         </label>
                                         <input class="input @error('subject') border-red-500 @enderror" name="subject"
                                             type="text" value="{{ old('subject') }}" required />
@@ -71,7 +72,7 @@
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
                                         <label class="form-label flex items-center gap-1 max-w-56">
-                                            Details <span class="text-danger">*</span>
+                                            {{ translate('Details') }} <span class="text-danger">*</span>
                                         </label>
                                         <textarea class="textarea @error('details') border-red-500 @enderror" name="details" rows="4" required>{{ old('details') }}</textarea>
                                     </div>
@@ -83,7 +84,7 @@
                                 <!-- Files (Media Picker) -->
                                 @include('media.multiple', [
                                     'name' => 'files',
-                                    'label' => 'Files (Optional)',
+                                    'label' => translate('Files (Optional)'),
                                     'required' => false,
                                     'value' => old('files'),
                                     'multiple_select' => true,
@@ -92,7 +93,7 @@
                                 <!-- Submit Button -->
                                 <div class="flex justify-end pt-2.5">
                                     <button class="btn btn-primary">
-                                        Create Ticket
+                                        {{ translate('Create Ticket') }}
                                     </button>
                                 </div>
                             </div>
@@ -117,7 +118,7 @@
                     itemSelectText: '',
                     shouldSort: false,
                     placeholder: true,
-                    placeholderValue: '{{ __('Select User') }}'
+                    placeholderValue: '{{ translate('Select User') }}'
                 });
             }
         });

@@ -19,7 +19,7 @@
     <script>
         Swal.fire({
             icon: 'success',
-            title: 'Success',
+            title: '{{ translate('Success') }}',
             text: "{{ session('success') }}",
             toast: true,
             position: 'bottom',
@@ -38,7 +38,7 @@
     <script>
         Swal.fire({
             icon: 'error',
-            title: 'Validation Errors!Error',
+            title: '{{ translate('Validation Errors!') }}',
             html: `{!! implode('<br>', $errors->all()) !!}`,
             toast: true,
             position: 'bottom-end',
@@ -57,7 +57,7 @@
     <script>
         Swal.fire({
             icon: 'error',
-            title: 'Error',
+            title: '{{ translate('Error') }}',
             text: "{{ session('error') }}",
             toast: true,
             position: 'bottom-end',

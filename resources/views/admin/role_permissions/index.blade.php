@@ -10,12 +10,12 @@
             <div class="flex flex-wrap items-center justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        Role Permissions
+                        {{ translate('Role Permissions') }}
                     </h1>
                 </div>
                 <div class="flex items-center gap-2.5">
                     <a class="btn btn-sm btn-light" href="{{ route('role-permissions.create') }}">
-                        Create New Role Permission
+                        {{ translate('Create New Role Permission') }}
                     </a>
                 </div>
             </div>
@@ -26,13 +26,13 @@
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
-                        <h3 class="card-title font-medium text-sm">Roles</h3>
+                        <h3 class="card-title font-medium text-sm">{{ translate('Roles') }}</h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"></i>
-                                    <input data-datatable-search="#role_permission_table" placeholder="Search roles"
-                                        type="text" value="" />
+                                    <input data-datatable-search="#role_permission_table"
+                                        placeholder="{{ translate('Search roles') }}" type="text" value="" />
                                 </label>
                             </div>
                         </div>
@@ -44,11 +44,11 @@
                                 <table class="table table-auto table-border" data-datatable-table="true">
                                     <thead>
                                         <tr>
-                                            <th class="w-[60px] text-center">No</th>
-                                            <th>Department</th>
-                                            <th>Role</th>
-                                            <th>Permissions</th>
-                                            <th>Action</th>
+                                            <th class="w-[60px] text-center">{{ translate('No') }}</th>
+                                            <th>{{ translate('Department') }}</th>
+                                            <th>{{ translate('Role') }}</th>
+                                            <th>{{ translate('Permissions') }}</th>
+                                            <th>{{ translate('Action') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -64,7 +64,6 @@
 
                                             @foreach ($departmentPermissionMap as $departmentId => $permissionsGroup)
                                                 @php
-                                                    // Use preloaded departments to avoid extra queries
                                                     $department = $departments[$departmentId] ?? null;
                                                     $permIds = collect($permissionsGroup)
                                                         ->pluck('permission_id')

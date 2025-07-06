@@ -8,9 +8,11 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label for="department_id" class="block text-sm font-medium text-gray-700">Select Department</label>
+                        <label for="department_id" class="block text-sm font-medium text-gray-700">
+                            {{ translate('Select Department') }}
+                        </label>
                         <select name="department_id" id="department_id" class="select w-full mt-1" required>
-                            <option value="">-- Select Department --</option>
+                            <option value="">{{ translate('-- Select Department --') }}</option>
                             @foreach ($departments as $department)
                                 <option value="{{ $department->id }}">{{ ucfirst($department->name) }}</option>
                             @endforeach
@@ -18,9 +20,11 @@
                     </div>
 
                     <div>
-                        <label for="role_id" class="block text-sm font-medium text-gray-700">Select Role</label>
+                        <label for="role_id" class="block text-sm font-medium text-gray-700">
+                            {{ translate('Select Role') }}
+                        </label>
                         <select name="role_id" id="role_id" class="select w-full mt-1" required disabled>
-                            <option value="">-- Select Role --</option>
+                            <option value="">{{ translate('-- Select Role --') }}</option>
                             {{-- Roles will be loaded dynamically --}}
                         </select>
                     </div>
@@ -30,7 +34,7 @@
 
                 <div class="pt-5">
                     <button type="submit" class="btn btn-primary" disabled id="submit_btn">
-                        Update Permissions
+                        {{ translate('Update Permissions') }}
                     </button>
                 </div>
             </form>

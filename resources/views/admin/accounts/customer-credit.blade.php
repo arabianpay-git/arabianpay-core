@@ -25,16 +25,17 @@
         <div class="container-fixed">
             <!-- Header Section -->
             <div class="mb-8">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Credit Risk Assessment</h1>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">{{ translate('Credit Risk Assessment') }}</h1>
                 <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-4">
 
                     <div class="grid grid-cols-3 lg:grid-cols-1">
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm text-gray-500">Credit Score</p>
+                                    <p class="text-sm text-gray-500">{{ translate('Credit Score') }}</p>
                                     <p class="text-2xl font-bold text-primary-600">
-                                        {{ $creditScore['creditScore']['compositeScore'] }}/100</p>
+                                        {{ $creditScore['creditScore']['compositeScore'] }}/100
+                                    </p>
                                 </div>
                                 <div class="bg-primary-100 p-3 rounded-full">
                                     <svg class="w-6 h-6 text-primary-600" fill="none" stroke="currentColor"
@@ -51,7 +52,7 @@
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm text-gray-500">Risk Level</p>
+                                    <p class="text-sm text-gray-500">{{ translate('Risk Level') }}</p>
                                     <p class="text-2xl font-bold text-yellow-600">{{ $riskLevel }}</p>
                                 </div>
                                 <div class="bg-yellow-100 p-3 rounded-full">
@@ -69,7 +70,7 @@
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm text-gray-500">Business Age</p>
+                                    <p class="text-sm text-gray-500">{{ translate('Business Age') }}</p>
                                     <p class="text-2xl font-bold text-green-600">{{ $businessAge }}</p>
                                 </div>
                                 <div class="bg-green-100 p-3 rounded-full">
@@ -89,38 +90,38 @@
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 <!-- Risk Score Gauge -->
                 <div class="card p-4">
-                    <h3 class="text-lg font-semibold mb-4">Composite Risk Score</h3>
+                    <h3 class="text-lg font-semibold mb-4">{{ translate('Composite Risk Score') }}</h3>
                     <div id="scoreGauge"></div>
                 </div>
 
                 <!-- Score Breakdown Chart -->
                 <div class="card p-4">
-                    <h3 class="text-lg font-semibold mb-4">Score Components</h3>
+                    <h3 class="text-lg font-semibold mb-4">{{ translate('Score Components') }}</h3>
                     <div id="scoreBreakdown"></div>
                 </div>
 
                 <!-- Payment History Timeline -->
                 <div class="card p-4 lg:col-span-2">
-                    <h3 class="text-lg font-semibold mb-4">Payment History</h3>
+                    <h3 class="text-lg font-semibold mb-4">{{ translate('Payment History') }}</h3>
                     <div id="paymentTimeline"></div>
                 </div>
 
                 <!-- Risk Factors Table -->
                 <div class="card p-4">
-                    <h3 class="text-lg font-semibold mb-4">Flagged Risk Factors</h3>
+                    <h3 class="text-lg font-semibold mb-4">{{ translate('Flagged Risk Factors') }}</h3>
                     <div class="overflow-x-auto">
                         <table class="w-full">
                             <tbody>
                                 <tr class="border-b">
-                                    <td class="py-2">Industry Volatility</td>
-                                    <td class="py-2 text-red-600">High Risk</td>
+                                    <td class="py-2">{{ translate('Industry Volatility') }}</td>
+                                    <td class="py-2 text-red-600">{{ translate('High Risk') }}</td>
                                 </tr>
                                 <tr class="border-b">
-                                    <td class="py-2">Debt-to-Revenue Ratio</td>
+                                    <td class="py-2">{{ translate('Debt-to-Revenue Ratio') }}</td>
                                     <td class="py-2 text-yellow-600">1.2:1</td>
                                 </tr>
                                 <tr>
-                                    <td class="py-2">Recent Disputes</td>
+                                    <td class="py-2">{{ translate('Recent Disputes') }}</td>
                                     <td class="py-2 text-red-600">3 Cases</td>
                                 </tr>
                             </tbody>
@@ -130,17 +131,16 @@
 
                 <!-- Compliance Status -->
                 <div class="card p-4">
-                    <h3 class="text-lg font-semibold mb-4">Compliance Status</h3>
+                    <h3 class="text-lg font-semibold mb-4">{{ translate('Compliance Status') }}</h3>
                     <div class="space-y-2">
                         @foreach ($complianceStatus as $status)
                             <div class="flex justify-between items-center mb-2">
-                                <span>{{ $status['name'] }}</span>
-                                <span class="badge {{ $status['badge'] }}">{{ $status['status'] }}</span>
+                                <span>{{ translate($status['name']) }}</span>
+                                <span class="badge {{ $status['badge'] }}">{{ translate($status['status']) }}</span>
                             </div>
                         @endforeach
                     </div>
                 </div>
-
             </div>
         </div>
     </main>

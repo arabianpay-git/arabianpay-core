@@ -1,7 +1,7 @@
 <div class="modal" data-modal="true" id="transfer_request_bulk">
     <div class="modal-content max-w-[600px] top-[10%]">
         <div class="modal-header py-4 px-5">
-            <h1>{{ __('Bulk Transfer Request') }}</h1>
+            <h1>{{ translate('Bulk Transfer Request') }}</h1>
             <button class="btn btn-sm btn-icon btn-light btn-clear" data-modal-dismiss="true">
                 <i class="ki-filled ki-cross"></i>
             </button>
@@ -13,17 +13,17 @@
 
                 {{-- Transfer To --}}
                 <div class="w-full mt-5">
-                    <label class="form-label">{{ __('Transfer To') }}</label>
+                    <label class="form-label">{{ translate('Transfer To') }}</label>
                     <select name="to_user_id" class="select choices" required>
-                        <option value="">{{ __('Select User') }}</option>
+                        <option value="">{{ translate('Select User') }}</option>
                         @foreach ($employees as $user)
                             <option value="{{ $user->id }}">
                                 @if ($user->is_manager)
                                     - {{ strtoupper($user->first_name) }} {{ strtoupper($user->last_name ?? '') }}
-                                    ({{ __('Manager') }})
+                                    ({{ translate('Manager') }})
                                 @else
                                     -- {{ strtoupper($user->first_name) }} {{ strtoupper($user->last_name ?? '') }}
-                                    ({{ __('Employee') }})
+                                    ({{ translate('Employee') }})
                                 @endif
                             </option>
                         @endforeach
@@ -32,8 +32,8 @@
 
                 {{-- Description --}}
                 <div class="w-full mt-5">
-                    <label class="form-label">{{ __('Description') }}</label>
-                    <textarea name="description" class="textarea" rows="3" placeholder="{{ __('Optional') }}"></textarea>
+                    <label class="form-label">{{ translate('Description') }}</label>
+                    <textarea name="description" class="textarea" rows="3" placeholder="{{ translate('Optional') }}"></textarea>
                 </div>
 
                 {{-- Hidden array of IDs --}}
@@ -42,7 +42,7 @@
 
                 {{-- Submit --}}
                 <div class="text-end pt-2">
-                    <button type="submit" class="btn btn-primary">{{ __('Send Bulk Request') }}</button>
+                    <button type="submit" class="btn btn-primary">{{ translate('Send Bulk Request') }}</button>
                 </div>
             </div>
         </form>
@@ -85,7 +85,7 @@
                 itemSelectText: '',
                 shouldSort: false,
                 placeholder: true,
-                placeholderValue: '{{ __('Select User') }}',
+                placeholderValue: '{{ translate('Select User') }}',
             });
         });
     </script>

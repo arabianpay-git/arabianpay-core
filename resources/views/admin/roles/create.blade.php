@@ -10,7 +10,7 @@
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
                             <h3 class="card-title">
-                                Add New Role
+                                {{ translate('Add New Role') }}
                             </h3>
                         </div>
                         <form action="{{ route('roles.store') }}" method="POST">
@@ -20,7 +20,7 @@
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
                                         <label class="form-label flex items-center gap-1 max-w-56">
-                                            Role Name
+                                            {{ translate('Role Name') }}
                                         </label>
                                         <input class="input @error('name') border-red-500 @enderror" name="name"
                                             type="text" value="{{ old('name') }}" required />
@@ -32,7 +32,7 @@
 
                                 <div class="flex justify-end pt-2.5">
                                     <button class="btn btn-primary">
-                                        Save Changes
+                                        {{ translate('Save Changes') }}
                                     </button>
                                 </div>
                             </div>

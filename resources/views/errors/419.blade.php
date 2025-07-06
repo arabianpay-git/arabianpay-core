@@ -8,13 +8,13 @@
                     src="{{ asset('assets/media/illustrations/13.svg') }}">
             </div>
             <h3 class="text-lg font-medium text-gray-900 dark:text-white text-center mb-3">
-                {{ __('Page Expired') }}
+                {{ translate('Page Expired') }}
             </h3>
             <div class="text-sm text-center text-gray-700 dark:text-gray-300 mb-7">
-                {{ __('The page has expired due to inactivity. Please refresh and try again.') }}
+                {{ translate('The page has expired due to inactivity. Please refresh and try again.') }}
             </div>
             <a class="btn btn-primary inline-flex justify-center" href="{{ url('/') }}">
-                {{ __('Go to Home') }}
+                {{ translate('Go to Home') }}
             </a>
         </div>
     </div>

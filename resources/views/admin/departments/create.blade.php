@@ -42,7 +42,7 @@
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
                             <h3 class="card-title">
-                                Add New Department
+                                {{ translate('Add New Department') }}
                             </h3>
                         </div>
                         <form action="{{ route('departments.store') }}" method="POST">
@@ -51,7 +51,7 @@
 
                                 <div class="w-full">
                                     <label class="form-label flex items-center gap-1 max-w-56" for="name">
-                                        Name <span class="text-red-600">*</span>
+                                        {{ translate('Name') }} <span class="text-red-600">*</span>
                                     </label>
                                     <input id="name" class="input @error('name') border-red-500 @enderror"
                                         name="name" type="text" value="{{ old('name') }}" required />
@@ -60,10 +60,10 @@
                                     @enderror
                                 </div>
 
-                                <!-- Email -->
+                                <!-- Roles -->
                                 <div class="w-full">
                                     <label class="form-label flex items-center gap-1 max-w-56" for="role">
-                                        Roles <span class="text-red-600">*</span>
+                                        {{ translate('Roles') }} <span class="text-red-600">*</span>
                                     </label>
                                     <select name="role[]" id="role" class="select w-full" multiple>
                                         @foreach ($roles as $item)
@@ -87,7 +87,7 @@
                                             <label class="flex items-center gap-1 text-sm switch">
                                                 <input type="checkbox" class="select-all-perms"
                                                     data-target="perm-group-{{ $loop->index }}">
-                                                Select All
+                                                {{ translate('Select All') }}
                                             </label>
                                         </div>
 
@@ -116,7 +116,7 @@
 
                                 <div class="flex justify-end pt-2.5">
                                     <button type="submit" class="btn btn-primary">
-                                        Save Changes
+                                        {{ translate('Save Changes') }}
                                     </button>
                                 </div>
                             </div>

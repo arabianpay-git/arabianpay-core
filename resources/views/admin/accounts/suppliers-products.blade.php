@@ -30,14 +30,14 @@
                     <div class="card">
                         <div class="card-header flex-wrap gap-2">
                             <h3 class="card-title font-medium text-sm">
-                                Supplier Products
+                                {{ translate('Supplier Products') }}
                             </h3>
                             <div class="flex flex-wrap gap-2 lg:gap-5">
                                 <div class="flex">
                                     <label class="input input-sm">
                                         <i class="ki-filled ki-magnifier"> </i>
-                                        <input data-datatable-search="#team_crew_table" placeholder="Search users"
-                                            type="text" value="" />
+                                        <input data-datatable-search="#team_crew_table"
+                                            placeholder="{{ translate('Search users') }}" type="text" value="" />
                                     </label>
                                 </div>
                             </div>
@@ -49,12 +49,12 @@
                                         <thead>
                                             <tr>
                                                 <th class="text-center">
-                                                    No
+                                                    {{ translate('No') }}
                                                 </th>
                                                 <th class="">
                                                     <span class="sort asc">
                                                         <span class="sort-label font-normal text-gray-700">
-                                                            Thumbnail
+                                                            {{ translate('Thumbnail') }}
                                                         </span>
                                                         <span class="sort-icon"> </span>
                                                     </span>
@@ -63,7 +63,7 @@
                                                 <th class="">
                                                     <span class="sort asc">
                                                         <span class="sort-label font-normal text-gray-700">
-                                                            Name
+                                                            {{ translate('Name') }}
                                                         </span>
                                                         <span class="sort-icon"> </span>
                                                     </span>
@@ -72,17 +72,7 @@
                                                 <th class="">
                                                     <span class="sort asc">
                                                         <span class="sort-label font-normal text-gray-700">
-                                                            Unit Price
-                                                        </span>
-                                                        <span class="sort-icon"> </span>
-                                                    </span>
-                                                </th>
-
-
-                                                <th class="">
-                                                    <span class="sort asc">
-                                                        <span class="sort-label font-normal text-gray-700">
-                                                            Stock
+                                                            {{ translate('Unit Price') }}
                                                         </span>
                                                         <span class="sort-icon"> </span>
                                                     </span>
@@ -91,7 +81,7 @@
                                                 <th class="">
                                                     <span class="sort asc">
                                                         <span class="sort-label font-normal text-gray-700">
-                                                            Status
+                                                            {{ translate('Stock') }}
                                                         </span>
                                                         <span class="sort-icon"> </span>
                                                     </span>
@@ -100,7 +90,16 @@
                                                 <th class="">
                                                     <span class="sort asc">
                                                         <span class="sort-label font-normal text-gray-700">
-                                                            Published
+                                                            {{ translate('Status') }}
+                                                        </span>
+                                                        <span class="sort-icon"> </span>
+                                                    </span>
+                                                </th>
+
+                                                <th class="">
+                                                    <span class="sort asc">
+                                                        <span class="sort-label font-normal text-gray-700">
+                                                            {{ translate('Published') }}
                                                         </span>
                                                         <span class="sort-icon"> </span>
                                                     </span>
@@ -109,7 +108,7 @@
                                                 <th class="">
                                                     <span class="sort">
                                                         <span class="sort-label font-normal text-gray-700">
-                                                            Created At
+                                                            {{ translate('Created At') }}
                                                         </span>
                                                         <span class="sort-icon"> </span>
                                                     </span>
@@ -118,7 +117,7 @@
                                                 <th class="">
                                                     <span class="sort">
                                                         <span class="sort-label font-normal text-gray-700">
-                                                            Action
+                                                            {{ translate('Action') }}
                                                         </span>
                                                         <span class="sort-icon"> </span>
                                                     </span>
@@ -135,7 +134,7 @@
                                                                 alt="{{ $product->name }}"
                                                                 class="w-10 h-10 object-contain border-7">
                                                         @else
-                                                            <span class="text-gray-400">N/A</span>
+                                                            <span class="text-gray-400">{{ translate('N/A') }}</span>
                                                         @endif
                                                     </td>
 
@@ -150,7 +149,6 @@
                                                         </div>
                                                     </td>
 
-
                                                     <td>{{ $product->unit_price ?? '—' }}</td>
 
                                                     <td>{{ $product->current_stock ?? 0 }}</td>
@@ -158,20 +156,20 @@
                                                     <td>
                                                         @if ($product->approved == 'approved')
                                                             <span
-                                                                class="badge badge-sm badge-outline badge-success">{{ $product->approved }}</span>
+                                                                class="badge badge-sm badge-outline badge-success">{{ translate($product->approved) }}</span>
                                                         @else
                                                             <span
-                                                                class="badge badge-sm badge-outline badge-danger">{{ $product->approved }}</span>
+                                                                class="badge badge-sm badge-outline badge-danger">{{ translate($product->approved) }}</span>
                                                         @endif
                                                     </td>
 
                                                     <td>
                                                         @if ($product->published == 'published')
                                                             <span
-                                                                class="badge badge-sm badge-outline badge-success">{{ $product->published }}</span>
+                                                                class="badge badge-sm badge-outline badge-success">{{ translate($product->published) }}</span>
                                                         @else
                                                             <span
-                                                                class="badge badge-sm badge-outline badge-danger">{{ $product->published }}</span>
+                                                                class="badge badge-sm badge-outline badge-danger">{{ translate($product->published) }}</span>
                                                         @endif
                                                     </td>
 
@@ -204,6 +202,7 @@
             </div>
             <!-- end: grid -->
         </div>
+
         <!-- End of Container -->
     </main>
 @endsection

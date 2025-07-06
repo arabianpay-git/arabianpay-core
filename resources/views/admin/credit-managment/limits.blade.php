@@ -6,7 +6,7 @@
                 <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                     <div class="flex flex-col justify-center gap-2">
                         <h1 class="text-xl font-medium leading-none text-gray-900">
-                            {{ __('Customers Credit Limit') }}
+                            {{ translate('Customers Credit Limit') }}
                         </h1>
                     </div>
                 </div>
@@ -17,18 +17,19 @@
                     <div class="card card-grid min-w-full">
                         <div class="card-header flex-wrap gap-2">
                             <h3 class="card-title font-medium text-sm">
-                                {{ __('Credit Limits') }}
+                                {{ translate('Credit Limits') }}
                             </h3>
                             <div class="flex flex-wrap gap-2 lg:gap-5 items-center">
                                 <div class="flex">
                                     <form method="GET" action="{{ route('creditLimit') }}" class="flex">
                                         <label class="input input-sm">
                                             <i class="ki-filled ki-magnifier"></i>
-                                            <input name="search" type="text" placeholder="{{ __('Search by user') }}"
+                                            <input name="search" type="text"
+                                                placeholder="{{ translate('Search by user') }}"
                                                 value="{{ request('search') }}" />
                                         </label>
                                         <button type="submit" class="btn btn-sm btn-primary" style="margin-left: 5px;">
-                                            {{ __('Search') }}
+                                            {{ translate('Search') }}
                                         </button>
                                     </form>
                                 </div>
@@ -40,15 +41,16 @@
                                     <table class="table table-auto table-border" data-datatable-table="true">
                                         <thead>
                                             <tr>
-                                                <th class="w-[60px] text-center">ID</th>
-                                                <th>User Name</th>
-                                                <th>Limit Arabinpay After</th>
-                                                <th>Limit Arabinpay Befor</th>
-                                                <th>Simah Limit</th>
-                                                <th>Created At</th>
-                                                {{-- <th>Action</th> --}}
+                                                <th class="w-[60px] text-center">{{ translate('ID') }}</th>
+                                                <th>{{ translate('User Name') }}</th>
+                                                <th>{{ translate('Limit Arabinpay After') }}</th>
+                                                <th>{{ translate('Limit Arabinpay Before') }}</th>
+                                                <th>{{ translate('Simah Limit') }}</th>
+                                                <th>{{ translate('Created At') }}</th>
+                                                {{-- <th>{{ translate('Action') }}</th> --}}
                                             </tr>
                                         </thead>
+
                                         <tbody>
                                             @foreach ($creditLimits as $item)
                                                 <tr>

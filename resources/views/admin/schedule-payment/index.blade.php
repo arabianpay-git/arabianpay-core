@@ -10,7 +10,7 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        {{ $type }} Payments
+                        {{ $type }} {{ translate('Payments') }}
                     </h1>
                 </div>
             </div>
@@ -22,20 +22,20 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            {{ $type }} Payments
+                            {{ $type }} {{ translate('Payments') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#team_crew_table" placeholder="Search users"
-                                        type="text" value="" />
+                                    <input data-datatable-search="#team_crew_table"
+                                        placeholder="{{ translate('Search users') }}" type="text" value="" />
                                 </label>
                             </div>
                             <div class="flex justify-end">
                                 <button id="bulk-transfer-btn" class="btn btn-sm btn-primary hidden"
                                     data-modal-toggle="#transfer_request_bulk">
-                                    <i class="ki-filled ki-disconnect"></i> {{ __('Bulk Transfer') }}
+                                    <i class="ki-filled ki-disconnect"></i> {{ translate('Bulk Transfer') }}
                                 </button>
                             </div>
                         </div>
@@ -55,14 +55,14 @@
                                                 <input class="checkbox checkbox-sm" data-datatable-check="true"
                                                     type="checkbox" id="select-all-checkbox">
                                             </th>
-                                            <th class="w-[60px] text-center">No</th>
-                                            <th class="w-[60px] text-center">ID</th>
-                                            <th class="text-left">Instalment Number</th>
-                                            <th class="text-left">Due Date</th>
-                                            <th class="text-left">Instalment Amount</th>
-                                            <th class="text-left">Payment Status</th>
-                                            <th class="text-left">Assigned To</th>
-                                            <th class="text-left">Action</th>
+                                            <th class="w-[60px] text-center">{{ translate('No') }}</th>
+                                            <th class="w-[60px] text-center">{{ translate('ID') }}</th>
+                                            <th class="text-left">{{ translate('Instalment Number') }}</th>
+                                            <th class="text-left">{{ translate('Due Date') }}</th>
+                                            <th class="text-left">{{ translate('Instalment Amount') }}</th>
+                                            <th class="text-left">{{ translate('Payment Status') }}</th>
+                                            <th class="text-left">{{ translate('Assigned To') }}</th>
+                                            <th class="text-left">{{ translate('Action') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -78,21 +78,21 @@
                                                 </td>
                                                 <td>{{ $item->instalment_number }}</td>
                                                 <td>{{ \Carbon\Carbon::parse($item->due_date)->format('d-m-Y') }}</td>
-                                                <td>{{ number_format($item->instalment_amount, 2) }} SAR</td>
+                                                <td>{{ number_format($item->instalment_amount, 2) }}
+                                                    {{ translate('SAR') }}</td>
                                                 <td>
                                                     <span
                                                         class="badge badge-sm badge-outline 
-                                                            @if ($item->payment_status == 'paid') badge-success 
-                                                            @elseif($item->payment_status == 'pending') badge-warning 
-                                                            @elseif($item->payment_status == 'late') badge-danger 
-                                                            @elseif($item->payment_status == 'failed') badge-secondary 
-                                                            @else badge-info @endif">
+                                                    @if ($item->payment_status == 'paid') badge-success 
+                                                    @elseif($item->payment_status == 'pending') badge-warning 
+                                                    @elseif($item->payment_status == 'late') badge-danger 
+                                                    @elseif($item->payment_status == 'failed') badge-secondary 
+                                                    @else badge-info @endif">
                                                         {{ ucfirst($item->payment_status) }}
                                                     </span>
                                                 </td>
-
                                                 <td>
-                                                    {{ $item->assigned ? $item->assigned->first_name . ' ' . $item->assigned->last_name : __('--Not Assigned--') }}
+                                                    {{ $item->assigned ? $item->assigned->first_name . ' ' . $item->assigned->last_name : translate('--Not Assigned--') }}
                                                 </td>
                                                 <td>
                                                     <button
@@ -119,6 +119,7 @@
             </div>
         </div>
     </main>
+
     @include('admin.components.transfer-detail')
 @endsection
 

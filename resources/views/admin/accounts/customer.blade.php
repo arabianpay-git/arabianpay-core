@@ -10,7 +10,7 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        Customers
+                        {{ translate('Customers') }}
                     </h1>
                 </div>
             </div>
@@ -22,7 +22,7 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            Customers
+                            {{ translate('Customers') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
@@ -35,7 +35,7 @@
                             <div class="flex justify-end">
                                 <button id="bulk-transfer-btn" class="btn btn-sm btn-primary hidden"
                                     data-modal-toggle="#transfer_request_bulk">
-                                    <i class="ki-filled ki-disconnect"></i> {{ __('Bulk Transfer') }}
+                                    <i class="ki-filled ki-disconnect"></i> {{ translate('Bulk Transfer') }}
                                 </button>
                             </div>
                             @include('admin.components.transfer-request-bulk', [
@@ -56,22 +56,13 @@
                                                     type="checkbox" id="select-all-checkbox">
                                             </th>
                                             <th class="w-[60px] text-center">
-                                                ID
+                                                {{ translate('ID') }}
                                             </th>
 
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        User Info
-                                                    </span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-
-                                            <th class="">
-                                                <span class="sort asc">
-                                                    <span class="sort-label font-normal text-gray-700">
-                                                        Business Data
+                                                        {{ translate('User Info') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -80,7 +71,16 @@
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Value of Goods
+                                                        {{ translate('Business Data') }}
+                                                    </span>
+                                                    <span class="sort-icon"> </span>
+                                                </span>
+                                            </th>
+
+                                            <th class="">
+                                                <span class="sort asc">
+                                                    <span class="sort-label font-normal text-gray-700">
+                                                        {{ translate('Value of Goods') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -89,7 +89,7 @@
                                             <th class="">
                                                 <span class="sort">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Status
+                                                        {{ translate('Status') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -98,7 +98,7 @@
                                             <th class="">
                                                 <span class="sort">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Joining Date
+                                                        {{ translate('Joining Date') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -107,7 +107,7 @@
                                             <th class="">
                                                 <span class="sort">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Assigned To
+                                                        {{ translate('Assigned To') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -116,13 +116,14 @@
                                             <th class="">
                                                 <span class="sort">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Action
+                                                        {{ translate('Action') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
                                         </tr>
                                     </thead>
+
                                     <tbody>
                                         @foreach ($customers as $item)
                                             <tr>
@@ -150,7 +151,7 @@
                                                         {{ $item->user?->business_name }}
                                                         <br>
                                                         <small class="text-gray-500">
-                                                            — CR Number: {{ $item->cr_number ?? '—' }}
+                                                            — {{ translate('CR Number') }}: {{ $item->cr_number ?? '—' }}
                                                         </small>
                                                         <br />
                                                         <small class="text-gray-500">
@@ -173,7 +174,7 @@
                                                     <div class="whitespace-nowrap">
                                                         <span class="icon-saudi_riyal"></span>
                                                         {{ number_format($newCreditLimit) }}
-                                                        <small class="text-gray-500">(Available)</small>
+                                                        <small class="text-gray-500">({{ translate('Available') }})</small>
                                                         <br>
                                                         <small class="text-gray-500">
                                                             — Used:
@@ -198,7 +199,7 @@
                                                 <td>{{ $item->created_at->format('d M Y') }}</td>
 
                                                 <td>
-                                                    {{ $item->assigned ? $item->assigned->first_name . ' ' . $item->assigned->last_name : __('--Not Assigned--') }}
+                                                    {{ $item->assigned ? $item->assigned->first_name . ' ' . $item->assigned->last_name : translate('--Not Assigned--') }}
                                                 </td>
 
                                                 <td>

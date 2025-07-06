@@ -72,12 +72,12 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        {{ __('Product Bulk Upload') }}
+                        {{ translate('Product Bulk Upload') }}
                     </h1>
                 </div>
                 <div class="flex items-center gap-2.5">
                     <a class="btn btn-sm btn-light" href="{{ route('products.create') }}">
-                        {{ __('Create New Product') }}
+                        {{ translate('Create New Product') }}
                     </a>
                 </div>
             </div>
@@ -91,12 +91,12 @@
                     <div class="card-header flex-wrap gap-2">
                         <div class="flex items-center justify-between w-full">
                             <h3 class="card-title font-medium text-sm">
-                                {{ __('Products Upload Form') }}
+                                {{ translate('Products Upload Form') }}
                             </h3>
                             <a href="{{ asset('assets/media/sample-product.xlsx') }}" download="sample-product.xlsx"
                                 class="btn btn-sm btn-light flex items-center gap-1">
                                 <i class="ki-filled ki-files"></i>
-                                {{ __('Sample File') }}
+                                {{ translate('Sample File') }}
                             </a>
 
                         </div>
@@ -112,7 +112,7 @@
                                                 <i class="ki-filled ki-information-4 text-2xl text-red-600 mt-1"></i>
                                                 <div>
                                                     <span class="font-semibold block mb-2">
-                                                        {{ __('Bulk upload failed with the following errors:') }}
+                                                        {{ translate('Bulk upload failed with the following errors:') }}
                                                     </span>
                                                     <ul class="list-disc pl-5 space-y-1 text-sm">
                                                         @foreach (session('bulk_errors') as $error)
@@ -138,13 +138,13 @@
                                                         xmlns="http://www.w3.org/2000/svg">
                                                         <path
                                                             d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z"
                                                             fill=""></path>
                                                         <path
                                                             d="M16.25 2.89711C19.8081 0.842838 24.1919 0.842837 27.75 2.89711L37.4006 8.46891C40.9587 10.5232 43.1506 14.3196 43.1506
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937
-                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z"
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z"
                                                             stroke=""></path>
                                                     </svg>
                                                     <div
@@ -184,7 +184,7 @@
                                     </button>
 
                                     <input type="text" id="fileNameDisplay" class="input w-full"
-                                        placeholder="{{ __('Click to select excel file') }}" readonly
+                                        placeholder="{{ translate('Click to select excel file') }}" readonly
                                         style="padding-inline-start: 2.75rem;">
 
                                     <input type="file" id="fileInput" name="file" class="hidden"
@@ -197,7 +197,7 @@
                                 <div class="flex items-center gap-4 mt-4">
                                     <button type="submit" class="btn btn-sm btn-outline btn-primary">
                                         <i class="ki-filled ki-exit-up"></i>
-                                        {{ __('Upload Now') }}
+                                        {{ translate('Upload Now') }}
                                     </button>
                                 </div>
                             </form>
@@ -209,7 +209,7 @@
                     <div class="card card-grid min-w-full">
                         <div class="card-header flex-wrap gap-2">
                             <h3 class="card-title font-medium text-sm">
-                                {{ __('Uploaded Products Preview') }}
+                                {{ translate('Uploaded Products Preview') }}
                             </h3>
                         </div>
                         <div class="card-body mt-8">
@@ -222,16 +222,24 @@
                                         <table class="min-w-full border border-gray-300 bg-white" id="editable-table">
                                             <thead class="bg-gray-100 text-gray-700 text-sm font-semibold">
                                                 <tr>
-                                                    <th class="border px-4 py-2" data-col="0">{{ __('Name') }}</th>
-                                                    <th class="border px-4 py-2" data-col="1">{{ __('Unit Price') }}
+                                                    <th class="border px-4 py-2" data-col="0">{{ translate('Name') }}
                                                     </th>
-                                                    <th class="border px-4 py-2" data-col="2">{{ __('Description') }}
+                                                    <th class="border px-4 py-2" data-col="1">
+                                                        {{ translate('Unit Price') }}
                                                     </th>
-                                                    <th class="border px-4 py-2" data-col="3">{{ __('Unit') }}</th>
-                                                    <th class="border px-4 py-2" data-col="4">{{ __('Stock') }}</th>
-                                                    <th class="border px-4 py-2" data-col="5">{{ __('Category') }}</th>
-                                                    <th class="border px-4 py-2" data-col="6">{{ __('Brand') }}</th>
-                                                    <th class="border px-4 py-2" data-col="7">{{ __('Thumbnail') }}
+                                                    <th class="border px-4 py-2" data-col="2">
+                                                        {{ translate('Description') }}
+                                                    </th>
+                                                    <th class="border px-4 py-2" data-col="3">{{ translate('Unit') }}
+                                                    </th>
+                                                    <th class="border px-4 py-2" data-col="4">{{ translate('Stock') }}
+                                                    </th>
+                                                    <th class="border px-4 py-2" data-col="5">
+                                                        {{ translate('Category') }}</th>
+                                                    <th class="border px-4 py-2" data-col="6">{{ translate('Brand') }}
+                                                    </th>
+                                                    <th class="border px-4 py-2" data-col="7">
+                                                        {{ translate('Thumbnail') }}
                                                     </th>
                                                 </tr>
                                             </thead>
@@ -263,7 +271,7 @@
                                                             <select name="products[{{ $rowIndex }}][category_id]"
                                                                 class="w-full text-sm rounded border-gray-300 select"
                                                                 required>
-                                                                <option value="">{{ __('Select Category') }}
+                                                                <option value="">{{ translate('Select Category') }}
                                                                 </option>
                                                                 @foreach ($categories as $category)
                                                                     <option value="{{ $category->id }}"
@@ -278,7 +286,8 @@
                                                             <select name="products[{{ $rowIndex }}][brand_id]"
                                                                 class="w-full text-sm rounded border-gray-300 select"
                                                                 required>
-                                                                <option value="">{{ __('Select Brand') }}</option>
+                                                                <option value="">{{ translate('Select Brand') }}
+                                                                </option>
                                                                 @foreach ($brands as $brand)
                                                                     <option value="{{ $brand->id }}"
                                                                         {{ old("products.$rowIndex.brand_id") == $brand->id ? 'selected' : '' }}>
@@ -306,7 +315,7 @@
                                             <div class="w-full">
                                                 <select class="w-full border border-gray-300 rounded px-3 py-2"
                                                     name="user_id" id="user_id" required>
-                                                    <option value="">{{ __('Select Merchant') }}</option>
+                                                    <option value="">{{ translate('Select Merchant') }}</option>
                                                     @foreach ($merchants as $merchant)
                                                         <option value="{{ $merchant->id }}"
                                                             {{ old('user_id') == $merchant->id ? 'selected' : '' }}>
@@ -322,7 +331,7 @@
 
                                         <div class="mt-4 p-2 flex justify-end" style="margin-right: 10px;">
                                             <button type="submit" class="btn btn-sm btn-outline btn-primary">
-                                                {{ __('Submit Product') }}
+                                                {{ translate('Submit Product') }}
                                             </button>
                                         </div>
 
@@ -335,7 +344,7 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            {{ __('Products Example') }}
+                            {{ translate('Products Example') }}
                         </h3>
                     </div>
                     <div class="card-body">
@@ -345,11 +354,11 @@
                                     <thead>
                                         <tr>
                                             <th>
-                                                {{ __('Column Name') }}
+                                                {{ translate('Column Name') }}
                                             </th>
 
                                             <th class="text-center">
-                                                {{ __('Description') }}
+                                                {{ translate('Description') }}
                                             </th>
                                         </tr>
                                     </thead>
@@ -358,24 +367,24 @@
                                             <td class="px-4 py-3 text-sm font-medium text-gray-800">Product Name <span
                                                     class="text-danger">*</span></td>
                                             <td class="px-4 py-3 text-sm text-gray-700">
-                                                {{ __('The product’s display name.') }} <br>
-                                                <strong>{{ __('Example:') }}</strong> <code>T-Shirt</code>
+                                                {{ translate('The product’s display name.') }} <br>
+                                                <strong>{{ translate('Example:') }}</strong> <code>T-Shirt</code>
                                             </td>
                                         </tr>
                                         <tr>
                                             <td class="px-4 py-3 text-sm font-medium text-gray-800">Unit Price <span
                                                     class="text-danger">*</span></td>
                                             <td class="px-4 py-3 text-sm text-gray-700">
-                                                {{ __('Selling price for one unit (decimal).') }}<br>
-                                                <strong>{{ __('Example:') }}</strong> <code>100.00</code>
+                                                {{ translate('Selling price for one unit (decimal).') }}<br>
+                                                <strong>{{ translate('Example:') }}</strong> <code>100.00</code>
                                             </td>
                                         </tr>
 
                                         <tr>
                                             <td class="px-4 py-3 text-sm font-medium text-gray-800">Description</td>
                                             <td class="px-4 py-3 text-sm text-gray-700">
-                                                {{ __('A brief description or details about the product (optional).') }}<br>
-                                                <strong>{{ __('Example:') }}</strong> <code>High quality cotton
+                                                {{ translate('A brief description or details about the product (optional).') }}<br>
+                                                <strong>{{ translate('Example:') }}</strong> <code>High quality cotton
                                                     t-shirt</code>
                                             </td>
                                         </tr>
@@ -383,8 +392,9 @@
                                             <td class="px-4 py-3 text-sm font-medium text-gray-800">Unit<span
                                                     class="text-danger">*</span></td>
                                             <td class="px-4 py-3 text-sm text-gray-700">
-                                                {{ __('The unit of measurement for the product.') }}<br>
-                                                <strong>{{ __('Example:') }}</strong> <code>PC</code>, <code>KG</code>,
+                                                {{ translate('The unit of measurement for the product.') }}<br>
+                                                <strong>{{ translate('Example:') }}</strong> <code>PC</code>,
+                                                <code>KG</code>,
                                                 <code>Liters</code>
                                             </td>
                                         </tr>
@@ -392,8 +402,8 @@
                                             <td class="px-4 py-3 text-sm font-medium text-gray-800">Stock<span
                                                     class="text-danger">*</span></td>
                                             <td class="px-4 py-3 text-sm text-gray-700">
-                                                {{ __('Initial stock quantity available for the product.') }}<br>
-                                                <strong>{{ __('Example:') }}</strong> <code>100</code>
+                                                {{ translate('Initial stock quantity available for the product.') }}<br>
+                                                <strong>{{ translate('Example:') }}</strong> <code>100</code>
                                             </td>
                                         </tr>
 

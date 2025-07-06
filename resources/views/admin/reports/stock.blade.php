@@ -10,7 +10,7 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        Products Stock
+                        {{ translate('Products Stock') }}
                     </h1>
                 </div>
             </div>
@@ -22,14 +22,14 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            Product Stock
+                            {{ translate('Product Stock') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#team_crew_table" placeholder="Search users"
-                                        type="text" value="" />
+                                    <input data-datatable-search="#team_crew_table"
+                                        placeholder="{{ translate('Search users') }}" type="text" value="" />
                                 </label>
                             </div>
                         </div>
@@ -41,12 +41,12 @@
                                     <thead>
                                         <tr>
                                             <th class="text-center">
-                                                No
+                                                {{ translate('No') }}
                                             </th>
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Thumbnail
+                                                        {{ translate('Thumbnail') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -55,7 +55,7 @@
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Name
+                                                        {{ translate('Name') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -64,17 +64,7 @@
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Unit Price
-                                                    </span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-
-
-                                            <th class="">
-                                                <span class="sort asc">
-                                                    <span class="sort-label font-normal text-gray-700">
-                                                        Stock
+                                                        {{ translate('Unit Price') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -83,12 +73,20 @@
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Status
+                                                        {{ translate('Stock') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
 
+                                            <th class="">
+                                                <span class="sort asc">
+                                                    <span class="sort-label font-normal text-gray-700">
+                                                        {{ translate('Status') }}
+                                                    </span>
+                                                    <span class="sort-icon"> </span>
+                                                </span>
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -101,7 +99,7 @@
                                                             alt="{{ $product->name }}"
                                                             class="w-10 h-10 object-contain border-7">
                                                     @else
-                                                        <span class="text-gray-400">N/A</span>
+                                                        <span class="text-gray-400">{{ translate('N/A') }}</span>
                                                     @endif
                                                 </td>
 
@@ -115,27 +113,29 @@
                                                     </div>
                                                 </td>
 
-
-                                                <td><span class="icon-saudi_riyal"></span> {{ $product->unit_price ?? '—' }}
-                                                </td>
+                                                <td><span class="icon-saudi_riyal"></span>
+                                                    {{ $product->unit_price ?? '—' }}</td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        <strong>Stock:</strong>
-                                                        {{ number_format($product->current_stock) ?? 'N/A' }}
+                                                        <strong>{{ translate('Stock:') }}</strong>
+                                                        {{ number_format($product->current_stock) ?? translate('N/A') }}
                                                         <br>
                                                         <small class="text-gray-500">
-                                                            <strong>SKU:</strong> {{ $product->sku ?? 'N/A' }}
+                                                            <strong>{{ translate('SKU:') }}</strong>
+                                                            {{ $product->sku ?? translate('N/A') }}
                                                         </small>
                                                     </div>
                                                 </td>
 
                                                 <td>
                                                     @if ($product->published == 'published')
-                                                        <span
-                                                            class="badge badge-sm badge-outline badge-success">{{ $product->published }}</span>
+                                                        <span class="badge badge-sm badge-outline badge-success">
+                                                            {{ translate($product->published) }}
+                                                        </span>
                                                     @else
-                                                        <span
-                                                            class="badge badge-sm badge-outline badge-danger">{{ $product->published }}</span>
+                                                        <span class="badge badge-sm badge-outline badge-danger">
+                                                            {{ translate($product->published) }}
+                                                        </span>
                                                     @endif
                                                 </td>
                                             </tr>

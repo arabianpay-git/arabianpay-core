@@ -6,7 +6,7 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        {{ __('Real-Time Alerts') }}
+                        {{ translate('Real-Time Alerts') }}
                     </h1>
                 </div>
             </div>
@@ -17,13 +17,13 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            {{ __('Alerts') }}
+                            {{ translate('Alerts') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#alerts_table" placeholder="{{ __('Search') }}"
+                                    <input data-datatable-search="#alerts_table" placeholder="{{ translate('Search') }}"
                                         type="text" value="" />
                                 </label>
                             </div>
@@ -37,11 +37,11 @@
                                     <thead>
                                         <tr>
                                             <th class="w-[60px] text-center">ID</th>
-                                            <th>{{ __('User') }}</th>
-                                            <th>{{ __('Risk Score') }}</th>
-                                            <th>{{ __('Activity') }}</th>
-                                            <th>{{ __('Transaction') }}</th>
-                                            <th>{{ __('Created At') }}</th>
+                                            <th>{{ translate('User') }}</th>
+                                            <th>{{ translate('Risk Score') }}</th>
+                                            <th>{{ translate('Activity') }}</th>
+                                            <th>{{ translate('Transaction') }}</th>
+                                            <th>{{ translate('Created At') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>

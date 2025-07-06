@@ -7,7 +7,7 @@
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
                             <h3 class="card-title">
-                                Add New Business Type
+                                {{ translate('Add New Business Type') }}
                             </h3>
                         </div>
 
@@ -17,7 +17,7 @@
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
                                         <label class="form-label flex items-center gap-1 max-w-56">
-                                            Business Type <span class="text-danger">*</span>
+                                            {{ translate('Business Type') }} <span class="text-danger">*</span>
                                         </label>
                                         <input class="input @error('name') border-red-500 @enderror" name="name"
                                             type="text" value="{{ old('name') }}" required />
@@ -30,33 +30,33 @@
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
                                         <label class="form-label flex items-center gap-1 max-w-56">
-                                            Risk Level <span class="text-danger">*</span>
+                                            {{ translate('Risk Level') }} <span class="text-danger">*</span>
                                         </label>
                                         <select class="input @error('risk_level') border-red-500 @enderror"
                                             name="risk_level" required>
                                             <option value=""
                                                 {{ old('risk_level', $businessType->risk_level ?? '') == '' ? 'selected' : '' }}>
-                                                Select risk level
+                                                {{ translate('Select risk level') }}
                                             </option>
                                             <option value="low"
                                                 {{ old('risk_level', $businessType->risk_level ?? '') == 'low' ? 'selected' : '' }}>
-                                                Low
+                                                {{ translate('Low') }}
                                             </option>
                                             <option value="medium-low"
                                                 {{ old('risk_level', $businessType->risk_level ?? '') == 'medium-low' ? 'selected' : '' }}>
-                                                Medium Low
+                                                {{ translate('Medium Low') }}
                                             </option>
                                             <option value="medium"
                                                 {{ old('risk_level', $businessType->risk_level ?? '') == 'medium' ? 'selected' : '' }}>
-                                                Medium
+                                                {{ translate('Medium') }}
                                             </option>
                                             <option value="high"
                                                 {{ old('risk_level', $businessType->risk_level ?? '') == 'high' ? 'selected' : '' }}>
-                                                High
+                                                {{ translate('High') }}
                                             </option>
                                             <option value="very-high"
                                                 {{ old('risk_level', $businessType->risk_level ?? '') == 'very-high' ? 'selected' : '' }}>
-                                                Very High
+                                                {{ translate('Very High') }}
                                             </option>
                                         </select>
                                     </div>
@@ -65,21 +65,20 @@
                                     @enderror
                                 </div>
 
-
                                 <div class="flex gap-2.5">
                                     <div class="w-full">
                                         <div class="flex items-baseline flex-wrap gap-2.5">
                                             <label class="form-label flex items-center gap-1 max-w-56">
-                                                Featured
+                                                {{ translate('Featured') }}
                                             </label>
                                             <select class="input @error('featured') border-red-500 @enderror"
                                                 name="featured">
-                                                <option value="">Select One Option</option>
+                                                <option value="">{{ translate('Select One Option') }}</option>
                                                 <option value="true" {{ old('featured') == 'true' ? 'selected' : '' }}>
-                                                    Yes
+                                                    {{ translate('Yes') }}
                                                 </option>
                                                 <option value="false" {{ old('featured') == 'false' ? 'selected' : '' }}>
-                                                    No
+                                                    {{ translate('No') }}
                                                 </option>
                                             </select>
                                         </div>
@@ -88,11 +87,10 @@
                                         @enderror
                                     </div>
 
-
                                     <div class="w-full">
                                         <div class="flex items-baseline flex-wrap gap-2.5">
                                             <label class="form-label flex items-center gap-1 max-w-56">
-                                                Order Level
+                                                {{ translate('Order Level') }}
                                             </label>
                                             <input class="input @error('order_level') border-red-500 @enderror"
                                                 name="order_level" type="number" value="{{ old('order_level') }}" />
@@ -104,17 +102,16 @@
                                 </div>
 
                                 <!-- Icon Picker -->
-
                                 @include('media.single', [
                                     'name' => 'icon',
-                                    'label' => 'Business Type Icon',
+                                    'label' => translate('Business Type Icon'),
                                     'required' => false,
                                     'value' => old('icon'),
                                 ])
 
                                 @include('media.single', [
                                     'name' => 'banner',
-                                    'label' => 'Business Type Banner',
+                                    'label' => translate('Business Type Banner'),
                                     'required' => false,
                                     'value' => old('banner'),
                                 ])
@@ -122,7 +119,7 @@
                                 <!-- Submit Button -->
                                 <div class="flex justify-end pt-2.5">
                                     <button class="btn btn-primary">
-                                        Save Changes
+                                        {{ translate('Save Changes') }}
                                     </button>
                                 </div>
                             </div>

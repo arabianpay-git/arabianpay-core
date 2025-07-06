@@ -7,7 +7,7 @@
                 <div class="flex flex-col items-stretch grow gap-5 lg:gap-7.5">
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
-                            <h3 class="card-title">{{ __('Edit Case') }}</h3>
+                            <h3 class="card-title">{{ translate('Edit Case') }}</h3>
                         </div>
 
                         <form action="{{ route('case-management.update', $case->id) }}" method="POST"
@@ -18,18 +18,18 @@
                             <div class="card-body grid gap-5">
                                 <!-- Assign To -->
                                 <div class="w-full">
-                                    <label class="form-label">{{ __('Assign To') }}</label>
+                                    <label class="form-label">{{ translate('Assign To') }}</label>
                                     <select name="user_id" id="to_user_id" class="select choices w-full" required>
-                                        <option value="">{{ __('Select User') }}</option>
+                                        <option value="">{{ translate('Select User') }}</option>
                                         @foreach ($users as $user)
                                             <option value="{{ $user->id }}"
                                                 {{ $case->user_id == $user->id ? 'selected' : '' }}>
                                                 @if ($user->is_manager)
                                                     - {{ strtoupper($user->first_name) }}
-                                                    {{ strtoupper($user->last_name ?? '') }} ({{ __('Manager') }})
+                                                    {{ strtoupper($user->last_name ?? '') }} ({{ translate('Manager') }})
                                                 @else
                                                     -- {{ strtoupper($user->first_name) }}
-                                                    {{ strtoupper($user->last_name ?? '') }} ({{ __('Employee') }})
+                                                    {{ strtoupper($user->last_name ?? '') }} ({{ translate('Employee') }})
                                                 @endif
                                             </option>
                                         @endforeach
@@ -42,7 +42,7 @@
                                 <div class="flex gap-4">
                                     <!-- Title -->
                                     <div class="w-full">
-                                        <label for="title" class="form-label">{{ __('Title') }}</label>
+                                        <label for="title" class="form-label">{{ translate('Title') }}</label>
                                         <input type="text" name="title" id="title" class="input w-full"
                                             value="{{ old('title', $case->title) }}">
                                         @error('title')
@@ -52,16 +52,19 @@
 
                                     <!-- Priority -->
                                     <div class="w-full">
-                                        <label for="priority" class="form-label">{{ __('Priority') }}</label>
+                                        <label for="priority" class="form-label">{{ translate('Priority') }}</label>
                                         <select name="priority" id="priority" class="input w-full">
                                             <option value="low"
-                                                {{ old('priority', $case->priority) == 'low' ? 'selected' : '' }}>Low
+                                                {{ old('priority', $case->priority) == 'low' ? 'selected' : '' }}>
+                                                {{ translate('Low') }}
                                             </option>
                                             <option value="medium"
-                                                {{ old('priority', $case->priority) == 'medium' ? 'selected' : '' }}>Medium
+                                                {{ old('priority', $case->priority) == 'medium' ? 'selected' : '' }}>
+                                                {{ translate('Medium') }}
                                             </option>
                                             <option value="high"
-                                                {{ old('priority', $case->priority) == 'high' ? 'selected' : '' }}>High
+                                                {{ old('priority', $case->priority) == 'high' ? 'selected' : '' }}>
+                                                {{ translate('High') }}
                                             </option>
                                         </select>
                                         @error('priority')
@@ -72,18 +75,23 @@
 
                                 <!-- Status -->
                                 <div>
-                                    <label for="status" class="form-label">{{ __('Status') }}</label>
+                                    <label for="status" class="form-label">{{ translate('Status') }}</label>
                                     <select name="status" id="status" class="input w-full">
                                         <option value="open"
-                                            {{ old('status', $case->status) == 'open' ? 'selected' : '' }}>Open</option>
+                                            {{ old('status', $case->status) == 'open' ? 'selected' : '' }}>
+                                            {{ translate('Open') }}
+                                        </option>
                                         <option value="in_progress"
-                                            {{ old('status', $case->status) == 'in_progress' ? 'selected' : '' }}>In
-                                            Progress</option>
+                                            {{ old('status', $case->status) == 'in_progress' ? 'selected' : '' }}>
+                                            {{ translate('In Progress') }}
+                                        </option>
                                         <option value="resolved"
-                                            {{ old('status', $case->status) == 'resolved' ? 'selected' : '' }}>Resolved
+                                            {{ old('status', $case->status) == 'resolved' ? 'selected' : '' }}>
+                                            {{ translate('Resolved') }}
                                         </option>
                                         <option value="closed"
-                                            {{ old('status', $case->status) == 'closed' ? 'selected' : '' }}>Closed
+                                            {{ old('status', $case->status) == 'closed' ? 'selected' : '' }}>
+                                            {{ translate('Closed') }}
                                         </option>
                                     </select>
                                     @error('status')
@@ -93,7 +101,7 @@
 
                                 <!-- Description -->
                                 <div>
-                                    <label for="description" class="form-label">{{ __('Description') }}</label>
+                                    <label for="description" class="form-label">{{ translate('Description') }}</label>
                                     <textarea name="description" id="description" class="textarea w-full" rows="4">{{ old('description', $case->description) }}</textarea>
                                     @error('description')
                                         <span class="text-danger text-sm">{{ $message }}</span>
@@ -102,7 +110,7 @@
 
                                 <!-- Due Date -->
                                 <div>
-                                    <label for="due_date" class="form-label">{{ __('Due Date') }}</label>
+                                    <label for="due_date" class="form-label">{{ translate('Due Date') }}</label>
                                     <input type="text" name="due_date" id="due_date" class="input w-full"
                                         value="{{ old('due_date', $case->due_date) }}">
                                     @error('due_date')
@@ -113,7 +121,7 @@
                                 <!-- Upload Documents -->
                                 @include('media.multiple', [
                                     'name' => 'documents',
-                                    'label' => __('Upload Documents'),
+                                    'label' => translate('Upload Documents'),
                                     'required' => false,
                                     'value' => old('documents', $case->documents ?? []),
                                     'multiple_select' => true,
@@ -121,7 +129,7 @@
 
                                 <!-- Submit -->
                                 <div class="flex justify-end pt-2.5">
-                                    <button type="submit" class="btn btn-primary">{{ __('Update Case') }}</button>
+                                    <button type="submit" class="btn btn-primary">{{ translate('Update Case') }}</button>
                                 </div>
                             </div>
                         </form>
@@ -157,7 +165,7 @@
                 searchEnabled: true,
                 itemSelectText: '',
                 shouldSort: false,
-                placeholderValue: "{{ __('Select User') }}",
+                placeholderValue: "{{ translate('Select User') }}",
             });
         });
     </script>

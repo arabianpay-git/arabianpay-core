@@ -7,33 +7,34 @@
                 <div class="flex flex-col items-stretch grow gap-5 lg:gap-7.5">
                     <div class="card pb-2.5">
                         <div class="card-header">
-                            <h3 class="card-title">Assign Role</h3>
+                            <h3 class="card-title">{{ translate('Assign Role') }}</h3>
                         </div>
 
                         <form method="POST" action="{{ route('user-roles.store') }}">
                             @csrf
                             <div class="mb-4">
-                                <label class="block mb-1 font-medium">Select User</label>
+                                <label class="block mb-1 font-medium">{{ translate('Select User') }}</label>
                                 <select name="user_id" class="form-select w-full">
-                                    <option value="">-- Select User --</option>
+                                    <option value="">{{ translate('-- Select User --') }}</option>
                                     @foreach ($users as $user)
-                                        <option value="{{ $user->id }}">{{ $user->first_name }} ({{ $user->email }})
+                                        <option value="{{ $user->id }}">
+                                            {{ $user->first_name }} ({{ $user->email }})
                                         </option>
                                     @endforeach
                                 </select>
                             </div>
 
                             <div class="mb-4">
-                                <label class="block mb-1 font-medium">Select Role</label>
+                                <label class="block mb-1 font-medium">{{ translate('Select Role') }}</label>
                                 <select name="role_id" class="form-select w-full">
-                                    <option value="">-- Select Role --</option>
+                                    <option value="">{{ translate('-- Select Role --') }}</option>
                                     @foreach ($roles as $role)
-                                        <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
+                                        <option value="{{ $role->id }}">{{ ucfirst(translate($role->name)) }}</option>
                                     @endforeach
                                 </select>
                             </div>
 
-                            <button type="submit" class="btn btn-primary">Assign Role</button>
+                            <button type="submit" class="btn btn-primary">{{ translate('Assign Role') }}</button>
                         </form>
                     </div>
                 </div>

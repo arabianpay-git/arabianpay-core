@@ -1,137 +1,136 @@
 @extends('layouts.base') @section('content')
+    <main class="grow content pt-5" id="content" role="content">
+        <div class="container-fixed">
+            <div class="flex grow gap-5 lg:gap-7.5">
+                <div class="flex flex-col items-stretch grow gap-5 lg:gap-7.5">
+                    <div class="card pb-2.5">
+                        <div class="card-header" id="basic_settings">
+                            <h3 class="card-title">
+                                {{ translate('Add New Category') }}
+                            </h3>
+                        </div>
 
-<main class="grow content pt-5" id="content" role="content">
-    <!-- Container -->
-    <div class="container-fixed">
-        <div class="flex grow gap-5 lg:gap-7.5">
-            <div class="flex flex-col items-stretch grow gap-5 lg:gap-7.5">
-                <div class="card pb-2.5">
-                    <div class="card-header" id="basic_settings">
-                        <h3 class="card-title">
-                            Add New Category
-                        </h3>
-                    </div>
-
-                    <form action="{{ route('categories.store') }}" method="POST">
-                        @csrf
-                        <div class="card-body grid gap-5">
-                            <div class="w-full">
-                                <div class="flex items-baseline flex-wrap gap-2.5">
-                                    <label class="form-label flex items-center gap-1 max-w-56">
-                                        Category Name <span class="text-danger">*</span>
-                                    </label>
-                                    <input class="input @error('name') border-red-500 @enderror" name="name" type="text" value="{{ old('name') }}" required />
-                                </div>
-                                @error('name')
-                                <span class="text-danger text-sm">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="w-full">
-                                <div class="flex items-baseline flex-wrap gap-2.5">
-                                    <label class="form-label flex items-center gap-1 max-w-56">
-                                        Parent
-                                    </label>
-                                    <select class="input @error('category_id') border-red-500 @enderror" name="category_id">
-                                        <option value="">Select Parent Category</option>
-                                        @foreach ($categories as $category) 
-                                            <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}> 
-                                                {{ $category->name }} 
-                                            </option>   
-                                        @endforeach
-                                    </select>
-                                </div>
-                                @error('category_id')
-                                <span class="text-danger text-sm">{{ $message }}</span>
-                                @enderror
-                            </div>
-
-                            <div class="flex gap-2.5">
+                        <form action="{{ route('categories.store') }}" method="POST">
+                            @csrf
+                            <div class="card-body grid gap-5">
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
                                         <label class="form-label flex items-center gap-1 max-w-56">
-                                            Featured
+                                            {{ translate('Category Name') }} <span class="text-danger">*</span>
                                         </label>
-                                        <select class="input @error('featured') border-red-500 @enderror" name="featured">
-                                            <option value="">Select One Option</option>
-                                            <option value="true" {{ old('featured') == 'true' ? 'selected' : '' }}>Yes</option>
-                                            <option value="false" {{ old('featured') == 'false' ? 'selected' : '' }}>No</option>
+                                        <input class="input @error('name') border-red-500 @enderror" name="name"
+                                            type="text" value="{{ old('name') }}" required />
+                                    </div>
+                                    @error('name')
+                                        <span class="text-danger text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <div class="w-full">
+                                    <div class="flex items-baseline flex-wrap gap-2.5">
+                                        <label class="form-label flex items-center gap-1 max-w-56">
+                                            {{ translate('Parent') }}
+                                        </label>
+                                        <select class="input @error('category_id') border-red-500 @enderror"
+                                            name="category_id">
+                                            <option value="">{{ translate('Select Parent Category') }}</option>
+                                            @foreach ($categories as $category)
+                                                <option value="{{ $category->id }}"
+                                                    {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                                    {{ $category->name }}
+                                                </option>
+                                            @endforeach
                                         </select>
                                     </div>
-                                    @error('featured')
-                                    <span class="text-danger text-sm">{{ $message }}</span>
+                                    @error('category_id')
+                                        <span class="text-danger text-sm">{{ $message }}</span>
                                     @enderror
                                 </div>
-                                
-    
+
+                                <div class="flex gap-2.5">
+                                    <div class="w-full">
+                                        <div class="flex items-baseline flex-wrap gap-2.5">
+                                            <label class="form-label flex items-center gap-1 max-w-56">
+                                                {{ translate('Featured') }}
+                                            </label>
+                                            <select class="input @error('featured') border-red-500 @enderror"
+                                                name="featured">
+                                                <option value="">{{ translate('Select One Option') }}</option>
+                                                <option value="true" {{ old('featured') == 'true' ? 'selected' : '' }}>
+                                                    {{ translate('Yes') }}</option>
+                                                <option value="false" {{ old('featured') == 'false' ? 'selected' : '' }}>
+                                                    {{ translate('No') }}</option>
+                                            </select>
+                                        </div>
+                                        @error('featured')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <div class="w-full">
+                                        <div class="flex items-baseline flex-wrap gap-2.5">
+                                            <label class="form-label flex items-center gap-1 max-w-56">
+                                                {{ translate('Order Level') }}
+                                            </label>
+                                            <input class="input @error('order_level') border-red-500 @enderror"
+                                                name="order_level" type="number" value="{{ old('order_level') }}" />
+                                        </div>
+                                        @error('order_level')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <!-- Icon Picker -->
+                                @include('media.single', [
+                                    'name' => 'icon',
+                                    'label' => translate('Category Icon'),
+                                    'required' => false,
+                                    'value' => old('icon'),
+                                ])
+
+                                @include('media.single', [
+                                    'name' => 'banner',
+                                    'label' => translate('Category Banner'),
+                                    'required' => false,
+                                    'value' => old('banner'),
+                                ])
+
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
                                         <label class="form-label flex items-center gap-1 max-w-56">
-                                            Order Level
+                                            {{ translate('Meta Title') }}
                                         </label>
-                                        <input class="input @error('order_level') border-red-500 @enderror" name="order_level" type="number" value="{{ old('order_level') }}" />
+                                        <input class="input @error('meta_title') border-red-500 @enderror" name="meta_title"
+                                            type="text" value="{{ old('meta_title') }}" />
                                     </div>
-                                    @error('order_level')
-                                    <span class="text-danger text-sm">{{ $message }}</span>
+                                    @error('meta_title')
+                                        <span class="text-danger text-sm">{{ $message }}</span>
                                     @enderror
                                 </div>
-                            </div>
 
-                            <!-- Icon Picker -->
-
-                            @include('media.single', [
-                                'name' => 'icon',
-                                'label' => 'Category Icon',
-                                'required' => false,
-                                'value' => old('icon')
-                            ])
-
-                            @include('media.single', [
-                                'name' => 'banner',
-                                'label' => 'Category Banner',
-                                'required' => false,
-                                'value' => old('banner')
-                            ])
-
-                            <div class="w-full">
-                                <div class="flex items-baseline flex-wrap gap-2.5">
-                                    <label class="form-label flex items-center gap-1 max-w-56">
-                                        Meta Title
-                                    </label>
-                                    <input class="input @error('meta_title') border-red-500 @enderror" name="meta_title" type="text" value="{{ old('meta_title') }}" />
+                                <div class="w-full">
+                                    <div class="flex items-baseline flex-wrap gap-2.5">
+                                        <label class="form-label flex items-center gap-1 max-w-56">
+                                            {{ translate('Meta Description') }}
+                                        </label>
+                                        <textarea class="textarea @error('meta_description') border-red-500 @enderror" name="meta_description" rows="4">{{ old('meta_description') }}</textarea>
+                                    </div>
+                                    @error('meta_description')
+                                        <span class="text-danger text-sm">{{ $message }}</span>
+                                    @enderror
                                 </div>
-                                @error('meta_title')
-                                <span class="text-danger text-sm">{{ $message }}</span>
-                                @enderror
-                            </div>
 
-                            <div class="w-full">
-                                <div class="flex items-baseline flex-wrap gap-2.5">
-                                    <label class="form-label flex items-center gap-1 max-w-56">
-                                        Meta Description
-                                    </label>
-                                    <textarea class="textarea @error('meta_description') border-red-500 @enderror" name="meta_description" rows="4">{{ old('meta_description') }}</textarea>
+                                <div class="flex justify-end pt-2.5">
+                                    <button class="btn btn-primary">
+                                        {{ translate('Save Changes') }}
+                                    </button>
                                 </div>
-                                @error('meta_description')
-                                <span class="text-danger text-sm">{{ $message }}</span>
-                                @enderror
                             </div>
-
-
-                            <!-- Submit Button -->
-                            <div class="flex justify-end pt-2.5">
-                                <button class="btn btn-primary">
-                                    Save Changes
-                                </button>
-                            </div>
-                        </div>
-                    </form>
+                        </form>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
-    <!-- End of Container -->
-</main>
-
+    </main>
 @endsection
-

@@ -7,7 +7,7 @@
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
                             <h3 class="card-title">
-                                Edit Risk Register
+                                {{ translate('Edit Risk Register') }}
                             </h3>
                         </div>
 
@@ -19,7 +19,7 @@
                                 <div class="flex gap-4">
                                     <!-- Type -->
                                     <div class="w-full">
-                                        <label for="type" class="form-label">Type</label>
+                                        <label for="type" class="form-label">{{ translate('Type') }}</label>
                                         <input type="text" name="type" id="type" class="input w-full"
                                             value="{{ old('type', $risk->type) }}">
                                         @error('type')
@@ -29,7 +29,7 @@
 
                                     <!-- Entity -->
                                     <div class="w-full">
-                                        <label for="entity" class="form-label">Entity</label>
+                                        <label for="entity" class="form-label">{{ translate('Entity') }}</label>
                                         <input type="text" name="entity" id="entity" class="input w-full"
                                             value="{{ old('entity', $risk->entity) }}">
                                         @error('entity')
@@ -41,8 +41,9 @@
                                 <div class="flex gap-4">
                                     <!-- Score -->
                                     <div class="w-full">
-                                        <label for="score" class="form-label">Score <span
-                                                class="text-danger">*</span></label>
+                                        <label for="score" class="form-label">
+                                            {{ translate('Score') }} <span class="text-danger">*</span>
+                                        </label>
                                         <input type="number" name="score" id="score" class="input w-full"
                                             step="0.01" value="{{ old('score', $risk->score) }}" required>
                                         @error('score')
@@ -52,18 +53,25 @@
 
                                     <!-- Status -->
                                     <div class="w-full">
-                                        <label for="status" class="form-label">Status <span
-                                                class="text-danger">*</span></label>
+                                        <label for="status" class="form-label">
+                                            {{ translate('Status') }} <span class="text-danger">*</span>
+                                        </label>
                                         <select name="status" id="status" class="select w-full" required>
                                             <option value="low"
-                                                {{ old('status', $risk->status) == 'low' ? 'selected' : '' }}>Low</option>
+                                                {{ old('status', $risk->status) == 'low' ? 'selected' : '' }}>
+                                                {{ translate('Low') }}
+                                            </option>
                                             <option value="medium"
-                                                {{ old('status', $risk->status) == 'medium' ? 'selected' : '' }}>Medium
+                                                {{ old('status', $risk->status) == 'medium' ? 'selected' : '' }}>
+                                                {{ translate('Medium') }}
                                             </option>
                                             <option value="high"
-                                                {{ old('status', $risk->status) == 'high' ? 'selected' : '' }}>High</option>
+                                                {{ old('status', $risk->status) == 'high' ? 'selected' : '' }}>
+                                                {{ translate('High') }}
+                                            </option>
                                             <option value="critical"
-                                                {{ old('status', $risk->status) == 'critical' ? 'selected' : '' }}>Critical
+                                                {{ old('status', $risk->status) == 'critical' ? 'selected' : '' }}>
+                                                {{ translate('Critical') }}
                                             </option>
                                         </select>
                                         @error('status')
@@ -74,7 +82,7 @@
 
                                 <!-- Description -->
                                 <div class="w-full">
-                                    <label for="description" class="form-label">Description</label>
+                                    <label for="description" class="form-label">{{ translate('Description') }}</label>
                                     <textarea name="description" id="description" class="textarea w-full" rows="3">{{ old('description', $risk->description) }}</textarea>
                                     @error('description')
                                         <span class="text-danger text-sm">{{ $message }}</span>
@@ -83,7 +91,7 @@
 
                                 <!-- Action -->
                                 <div class="w-full">
-                                    <label for="action" class="form-label">Action</label>
+                                    <label for="action" class="form-label">{{ translate('Action') }}</label>
                                     <input type="text" name="action" id="action" class="input w-full"
                                         value="{{ old('action', $risk->action) }}">
                                     @error('action')
@@ -93,7 +101,8 @@
 
                                 <!-- Submit Button -->
                                 <div class="flex justify-end pt-2.5">
-                                    <button type="submit" class="btn btn-primary">Update Risk Register</button>
+                                    <button type="submit"
+                                        class="btn btn-primary">{{ translate('Update Risk Register') }}</button>
                                 </div>
                             </div>
                         </form>

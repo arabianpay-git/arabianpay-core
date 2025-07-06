@@ -7,7 +7,7 @@
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
                             <h3 class="card-title">
-                                Add New Business Category
+                                {{ translate('Add New Business Category') }}
                             </h3>
                         </div>
 
@@ -17,10 +17,10 @@
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
                                         <label class="form-label flex items-center gap-1 max-w-56">
-                                            Business Type
+                                            {{ translate('Business Type') }}
                                         </label>
                                         <select class="select" name="business_type_id">
-                                            <option value="">Select One Option</option>
+                                            <option value="">{{ translate('Select One Option') }}</option>
                                             @foreach ($businessTypes as $item)
                                                 <option value="{{ $item->id }}">{{ $item->name }}</option>
                                             @endforeach
@@ -34,7 +34,7 @@
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
                                         <label class="form-label flex items-center gap-1 max-w-56">
-                                            Business Category <span class="text-danger">*</span>
+                                            {{ translate('Business Category') }} <span class="text-danger">*</span>
                                         </label>
                                         <input class="input @error('name') border-red-500 @enderror" name="name"
                                             type="text" value="{{ old('name') }}" required />
@@ -48,14 +48,16 @@
                                     <div class="w-full">
                                         <div class="flex items-baseline flex-wrap gap-2.5">
                                             <label class="form-label flex items-center gap-1 max-w-56">
-                                                Featured
+                                                {{ translate('Featured') }}
                                             </label>
                                             <select class="input @error('featured') border-red-500 @enderror"
                                                 name="featured">
-                                                <option value="">Select One Option</option>
-                                                <option value="true" {{ old('featured') == 'true' ? 'selected' : '' }}>Yes
+                                                <option value="">{{ translate('Select One Option') }}</option>
+                                                <option value="true" {{ old('featured') == 'true' ? 'selected' : '' }}>
+                                                    {{ translate('Yes') }}
                                                 </option>
-                                                <option value="false" {{ old('featured') == 'false' ? 'selected' : '' }}>No
+                                                <option value="false" {{ old('featured') == 'false' ? 'selected' : '' }}>
+                                                    {{ translate('No') }}
                                                 </option>
                                             </select>
                                         </div>
@@ -64,11 +66,10 @@
                                         @enderror
                                     </div>
 
-
                                     <div class="w-full">
                                         <div class="flex items-baseline flex-wrap gap-2.5">
                                             <label class="form-label flex items-center gap-1 max-w-56">
-                                                Order Level
+                                                {{ translate('Order Level') }}
                                             </label>
                                             <input class="input @error('order_level') border-red-500 @enderror"
                                                 name="order_level" type="number" value="{{ old('order_level') }}" />
@@ -80,17 +81,16 @@
                                 </div>
 
                                 <!-- Icon Picker -->
-
                                 @include('media.single', [
                                     'name' => 'icon',
-                                    'label' => 'Business Category Icon',
+                                    'label' => translate('Business Category Icon'),
                                     'required' => false,
                                     'value' => old('icon'),
                                 ])
 
                                 @include('media.single', [
                                     'name' => 'banner',
-                                    'label' => 'Business Category Banner',
+                                    'label' => translate('Business Category Banner'),
                                     'required' => false,
                                     'value' => old('banner'),
                                 ])
@@ -98,7 +98,7 @@
                                 <!-- Submit Button -->
                                 <div class="flex justify-end pt-2.5">
                                     <button class="btn btn-primary">
-                                        Save Changes
+                                        {{ translate('Save Changes') }}
                                     </button>
                                 </div>
                             </div>

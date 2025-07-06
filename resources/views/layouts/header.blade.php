@@ -72,7 +72,7 @@
                                         <i class="ki-filled ki-badge"> </i>
                                     </span>
                                     <span class="menu-title">
-                                        My Profile
+                                        {{ translate('My Profile') }}
                                     </span>
                                 </a>
                             </div>
@@ -88,7 +88,7 @@
                                         <i class="ki-filled ki-moon"> </i>
                                     </span>
                                     <span class="menu-title">
-                                        Dark Mode
+                                        {{ translate('Dark Mode') }}
                                     </span>
                                     <label class="switch switch-sm">
                                         <input data-theme-state="dark" data-theme-toggle="true" name="check"
@@ -100,7 +100,7 @@
                                 <form method="POST" action="{{ route('logout') }}">
                                     @csrf
                                     <button type="submit" class="btn btn-sm btn-light justify-center w-full">
-                                        Log out
+                                        {{ translate('Log out') }}
                                     </button>
                                 </form>
                             </div>

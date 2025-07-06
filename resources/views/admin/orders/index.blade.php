@@ -35,7 +35,7 @@
                             <div class="flex justify-end">
                                 <button id="bulk-transfer-btn" class="btn btn-sm btn-primary hidden"
                                     data-modal-toggle="#transfer_request_bulk">
-                                    <i class="ki-filled ki-disconnect"></i> {{ __('Bulk Transfer') }}
+                                    <i class="ki-filled ki-disconnect"></i> {{ translate('Bulk Transfer') }}
                                 </button>
                             </div>
                         </div>

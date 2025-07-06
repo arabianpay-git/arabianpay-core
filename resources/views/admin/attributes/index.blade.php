@@ -10,7 +10,7 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        Attributes
+                        {{ translate('Attributes') }}
                     </h1>
                 </div>
             </div>
@@ -22,14 +22,14 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            Attributes
+                            {{ translate('Attributes') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#team_crew_table" placeholder="Search users"
-                                        type="text" value="" />
+                                    <input data-datatable-search="#team_crew_table"
+                                        placeholder="{{ translate('Search users') }}" type="text" value="" />
                                 </label>
                             </div>
                         </div>
@@ -41,13 +41,13 @@
                                     <thead>
                                         <tr>
                                             <th class="w-[60px] text-center">
-                                                No
+                                                {{ translate('No') }}
                                             </th>
 
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Name
+                                                        {{ translate('Name') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -56,7 +56,7 @@
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Values
+                                                        {{ translate('Values') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -65,7 +65,7 @@
                                             <th class="">
                                                 <span class="sort">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Action
+                                                        {{ translate('Action') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -134,7 +134,7 @@
                         <div class="card pb-2.5">
                             <div class="card-header" id="basic_settings">
                                 <h3 class="card-title">
-                                    Add New Attribute
+                                    {{ translate('Add New Attribute') }}
                                 </h3>
                             </div>
                             <form action="{{ route('attributes.store') }}" method="POST">
@@ -143,7 +143,7 @@
                                     <div class="w-full">
                                         <div class="flex items-baseline flex-wrap gap-2.5">
                                             <label class="form-label flex items-center gap-1 max-w-56">
-                                                Attribute Name
+                                                {{ translate('Attribute Name') }}
                                             </label>
                                             <input class="input @error('name') border-red-500 @enderror" name="name"
                                                 type="text" value="{{ old('name') }}" required />
@@ -155,7 +155,7 @@
 
                                     <div class="flex justify-end pt-2.5">
                                         <button class="btn btn-primary">
-                                            Save Changes
+                                            {{ translate('Save Changes') }}
                                         </button>
                                     </div>
                                 </div>

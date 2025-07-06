@@ -73,7 +73,7 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        Add New Product
+                        {{ translate('Add New Product') }}
                     </h1>
                 </div>
             </div>
@@ -96,13 +96,13 @@
                                             xmlns="http://www.w3.org/2000/svg">
                                             <path
                                                 d="M16 2.4641C19.7128 0.320509 24.2872 0.320508 28 2.4641L37.6506 8.0359C41.3634 10.1795 43.6506 14.141 43.6506
-                                                                18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937
-                                                                39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z"
+                                                                                        18.4282V29.5718C43.6506 33.859 41.3634 37.8205 37.6506 39.9641L28 45.5359C24.2872 47.6795 19.7128 47.6795 16 45.5359L6.34937
+                                                                                        39.9641C2.63655 37.8205 0.349365 33.859 0.349365 29.5718V18.4282C0.349365 14.141 2.63655 10.1795 6.34937 8.0359L16 2.4641Z"
                                                 fill=""></path>
                                             <path
                                                 d="M16.25 2.89711C19.8081 0.842838 24.1919 0.842837 27.75 2.89711L37.4006 8.46891C40.9587 10.5232 43.1506 14.3196 43.1506
-                                                                18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937
-                                                                39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z"
+                                                                                        18.4282V29.5718C43.1506 33.6804 40.9587 37.4768 37.4006 39.5311L27.75 45.1029C24.1919 47.1572 19.8081 47.1572 16.25 45.1029L6.59937
+                                                                                        39.5311C3.04125 37.4768 0.849365 33.6803 0.849365 29.5718V18.4282C0.849365 14.3196 3.04125 10.5232 6.59937 8.46891L16.25 2.89711Z"
                                                 stroke=""></path>
                                         </svg>
                                         <div
@@ -114,7 +114,7 @@
                                         <div class="flex items-center flex-wrap gap-2.5">
                                             <a class="text-base font-medium text-gray-900 hover:text-primary-active"
                                                 href="#">
-                                                Please fix the following errors:
+                                                {{ translate('Please fix the following errors:') }}
                                             </a>
                                         </div>
                                         <div class="text-2sm text-gray-800">
@@ -138,7 +138,7 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Select Supplier
+                                        {{ translate('Select Supplier') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -146,11 +146,11 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    Merchants
+                                                    {{ translate('Merchants') }}
                                                 </label>
                                                 <select class="input @error('user_id') border-red-500 @enderror"
                                                     name="user_id" required>
-                                                    <option value="">Select Merchant</option>
+                                                    <option value="">{{ translate('Select Merchant') }}</option>
                                                     @foreach ($merchants as $merchant)
                                                         <option value="{{ $merchant->id }}"
                                                             {{ old('user_id') == $merchant->id ? 'selected' : '' }}>
@@ -170,7 +170,7 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Product Information
+                                        {{ translate('Product Information') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -178,7 +178,7 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    Product Name <span class="text-danger">*</span>
+                                                    {{ translate('Product Name') }} <span class="text-danger">*</span>
                                                 </label>
                                                 <input class="input @error('name') border-red-500 @enderror" name="name"
                                                     type="text" value="{{ old('name') }}" required />
@@ -191,12 +191,12 @@
                                         <div class="w-full">
                                             <div class="flex flex-col gap-1.5">
                                                 <label class="form-label">
-                                                    Category
+                                                    {{ translate('Category') }}
                                                 </label>
                                                 <select id="category_id"
                                                     class="select w-full @error('category_id') border-red-500 @enderror"
                                                     name="category_id" required>
-                                                    <option value="">Select Category</option>
+                                                    <option value="">{{ translate('Select Category') }}</option>
                                                     @foreach ($categories as $category)
                                                         <option value="{{ $category->id }}"
                                                             {{ old('category_id') == $category->id ? 'selected' : '' }}>
@@ -213,12 +213,12 @@
                                         <div class="w-full">
                                             <div class="flex flex-col gap-1.5">
                                                 <label class="form-label">
-                                                    Brand
+                                                    {{ translate('Brand') }}
                                                 </label>
                                                 <select id="brand_id"
                                                     class="select w-full @error('brand_id') border-red-500 @enderror"
                                                     name="brand_id">
-                                                    <option value="">Select Brand</option>
+                                                    <option value="">{{ translate('Select Brand') }}</option>
                                                     @foreach ($brands as $brand)
                                                         <option value="{{ $brand->id }}"
                                                             {{ old('brand_id') == $brand->id ? 'selected' : '' }}>
@@ -235,11 +235,11 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    Unit
+                                                    {{ translate('Unit') }}
                                                 </label>
                                                 <input class="input @error('unit') border-red-500 @enderror" name="unit"
                                                     type="text" value="{{ old('unit') }}"
-                                                    placeholder="Unit (eg. KG, PC etc)" />
+                                                    placeholder="{{ translate('Unit (eg. KG, PC etc)') }}" />
                                             </div>
                                             @error('unit')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
@@ -249,7 +249,7 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    Weight <small>(In KG)</small>
+                                                    {{ translate('Weight') }} <small>({{ translate('In KG') }})</small>
                                                 </label>
                                                 <input class="input @error('weight') border-red-500 @enderror"
                                                     name="weight" type="number" value="{{ old('weight', 0.0) }}"
@@ -263,7 +263,7 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    Minimum Purchase Quantity
+                                                    {{ translate('Minimum Purchase Quantity') }}
                                                 </label>
                                                 <input class="input @error('min_qty') border-red-500 @enderror"
                                                     name="min_qty" type="number" value="{{ old('min_qty', 1) }}"
@@ -276,29 +276,29 @@
 
                                         <div class="w-full">
                                             <div class="flex flex-col gap-1.5">
-                                                <label class="form-label">Tags</label>
+                                                <label class="form-label">{{ translate('Tags') }}</label>
                                                 <input id="tags"
                                                     class="input w-full @error('tags') border-red-500 @enderror"
                                                     name="tags[]" type="text"
-                                                    placeholder="Type and hit enter to add a tag" multiple
+                                                    placeholder="{{ translate('Type and hit enter to add a tag') }}"
+                                                    multiple
                                                     value="{{ old('tags') ? implode(',', (array) old('tags')) : '' }}" />
                                             </div>
-                                            <span class="text-xs">This is used for search. Input those words by which
-                                                customer can find this product.</span>
+                                            <span
+                                                class="text-xs">{{ translate('This is used for search. Input those words by which customer can find this product.') }}</span>
                                             @error('tags')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
                                             @enderror
                                         </div>
 
-
                                         <div class="flex items-center flex-wrap gap-2.5">
                                             <label class="form-label max-w-56">
-                                                Refundable
+                                                {{ translate('Refundable') }}
                                             </label>
                                             <div class="grow">
                                                 <label class="switch">
                                                     <span class="switch-label text-sm">
-                                                        Is Product Refundable
+                                                        {{ translate('Is Product Refundable') }}
                                                     </span>
                                                     <input name="refundable" type="checkbox" value="1"
                                                         {{ old('refundable') ? 'checked' : '' }} />
@@ -312,29 +312,28 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Product Images
+                                        {{ translate('Product Images') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
                                     <div class="card-body grid gap-5">
                                         @include('media.single', [
                                             'name' => 'thumbnail',
-                                            'label' => 'Product Thumbnail',
+                                            'label' => translate('Product Thumbnail'),
                                             'required' => false,
                                             'value' => old('thumbnail'),
-                                            'info' =>
-                                                'These images are visible in product details page gallery. Use 600x600 sizes images.',
+                                            'info' => translate(
+                                                'These images are visible in product details page gallery. Use 600x600 sizes images.'),
                                         ])
                                         @include('media.multiple', [
                                             'name' => 'photos',
-                                            'label' => 'Gallery Images',
+                                            'label' => translate('Gallery Images'),
                                             'required' => false,
                                             'value' => old('photos', []),
-                                            'info' =>
-                                                'This image is visible in all product box. Use 300x300 sizes image. Keep some blank space around main object of your image as we had to crop some edge in different devices to make it responsive.',
+                                            'info' => translate(
+                                                'This image is visible in all product box. Use 300x300 sizes image. Keep some blank space around main object of your image as we had to crop some edge in different devices to make it responsive.'),
                                             'multiple_select' => true,
                                         ])
-
                                     </div>
                                 </div>
                             </div>
@@ -343,7 +342,7 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Product Variation
+                                        {{ translate('Product Variation') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -351,12 +350,12 @@
                                         <div class="w-full">
                                             <div class="flex flex-col gap-2.5">
                                                 <label for="attribute_id" class="form-label text-sm font-semibold mb-2">
-                                                    Attributes
+                                                    {{ translate('Attributes') }}
                                                 </label>
                                                 <select id="attribute_id"
                                                     class="input @error('attribute_id') border-red-500 @enderror w-full"
                                                     name="attribute_id[]" multiple>
-                                                    <option value="">Select Attributes</option>
+                                                    <option value="">{{ translate('Select Attributes') }}</option>
                                                     @foreach ($attributes as $attribute)
                                                         <option value="{{ $attribute->id }}"
                                                             {{ collect(old('attribute_id'))->contains($attribute->id) ? 'selected' : '' }}>
@@ -376,7 +375,7 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Product Prices & Stock
+                                        {{ translate('Product Prices & Stock') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -385,7 +384,7 @@
                                             <div class="w-full">
                                                 <div class="flex items-baseline flex-wrap gap-2.5">
                                                     <label class="form-label flex items-center gap-1 max-w-56">
-                                                        Unit Price <span class="text-danger">*</span>
+                                                        {{ translate('Unit Price') }} <span class="text-danger">*</span>
                                                     </label>
                                                     <input class="input @error('unit_price') border-red-500 @enderror"
                                                         name="unit_price" type="number"
@@ -399,13 +398,15 @@
                                             <div class="w-full">
                                                 <div class="flex items-baseline flex-wrap gap-2.5">
                                                     <label class="form-label flex items-center gap-1 max-w-56">
-                                                        Cost Per item <span class="text-danger">*</span>
+                                                        {{ translate('Cost Per item') }} <span
+                                                            class="text-danger">*</span>
                                                     </label>
                                                     <input class="input @error('purchase_price') border-red-500 @enderror"
                                                         name="purchase_price" type="number"
                                                         value="{{ old('purchase_price', 0) }}" required />
                                                 </div>
-                                                <span class="text-xs">Customers won't see this price.</span>
+                                                <span
+                                                    class="text-xs">{{ translate("Customers won't see this price.") }}</span>
                                                 @error('purchase_price')
                                                     <span class="text-danger text-sm">{{ $message }}</span>
                                                 @enderror
@@ -416,11 +417,12 @@
                                             <div class="w-full">
                                                 <div class="flex items-baseline flex-wrap gap-2.5">
                                                     <label class="form-label flex items-center gap-1 max-w-56">
-                                                        Discount Start Date
+                                                        {{ translate('Discount Start Date') }}
                                                     </label>
                                                     <input
                                                         class="input @error('discount_start_date') border-red-500 @enderror"
-                                                        name="discount_start_date" placeholder="Discount Start Date"
+                                                        name="discount_start_date"
+                                                        placeholder="{{ translate('Discount Start Date') }}"
                                                         type="date" value="{{ old('discount_start_date') }}"
                                                         required />
                                                 </div>
@@ -432,12 +434,13 @@
                                             <div class="w-full">
                                                 <div class="flex items-baseline flex-wrap gap-2.5">
                                                     <label class="form-label flex items-center gap-1 max-w-56">
-                                                        Discount End Date
+                                                        {{ translate('Discount End Date') }}
                                                     </label>
                                                     <input
                                                         class="input @error('discount_end_date') border-red-500 @enderror"
-                                                        name="discount_end_date" placeholder="Discount End Date"
-                                                        type="date" value="{{ old('discount_end_date') }}" required />
+                                                        name="discount_end_date"
+                                                        placeholder="{{ translate('Discount End Date') }}" type="date"
+                                                        value="{{ old('discount_end_date') }}" required />
                                                 </div>
                                                 @error('discount_end_date')
                                                     <span class="text-danger text-sm">{{ $message }}</span>
@@ -449,7 +452,7 @@
                                             <div class="w-full">
                                                 <div class="flex items-baseline flex-wrap gap-2.5">
                                                     <label class="form-label flex items-center gap-1 max-w-56">
-                                                        Discount
+                                                        {{ translate('Discount') }}
                                                     </label>
                                                     <input class="input @error('discount') border-red-500 @enderror"
                                                         name="discount" type="number" value="{{ old('discount') }}"
@@ -463,17 +466,20 @@
                                             <div class="w-full">
                                                 <div class="flex items-baseline flex-wrap gap-2.5">
                                                     <label class="form-label flex items-center gap-1 max-w-56">
-                                                        Discount Type
+                                                        {{ translate('Discount Type') }}
                                                     </label>
                                                     <select class="input @error('discount_type') border-red-500 @enderror"
                                                         name="discount_type">
-                                                        <option value="">Select One Option</option>
+                                                        <option value="">{{ translate('Select One Option') }}
+                                                        </option>
                                                         <option value="amount"
-                                                            {{ old('discount_type') == 'amount' ? 'selected' : '' }}>Flat
+                                                            {{ old('discount_type') == 'amount' ? 'selected' : '' }}>
+                                                            {{ translate('Flat') }}
                                                         </option>
                                                         <option value="percent"
                                                             {{ old('discount_type') == 'percent' ? 'selected' : '' }}>
-                                                            Percent</option>
+                                                            {{ translate('Percent') }}
+                                                        </option>
                                                     </select>
                                                 </div>
                                                 @error('discount_type')
@@ -485,7 +491,7 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    Quantity
+                                                    {{ translate('Quantity') }}
                                                 </label>
                                                 <input class="input @error('current_stock') border-red-500 @enderror"
                                                     name="current_stock" type="number"
@@ -499,7 +505,7 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    SKU
+                                                    {{ translate('SKU') }}
                                                 </label>
                                                 <input class="input @error('sku') border-red-500 @enderror"
                                                     name="sku" type="text" value="{{ old('sku') }}" />
@@ -508,15 +514,15 @@
                                                 <span class="text-danger text-sm">{{ $message }}</span>
                                             @enderror
                                         </div>
-
                                     </div>
                                 </div>
                             </div>
+
                             {{-- description --}}
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Product Description
+                                        {{ translate('Product Description') }}
                                     </h3>
                                 </div>
 
@@ -525,7 +531,7 @@
                                         <div class="w-full">
                                             <div class="flex flex-col gap-2.5">
                                                 <label class="form-label">
-                                                    Short Description
+                                                    {{ translate('Short Description') }}
                                                 </label>
                                                 <textarea id="short_description" name="short_description"
                                                     class="input @error('short_description') border-red-500 @enderror">{{ old('short_description') }}</textarea>
@@ -538,11 +544,9 @@
                                         <div class="w-full">
                                             <div class="flex flex-col gap-2.5">
                                                 <label class="form-label">
-                                                    Description
+                                                    {{ translate('Description') }}
                                                 </label>
-                                                <textarea id="description" name="description" class="input @error('description') border-red-500 @enderror">
-                                                {{ old('description') }}
-                                            </textarea>
+                                                <textarea id="description" name="description" class="input @error('description') border-red-500 @enderror">{{ old('description') }}</textarea>
                                             </div>
                                             @error('description')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
@@ -551,11 +555,12 @@
                                     </div>
                                 </div>
                             </div>
+
                             {{-- meta tags --}}
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        SEO Meta Tags
+                                        {{ translate('SEO Meta Tags') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -563,7 +568,7 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    Meta Title
+                                                    {{ translate('Meta Title') }}
                                                 </label>
                                                 <input class="input @error('meta_title') border-red-500 @enderror"
                                                     name="meta_title" type="text" value="{{ old('meta_title') }}" />
@@ -576,7 +581,7 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    Meta Description
+                                                    {{ translate('Meta Description') }}
                                                 </label>
                                                 <textarea class="textarea @error('meta_description') border-red-500 @enderror" name="meta_description"
                                                     rows="4">{{ old('meta_description') }}</textarea>
@@ -588,7 +593,7 @@
 
                                         @include('media.single', [
                                             'name' => 'meta_img',
-                                            'label' => 'Meta Image',
+                                            'label' => translate('Meta Image'),
                                             'required' => false,
                                             'value' => old('meta_img'),
                                         ])
@@ -603,7 +608,7 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Shipping Configuration
+                                        {{ translate('Shipping Configuration') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -617,7 +622,7 @@
                                             <div class="grow">
                                                 <label class="switch justify-between">
                                                     <span class="switch-label text-sm">
-                                                        Free Shipping
+                                                        {{ translate('Free Shipping') }}
                                                     </span>
                                                     <input id="free_shipping" name="shipping_type" type="checkbox"
                                                         value="free"
@@ -631,7 +636,7 @@
                                             <div class="grow">
                                                 <label class="switch justify-between">
                                                     <span class="switch-label text-sm">
-                                                        Flat Rate
+                                                        {{ translate('Flat Rate') }}
                                                     </span>
                                                     <input id="flat_rate" name="shipping_type" type="checkbox"
                                                         value="flat_rate"
@@ -643,10 +648,11 @@
                                         <!-- Flat Rate Input Field (toggle visibility) -->
                                         <div id="flat_rate_input"
                                             class="flex items-center gap-2.5 {{ $oldShippingType === 'flat_rate' ? '' : 'hidden' }}">
-                                            <label for="flat_rate_amount" class="text-sm">Flat Rate Amount</label>
+                                            <label for="flat_rate_amount"
+                                                class="text-sm">{{ translate('Flat Rate Amount') }}</label>
                                             <input id="flat_rate_amount" type="number"
                                                 class="input @error('shipping_cost') border-red-500 @enderror"
-                                                name="shipping_cost" placeholder="Enter amount"
+                                                name="shipping_cost" placeholder="{{ translate('Enter amount') }}"
                                                 value="{{ old('shipping_cost') }}" />
                                         </div>
 
@@ -655,7 +661,7 @@
                                             <div class="grow">
                                                 <label class="switch justify-between">
                                                     <span class="switch-label text-sm">
-                                                        Is Product Quantity Multiply
+                                                        {{ translate('Is Product Quantity Multiply') }}
                                                     </span>
                                                     <input id="quantity_multiply" name="shipping_type" type="checkbox"
                                                         value="product_wise"
@@ -671,7 +677,7 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Low Stock Quantity Warning
+                                        {{ translate('Low Stock Quantity Warning') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -679,7 +685,7 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    Quantity
+                                                    {{ translate('Quantity') }}
                                                 </label>
                                                 <input class="input @error('low_stock_quantity') border-red-500 @enderror"
                                                     name="low_stock_quantity" type="number"
@@ -696,7 +702,7 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Stock Visibility State
+                                        {{ translate('Stock Visibility State') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -706,7 +712,8 @@
                                         <div class="flex items-center flex-wrap gap-2.5">
                                             <div class="grow">
                                                 <label class="switch justify-between">
-                                                    <span class="switch-label text-sm">Show Stock Quantity</span>
+                                                    <span
+                                                        class="switch-label text-sm">{{ translate('Show Stock Quantity') }}</span>
                                                     <input id="stock_qty" name="stock_visibility_state" type="checkbox"
                                                         value="quantity"
                                                         {{ old('stock_visibility_state') === 'quantity' ? 'checked' : '' }} />
@@ -718,7 +725,8 @@
                                         <div class="flex items-center flex-wrap gap-2.5">
                                             <div class="grow">
                                                 <label class="switch justify-between">
-                                                    <span class="switch-label text-sm">Show Stock With Text Only</span>
+                                                    <span
+                                                        class="switch-label text-sm">{{ translate('Show Stock With Text Only') }}</span>
                                                     <input id="stock_text" name="stock_visibility_state" type="checkbox"
                                                         value="text"
                                                         {{ old('stock_visibility_state') === 'text' ? 'checked' : '' }} />
@@ -730,7 +738,8 @@
                                         <div class="flex items-center flex-wrap gap-2.5">
                                             <div class="grow">
                                                 <label class="switch justify-between">
-                                                    <span class="switch-label text-sm">Hide Stock</span>
+                                                    <span
+                                                        class="switch-label text-sm">{{ translate('Hide Stock') }}</span>
                                                     <input id="stock_hide" name="stock_visibility_state" type="checkbox"
                                                         value="hide"
                                                         {{ old('stock_visibility_state') === 'hide' ? 'checked' : '' }} />
@@ -744,7 +753,7 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Featured
+                                        {{ translate('Featured') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -753,7 +762,7 @@
                                             <div class="grow">
                                                 <label class="switch justify-between">
                                                     <span class="switch-label text-sm">
-                                                        Status
+                                                        {{ translate('Status') }}
                                                     </span>
                                                     <!-- Hidden input to send false if checkbox is unchecked -->
                                                     <input type="hidden" name="featured" value="0" />
@@ -769,7 +778,7 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Estimate Shipping Time
+                                        {{ translate('Estimate Shipping Time') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -778,7 +787,7 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    Shipping Days
+                                                    {{ translate('Shipping Days') }}
                                                 </label>
                                                 <input class="input @error('est_shipping_days') border-red-500 @enderror"
                                                     name="est_shipping_days" type="number"
@@ -796,7 +805,7 @@
                             <div class="card min-w-full">
                                 <div class="card-header">
                                     <h3 class="card-title">
-                                        Vat & TAX
+                                        {{ translate('Vat & TAX') }}
                                     </h3>
                                 </div>
                                 <div class="card-table scrollable-x-auto pb-3">
@@ -805,7 +814,7 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    VAT
+                                                    {{ translate('VAT') }}
                                                 </label>
                                                 <input class="input @error('tax') border-red-500 @enderror"
                                                     name="tax" type="number" value="{{ old('tax') }}" />
@@ -818,16 +827,17 @@
                                         <div class="w-full">
                                             <div class="flex items-baseline flex-wrap gap-2.5">
                                                 <label class="form-label flex items-center gap-1 max-w-56">
-                                                    VAT Type
+                                                    {{ translate('VAT Type') }}
                                                 </label>
                                                 <select class="input @error('tax_type') border-red-500 @enderror"
                                                     name="tax_type">
-                                                    <option value="">Select One Option</option>
+                                                    <option value="">{{ translate('Select One Option') }}</option>
                                                     <option value="amount"
-                                                        {{ old('tax_type') == 'amount' ? 'selected' : '' }}>Flat</option>
+                                                        {{ old('tax_type') == 'amount' ? 'selected' : '' }}>
+                                                        {{ translate('Flat') }}</option>
                                                     <option value="percent"
-                                                        {{ old('tax_type') == 'percent' ? 'selected' : '' }}>Percent
-                                                    </option>
+                                                        {{ old('tax_type') == 'percent' ? 'selected' : '' }}>
+                                                        {{ translate('Percent') }}</option>
                                                 </select>
                                             </div>
                                             @error('tax_type')
@@ -839,16 +849,17 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
 
                 <div class="flex justify-end pt-2.5">
                     <button type="submit" name="action" value="unpublish" class="btn btn-danger"
                         style="margin-right: 7px">
-                        Save & Unpublish
+                        {{ translate('Save & Unpublish') }}
                     </button>
 
                     <button type="submit" name="action" value="publish" class="btn btn-primary">
-                        Save & Publish
+                        {{ translate('Save & Publish') }}
                     </button>
                 </div>
 

@@ -26,14 +26,14 @@
         <div class="container-fixed">
 
             <div class="mb-8">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Customer Profile</h1>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">{{ translate('Customer Profile') }}</h1>
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 mt-4">
 
                     <div class="grid grid-cols-3 lg:grid-cols-1">
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm text-gray-500">Credit Score</p>
+                                    <p class="text-sm text-gray-500">{{ translate('Credit Score') }}</p>
                                     <p class="text-2xl font-bold text-primary-600">
                                         {{ $data['creditScore']['compositeScore'] }}/100
                                     </p>
@@ -49,7 +49,7 @@
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm text-gray-500">Risk Score</p>
+                                    <p class="text-sm text-gray-500">{{ translate('Risk Score') }}</p>
                                     <p class="text-2xl font-bold text-primary-600">
                                         {{ $riskScore->total_score }}/100
                                     </p>
@@ -73,12 +73,10 @@
                                         $creditScore = $data['creditScore']['compositeScore'];
                                         $riskScore = $riskScore->total_score;
                                         $oldCreditLimit = 20000;
-
                                         $finalScore = $creditScore * ($riskScore / 100);
-
                                         $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
                                     @endphp
-                                    <p class="text-sm text-gray-500">Total Score</p>
+                                    <p class="text-sm text-gray-500">{{ translate('Total Score') }}</p>
                                     <p class="text-2xl font-bold text-yellow-600">{{ number_format($finalScore, 2) }}</p>
                                 </div>
                                 <div class="bg-yellow-100 p-3 rounded-full">
@@ -96,7 +94,7 @@
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm text-gray-500">Credit Limit</p>
+                                    <p class="text-sm text-gray-500">{{ translate('Credit Limit') }}</p>
                                     <p class="text-2xl font-bold text-yellow-600">
                                         <span class="icon-saudi_riyal"></span>{{ number_format($newCreditLimit, 2) }}
                                     </p>
@@ -116,7 +114,7 @@
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    <p class="text-sm text-gray-500">Business Age</p>
+                                    <p class="text-sm text-gray-500">{{ translate('Business Age') }}</p>
                                     <p class="text-2xl font-bold text-green-600">{{ $data['businessAge'] }}</p>
                                 </div>
                                 <div class="bg-green-100 p-3 rounded-full">
@@ -129,8 +127,10 @@
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
+
             <!-- begin: grid -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-7.5">
                 @php
@@ -143,86 +143,93 @@
                 <div class="col-span-1 lg:col-span-3">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">Government information</h3>
+                            <h3 class="card-title">{{ translate('Government information') }}</h3>
                         </div>
                         <div class="card-body">
-
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+
                                 {{-- LEFT COLUMN --}}
                                 <table class="table-auto w-full">
                                     <tbody>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">CR National Number</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('CR National Number') }}
+                                            </td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['crNationalNumber'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">CR Number</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('CR Number') }}</td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['crNumber'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Version</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Version') }}</td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['versionNo'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Name</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Name') }}</td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['name'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Language</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Language') }}</td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['nameLangDesc'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Capital
-                                                ({{ $g['capital']['currencyName'] ?? '' }})</td>
+                                            <td class="text-sm text-gray-600 py-2">
+                                                {{ translate('Capital') }} ({{ $g['capital']['currencyName'] ?? '' }})
+                                            </td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['crCapital'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Duration (yrs)</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Duration (yrs)') }}</td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['companyDuration'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Main CR National No</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Main CR National No') }}
+                                            </td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['mainCrNationalNumber'] ?? '-' }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Main CR Number</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Main CR Number') }}</td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['mainCrNumber'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">In Liquidation?</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('In Liquidation?') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['inLiquidationProcess']) ? 'Yes' : 'No' }}
+                                                {{ !empty($g['inLiquidationProcess']) ? translate('Yes') : translate('No') }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">E-Commerce?</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('E-Commerce?') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['hasEcommerce']) ? 'Yes' : 'No' }}
-                                            </td>
+                                                {{ !empty($g['hasEcommerce']) ? translate('Yes') : translate('No') }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Headquarter City</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Headquarter City') }}
+                                            </td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['headquarterCityName'] ?? '-' }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">License Based?</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('License Based?') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['isLicenseBased']) ? 'Yes' : 'No' }}</td>
+                                                {{ !empty($g['isLicenseBased']) ? translate('Yes') : translate('No') }}
+                                            </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">License Issuer No</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('License Issuer No') }}
+                                            </td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 {{ $g['licenseIssuerNationalNumber'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">License Issuer Name</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('License Issuer Name') }}
+                                            </td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['licenseIssuerName'] ?? '-' }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Partners’ Nationality</td>
+                                            <td class="text-sm text-gray-600 py-2">
+                                                {{ translate('Partners’ Nationality') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 {{ $g['PartnersNationalityName'] ?? '-' }}</td>
                                         </tr>
@@ -233,14 +240,12 @@
                                 <table class="table-auto w-full">
                                     <tbody>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Entity Type</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ $g['entityType']['name'] ?? '-' }} –
-                                                {{ $g['entityType']['formName'] ?? '' }}
-                                            </td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Entity Type') }}</td>
+                                            <td class="text-sm text-gray-900 py-2">{{ $g['entityType']['name'] ?? '-' }} –
+                                                {{ $g['entityType']['formName'] ?? '' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Status</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Status') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 @php
                                                     $st = strtolower($g['status']['name'] ?? '');
@@ -251,64 +256,63 @@
                                                                 ? 'warning'
                                                                 : 'danger');
                                                 @endphp
-                                                <span class="badge badge-sm badge-{{ $color }} badge-outline">
-                                                    {{ $g['status']['name'] ?? '-' }}
-                                                </span>
+                                                <span
+                                                    class="badge badge-sm badge-{{ $color }} badge-outline">{{ $g['status']['name'] ?? '-' }}</span>
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Issue Date (G)</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Issue Date (G)') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 {{ !empty($g['issueDateGregorian']) ? \Carbon\Carbon::parse($g['issueDateGregorian'])->format('d M Y') : '-' }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Issue Date (H)</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ $g['issueDateHijri'] ?? '-' }}
-                                            </td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Issue Date (H)') }}</td>
+                                            <td class="text-sm text-gray-900 py-2">{{ $g['issueDateHijri'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Confirmation Date</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Confirmation Date') }}
+                                            </td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 {{ !empty($g['confirmationDate']['gregorian']) ? \Carbon\Carbon::parse($g['confirmationDate']['gregorian'])->format('d M Y') : '-' }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Reactivation Date</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Reactivation Date') }}
+                                            </td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 {{ !empty($g['reactivationDate']['gregorian']) ? \Carbon\Carbon::parse($g['reactivationDate']['gregorian'])->format('d M Y') : '-' }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Suspension Date</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Suspension Date') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 {{ !empty($g['suspensionDate']['gregorian']) ? \Carbon\Carbon::parse($g['suspensionDate']['gregorian'])->format('d M Y') : '-' }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Deletion Date</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Deletion Date') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 {{ !empty($g['deletionDate']['gregorian']) ? \Carbon\Carbon::parse($g['deletionDate']['gregorian'])->format('d M Y') : '-' }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Contact Phone</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Contact Phone') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 {{ $g['contactInfo']['phoneNo'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Contact Mobile</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Contact Mobile') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 {{ $g['contactInfo']['mobileNo'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Contact Email</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Contact Email') }}</td>
                                             <td class="text-sm text-gray-900 py-2">{{ $g['contactInfo']['email'] ?? '-' }}
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">Website</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('Website') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
                                                 @if (!empty($g['contactInfo']['websiteUrl']))
                                                     <a href="//{{ $g['contactInfo']['websiteUrl'] }}" target="_blank"
@@ -321,24 +325,23 @@
                                             </td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">e-Store URL</td>
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('e-Store URL') }}</td>
                                             <td class="text-sm text-gray-900 py-2">
-                                                {{ $g['eCommerce']['eStore'][0]['storeUrl'] ?? '-' }}
-                                            </td>
+                                                {{ $g['eCommerce']['eStore'][0]['storeUrl'] ?? '-' }}</td>
                                         </tr>
                                         <tr>
-                                            <td class="text-sm text-gray-600 py-2">e-Store Platform</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ $g['eCommerce']['eStore'][0]['authenticationPlatformUrl'] ?? '-' }}
+                                            <td class="text-sm text-gray-600 py-2">{{ translate('e-Store Platform') }}
                                             </td>
+                                            <td class="text-sm text-gray-900 py-2">
+                                                {{ $g['eCommerce']['eStore'][0]['authenticationPlatformUrl'] ?? '-' }}</td>
                                         </tr>
                                     </tbody>
                                 </table>
+
                             </div>
                         </div>
                     </div>
                 </div>
-
             </div>
             <!-- end: grid -->
         </div>
@@ -352,15 +355,15 @@
                             <div class="flex items-center justify-between flex-wrap grow gap-5">
                                 <div class="flex flex-col justify-center gap-2">
                                     <h1 class="text-xl pt-5 font-semibold leading-none text-gray-900">
-                                        Fahman
+                                        {{ translate('Fahman') }}
                                     </h1>
                                     <div class="flex items-center gap-2 text-sm font-normal text-gray-700">
-                                        The Friendly FinAdvisor
+                                        {{ translate('The Friendly FinAdvisor') }}
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-2.5">
                                     <a class="btn btn-sm btn-light" data-modal-dismiss="true" href="#">
-                                        Close
+                                        {{ translate('Close') }}
                                     </a>
                                 </div>
                             </div>
@@ -372,11 +375,10 @@
                     style="margin: auto">
                     <img src="{{ asset('assets/media/waiting.gif') }}" alt="" style="margin: auto;width:200px">
                     <div class="text-center mt-5">
-                        <h3 class="text-lg font-semibold text-gray-900">Loading...</h3>
-                        <p class="text-sm text-gray-600">Customer data is being analyzed.</p>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ translate('Loading...') }}</h3>
+                        <p class="text-sm text-gray-600">{{ translate('Customer data is being analyzed.') }}</p>
                     </div>
                 </div>
-
             </div>
         </div>
 
@@ -389,13 +391,12 @@
                             <div class="flex items-center justify-between flex-wrap grow gap-5">
                                 <div class="flex flex-col justify-center gap-2">
                                     <h1 class="text-xl pt-5 font-semibold leading-none text-gray-900">
-                                        Fahman
+                                        {{ translate('Fahman') }}
                                     </h1>
                                     <div class="flex items-center gap-2 text-sm font-normal text-gray-700">
-                                        The Friendly FinAdvisor
+                                        {{ translate('The Friendly FinAdvisor') }}
                                     </div>
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -405,26 +406,28 @@
                     style="margin: auto">
                     <img src="{{ asset('assets/media/waiting.gif') }}" alt="" style="margin: auto;width:200px">
                     <div class="text-center mt-5">
-                        <h3 class="text-lg font-semibold text-gray-900">Loading...</h3>
-                        <p class="text-sm text-gray-600">Customer data is being analyzed.</p>
+                        <h3 class="text-lg font-semibold text-gray-900">{{ translate('Loading...') }}</h3>
+                        <p class="text-sm text-gray-600">{{ translate('Customer data is being analyzed.') }}</p>
                     </div>
                 </div>
-
             </div>
         </div>
+
         <!-- Fahman Details Modal -->
         <div class="modal fade" id="fahmanDetailsModal1" tabindex="-1" aria-labelledby="fahmanDetailsModalLabel"
             aria-hidden="true">
             <div class="modal-dialog modal-lg modal-dialog-scrollable">
                 <div class="modal-content">
                     <div class="modal-header bg-dark text-white">
-                        <h5 class="modal-title" id="fahmanDetailsModalLabel">📊 Detailed Credit Breakdown</h5>
+                        <h5 class="modal-title" id="fahmanDetailsModalLabel">
+                            📊 {{ translate('Detailed Credit Breakdown') }}
+                        </h5>
                         <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
-                            aria-label="Close"></button>
+                            aria-label="{{ translate('Close') }}"></button>
                     </div>
                     <div class="modal-body" id="fahman-details-body1">
                         <div class="text-center text-muted">
-                            <span>Loading details...</span>
+                            <span>{{ translate('Loading details...') }}</span>
                         </div>
                     </div>
                 </div>

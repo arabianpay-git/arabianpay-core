@@ -5,38 +5,40 @@
         <!-- Container -->
         <div class="container-fixed" id="content_container"></div>
         <!-- End of Container -->
+
         <!-- Container -->
         <div class="container-fixed">
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        Brands
+                        {{ translate('Brands') }}
                     </h1>
                 </div>
                 @can('brand.create')
                     <div class="flex items-center gap-2.5">
                         <a class="btn btn-sm btn-light" href="{{ route('brands.create') }}">
-                            Create New Brans
+                            {{ translate('Create New Brand') }}
                         </a>
                     </div>
                 @endcan
             </div>
         </div>
         <!-- End of Container -->
+
         <!-- Container -->
         <div class="container-fixed">
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            Brands
+                            {{ translate('Brands') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#team_crew_table" placeholder="Search users"
-                                        type="text" value="" />
+                                    <input data-datatable-search="#team_crew_table"
+                                        placeholder="{{ translate('Search users') }}" type="text" value="" />
                                 </label>
                             </div>
                         </div>
@@ -48,57 +50,57 @@
                                     <thead>
                                         <tr>
                                             <th class="w-[60px] text-center">
-                                                No
+                                                {{ translate('No') }}
                                             </th>
-                                            <th class="">
+                                            <th>
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Logo
+                                                        {{ translate('Logo') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
 
-                                            <th class="">
+                                            <th>
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Name
+                                                        {{ translate('Name') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
 
-                                            <th class="">
+                                            <th>
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Order Level
+                                                        {{ translate('Order Level') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
 
-                                            <th class="">
+                                            <th>
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Featured
+                                                        {{ translate('Featured') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
 
-                                            <th class="">
+                                            <th>
                                                 <span class="sort">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Created At
+                                                        {{ translate('Created At') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
 
-                                            <th class="">
+                                            <th>
                                                 <span class="sort">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Action
+                                                        {{ translate('Action') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -115,7 +117,7 @@
                                                         <img src="{{ asset($brand->logo) }}" alt="{{ $brand->name }}"
                                                             class="w-10 h-10 object-contain border-7">
                                                     @else
-                                                        <span class="text-gray-400">N/A</span>
+                                                        <span class="text-gray-400">{{ translate('N/A') }}</span>
                                                     @endif
                                                 </td>
 
@@ -125,9 +127,11 @@
 
                                                 <td>
                                                     @if ($brand->featured)
-                                                        <span class="badge badge-sm badge-outline badge-success">Yes</span>
+                                                        <span
+                                                            class="badge badge-sm badge-outline badge-success">{{ translate('Yes') }}</span>
                                                     @else
-                                                        <span class="badge badge-sm badge-outline badge-danger">No</span>
+                                                        <span
+                                                            class="badge badge-sm badge-outline badge-danger">{{ translate('No') }}</span>
                                                     @endif
                                                 </td>
 

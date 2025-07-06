@@ -6,7 +6,7 @@
             </h3>
             <label class="flex items-center gap-1 text-sm switch">
                 <input type="checkbox" class="select-all-perms" data-target="perm-group-{{ $loop->index }}">
-                Select All
+                {{ translate('Select All') }}
             </label>
         </div>
         <div class="card-body flex flex-wrap gap-7 perm-group-{{ $loop->index }}" style="padding: 0.725rem;">

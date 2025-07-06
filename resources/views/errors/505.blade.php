@@ -8,13 +8,13 @@
                     src="{{ asset('assets/media/illustrations/11.svg') }}">
             </div>
             <h3 class="text-lg font-medium text-gray-900 dark:text-white text-center mb-3">
-                {{ __('HTTP Version Not Supported') }}
+                {{ translate('HTTP Version Not Supported') }}
             </h3>
             <div class="text-sm text-center text-gray-700 dark:text-gray-300 mb-7">
-                {{ __('The HTTP protocol version used in the request is not supported by the server.') }}
+                {{ translate('The HTTP protocol version used in the request is not supported by the server.') }}
             </div>
             <a class="btn btn-primary inline-flex justify-center" href="{{ url('/') }}">
-                {{ __('Go to Home') }}
+                {{ translate('Go to Home') }}
             </a>
         </div>
     </div>

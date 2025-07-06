@@ -47,7 +47,7 @@
                                 <i class="ki-filled ki-element-8 text-lg"> </i>
                             </span>
                             <span class="menu-title text-sm font-medium text-gray-800">
-                                Dashboard
+                                {{ translate('Dashboard') }}
                             </span>
                         </div>
                     </div>
@@ -62,12 +62,12 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Accounts
+                                {{ translate('Accounts') }}
                             </span>
                             @if ($hasNewCustomers || $hasNewSuppliers)
                                 <span class="menu-badge me-[-10px]">
                                     <span class="badge badge-success badge-xs">
-                                        New
+                                        {{ translate('New') }}
                                     </span>
                                 </span>
                             @endif
@@ -88,12 +88,12 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Customers
+                                            {{ translate('Customers') }}
                                         </span>
                                         @if ($hasNewCustomers)
                                             <span class="menu-badge me-[-10px]">
                                                 <span class="badge badge-success badge-xs">
-                                                    New
+                                                    {{ translate('New') }}
                                                 </span>
                                             </span>
                                         @endif
@@ -109,13 +109,13 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Supplier
+                                            {{ translate('Supplier') }}
                                         </span>
 
                                         @if ($hasNewSuppliers)
                                             <span class="menu-badge me-[-10px]">
                                                 <span class="badge badge-success badge-xs">
-                                                    New
+                                                    {{ translate('New') }}
                                                 </span>
                                             </span>
                                         @endif
@@ -131,7 +131,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Nafath
+                                            {{ translate('Nafath') }}
                                         </span>
                                     </a>
                                 </div>
@@ -144,7 +144,6 @@
                     'statics.brand', 'statics.reviews'])
                     <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                         @canany(['product.create', 'product.read', 'product.approval', 'product.reviews'])
-
                             <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                                 tabindex="0">
                                 <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -152,12 +151,12 @@
                                 </span>
                                 <span
                                     class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                    Products
+                                    {{ translate('Products') }}
                                 </span>
                                 @if ($hasNewProduct)
                                     <span class="menu-badge me-[-10px]">
                                         <span class="badge badge-success badge-xs">
-                                            New
+                                            {{ translate('New') }}
                                         </span>
                                     </span>
                                 @endif
@@ -176,12 +175,12 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                            Products
+                                            {{ translate('Products') }}
                                         </span>
                                         @if ($hasNewProduct)
                                             <span class="menu-badge me-[-10px]">
                                                 <span class="badge badge-success badge-xs">
-                                                    New
+                                                    {{ translate('New') }}
                                                 </span>
                                             </span>
                                         @endif
@@ -202,7 +201,7 @@
                                                     </span>
                                                     <span
                                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                        Add New Product
+                                                        {{ translate('Add New Product') }}
                                                     </span>
                                                 </a>
                                             </div>
@@ -216,7 +215,7 @@
                                                     </span>
                                                     <span
                                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                        Bulk Import Product
+                                                        {{ translate('Bulk Import Product') }}
                                                     </span>
                                                 </a>
                                             </div>
@@ -230,7 +229,7 @@
                                                     </span>
                                                     <span
                                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                        All Products
+                                                        {{ translate('All Products') }}
                                                     </span>
                                                 </a>
                                             </div>
@@ -244,12 +243,12 @@
                                                     </span>
                                                     <span
                                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                        Product Approval
+                                                        {{ translate('Product Approval') }}
                                                     </span>
                                                     @if ($hasNewProduct)
                                                         <span class="menu-badge me-[-10px]">
                                                             <span class="badge badge-success badge-xs">
-                                                                New
+                                                                {{ translate('New') }}
                                                             </span>
                                                         </span>
                                                     @endif
@@ -265,7 +264,7 @@
                                                     </span>
                                                     <span
                                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                        Product Reviews
+                                                        {{ translate('Product Reviews') }}
                                                     </span>
                                                 </a>
                                             </div>
@@ -282,7 +281,7 @@
                                             </span>
                                             <span
                                                 class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                                Categories
+                                                {{ translate('Categories') }}
                                             </span>
                                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -300,7 +299,7 @@
                                                         </span>
                                                         <span
                                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                            Add New Category
+                                                            {{ translate('Add New Category') }}
                                                         </span>
                                                     </a>
                                                 </div>
@@ -314,7 +313,7 @@
                                                         </span>
                                                         <span
                                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                            All Categories
+                                                            {{ translate('All Categories') }}
                                                         </span>
                                                     </a>
                                                 </div>
@@ -331,7 +330,7 @@
                                             </span>
                                             <span
                                                 class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                                Brands
+                                                {{ translate('Brands') }}
                                             </span>
                                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -349,7 +348,7 @@
                                                         </span>
                                                         <span
                                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                            Add New Brand
+                                                            {{ translate('Add New Brand') }}
                                                         </span>
                                                     </a>
                                                 </div>
@@ -363,7 +362,7 @@
                                                         </span>
                                                         <span
                                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                            All Brands
+                                                            {{ translate('All Brands') }}
                                                         </span>
                                                     </a>
                                                 </div>
@@ -380,7 +379,7 @@
                                             </span>
                                             <span
                                                 class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                Attributes
+                                                {{ translate('Attributes') }}
                                             </span>
                                         </a>
                                     </div>
@@ -395,7 +394,7 @@
                                             </span>
                                             <span
                                                 class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                                Statics
+                                                {{ translate('Statics') }}
                                             </span>
                                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -413,7 +412,7 @@
                                                         </span>
                                                         <span
                                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                            Product
+                                                            {{ translate('Product') }}
                                                         </span>
                                                     </a>
                                                 </div>
@@ -427,7 +426,7 @@
                                                         </span>
                                                         <span
                                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                            Category
+                                                            {{ translate('Category') }}
                                                         </span>
                                                     </a>
                                                 </div>
@@ -441,7 +440,7 @@
                                                         </span>
                                                         <span
                                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                            Brand
+                                                            {{ translate('Brand') }}
                                                         </span>
                                                     </a>
                                                 </div>
@@ -455,7 +454,7 @@
                                                         </span>
                                                         <span
                                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                            Reviews
+                                                            {{ translate('Reviews') }}
                                                         </span>
                                                     </a>
                                                 </div>
@@ -477,7 +476,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Orders
+                                {{ translate('Orders') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -495,7 +494,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            All Order
+                                            {{ translate('All Order') }}
                                         </span>
                                     </a>
                                 </div>
@@ -508,7 +507,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Confirmed Order
+                                            {{ translate('Confirmed Order') }}
                                         </span>
                                     </a>
                                 </div>
@@ -521,7 +520,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Processing Orders
+                                            {{ translate('Processing Orders') }}
                                         </span>
                                     </a>
                                 </div>
@@ -534,7 +533,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Cancelled Orders
+                                            {{ translate('Cancelled Orders') }}
                                         </span>
                                     </a>
                                 </div>
@@ -547,7 +546,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Failed Orders
+                                            {{ translate('Failed Orders') }}
                                         </span>
                                     </a>
                                 </div>
@@ -561,7 +560,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                            Shipping Orders
+                                            {{ translate('Shipping Orders') }}
                                         </span>
                                         <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                             <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -578,7 +577,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    All Shipping Orders
+                                                    {{ translate('All Shipping Orders') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -591,7 +590,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Confirmed Shipping Orders
+                                                    {{ translate('Confirmed Shipping Orders') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -604,7 +603,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Pending Shipping Orders
+                                                    {{ translate('Pending Shipping Orders') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -618,7 +617,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Delivered Shipping Orders
+                                                    {{ translate('Delivered Shipping Orders') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -631,16 +630,16 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Returned Shipping Orders
+                                                    {{ translate('Returned Shipping Orders') }}
                                                 </span>
                                             </a>
                                         </div>
-
                                     </div>
                                 </div>
                             @endcan
                         </div>
                     </div>
+
                 @endcanany
 
                 @canany(['transaction.view', 'schedule_payment.view', 'supplier_and_sales.view',
@@ -653,7 +652,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Financial
+                                {{ translate('Financial') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -671,7 +670,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Transactions
+                                            {{ translate('Transactions') }}
                                         </span>
                                     </a>
                                 </div>
@@ -686,7 +685,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                            Scheduled Payments
+                                            {{ translate('Scheduled Payments') }}
                                         </span>
                                         <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                             <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -704,7 +703,7 @@
                                                     </span>
                                                     <span
                                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                        All Payments
+                                                        {{ translate('All Payments') }}
                                                     </span>
                                                 </a>
                                             </div>
@@ -717,7 +716,7 @@
                                                     </span>
                                                     <span
                                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                        Pending Payments
+                                                        {{ translate('Pending Payments') }}
                                                     </span>
                                                 </a>
                                             </div>
@@ -730,7 +729,7 @@
                                                     </span>
                                                     <span
                                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                        Due Payments
+                                                        {{ translate('Due Payments') }}
                                                     </span>
                                                 </a>
                                             </div>
@@ -743,7 +742,7 @@
                                                     </span>
                                                     <span
                                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                        Late Payments
+                                                        {{ translate('Late Payments') }}
                                                     </span>
                                                 </a>
                                             </div>
@@ -756,14 +755,14 @@
                                                     </span>
                                                     <span
                                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                        Paid Payments
+                                                        {{ translate('Paid Payments') }}
                                                     </span>
                                                 </a>
                                             </div>
                                         @endcan
                                     </div>
                                 </div>
-                            @endcan
+                            @endcanany
 
                             @can('supplier_and_sales.view')
                                 <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
@@ -774,7 +773,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                            Supplier & Sales
+                                            {{ translate('Supplier & Sales') }}
                                         </span>
                                         <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                             <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -791,7 +790,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Detailed Purchases
+                                                    {{ translate('Detailed Purchases') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -804,7 +803,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Total Purchases
+                                                    {{ translate('Total Purchases') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -817,7 +816,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Payment of Suppliers
+                                                    {{ translate('Payment of Suppliers') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -830,7 +829,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Detailed Supplier Debt
+                                                    {{ translate('Detailed Supplier Debt') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -843,7 +842,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Total Supplier Debt
+                                                    {{ translate('Total Supplier Debt') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -860,7 +859,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                            Customer & Sales
+                                            {{ translate('Customer & Sales') }}
                                         </span>
                                         <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                             <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -877,7 +876,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Detailed Sale Reports
+                                                    {{ translate('Detailed Sale Reports') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -890,7 +889,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Total Sale Reports
+                                                    {{ translate('Total Sale Reports') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -903,7 +902,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Customer Collection Reports
+                                                    {{ translate('Customer Collection Reports') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -916,7 +915,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Detailed Customer Debt
+                                                    {{ translate('Detailed Customer Debt') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -929,7 +928,7 @@
                                                 </span>
                                                 <span
                                                     class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                                    Total Customer Debt
+                                                    {{ translate('Total Customer Debt') }}
                                                 </span>
                                             </a>
                                         </div>
@@ -949,7 +948,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Risk Managment
+                                {{ translate('Risk Management') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -966,7 +965,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Scoring Engine
+                                        {{ translate('Scoring Engine') }}
                                     </span>
                                 </a>
                             </div>
@@ -982,7 +981,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Risk Register Table
+                                        {{ translate('Risk Register Table') }}
                                     </span>
                                 </a>
                             </div>
@@ -998,7 +997,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Alerts Engine
+                                        {{ translate('Alerts Engine') }}
                                     </span>
                                 </a>
                             </div>
@@ -1014,7 +1013,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Case Manager
+                                        {{ translate('Case Manager') }}
                                     </span>
                                 </a>
                             </div>
@@ -1030,7 +1029,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Audit Trail
+                                        {{ translate('Audit Trail') }}
                                     </span>
                                 </a>
                             </div>
@@ -1047,7 +1046,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Credit Managment
+                                {{ translate('Credit Management') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -1064,7 +1063,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Customer Credit Profile
+                                        {{ translate('Customer Credit Profile') }}
                                     </span>
                                 </a>
                             </div>
@@ -1080,7 +1079,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Credit Limit Engine
+                                        {{ translate('Credit Limit Engine') }}
                                     </span>
                                 </a>
                             </div>
@@ -1096,7 +1095,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Repayment Schedule Engine
+                                        {{ translate('Repayment Schedule Engine') }}
                                     </span>
                                 </a>
                             </div>
@@ -1112,7 +1111,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Credit Application System
+                                        {{ translate('Credit Application System') }}
                                     </span>
                                 </a>
                             </div>
@@ -1128,7 +1127,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Credit Adjustment Requests
+                                        {{ translate('Credit Adjustment Requests') }}
                                     </span>
                                 </a>
                             </div>
@@ -1146,7 +1145,7 @@
                                 </span>
                                 <span
                                     class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                    Instalment Plans
+                                    {{ translate('Instalment Plans') }}
                                 </span>
                             </div>
                         </a>
@@ -1163,7 +1162,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Marketing
+                                {{ translate('Marketing') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"></i>
@@ -1181,7 +1180,7 @@
                                             class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Coupons
+                                            {{ translate('Coupons') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1195,7 +1194,7 @@
                                             class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Abandoned Carts
+                                            {{ translate('Abandoned Carts') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1209,7 +1208,7 @@
                                             class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Notifications
+                                            {{ translate('Notifications') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1223,18 +1222,18 @@
                                             class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Ads Management
+                                            {{ translate('Ads Management') }}
                                         </span>
                                     </a>
                                 </div>
                                 <div class="menu-item">
-                                    <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active;border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                    <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
                                         href="#" tabindex="0">
                                         <span
                                             class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Ads Statistics
+                                            {{ translate('Ads Statistics') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1253,12 +1252,12 @@
                                 </span>
                                 <span
                                     class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                    Support & Tickets
+                                    {{ translate('Support & Tickets') }}
                                 </span>
                                 @if ($hasNewTicket)
                                     <span class="menu-badge me-[-10px]">
                                         <span class="badge badge-success badge-xs">
-                                            New
+                                            {{ translate('New') }}
                                         </span>
                                     </span>
                                 @endif
@@ -1275,12 +1274,12 @@
                                 </span>
                                 <span
                                     class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                    Internel Ticket
+                                    {{ translate('Internal Ticket') }}
                                 </span>
                                 @if ($hasNewInternelTicket)
                                     <span class="menu-badge me-[-10px]">
                                         <span class="badge badge-success badge-xs">
-                                            New
+                                            {{ translate('New') }}
                                         </span>
                                     </span>
                                 @endif
@@ -1299,7 +1298,7 @@
                                 </span>
                                 <span
                                     class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                    Customer Packages
+                                    {{ translate('Customer Packages') }}
                                 </span>
                             </div>
                         </a>
@@ -1316,7 +1315,7 @@
                                 </span>
                                 <span
                                     class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                    Media Uploads
+                                    {{ translate('Media Uploads') }}
                                 </span>
                             </div>
                         </a>
@@ -1332,7 +1331,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Reports
+                                {{ translate('Reports') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -1350,7 +1349,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Product Stock
+                                        {{ translate('Product Stock') }}
                                     </span>
                                 </a>
                             </div>
@@ -1363,7 +1362,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Wishlist Products
+                                        {{ translate('Wishlist Products') }}
                                     </span>
                                 </a>
                             </div>
@@ -1376,7 +1375,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        User Searches
+                                        {{ translate('User Searches') }}
                                     </span>
                                 </a>
                             </div>
@@ -1393,7 +1392,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Refunds
+                                {{ translate('Refunds') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -1411,7 +1410,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Refund Requests
+                                        {{ translate('Refund Requests') }}
                                     </span>
                                 </a>
                             </div>
@@ -1425,7 +1424,7 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Approved Refunds
+                                        {{ translate('Approved Refunds') }}
                                     </span>
                                 </a>
                             </div>
@@ -1439,20 +1438,21 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Rejected Refunds
+                                        {{ translate('Rejected Refunds') }}
                                     </span>
                                 </a>
                             </div>
 
                             <div class="menu-item">
                                 <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                    href="{{ route('refund-requests.status', ['status' => 'pending']) }}" tabindex="0">
+                                    href="{{ route('refund-requests.status', ['status' => 'pending']) }}"
+                                    tabindex="0">
                                     <span
                                         class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Pending Refunds
+                                        {{ translate('Pending Refunds') }}
                                     </span>
                                 </a>
                             </div>
@@ -1460,7 +1460,7 @@
                     </div>
                 @endcan
 
-                @canany(['role.manage', 'role.permission', 'role.assign', 'role.user'])
+                @canany(['role.manage', 'role.permission', 'role.assign', 'role.user', 'role.create_admin_user'])
                     <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
@@ -1469,7 +1469,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Role and Permission
+                                {{ translate('Role and Permission') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -1487,7 +1487,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Roles
+                                            {{ translate('Roles') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1502,7 +1502,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Permissions
+                                            {{ translate('Permissions') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1517,26 +1517,13 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Permission for Role
+                                            {{ translate('Permission for Role') }}
                                         </span>
                                     </a>
                                 </div>
                             @endcan
 
-                            {{-- @can('role.user')
-                                <div class="menu-item">
-                                    <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="{{ route('user-roles.index') }}" tabindex="0">
-                                        <span
-                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
-                                        </span>
-                                        <span
-                                            class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            User Role & Permission
-                                        </span>
-                                    </a>
-                                </div>
-                            @endcan --}}
+                            {{-- The commented out section for 'role.user' has been omitted as per the original request. --}}
 
                             @can('role.create_admin_user')
                                 <div class="menu-item">
@@ -1547,7 +1534,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Create Sub Admin
+                                            {{ translate('Create Sub Admin') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1565,7 +1552,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Employee Managment
+                                {{ translate('Employee Management') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -1582,12 +1569,13 @@
                                     </span>
                                     <span
                                         class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        Employees
+                                        {{ translate('Employees') }}
                                     </span>
                                 </a>
                             </div>
 
                             @can('employee.read')
+                                {{-- This nested @can seems redundant if the parent @can('employee.read') already covers it. --}}
                                 <div class="menu-item">
                                     <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
                                         href="{{ route('departments.index') }}" tabindex="0">
@@ -1596,7 +1584,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Department
+                                            {{ translate('Department') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1614,7 +1602,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Transfer Requests
+                                {{ translate('Transfer Requests') }}
                             </span>
                         </div>
                     </a>
@@ -1629,7 +1617,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Activity Logs
+                                {{ translate('Activity Logs') }}
                             </span>
                         </div>
                     </a>
@@ -1641,7 +1629,7 @@
                     'supplier_account.manage',
                     'supplier_payout.manage',
 
-                    // Locations
+                    // Locations (these are grouped below, but kept here for the canany check)
                     'country.read',
                     'country.create',
                     'country.update',
@@ -1655,7 +1643,7 @@
                     'city.update',
                     'city.delete',
 
-                    // Business Types & Categories
+                    // Business Types & Categories (these are grouped below, but kept here for the canany check)
                     'business_type.read',
                     'business_type.create',
                     'business_type.update',
@@ -1667,7 +1655,7 @@
                     ])
                     <div class="menu-item pt-2.25 pb-px">
                         <span class="menu-heading uppercase text-2sm font-medium text-gray-500 ps-[10px] pe-[10px]">
-                            Supplier Managment
+                            {{ translate('Supplier Management') }}
                         </span>
                     </div>
 
@@ -1679,7 +1667,7 @@
                             </span>
                             <span
                                 class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                Supplier Accounts
+                                {{ translate('Supplier Accounts') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -1698,7 +1686,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Supplier Entitilements
+                                            {{ translate('Supplier Entitlements') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1713,7 +1701,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Supplier Accounts
+                                            {{ translate('Supplier Accounts') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1728,7 +1716,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Supplier Payouts
+                                            {{ translate('Supplier Payouts') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1736,6 +1724,7 @@
                         </div>
                     </div>
                 @endcanany
+
                 @canany([
                     // Locations
                     'country.read',
@@ -1759,7 +1748,7 @@
                             </span>
                             <span
                                 class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                Locations
+                                {{ translate('Locations') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -1777,7 +1766,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Countries
+                                            {{ translate('Countries') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1792,7 +1781,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            States
+                                            {{ translate('States') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1807,7 +1796,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Cities
+                                            {{ translate('Cities') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1836,7 +1825,7 @@
                             </span>
                             <span
                                 class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                Business Type & Category
+                                {{ translate('Business Type & Category') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -1854,7 +1843,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Business Type
+                                            {{ translate('Business Type') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1869,7 +1858,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Business Category
+                                            {{ translate('Business Category') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1881,7 +1870,7 @@
                 @canany(['settings.manage', 'faq.manage', 'page.manage'])
                     <div class="menu-item pt-2.25 pb-px">
                         <span class="menu-heading uppercase text-2sm font-medium text-gray-500 ps-[10px] pe-[10px]">
-                            Web & App
+                            {{ translate('Web & App') }}
                         </span>
                     </div>
 
@@ -1893,7 +1882,7 @@
                             </span>
                             <span
                                 class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                Setup & Configuration
+                                {{ translate('Setup & Configuration') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -1905,13 +1894,13 @@
                             @can('settings.manage')
                                 <div class="menu-item">
                                     <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/works.html" tabindex="0">
+                                        href="#" tabindex="0">
                                         <span
                                             class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            App Settings
+                                            {{ translate('App Settings') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1920,13 +1909,13 @@
                             @can('faq.manage')
                                 <div class="menu-item">
                                     <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/works.html" tabindex="0">
+                                        href="#" tabindex="0">
                                         <span
                                             class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            FAQ's
+                                            {{ translate('FAQ\'s') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1935,13 +1924,13 @@
                             @can('page.manage')
                                 <div class="menu-item">
                                     <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                        href="html/demo1/public-profile/works.html" tabindex="0">
+                                        href="#" tabindex="0">
                                         <span
                                             class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            Pages
+                                            {{ translate('Pages') }}
                                         </span>
                                     </a>
                                 </div>

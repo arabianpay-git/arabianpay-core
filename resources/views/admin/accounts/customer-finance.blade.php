@@ -19,7 +19,7 @@
                     <div
                         class="card bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white shadow-lg rounded-2xl">
                         <div class="card-body p-6">
-                            <h3 class="text-lg font-semibold mb-4">Finance Overview</h3>
+                            <h3 class="text-lg font-semibold mb-4">{{ translate('Finance Overview') }}</h3>
 
                             <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
                                 <div class="flex flex-col">
@@ -32,7 +32,7 @@
 
                                         $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
                                     @endphp
-                                    <span class="text-sm opacity-80">Total Limit</span>
+                                    <span class="text-sm opacity-80">{{ translate('Total Limit') }}</span>
                                     <span class="text-xl font-bold">
                                         <span class="icon-saudi_riyal"></span>
                                         {{ number_format($newCreditLimit, 2) }}
@@ -40,26 +40,27 @@
                                 </div>
 
                                 <div class="flex flex-col">
-                                    <span class="text-sm opacity-80">Simah Limit</span>
+                                    <span class="text-sm opacity-80">{{ translate('Simah Limit') }}</span>
                                     <span class="text-xl font-bold"><span class="icon-saudi_riyal"></span> 600</span>
                                 </div>
 
                                 <div class="flex flex-col">
-                                    <span class="text-sm opacity-80">Used Limit</span>
+                                    <span class="text-sm opacity-80">{{ translate('Used Limit') }}</span>
                                     <span class="text-xl font-bold"><span class="icon-saudi_riyal"></span>
                                         {{ number_format($totalOrderAmount, 2) }}</span>
                                 </div>
 
                                 <div class="flex flex-col">
-                                    <span class="text-sm opacity-80">User Package</span>
-                                    <span class="text-xl font-bold">{{ $customer->package->name ?? 'N/A' }}</span>
+                                    <span class="text-sm opacity-80">{{ translate('User Package') }}</span>
+                                    <span
+                                        class="text-xl font-bold">{{ $customer->package->name ?? translate('N/A') }}</span>
                                 </div>
 
                                 <div class="flex flex-col items-start gap-2">
-                                    <span class="text-sm opacity-80">Package Upgrade</span>
+                                    <span class="text-sm opacity-80">{{ translate('Package Upgrade') }}</span>
 
-                                    <a class="btn btn-sm btn-primary w-auto" data-modal-toggle="#package_modal">Upgrade
-                                        Now</a>
+                                    <a class="btn btn-sm btn-primary w-auto"
+                                        data-modal-toggle="#package_modal">{{ translate('Upgrade Now') }}</a>
                                 </div>
                             </div>
                         </div>
@@ -70,23 +71,23 @@
                     <div
                         class="card bg-gradient-to-r from-blue-600 via-purple-600 to-indigo-600 text-white shadow-lg rounded-2xl">
                         <div class="card-body p-6">
-                            <h3 class="text-lg font-semibold mb-4">Financial Statistics</h3>
+                            <h3 class="text-lg font-semibold mb-4">{{ translate('Financial Statistics') }}</h3>
 
                             <div class="flex flex-col gap-5">
                                 <div class="w-full">
-                                    <span class="text-sm opacity-80">Total Payment Due Amount</span>
+                                    <span class="text-sm opacity-80">{{ translate('Total Payment Due Amount') }}</span>
                                     <span class="text-xl font-bold">
                                         <span class="icon-saudi_riyal"></span> {{ number_format($totalPaymentDue, 2) }}
                                     </span>
                                 </div>
 
                                 <div class="w-full">
-                                    <span class="text-sm opacity-80">Total Payment Due</span>
+                                    <span class="text-sm opacity-80">{{ translate('Total Payment Due') }}</span>
                                     <span class="text-xl font-bold">{{ number_format($lateCount) }}</span>
                                 </div>
 
                                 <div class="w-full">
-                                    <span class="text-sm opacity-80">Total Late Payments</span>
+                                    <span class="text-sm opacity-80">{{ translate('Total Late Payments') }}</span>
                                     <span class="text-xl font-bold">{{ number_format($lateCount) }}</span>
                                 </div>
                             </div>
@@ -100,19 +101,19 @@
                 <div class="card">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            Log Changes To Limit the Customer
+                            {{ translate('Log Changes To Limit the Customer') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
 
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#team_crew_table" placeholder="Search users"
-                                        type="text" value="" />
+                                    <input data-datatable-search="#team_crew_table"
+                                        placeholder="{{ translate('Search users') }}" type="text" value="" />
                                 </label>
                             </div>
                             <a class="btn btn-sm btn-light" data-modal-toggle="#limit_create_modal">
-                                Create New Limit
+                                {{ translate('Create New Limit') }}
                             </a>
                         </div>
                     </div>
@@ -123,12 +124,12 @@
                                     <thead>
                                         <tr>
                                             <th class="text-center">
-                                                No
+                                                {{ translate('No') }}
                                             </th>
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Limit Arabinpay After
+                                                        {{ translate('Limit Arabinpay After') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -137,7 +138,7 @@
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Limit Arabinpay Befor
+                                                        {{ translate('Limit Arabinpay Before') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -146,7 +147,7 @@
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Limit Simah
+                                                        {{ translate('Limit Simah') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -155,7 +156,7 @@
                                             <th class="">
                                                 <span class="sort">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Created At
+                                                        {{ translate('Created At') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -164,7 +165,7 @@
                                             <th class="">
                                                 <span class="sort">
                                                     <span class="sort-label font-normal text-gray-700">
-                                                        Action
+                                                        {{ translate('Action') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
@@ -208,19 +209,15 @@
                     </div>
                 </div>
             </div>
-
             <!-- end: grid -->
         </div>
         <!-- End of Container -->
     </main>
 
-
-
-
     <div class="modal" data-modal="true" id="package_modal">
         <div class="modal-content max-w-[600px] top-[5%]">
             <div class="modal-header py-4 px-5">
-                <h5 class="modal-title">User Package</h5>
+                <h5 class="modal-title">{{ translate('User Package') }}</h5>
                 <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0"
                     data-modal-dismiss="true">
                     <i class="ki-filled ki-cross"></i>
@@ -231,7 +228,7 @@
                     class="px-5 pt-3">
                     @csrf
                     <div class="mb-4">
-                        <label class="form-label">Select Package</label>
+                        <label class="form-label">{{ translate('Select Package') }}</label>
                         <select name="package_id" class="input" required>
                             @foreach ($packages as $package)
                                 <option value="{{ $package->id }}"
@@ -242,7 +239,7 @@
                     </div>
 
                     <div class="flex justify-end">
-                        <button type="submit" class="btn btn-primary">Upgrade</button>
+                        <button type="submit" class="btn btn-primary">{{ translate('Upgrade') }}</button>
                     </div>
                 </form>
             </div>
@@ -252,7 +249,7 @@
     <div class="modal" data-modal="true" id="limit_update_modal">
         <div class="modal-content max-w-[600px] top-[5%]">
             <div class="modal-header py-4 px-5">
-                <h5 class="modal-title">User Credit Limit the Customer</h5>
+                <h5 class="modal-title">{{ translate('User Credit Limit the Customer') }}</h5>
                 <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0"
                     data-modal-dismiss="true">
                     <i class="ki-filled ki-cross"></i>
@@ -264,20 +261,22 @@
                     <input type="hidden" id="credit_limit_id" name="credit_limit_id">
 
                     <div class="mb-4">
-                        <label class="form-label" for="limit_arabianpay_before">Limit Arabianpay Before</label>
+                        <label class="form-label"
+                            for="limit_arabianpay_before">{{ translate('Limit Arabianpay Before') }}</label>
                         <input type="text" id="limit_arabianpay_before" name="limit_arabianpay_before" class="input"
                             value="{{ old('limit_arabianpay_before', $customer->limit_arabianpay_after ?? '') }}"
                             required>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label" for="limit_arabianpay_after">Limit Arabianpay After</label>
+                        <label class="form-label"
+                            for="limit_arabianpay_after">{{ translate('Limit Arabianpay After') }}</label>
                         <input type="text" id="limit_arabianpay_after" name="limit_arabianpay_after" class="input"
                             value="{{ old('limit_arabianpay_after', $customer->limit_arabianpay_after ?? '') }}" required>
                     </div>
 
                     <div class="flex justify-end">
-                        <button type="submit" class="btn btn-primary">Upgrade</button>
+                        <button type="submit" class="btn btn-primary">{{ translate('Upgrade') }}</button>
                     </div>
                 </form>
             </div>
@@ -287,7 +286,7 @@
     <div class="modal" data-modal="true" id="limit_create_modal">
         <div class="modal-content max-w-[600px] top-[5%]">
             <div class="modal-header py-4 px-5">
-                <h5 class="modal-title">User Credit Limit the Customer</h5>
+                <h5 class="modal-title">{{ translate('User Credit Limit the Customer') }}</h5>
                 <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0"
                     data-modal-dismiss="true">
                     <i class="ki-filled ki-cross"></i>
@@ -300,20 +299,20 @@
                     <input type="hidden" name="package_id" value="{{ $customer->package_id }}">
 
                     <div class="mb-4">
-                        <label class="form-label">Limit Arabianpay Before</label>
+                        <label class="form-label">{{ translate('Limit Arabianpay Before') }}</label>
                         <input type="text" name="limit_arabianpay_before" class="input"
                             value="{{ old('limit_arabianpay_before', $customer->limit_arabianpay_after ?? '') }}"
                             required>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label">Limit Arabianpay After</label>
+                        <label class="form-label">{{ translate('Limit Arabianpay After') }}</label>
                         <input type="text" name="limit_arabianpay_after" class="input"
                             value="{{ old('limit_arabianpay_after', $customer->limit_arabianpay_after ?? '') }}" required>
                     </div>
 
                     <div class="flex justify-end">
-                        <button type="submit" class="btn btn-primary">Create</button>
+                        <button type="submit" class="btn btn-primary">{{ translate('Create') }}</button>
                     </div>
                 </form>
             </div>

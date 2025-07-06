@@ -1,8 +1,8 @@
 @php
     $currentLocale = app()->getLocale();
     $locales = [
-        'en' => ['name' => 'English', 'flag' => 'assets/media/flags/united-states.svg'],
-        'ar' => ['name' => 'Arabic', 'flag' => 'assets/media/flags/saudi-arabia.svg'],
+        'en' => ['name' => translate('English'), 'flag' => 'assets/media/flags/united-states.svg'],
+        'ar' => ['name' => translate('Arabic'), 'flag' => 'assets/media/flags/saudi-arabia.svg'],
     ];
 @endphp
 
@@ -11,7 +11,7 @@
         <span class="menu-icon">
             <i class="ki-filled ki-icon"> </i>
         </span>
-        <span class="menu-title">Language</span>
+        <span class="menu-title">{{ translate('Language') }}</span>
         <div class="flex items-center gap-1.5 rounded-md border border-gray-300 text-gray-600 p-1.5 text-2xs font-medium shrink-0">
             {{ $locales[$currentLocale]['name'] }}
             <img alt="" class="inline-block size-3.5 rounded-full" src="{{ asset($locales[$currentLocale]['flag']) }}" />

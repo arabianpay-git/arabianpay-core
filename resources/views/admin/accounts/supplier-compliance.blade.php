@@ -22,58 +22,58 @@
 
         <div class="container-fixed">
             <div class="mb-8">
-                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">Supplier Compliance</h1>
+                <h1 class="text-2xl font-bold text-gray-800 dark:text-white">{{ translate('Supplier Compliance') }}</h1>
             </div>
 
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-7.5">
                 <div class="col-span-1 lg:col-span-3">
                     <div class="card">
                         <div class="card-header">
-                            <h3 class="card-title">Compliance Documents</h3>
+                            <h3 class="card-title">{{ translate('Compliance Documents') }}</h3>
                         </div>
                         <div class="card-body space-y-6">
 
                             @php
                                 $compliance = [
                                     [
-                                        'title' => 'Supplier Contract',
+                                        'title' => translate('Supplier Contract'),
                                         'file' => $contract->contract ?? null,
                                         'status' => 'submitted',
                                     ],
                                     [
-                                        'title' => 'CR File',
+                                        'title' => translate('CR File'),
                                         'file' => supplierMedia($merchant->registration_number_form),
                                         'status' => null,
                                     ],
                                     [
-                                        'title' => 'VAT Register File',
+                                        'title' => translate('VAT Register File'),
                                         'file' => supplierMedia($merchant->vat_register_file),
                                         'status' => null,
                                     ],
                                     [
-                                        'title' => 'Return Policy File',
+                                        'title' => translate('Return Policy File'),
                                         'file' => supplierMedia($merchant->return_policy_file),
                                         'status' => null,
                                     ],
                                     [
-                                        'title' => 'Delivery Policy File',
+                                        'title' => translate('Delivery Policy File'),
                                         'file' => supplierMedia($merchant->exchange_policy_file),
                                         'status' => null,
                                     ],
                                     [
-                                        'title' => 'Cancel Policy File',
+                                        'title' => translate('Cancel Policy File'),
                                         'file' => supplierMedia($merchant->cancel_policy_file),
                                         'status' => null,
                                     ],
                                     [
-                                        'title' => 'ID Image',
+                                        'title' => translate('ID Image'),
                                         'file' => supplierMedia($merchant->owner_iqama_image),
                                         'status' => null,
                                     ],
                                 ];
                                 if ($merchant->is_manager) {
                                     $compliance[] = [
-                                        'title' => 'Company Approval Letter for Manager',
+                                        'title' => translate('Company Approval Letter for Manager'),
                                         'file' => supplierMedia($merchant->manager_approval),
                                         'status' => null,
                                     ];
@@ -97,10 +97,10 @@
                                         @if ($item['file'])
                                             <a href="{{ asset($item['file']) }}" target="_blank"
                                                 class="inline-block px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition duration-150">
-                                                View
+                                                {{ translate('View') }}
                                             </a>
                                         @else
-                                            <span class="text-red-500 text-sm italic">Not uploaded</span>
+                                            <span class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>
                                         @endif
                                     </div>
                                 </div>
@@ -111,5 +111,6 @@
                 </div>
             </div>
         </div>
+
     </main>
 @endsection

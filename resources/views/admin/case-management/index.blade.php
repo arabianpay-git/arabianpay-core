@@ -6,12 +6,12 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        {{ __('Case Management') }}
+                        {{ translate('Case Management') }}
                     </h1>
                 </div>
                 <div class="flex items-center gap-2.5">
                     <a class="btn btn-sm btn-light" href="{{ route('case-management.create') }}">
-                        {{ __('Create New Case') }}
+                        {{ translate('Create New Case') }}
                     </a>
                 </div>
             </div>
@@ -22,13 +22,13 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            {{ __('Cases') }}
+                            {{ translate('Cases') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"></i>
-                                    <input data-datatable-search="#cases_table" placeholder="{{ __('Search') }}"
+                                    <input data-datatable-search="#cases_table" placeholder="{{ translate('Search') }}"
                                         type="text" value="" />
                                 </label>
                             </div>
@@ -41,14 +41,14 @@
                                 <table class="table table-auto table-border" data-datatable-table="true">
                                     <thead>
                                         <tr>
-                                            <th class="w-[60px] text-center">ID</th>
-                                            <th>{{ __('Title') }}</th>
-                                            <th>{{ __('Assigned User') }}</th>
-                                            <th>{{ __('Description') }}</th>
-                                            <th>{{ __('Status') }}</th>
-                                            <th>{{ __('Priority') }}</th>
-                                            <th>{{ __('Due Date') }}</th>
-                                            <th class="text-center">{{ __('Actions') }}</th>
+                                            <th class="w-[60px] text-center">{{ translate('ID') }}</th>
+                                            <th>{{ translate('Title') }}</th>
+                                            <th>{{ translate('Assigned User') }}</th>
+                                            <th>{{ translate('Description') }}</th>
+                                            <th>{{ translate('Status') }}</th>
+                                            <th>{{ translate('Priority') }}</th>
+                                            <th>{{ translate('Due Date') }}</th>
+                                            <th class="text-center">{{ translate('Actions') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -68,7 +68,7 @@
                                                         <button type="button" class="btn btn-sm btn-primary"
                                                             data-modal-toggle="#case_description_modal"
                                                             data-description="{{ $item->description }}">
-                                                            {{ __('View') }}
+                                                            {{ translate('View') }}
                                                         </button>
                                                     @else
                                                         -
@@ -138,7 +138,7 @@
     <div class="modal" data-modal="true" id="case_description_modal">
         <div class="modal-content max-w-[600px] top-[15%]">
             <div class="modal-header py-4 px-5">
-                <h1>{{ __('Case Description') }}</h1>
+                <h1>{{ translate('Case Description') }}</h1>
                 <button class="btn btn-sm btn-icon btn-light btn-clear" data-modal-dismiss="true">
                     <i class="ki-filled ki-cross"></i>
                 </button>

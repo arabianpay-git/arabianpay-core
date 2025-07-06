@@ -8,13 +8,13 @@
                     src="{{ asset('assets/media/illustrations/9.svg') }}">
             </div>
             <h3 class="text-lg font-medium text-gray-900 dark:text-white text-center mb-3">
-                {{ __('Service Unavailable') }}
+                {{ translate('Service Unavailable') }}
             </h3>
             <div class="text-sm text-center text-gray-700 dark:text-gray-300 mb-7">
-                {{ __('The service is temporarily unavailable. Please try again later.') }}
+                {{ translate('The service is temporarily unavailable. Please try again later.') }}
             </div>
             <a class="btn btn-primary inline-flex justify-center" href="{{ url('/') }}">
-                {{ __('Go to Home') }}
+                {{ translate('Go to Home') }}
             </a>
         </div>
     </div>

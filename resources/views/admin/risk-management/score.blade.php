@@ -6,7 +6,7 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        {{ __('Risk Score Engine') }}
+                        {{ translate('Risk Score Engine') }}
                     </h1>
                 </div>
             </div>
@@ -17,7 +17,7 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            {{ __('Risks') }}
+                            {{ translate('Risks') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5 items-center">
                             <div class="flex">
@@ -25,11 +25,11 @@
                                     <label class="input input-sm">
                                         <i class="ki-filled ki-magnifier"></i>
                                         <input name="search" type="text"
-                                            placeholder="{{ __('Search by first name, last name, email, business name, phone number, iqama number') }}"
+                                            placeholder="{{ translate('Search by first name, last name, email, business name, phone number, iqama number') }}"
                                             value="{{ request('search') }}" style="width: 492px;" />
                                     </label>
                                     <button type="submit" class="btn btn-sm btn-primary" style="margin-left: 5px;">
-                                        {{ __('Search') }}
+                                        {{ translate('Search') }}
                                     </button>
                                 </form>
                             </div>
@@ -37,23 +37,23 @@
                             <div class="flex gap-2 lg:gap-3">
                                 <a href="{{ route('risk.exportCsv', request()->only('search')) }}"
                                     class="btn btn-sm btn-outline btn-success flex items-center"
-                                    title="{{ __('Export CSV') }}">
+                                    title="{{ translate('Export CSV') }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round"
                                             d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M4 12h16M4 8h16M4 4h16" />
                                     </svg>
-                                    {{ __('Export CSV') }}
+                                    {{ translate('Export CSV') }}
                                 </a>
 
                                 <a href="{{ route('risk.exportPdf', request()->only('search')) }}"
                                     class="btn btn-sm btn-outline btn-danger flex items-center"
-                                    title="{{ __('Export PDF') }}">
+                                    title="{{ translate('Export PDF') }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
                                         viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                                     </svg>
-                                    {{ __('Export PDF') }}
+                                    {{ translate('Export PDF') }}
                                 </a>
                             </div>
                         </div>
@@ -65,16 +65,16 @@
                                 <table class="table table-auto table-border" data-datatable-table="true">
                                     <thead>
                                         <tr>
-                                            <th class="w-[60px] text-center">User ID</th>
-                                            <th class="text-center">User Name</th>
-                                            <th class="w-[200px] text-center">CR & ID Validation</th>
-                                            <th class="text-center">POS Revenue</th>
-                                            <th class="text-center">Repayment Delays</th>
-                                            <th class="text-center">Industory Category</th>
-                                            <th class="w-[120px] text-left">Location Risk</th>
-                                            <th class="text-left">Google Reviews</th>
-                                            <th class="text-left">Risk Score</th>
-                                            <th class="text-left">Action</th>
+                                            <th class="w-[60px] text-center">{{ translate('User ID') }}</th>
+                                            <th class="text-center">{{ translate('User Name') }}</th>
+                                            <th class="w-[200px] text-center">{{ translate('CR & ID Validation') }}</th>
+                                            <th class="text-center">{{ translate('POS Revenue') }}</th>
+                                            <th class="text-center">{{ translate('Repayment Delays') }}</th>
+                                            <th class="text-center">{{ translate('Industry Category') }}</th>
+                                            <th class="w-[120px] text-left">{{ translate('Location Risk') }}</th>
+                                            <th class="text-left">{{ translate('Google Reviews') }}</th>
+                                            <th class="text-left">{{ translate('Risk Score') }}</th>
+                                            <th class="text-left">{{ translate('Action') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -84,125 +84,104 @@
                                                 <td>
                                                     @if ($item->flagged)
                                                         <span class="menu-icon items-start w-[20px]">
-                                                            <i class="ki-filled ki-flag text-lg text-danger"> </i>
+                                                            <i class="ki-filled ki-flag text-lg text-danger"></i>
                                                         </span>
                                                     @endif
                                                     <div class="whitespace-nowrap">
                                                         {{ $item->name ?? '-' }}
                                                         <br>
-                                                        <small class="text-gray-500">
-                                                            — {{ $item->business_name ?? '-' }}
-                                                        </small>
+                                                        <small class="text-gray-500">—
+                                                            {{ $item->business_name ?? '-' }}</small>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        CR Number: {{ $item->cr_number ?? '-' }}
-                                                        <br>
-                                                        <small class="text-gray-500">
-                                                            — ID Number: {{ $item->id_number ?? '-' }}
-                                                        </small> <br>
-                                                        <small class="text-gray-500">
-                                                            — ID/CR Match: {{ $item->cr_id_match_score ?? 0 }}
-                                                        </small> <br>
-                                                        <small class="text-gray-500">
-                                                            — ID Expiry Score: {{ $item->id_expiry_score ?? 0 }}
-                                                        </small> <br>
-                                                        <small class="text-gray-500">
-                                                            — CR Expiry Score: {{ $item->cr_expiry_score ?? 0 }}
-                                                        </small> <br>
-                                                        <small class="text-gray-500">
-                                                            — Business Type: {{ $item->business_type_score ?? 0 }}
-                                                        </small> <br>
-                                                        <small class="text-gray-500">
-                                                            — Activity Match: {{ $item->activity_score ?? 0 }}
-                                                        </small> <br>
-                                                        <small class="text-gray-500">
-                                                            — Total Raw: {{ $item->cr_id_total ?? 0 }}
-                                                        </small> <br>
-                                                        <small class="text-green-600 font-semibold">
-                                                            — Weighted Score: {{ $item->cr_id_score ?? 0 }}
-                                                        </small>
+                                                        {{ translate('CR Number') }}: {{ $item->cr_number ?? '-' }}<br>
+                                                        <small class="text-gray-500">— {{ translate('ID Number') }}:
+                                                            {{ $item->id_number ?? '-' }}</small><br>
+                                                        <small class="text-gray-500">— {{ translate('ID/CR Match') }}:
+                                                            {{ $item->cr_id_match_score ?? 0 }}</small><br>
+                                                        <small class="text-gray-500">— {{ translate('ID Expiry Score') }}:
+                                                            {{ $item->id_expiry_score ?? 0 }}</small><br>
+                                                        <small class="text-gray-500">— {{ translate('CR Expiry Score') }}:
+                                                            {{ $item->cr_expiry_score ?? 0 }}</small><br>
+                                                        <small class="text-gray-500">— {{ translate('Business Type') }}:
+                                                            {{ $item->business_type_score ?? 0 }}</small><br>
+                                                        <small class="text-gray-500">— {{ translate('Activity Match') }}:
+                                                            {{ $item->activity_score ?? 0 }}</small><br>
+                                                        <small class="text-gray-500">— {{ translate('Total Raw') }}:
+                                                            {{ $item->cr_id_total ?? 0 }}</small><br>
+                                                        <small class="text-green-600 font-semibold">—
+                                                            {{ translate('Weighted Score') }}:
+                                                            {{ $item->cr_id_score ?? 0 }}</small>
                                                     </div>
                                                 </td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        Revenue: {{ number_format($item->pos_revenue ?? 0) }}
-                                                        <br>
-                                                        <small class="text-gray-500">
-                                                            — Risk Score: {{ $item->pos_score ?? 0 }}
-                                                        </small>
+                                                        {{ translate('Revenue') }}:
+                                                        {{ number_format($item->pos_revenue ?? 0) }}<br>
+                                                        <small class="text-gray-500">— {{ translate('Risk Score') }}:
+                                                            {{ $item->pos_score ?? 0 }}</small>
                                                     </div>
                                                 </td>
-
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        Late Payments: {{ $item->late_payments ?? 0 }}
-                                                        <br>
-                                                        <small class="text-gray-500">
-                                                            — Risk Score: {{ $item->repayment_score ?? 0 }}
-                                                        </small>
+                                                        {{ translate('Late Payments') }}:
+                                                        {{ $item->late_payments ?? 0 }}<br>
+                                                        <small class="text-gray-500">— {{ translate('Risk Score') }}:
+                                                            {{ $item->repayment_score ?? 0 }}</small>
                                                     </div>
                                                 </td>
-
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        {{ $item->industry ?? '-' }}
-                                                        <br>
-                                                        <small class="text-gray-500">
-                                                            — Risk Score: {{ $item->industry_score ?? 0 }}
-                                                        </small>
+                                                        {{ $item->industry ?? '-' }}<br>
+                                                        <small class="text-gray-500">— {{ translate('Risk Score') }}:
+                                                            {{ $item->industry_score ?? 0 }}</small>
                                                     </div>
                                                 </td>
-
                                                 <td>
                                                     <div class="whitespace-nowrap">
                                                         {{ $item->location['city'] ?? '-' }}<br>
                                                         <small class="text-gray-500">
-                                                            — Tier Score: {{ $item->location['tier_score'] ?? 0 }}<br>
-                                                            — Activity: {{ $item->location['activity_score'] ?? 0 }}<br>
-                                                            — Default Rate:
+                                                            — {{ translate('Tier Score') }}:
+                                                            {{ $item->location['tier_score'] ?? 0 }}<br>
+                                                            — {{ translate('Activity') }}:
+                                                            {{ $item->location['activity_score'] ?? 0 }}<br>
+                                                            — {{ translate('Default Rate') }}:
                                                             {{ $item->location['default_rate_score'] ?? 0 }}
                                                         </small><br>
-                                                        <small class="text-gray-500">
-                                                            — Risk Score: {{ $item->location_score ?? 0 }}
-                                                        </small>
+                                                        <small class="text-gray-500">— {{ translate('Risk Score') }}:
+                                                            {{ $item->location_score ?? 0 }}</small>
                                                     </div>
                                                 </td>
-
                                                 <td>
-                                                    Overall {{ $item->google_rating['result']['rating'] ?? 0 }}/5
+                                                    {{ translate('Overall') }}
+                                                    {{ $item->google_rating['result']['rating'] ?? 0 }}/5
                                                 </td>
-
                                                 <td>
                                                     <div class="whitespace-nowrap">
                                                         @php
                                                             $score = $item->total_score ?? 0;
-                                                            $flagged = $item->flagged ?? false;
-
                                                             if ($score >= 80) {
-                                                                $riskLevel = 'Low Risk';
+                                                                $riskLevel = translate('Low Risk');
                                                                 $badgeColor =
                                                                     'badge badge-sm badge-outline badge-success';
                                                             } elseif ($score >= 60) {
-                                                                $riskLevel = 'Medium Risk';
+                                                                $riskLevel = translate('Medium Risk');
                                                                 $badgeColor =
                                                                     'badge badge-sm badge-outline badge-warning';
                                                             } else {
-                                                                $riskLevel = 'High Risk';
+                                                                $riskLevel = translate('High Risk');
                                                                 $badgeColor =
                                                                     'badge badge-sm badge-outline badge-danger';
                                                             }
                                                         @endphp
-
                                                         <span
                                                             class="inline-block px-2 py-1 text-xs font-semibold rounded {{ $badgeColor }}">
-                                                            {{ $score }}/100
-                                                            <br>- {{ $riskLevel }}
+                                                            {{ $score }}/100<br>- {{ $riskLevel }}
                                                         </span>
                                                     </div>
                                                 </td>
-
                                                 <td>
                                                     @if (Auth::user()->user_type == 'admin')
                                                         <div class="flex gap-1">
@@ -216,14 +195,14 @@
                                                             </a>
                                                         </div>
                                                     @else
-                                                        Unauthorized
+                                                        {{ translate('Unauthorized') }}
                                                     @endif
-
                                                 </td>
                                             </tr>
                                         @endforeach
                                     </tbody>
                                 </table>
+
                             </div>
                             <!-- Pagination Footer -->
                             @include('layouts.includes.table-pagination', ['paginator' => $risks])
@@ -237,7 +216,7 @@
     <div class="modal" data-modal="true" id="score_modal">
         <div class="modal-content max-w-[600px] top-[5%]">
             <div class="modal-header py-4 px-5">
-                <h5 class="modal-title">User Risk Managment</h5>
+                <h5 class="modal-title">{{ translate('User Risk Management') }}</h5>
                 <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0"
                     data-modal-dismiss="true">
                     <i class="ki-filled ki-cross"></i>
@@ -249,18 +228,18 @@
                     <input type="hidden" id="user_id" name="user_id">
 
                     <div class="mb-4">
-                        <label class="form-label" for="risk_score">Score</label>
+                        <label class="form-label" for="risk_score">{{ translate('Score') }}</label>
                         <input type="text" id="risk_score" name="risk_score" class="input"
                             value="{{ old('risk_score') }}" required>
                     </div>
 
                     <div class="mb-4">
-                        <label class="form-label" for="reason">Reason</label>
-                        <textarea type="text" id="reason" name="reason" class="textarea" value="{{ old('reason') }}" required></textarea>
+                        <label class="form-label" for="reason">{{ translate('Reason') }}</label>
+                        <textarea id="reason" name="reason" class="textarea" required>{{ old('reason') }}</textarea>
                     </div>
 
                     <div class="flex justify-end">
-                        <button type="submit" class="btn btn-primary">Upgrade</button>
+                        <button type="submit" class="btn btn-primary">{{ translate('Upgrade') }}</button>
                     </div>
                 </form>
             </div>

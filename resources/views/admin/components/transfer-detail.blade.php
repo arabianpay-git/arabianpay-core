@@ -1,7 +1,7 @@
 <div class="modal" data-modal="true" id="transfer_detail">
     <div class="modal-content max-w-[600px] top-[15%]">
         <div class="modal-header py-4 px-5">
-            <h1>{{ __('Transfer Details') }}</h1>
+            <h1>{{ translate('Transfer Details') }}</h1>
             <button class="btn btn-sm btn-icon btn-light btn-clear" data-modal-dismiss="true">
                 <i class="ki-filled ki-cross"></i>
             </button>
@@ -11,16 +11,16 @@
             <table class="table table-bordered w-full" id="transfer-request-table">
                 <thead>
                     <tr>
-                        <th>{{ __('No') }}</th>
-                        <th>{{ __('From User') }}</th>
-                        <th>{{ __('To User') }}</th>
-                        <th>{{ __('Description') }}</th>
-                        <th>{{ __('Requested At') }}</th>
+                        <th>{{ translate('No') }}</th>
+                        <th>{{ translate('From User') }}</th>
+                        <th>{{ translate('To User') }}</th>
+                        <th>{{ translate('Description') }}</th>
+                        <th>{{ translate('Requested At') }}</th>
                     </tr>
                 </thead>
                 <tbody id="transfer-request-body">
                     <tr>
-                        <td colspan="4" class="text-center">{{ __('No data loaded') }}</td>
+                        <td colspan="4" class="text-center">{{ translate('No data loaded') }}</td>
                     </tr>
                 </tbody>
             </table>

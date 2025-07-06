@@ -41,7 +41,7 @@
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
                             <h3 class="card-title">
-                                Add New Employee
+                                {{ translate('Add New Employee') }}
                             </h3>
                         </div>
                         <form action="{{ route('employees.store') }}" method="POST">
@@ -51,7 +51,7 @@
                                 <div class="flex gap-4">
                                     <div class="w-full">
                                         <label class="form-label flex items-center gap-1 max-w-56" for="first_name">
-                                            First Name <span class="text-red-600">*</span>
+                                            {{ translate('First Name') }} <span class="text-red-600">*</span>
                                         </label>
                                         <input id="first_name" class="input @error('first_name') border-red-500 @enderror"
                                             name="first_name" type="text" value="{{ old('first_name') }}" required />
@@ -62,7 +62,7 @@
 
                                     <div class="w-full">
                                         <label class="form-label flex items-center gap-1 max-w-56" for="last_name">
-                                            Last Name <span class="text-red-600">*</span>
+                                            {{ translate('Last Name') }} <span class="text-red-600">*</span>
                                         </label>
                                         <input id="last_name" class="input @error('last_name') border-red-500 @enderror"
                                             name="last_name" type="text" value="{{ old('last_name') }}" required />
@@ -75,7 +75,7 @@
                                 <!-- Email -->
                                 <div class="w-full">
                                     <label class="form-label flex items-center gap-1 max-w-56" for="email">
-                                        Email <span class="text-red-600">*</span>
+                                        {{ translate('Email') }} <span class="text-red-600">*</span>
                                     </label>
                                     <input id="email" class="input @error('email') border-red-500 @enderror"
                                         name="email" type="email" value="{{ old('email') }}" required />
@@ -87,7 +87,7 @@
                                 <!-- Phone Number -->
                                 <div class="w-full">
                                     <label class="form-label flex items-center gap-1 max-w-56" for="phone_number">
-                                        Phone Number
+                                        {{ translate('Phone Number') }}
                                     </label>
                                     <input id="phone_number" class="input @error('phone_number') border-red-500 @enderror"
                                         name="phone_number" type="text" value="{{ old('phone_number') }}" />
@@ -98,11 +98,12 @@
 
                                 <div class="flex gap-4">
                                     <div class="w-full">
-                                        <label class="form-label" for="department_id">Department <span
-                                                class="text-red-600">*</span></label>
+                                        <label class="form-label" for="department_id">
+                                            {{ translate('Department') }} <span class="text-red-600">*</span>
+                                        </label>
                                         <select id="department_id" name="department_id"
                                             class="select w-full @error('department_id') border-red-500 @enderror">
-                                            <option value="">-- Select Department --</option>
+                                            <option value="">{{ translate('-- Select Department --') }}</option>
                                             @foreach ($departments as $department)
                                                 <option value="{{ $department->id }}"
                                                     {{ old('department_id') == $department->id ? 'selected' : '' }}>
@@ -115,8 +116,9 @@
                                     </div>
 
                                     <div class="w-full">
-                                        <label class="form-label" for="role_id">Role <span
-                                                class="text-red-600">*</span></label>
+                                        <label class="form-label" for="role_id">
+                                            {{ translate('Role') }} <span class="text-red-600">*</span>
+                                        </label>
                                         <select name="role_id" id="role_id" class="select w-full"></select>
                                         @error('role_id')
                                             <span class="text-danger text-sm">{{ $message }}</span>
@@ -127,13 +129,15 @@
                                 <!-- Is Manager -->
                                 <div class="w-full">
                                     <label for="is_manager" class="form-label">
-                                        Is Manager
+                                        {{ translate('Is Manager') }}
                                     </label>
                                     <select id="is_manager" name="is_manager"
                                         class="input @error('is_manager') border-red-500 @enderror">
-                                        <option value="0" {{ old('is_manager') === '0' ? 'selected' : '' }}>No
+                                        <option value="0" {{ old('is_manager') === '0' ? 'selected' : '' }}>
+                                            {{ translate('No') }}
                                         </option>
-                                        <option value="1" {{ old('is_manager') === '1' ? 'selected' : '' }}>Yes
+                                        <option value="1" {{ old('is_manager') === '1' ? 'selected' : '' }}>
+                                            {{ translate('Yes') }}
                                         </option>
                                     </select>
                                     @error('is_manager')
@@ -143,10 +147,10 @@
 
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="flex flex-col gap-1">
-                                        <label class="form-label text-gray-900">Password</label>
+                                        <label class="form-label text-gray-900">{{ translate('Password') }}</label>
                                         <div class="input flex items-center gap-2" data-toggle-password="true">
-                                            <input name="password" placeholder="Enter Password" type="password"
-                                                value="Arabianpay@123" required class="flex-1" />
+                                            <input name="password" placeholder="{{ translate('Enter Password') }}"
+                                                type="password" value="Arabianpay@123" required class="flex-1" />
                                             <button class="btn btn-icon" type="button">
                                                 <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
                                                 <i
@@ -156,10 +160,11 @@
                                     </div>
 
                                     <div class="flex flex-col gap-1">
-                                        <label class="form-label text-gray-900">Confirm Password</label>
+                                        <label class="form-label text-gray-900">{{ translate('Confirm Password') }}</label>
                                         <div class="input flex items-center gap-2" data-toggle-password="true">
-                                            <input name="password_confirmation" placeholder="Re-enter Password"
-                                                type="password" value="Arabianpay@123" required class="flex-1" />
+                                            <input name="password_confirmation"
+                                                placeholder="{{ translate('Re-enter Password') }}" type="password"
+                                                value="Arabianpay@123" required class="flex-1" />
                                             <button class="btn btn-icon" type="button">
                                                 <i
                                                     class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
@@ -172,7 +177,7 @@
 
                                 <div class="flex justify-end pt-2.5">
                                     <button type="submit" class="btn btn-primary">
-                                        Save Changes
+                                        {{ translate('Save Changes') }}
                                     </button>
                                 </div>
                             </div>

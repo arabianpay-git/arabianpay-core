@@ -14,7 +14,7 @@
 
                     <h3
                         class="mt-6 text-2xl font-semibold text-gray-900 flex items-center justify-center gap-2 select-none">
-                        {{ __('Welcome Back') }} <span class="text-3xl leading-none">👋</span>
+                        {{ translate('Welcome Back') }} <span class="text-3xl leading-none">👋</span>
                     </h3>
                 </div>
 

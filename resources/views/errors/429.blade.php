@@ -8,13 +8,13 @@
                     src="{{ asset('assets/media/illustrations/14.svg') }}">
             </div>
             <h3 class="text-lg font-medium text-gray-900 dark:text-white text-center mb-3">
-                {{ __('Too Many Requests') }}
+                {{ translate('Too Many Requests') }}
             </h3>
             <div class="text-sm text-center text-gray-700 dark:text-gray-300 mb-7">
-                {{ __('You have made too many requests in a short period. Please wait and try again later.') }}
+                {{ translate('You have made too many requests in a short period. Please wait and try again later.') }}
             </div>
             <a class="btn btn-primary inline-flex justify-center" href="{{ url('/') }}">
-                {{ __('Go to Home') }}
+                {{ translate('Go to Home') }}
             </a>
         </div>
     </div>

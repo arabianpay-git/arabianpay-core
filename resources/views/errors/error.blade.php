@@ -57,7 +57,7 @@
                 {{ $description }}
             </div>
             <a class="btn btn-primary inline-flex justify-center" href="{{ url('/') }}">
-                {{ __('Go to Home') }}
+                {{ translate('Go to Home') }}
             </a>
         </div>
     </div>

@@ -34,7 +34,7 @@
         <div class="container-fixed">
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
-                    <h1 class="text-xl font-medium leading-none text-gray-900">Nafath</h1>
+                    <h1 class="text-xl font-medium leading-none text-gray-900">{{ translate('Nafath') }}</h1>
                 </div>
             </div>
         </div>
@@ -44,7 +44,7 @@
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
-                        <h3 class="card-title font-medium text-sm">Nafath</h3>
+                        <h3 class="card-title font-medium text-sm">{{ translate('Nafath') }}</h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
@@ -62,20 +62,20 @@
                                 <table class="table table-auto table-border">
                                     <thead>
                                         <tr>
-                                            <th>ID</th>
-                                            <th>Name</th>
-                                            <th>National Id</th>
-                                            <th>Phone Number</th>
-                                            <th>Nafath Status</th>
-                                            <th>Nafath Response</th>
-                                            <th>Wathiq Status</th>
-                                            <th>Wathiq Reject Reason</th>
-                                            <th>Wathiq Response</th>
-                                            <th>Joining Date</th>
+                                            <th>{{ translate('ID') }}</th>
+                                            <th>{{ translate('Name') }}</th>
+                                            <th>{{ translate('National Id') }}</th>
+                                            <th>{{ translate('Phone Number') }}</th>
+                                            <th>{{ translate('Nafath Status') }}</th>
+                                            <th>{{ translate('Nafath Response') }}</th>
+                                            <th>{{ translate('Wathiq Status') }}</th>
+                                            <th>{{ translate('Wathiq Reject Reason') }}</th>
+                                            <th>{{ translate('Wathiq Response') }}</th>
+                                            <th>{{ translate('Joining Date') }}</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
 
+                                    <tbody>
                                         @foreach ($nafath as $item)
                                             <tr>
                                                 <td class="text-center">{{ $item->id }}</td>
@@ -115,7 +115,7 @@
                                                     <button type="button" class="btn btn-sm btn-primary btn-show-nafath"
                                                         data-modal-toggle="#nafathModal"
                                                         data-response='@json($item->nafath_response)'>
-                                                        View Nafath
+                                                        {{ translate('View Nafath') }}
                                                     </button>
                                                 </td>
                                                 <td>
@@ -132,7 +132,7 @@
                                                     <button type="button" class="btn btn-sm btn-primary btn-show-wathiq"
                                                         data-modal-toggle="#wathiqModal"
                                                         data-response='@json($item->cr_data)'>
-                                                        View Wathiq
+                                                        {{ translate('View Wathiq') }}
                                                     </button>
                                                 </td>
                                                 <td>{{ $item->created_at->format('d M Y') }}</td>
@@ -153,7 +153,7 @@
     <div class="modal" data-modal="true" id="nafathModal">
         <div class="modal-content max-w-[600px] top-[5%]">
             <div class="modal-header py-4 px-5">
-                <h5 class="modal-title">Nafath Response</h5>
+                <h5 class="modal-title">{{ translate('Nafath Response') }}</h5>
                 <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0" data-modal-dismiss="true">
                     <i class="ki-filled ki-cross"></i>
                 </button>
@@ -162,7 +162,8 @@
                 <ul id="nafathResponseList" class="list-group list-group-flush space-y-2"></ul>
             </div>
             <div class="modal-footer px-5 py-3">
-                <button type="button" class="btn btn-secondary" data-modal-dismiss="true">Close</button>
+                <button type="button" class="btn btn-secondary"
+                    data-modal-dismiss="true">{{ translate('Close') }}</button>
             </div>
         </div>
     </div>
@@ -171,7 +172,7 @@
     <div class="modal" data-modal="true" id="wathiqModal">
         <div class="modal-content top-[5%]">
             <div class="modal-header py-4 px-5">
-                <h5 class="modal-title">Wathiq Response</h5>
+                <h5 class="modal-title">{{ translate('Wathiq Response') }}</h5>
                 <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0" data-modal-dismiss="true">
                     <i class="ki-filled ki-cross"></i>
                 </button>
@@ -180,7 +181,8 @@
                 <ul id="wathiqResponseList" class="list-group list-group-flush space-y-2"></ul>
             </div>
             <div class="modal-footer px-5 py-3">
-                <button type="button" class="btn btn-secondary" data-modal-dismiss="true">Close</button>
+                <button type="button" class="btn btn-secondary"
+                    data-modal-dismiss="true">{{ translate('Close') }}</button>
             </div>
         </div>
     </div>

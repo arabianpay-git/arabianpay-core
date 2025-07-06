@@ -38,23 +38,21 @@
         <!-- Container -->
         <div class="container-fixed">
             <div class="flex grow gap-5 lg:gap-7.5">
-
                 <div class="flex flex-col items-stretch grow gap-5 lg:gap-7.5">
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
                             <h3 class="card-title">
-                                Edit Employee
+                                {{ translate('Edit Employee') }}
                             </h3>
                         </div>
                         <form action="{{ route('employees.update', $employee->id) }}" method="POST">
                             @csrf
                             @method('PUT')
                             <div class="card-body grid gap-5">
-
                                 <div class="flex gap-4">
                                     <div class="w-full">
                                         <label class="form-label flex items-center gap-1 max-w-56" for="first_name">
-                                            First Name <span class="text-red-600">*</span>
+                                            {{ translate('First Name') }} <span class="text-red-600">*</span>
                                         </label>
                                         <input id="first_name" class="input @error('first_name') border-red-500 @enderror"
                                             name="first_name" type="text"
@@ -66,7 +64,7 @@
 
                                     <div class="w-full">
                                         <label class="form-label flex items-center gap-1 max-w-56" for="last_name">
-                                            Last Name <span class="text-red-600">*</span>
+                                            {{ translate('Last Name') }} <span class="text-red-600">*</span>
                                         </label>
                                         <input id="last_name" class="input @error('last_name') border-red-500 @enderror"
                                             name="last_name" type="text"
@@ -80,7 +78,7 @@
                                 <!-- Email -->
                                 <div class="w-full">
                                     <label class="form-label flex items-center gap-1 max-w-56" for="email">
-                                        Email <span class="text-red-600">*</span>
+                                        {{ translate('Email') }} <span class="text-red-600">*</span>
                                     </label>
                                     <input id="email" class="input @error('email') border-red-500 @enderror"
                                         name="email" type="email" value="{{ old('email', $employee->email) }}"
@@ -93,7 +91,7 @@
                                 <!-- Phone Number -->
                                 <div class="w-full">
                                     <label class="form-label flex items-center gap-1 max-w-56" for="phone_number">
-                                        Phone Number
+                                        {{ translate('Phone Number') }}
                                     </label>
                                     <input id="phone_number" class="input @error('phone_number') border-red-500 @enderror"
                                         name="phone_number" type="text"
@@ -106,11 +104,11 @@
                                 <div class="flex gap-4">
                                     <div class="w-full">
                                         <label class="form-label flex items-center gap-1 max-w-56" for="department_id">
-                                            Department <span class="text-red-600">*</span>
+                                            {{ translate('Department') }} <span class="text-red-600">*</span>
                                         </label>
                                         <select id="department_id" name="department_id"
                                             class="select w-full @error('department_id') border-red-500 @enderror">
-                                            <option value="">-- Select Department --</option>
+                                            <option value="">{{ translate('-- Select Department --') }}</option>
                                             @foreach ($departments as $department)
                                                 <option value="{{ $department->id }}"
                                                     {{ old('department_id', $employee->department_id) == $department->id ? 'selected' : '' }}>
@@ -125,10 +123,10 @@
 
                                     <!-- Role select single select -->
                                     <div class="w-full">
-                                        <label class="form-label" for="role_id">Role <span
+                                        <label class="form-label" for="role_id">{{ translate('Role') }} <span
                                                 class="text-red-600">*</span></label>
                                         <select name="role_id" id="role_id" class="input w-full">
-                                            <option value="">-- Select Role --</option>
+                                            <option value="">{{ translate('-- Select Role --') }}</option>
                                         </select>
 
                                         @error('role_id')
@@ -139,15 +137,17 @@
 
                                 <div class="w-full">
                                     <label for="is_manager" class="form-label">
-                                        Is Manager
+                                        {{ translate('Is Manager') }}
                                     </label>
                                     <select id="is_manager" name="is_manager"
                                         class="input @error('is_manager') border-red-500 @enderror">
                                         <option value="0"
-                                            {{ old('is_manager', $employee->is_manager) == 0 ? 'selected' : '' }}>No
+                                            {{ old('is_manager', $employee->is_manager) == 0 ? 'selected' : '' }}>
+                                            {{ translate('No') }}
                                         </option>
                                         <option value="1"
-                                            {{ old('is_manager', $employee->is_manager) == 1 ? 'selected' : '' }}>Yes
+                                            {{ old('is_manager', $employee->is_manager) == 1 ? 'selected' : '' }}>
+                                            {{ translate('Yes') }}
                                         </option>
                                     </select>
                                     @error('is_manager')
@@ -157,9 +157,10 @@
 
                                 <div class="grid grid-cols-2 gap-4">
                                     <div class="flex flex-col gap-1">
-                                        <label class="form-label text-gray-900">Password</label>
+                                        <label class="form-label text-gray-900">{{ translate('Password') }}</label>
                                         <div class="input flex items-center gap-2" data-toggle-password="true">
-                                            <input name="password" placeholder="Enter Password (leave blank to keep)"
+                                            <input name="password"
+                                                placeholder="{{ translate('Enter Password (leave blank to keep)') }}"
                                                 type="password" class="flex-1" />
                                             <button class="btn btn-icon" type="button">
                                                 <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
@@ -170,10 +171,11 @@
                                     </div>
 
                                     <div class="flex flex-col gap-1">
-                                        <label class="form-label text-gray-900">Confirm Password</label>
+                                        <label class="form-label text-gray-900">{{ translate('Confirm Password') }}</label>
                                         <div class="input flex items-center gap-2" data-toggle-password="true">
-                                            <input name="password_confirmation" placeholder="Re-enter Password"
-                                                type="password" class="flex-1" />
+                                            <input name="password_confirmation"
+                                                placeholder="{{ translate('Re-enter Password') }}" type="password"
+                                                class="flex-1" />
                                             <button class="btn btn-icon" type="button">
                                                 <i
                                                     class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"></i>
@@ -186,7 +188,7 @@
 
                                 <div class="flex justify-end pt-2.5">
                                     <button type="submit" class="btn btn-primary">
-                                        Update Employee
+                                        {{ translate('Update Employee') }}
                                     </button>
                                 </div>
                             </div>

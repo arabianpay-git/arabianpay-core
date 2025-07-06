@@ -6,12 +6,12 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        {{ __('Risk Register') }}
+                        {{ translate('Risk Register') }}
                     </h1>
                 </div>
                 <div class="flex items-center gap-2.5">
                     <a class="btn btn-sm btn-light" href="{{ route('risk-register.create') }}">
-                        {{ __('Create New Risk') }}
+                        {{ translate('Create New Risk') }}
                     </a>
                 </div>
             </div>
@@ -23,7 +23,7 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            {{ __('Risks') }}
+                            {{ translate('Risks') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
@@ -41,18 +41,19 @@
                                 <table class="table table-auto table-border" data-datatable-table="true">
                                     <thead>
                                         <tr>
-                                            <th class="w-[60px] text-center">Risk ID</th>
-                                            <th class="text-center">Description</th>
-                                            <th class="text-center">Type</th>
-                                            <th class="text-center">Entity</th>
-                                            <th class="text-center">Score</th>
-                                            <th class="text-center">Status</th>
-                                            <th class="text-center">Action</th>
-                                            <th class="text-left">Owner</th>
-                                            <th class="text-left">Review Date</th>
-                                            <th class="text-left">Action</th>
+                                            <th class="w-[60px] text-center">{{ translate('Risk ID') }}</th>
+                                            <th class="text-center">{{ translate('Description') }}</th>
+                                            <th class="text-center">{{ translate('Type') }}</th>
+                                            <th class="text-center">{{ translate('Entity') }}</th>
+                                            <th class="text-center">{{ translate('Score') }}</th>
+                                            <th class="text-center">{{ translate('Status') }}</th>
+                                            <th class="text-center">{{ translate('Action') }}</th>
+                                            <th class="text-left">{{ translate('Owner') }}</th>
+                                            <th class="text-left">{{ translate('Review Date') }}</th>
+                                            <th class="text-left">{{ translate('Action') }}</th>
                                         </tr>
                                     </thead>
+
                                     <tbody>
                                         @foreach ($risks as $item)
                                             <tr>

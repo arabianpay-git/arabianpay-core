@@ -10,7 +10,7 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        Supplier Payouts
+                        {{ translate('Supplier Payouts') }}
                     </h1>
                 </div>
             </div>
@@ -22,14 +22,14 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            Supplier Payouts
+                            {{ translate('Supplier Payouts') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#team_crew_table" placeholder="Search users"
-                                        type="text" value="" />
+                                    <input data-datatable-search="#team_crew_table"
+                                        placeholder="{{ translate('Search users') }}" type="text" value="" />
                                 </label>
                             </div>
                         </div>
@@ -41,39 +41,43 @@
                                 <table class="table table-auto table-border" data-datatable-table="true">
                                     <thead>
                                         <tr>
-                                            <th class="w-[60px] text-center">No</th>
+                                            <th class="w-[60px] text-center">{{ translate('No') }}</th>
                                             <th class="text-left">
                                                 <span class="sort asc">
-                                                    <span class="sort-label font-normal text-gray-700">Seller</span>
+                                                    <span
+                                                        class="sort-label font-normal text-gray-700">{{ translate('Seller') }}</span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
 
                                             <th class="text-left">
                                                 <span class="sort asc">
-                                                    <span class="sort-label font-normal text-gray-700">Reference</span>
+                                                    <span
+                                                        class="sort-label font-normal text-gray-700">{{ translate('Reference') }}</span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
 
                                             <th class="text-center">
                                                 <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">Date</span>
+                                                    <span
+                                                        class="sort-label font-normal text-gray-700">{{ translate('Date') }}</span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
 
                                             <th class="text-center">
                                                 <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">Amount</span>
+                                                    <span
+                                                        class="sort-label font-normal text-gray-700">{{ translate('Amount') }}</span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
 
                                             <th class="text-center">
                                                 <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">Payment
-                                                        Details</span>
+                                                    <span
+                                                        class="sort-label font-normal text-gray-700">{{ translate('Payment Details') }}</span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>
@@ -88,7 +92,7 @@
                                                         {{ $seller->first_name }} {{ $seller->last_name }}
                                                         <br>
                                                         <small class="text-gray-500">—
-                                                            {{ $seller->business_name ?? 'N/A' }}</small>
+                                                            {{ $seller->business_name ?? translate('N/A') }}</small>
                                                     </td>
                                                     <td>
                                                         {{ $wallet->order->code }} <br>

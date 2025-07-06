@@ -6,7 +6,7 @@
                 <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                     <div class="flex flex-col justify-center gap-2">
                         <h1 class="text-xl font-medium leading-none text-gray-900">
-                            {{ __('Customers Schedule Payments') }}
+                            {{ translate('Customers Schedule Payments') }}
                         </h1>
                     </div>
                 </div>
@@ -17,25 +17,26 @@
                     <div class="card card-grid min-w-full">
                         <div class="card-header flex-wrap gap-2">
                             <h3 class="card-title font-medium text-sm">
-                                {{ __('Schedule Payments') }}
+                                {{ translate('Schedule Payments') }}
                             </h3>
                             <div class="flex flex-wrap gap-2 lg:gap-5 items-center">
                                 <div class="flex">
                                     <form method="GET" action="{{ route('repaymentSchedule') }}" class="flex">
                                         <label class="input input-sm">
                                             <i class="ki-filled ki-magnifier"></i>
-                                            <input name="search" type="text" placeholder="{{ __('Search by user') }}"
+                                            <input name="search" type="text"
+                                                placeholder="{{ translate('Search by user') }}"
                                                 value="{{ request('search') }}" />
                                         </label>
                                         <button type="submit" class="btn btn-sm btn-primary" style="margin-left: 5px;">
-                                            {{ __('Search') }}
+                                            {{ translate('Search') }}
                                         </button>
                                     </form>
                                 </div>
                                 <div class="flex justify-end">
                                     <button id="bulk-transfer-btn" class="btn btn-sm btn-primary hidden"
                                         data-modal-toggle="#transfer_request_bulk">
-                                        <i class="ki-filled ki-disconnect"></i> {{ __('Bulk Transfer') }}
+                                        <i class="ki-filled ki-disconnect"></i> {{ translate('Bulk Transfer') }}
                                     </button>
                                 </div>
                             </div>
@@ -54,17 +55,18 @@
                                                     <input class="checkbox checkbox-sm" data-datatable-check="true"
                                                         type="checkbox" id="select-all-checkbox">
                                                 </th>
-                                                <th class="w-[60px] text-center">ID</th>
-                                                <th>User Name</th>
-                                                <th class="text-left">Instalment ID</th>
-                                                <th class="text-left">Instalment Number</th>
-                                                <th class="text-left">Due Date</th>
-                                                <th class="text-left">Instalment Amount</th>
-                                                <th class="text-left">Payment Status</th>
-                                                <th class="text-left">Assigned To</th>
-                                                <th class="text-left">Action</th>
+                                                <th class="w-[60px] text-center">{{ translate('ID') }}</th>
+                                                <th>{{ translate('User Name') }}</th>
+                                                <th class="text-left">{{ translate('Instalment ID') }}</th>
+                                                <th class="text-left">{{ translate('Instalment Number') }}</th>
+                                                <th class="text-left">{{ translate('Due Date') }}</th>
+                                                <th class="text-left">{{ translate('Instalment Amount') }}</th>
+                                                <th class="text-left">{{ translate('Payment Status') }}</th>
+                                                <th class="text-left">{{ translate('Assigned To') }}</th>
+                                                <th class="text-left">{{ translate('Action') }}</th>
                                             </tr>
                                         </thead>
+
                                         <tbody>
                                             @foreach ($schedulePayments as $item)
                                                 <tr>

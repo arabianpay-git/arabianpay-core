@@ -9,7 +9,7 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        Support Ticket #{{ $ticket->ticket_number }}
+                        {{ translate('Support Ticket') }} #{{ $ticket->ticket_number }}
                     </h1>
                 </div>
 
@@ -20,13 +20,22 @@
                             @csrf
                             @method('POST')
 
-                            <label for="status" class="block mb-1 text-sm font-medium text-gray-700">Status</label>
+                            <label for="status" class="block mb-1 text-sm font-medium text-gray-700">
+                                {{ translate('Status') }}
+                            </label>
                             <select name="status" id="status" class="select" style="width: 10rem;"
                                 onchange="this.form.submit()">
-                                <option value="active" {{ $ticket->status == 'active' ? 'selected' : '' }}>Active</option>
-                                <option value="solved" {{ $ticket->status == 'solved' ? 'selected' : '' }}>Solved</option>
-                                <option value="draft" {{ $ticket->status == 'draft' ? 'selected' : '' }}>Draft</option>
-                                <option value="canceled" {{ $ticket->status == 'canceled' ? 'selected' : '' }}>Canceled
+                                <option value="active" {{ $ticket->status == 'active' ? 'selected' : '' }}>
+                                    {{ translate('Active') }}
+                                </option>
+                                <option value="solved" {{ $ticket->status == 'solved' ? 'selected' : '' }}>
+                                    {{ translate('Solved') }}
+                                </option>
+                                <option value="draft" {{ $ticket->status == 'draft' ? 'selected' : '' }}>
+                                    {{ translate('Draft') }}
+                                </option>
+                                <option value="canceled" {{ $ticket->status == 'canceled' ? 'selected' : '' }}>
+                                    {{ translate('Canceled') }}
                                 </option>
                             </select>
                         </form>
@@ -35,13 +44,12 @@
             </div>
         </div>
 
-
         <!-- Ticket Details -->
         <div class="container-fixed">
             <div class="grid grid-cols-1 lg:gap-7.5">
                 <div class="card grow" id="activity_2024">
                     <div class="card-header">
-                        <h3 class="card-title">Activity</h3>
+                        <h3 class="card-title">{{ translate('Activity') }}</h3>
                     </div>
                     <div class="card-body">
                         <div class="flex flex-col">
@@ -64,7 +72,7 @@
                                                     {{ $activity['subject'] }}
                                                     <small class="text-xs font-medium text-gray-500">
                                                         @if (\Carbon\Carbon::parse($activity['created_at'])->isToday())
-                                                            (Today,
+                                                            ({{ translate('Today') }},
                                                             {{ \Carbon\Carbon::parse($activity['created_at'])->format('g:i A') }})
                                                         @else
                                                             ({{ \Carbon\Carbon::parse($activity['created_at'])->format('d M Y, g:i A') }})
@@ -82,7 +90,7 @@
                                                     @foreach ($activity['files'] as $file)
                                                         <a href="{{ $file }}" target="_blank"
                                                             class="text-xs text-primary underline">
-                                                            View Attachment
+                                                            {{ translate('View Attachment') }}
                                                         </a>
                                                     @endforeach
                                                 </div>
@@ -92,7 +100,7 @@
                                             <div class="mt-2">
                                                 <button type="button" class="btn btn-link reply-toggle-btn"
                                                     data-index="{{ $index }}">
-                                                    {{ empty($activity['reply']) ? 'Reply' : 'Edit Reply' }}
+                                                    {{ empty($activity['reply']) ? translate('Reply') : translate('Edit Reply') }}
                                                 </button>
                                             </div>
 
@@ -100,14 +108,17 @@
                                             <form action="{{ route('ticketReply', $activity['id']) }}" method="POST"
                                                 class="reply-form mt-4 hidden" id="reply-form-{{ $index }}">
                                                 @csrf
-                                                <textarea name="reply" rows="2" class="textarea w-full mb-2" placeholder="Type your reply..." required>{{ $activity['reply'] ?? '' }}</textarea>
-                                                <button class="btn btn-sm btn-primary" type="submit">Submit Reply</button>
+                                                <textarea name="reply" rows="2" class="textarea w-full mb-2"
+                                                    placeholder="{{ translate('Type your reply...') }}" required>{{ $activity['reply'] ?? '' }}</textarea>
+                                                <button class="btn btn-sm btn-primary"
+                                                    type="submit">{{ translate('Submit Reply') }}</button>
                                             </form>
 
                                             <!-- Show Existing Reply -->
                                             @if (!empty($activity['reply']))
                                                 <div class="text-sm text-gray-800 mt-2">
-                                                    <strong>Your Reply:</strong> {{ $activity['reply'] }}
+                                                    <strong>{{ translate('Your Reply') }}:</strong>
+                                                    {{ $activity['reply'] }}
                                                 </div>
                                             @endif
                                         </div>

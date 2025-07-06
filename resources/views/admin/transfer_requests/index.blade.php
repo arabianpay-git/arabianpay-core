@@ -10,7 +10,7 @@
             <div class="flex flex-wrap items-center justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        {{ __('Transfer Requests') }}
+                        {{ translate('Transfer Requests') }}
                     </h1>
                 </div>
             </div>
@@ -21,7 +21,7 @@
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
-                        <h3 class="card-title font-medium text-sm">{{ __('Requests') }}</h3>
+                        <h3 class="card-title font-medium text-sm">{{ translate('Requests') }}</h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
@@ -71,7 +71,7 @@
                                                         <button type="button" class="btn btn-sm btn-primary"
                                                             data-modal-toggle="#transfer_description_modal"
                                                             data-description="{{ $item->description }}">
-                                                            {{ __('View') }}
+                                                            {{ translate('View') }}
                                                         </button>
                                                     @else
                                                         -
@@ -105,7 +105,7 @@
     <div class="modal" data-modal="true" id="transfer_description_modal">
         <div class="modal-content max-w-[600px] top-[15%]">
             <div class="modal-header py-4 px-5">
-                <h1>{{ __('Transfer Request Description') }}</h1>
+                <h1>{{ translate('Transfer Request Description') }}</h1>
                 <button class="btn btn-sm btn-icon btn-light btn-clear" data-modal-dismiss="true">
                     <i class="ki-filled ki-cross"></i>
                 </button>

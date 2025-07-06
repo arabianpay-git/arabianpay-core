@@ -1560,7 +1560,7 @@
                         <li>{{ $city->name }}</li>
                     @endforeach
                 </ul>
-                <h1 class="mb-1 font-medium">{{ __('main.lets_get_started') }}</h1>
+                <h1 class="mb-1 font-medium">{{ translate('main.lets_get_started') }}</h1>
                 <p class="mb-2 text-[#706f6c] dark:text-[#A1A09A]">{!! __('main.laravel_description') !!}</p>
 
                 <ul class="flex flex-col mb-4 lg:mb-6">

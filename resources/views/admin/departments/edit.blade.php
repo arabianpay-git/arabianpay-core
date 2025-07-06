@@ -38,7 +38,7 @@
                 <div class="flex flex-col items-stretch grow gap-5 lg:gap-7.5">
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
-                            <h3 class="card-title">Edit Department</h3>
+                            <h3 class="card-title">{{ translate('Edit Department') }}</h3>
                         </div>
                         <form action="{{ route('departments.update', $department->id) }}" method="POST">
                             @csrf
@@ -47,7 +47,7 @@
                             <div class="card-body grid gap-5">
                                 <div class="w-full">
                                     <label class="form-label flex items-center gap-1 max-w-56" for="name">
-                                        Name <span class="text-red-600">*</span>
+                                        {{ translate('Name') }} <span class="text-red-600">*</span>
                                     </label>
 
                                     @php
@@ -68,7 +68,7 @@
 
                                 <div class="w-full">
                                     <label class="form-label flex items-center gap-1 max-w-56" for="role">
-                                        Roles <span class="text-red-600">*</span>
+                                        {{ translate('Roles') }} <span class="text-red-600">*</span>
                                     </label>
                                     <select name="role[]" id="role" class="select w-full" multiple>
                                         @foreach ($roles as $item)
@@ -92,7 +92,7 @@
                                             <label class="flex items-center gap-1 text-sm switch">
                                                 <input type="checkbox" class="select-all-perms"
                                                     data-target="perm-group-{{ $loop->index }}">
-                                                Select All
+                                                {{ translate('Select All') }}
                                             </label>
                                         </div>
 
@@ -122,7 +122,7 @@
 
                                 <div class="flex justify-end pt-2.5">
                                     <button type="submit" class="btn btn-primary">
-                                        Update Department
+                                        {{ translate('Update Department') }}
                                     </button>
                                 </div>
                             </div>

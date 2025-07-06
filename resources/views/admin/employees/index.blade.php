@@ -6,12 +6,12 @@
             <div class="flex flex-wrap items-center justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        Employees
+                        {{ translate('Employees') }}
                     </h1>
                 </div>
                 <div class="flex items-center gap-2.5">
                     <a class="btn btn-sm btn-light" href="{{ route('employees.create') }}">
-                        Create New Employee
+                        {{ translate('Create New Employee') }}
                     </a>
                 </div>
             </div>
@@ -21,13 +21,13 @@
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
-                        <h3 class="card-title font-medium text-sm">Employees</h3>
+                        <h3 class="card-title font-medium text-sm">{{ translate('Employees') }}</h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"></i>
-                                    <input data-datatable-search="#role_permission_table" placeholder="Search employees"
-                                        type="text" />
+                                    <input data-datatable-search="#role_permission_table"
+                                        placeholder="{{ translate('Search employees') }}" type="text" />
                                 </label>
                             </div>
                         </div>
@@ -39,27 +39,30 @@
                                 <table class="table table-auto table-border" data-datatable-table="true">
                                     <thead>
                                         <tr>
-                                            <th class="w-[60px] text-center">No</th>
-                                            <th>Name</th>
-                                            <th>Is Manager</th>
-                                            <th>Email</th>
-                                            <th>Phone</th>
-                                            <th>Department</th>
-                                            <th>Role</th>
-                                            <th>Permissions</th>
-                                            <th class="text-center">Action</th>
+                                            <th class="w-[60px] text-center">{{ translate('No') }}</th>
+                                            <th>{{ translate('Name') }}</th>
+                                            <th>{{ translate('Is Manager') }}</th>
+                                            <th>{{ translate('Email') }}</th>
+                                            <th>{{ translate('Phone') }}</th>
+                                            <th>{{ translate('Department') }}</th>
+                                            <th>{{ translate('Role') }}</th>
+                                            <th>{{ translate('Permissions') }}</th>
+                                            <th class="text-center">{{ translate('Action') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         @foreach ($employees as $index => $employee)
                                             <tr>
                                                 <td class="text-center">{{ $index + $employees->firstItem() }}</td>
-                                                <td>{{ $employee->first_name ?? '-' }} {{ $employee->last_name ?? '' }}</td>
+                                                <td>{{ $employee->first_name ?? '-' }} {{ $employee->last_name ?? '' }}
+                                                </td>
                                                 <td class="text-center">
                                                     @if ($employee->is_manager)
-                                                        <span class="badge badge-sm badge-outline badge-success">Yes</span>
+                                                        <span
+                                                            class="badge badge-sm badge-outline badge-success">{{ translate('Yes') }}</span>
                                                     @else
-                                                        <span class="badge badge-outline badge-secondary">No</span>
+                                                        <span
+                                                            class="badge badge-outline badge-secondary">{{ translate('No') }}</span>
                                                     @endif
                                                 </td>
                                                 <td>{{ $employee->email }}</td>
@@ -92,7 +95,7 @@
                                                         </a>
                                                         <a class="btn btn-sm btn-icon btn-clear btn-danger delete-btn"
                                                             href="{{ route('employees.destroy', $employee->id) }}">
-                                                            <i class="ki-filled ki-trash"> </i>
+                                                            <i class="ki-filled ki-trash"></i>
                                                         </a>
                                                     </div>
                                                 </td>

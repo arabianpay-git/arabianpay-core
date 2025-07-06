@@ -12,16 +12,20 @@
 
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                     <div>
-                        <label for="role_id_display" class="block text-sm font-medium text-gray-700">Selected Role</label>
+                        <label for="role_id_display" class="block text-sm font-medium text-gray-700">
+                            {{ translate('Selected Role') }}
+                        </label>
                         <select id="role_id_display" class="select w-full mt-1 bg-gray-100 cursor-not-allowed" disabled>
                             <option value="{{ $role->id }}">{{ ucfirst($role->name) }}</option>
                         </select>
                     </div>
 
                     <div>
-                        <label for="department_id" class="block text-sm font-medium text-gray-700">Select Department</label>
+                        <label for="department_id" class="block text-sm font-medium text-gray-700">
+                            {{ translate('Select Department') }}
+                        </label>
                         <select name="department_id" id="department_id" class="select w-full mt-1" required>
-                            <option value="">-- Select Department --</option>
+                            <option value="">{{ translate('-- Select Department --') }}</option>
                             @foreach ($departments as $item)
                                 <option value="{{ $item->id }}" @if ($item->id == $department->id) selected @endif>
                                     {{ ucfirst($item->name) }}
@@ -35,7 +39,7 @@
 
                 <div class="pt-5">
                     <button type="submit" class="btn btn-primary">
-                        Update Permissions
+                        {{ translate('Update Permissions') }}
                     </button>
                 </div>
             </form>

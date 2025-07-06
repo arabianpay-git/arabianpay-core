@@ -7,14 +7,14 @@
                 <div class="flex flex-col items-stretch grow gap-5 lg:gap-7.5">
                     <div class="card pb-2.5">
                         <div class="card-header" id="basic_settings">
-                            <h3 class="card-title">Edit Business Type</h3>
+                            <h3 class="card-title">{{ translate('Edit Business Type') }}</h3>
                         </div>
 
                         <!-- Language Tabs -->
                         <div class="border-b border-gray-200">
                             <nav class="-mb-px flex gap-4" id="langTabs">
-                                <button class="tab-btn active" data-tab="en">English</button>
-                                <button class="tab-btn" data-tab="ar">Arabic</button>
+                                <button class="tab-btn active" data-tab="en">{{ translate('English') }}</button>
+                                <button class="tab-btn" data-tab="ar">{{ translate('Arabic') }}</button>
                             </nav>
                         </div>
 
@@ -48,7 +48,7 @@
                                                 <div class="flex items-center flex-wrap gap-2.5">
                                                     <a class="text-base font-medium text-gray-900 hover:text-primary-active"
                                                         href="#">
-                                                        Please fix the following errors:
+                                                        {{ translate('Please fix the following errors:') }}
                                                     </a>
                                                 </div>
                                                 <div class="text-2sm text-gray-800">
@@ -62,7 +62,6 @@
                                         </div>
                                     </div>
                                 </div>
-
                             </div>
                         @endif
 
@@ -77,7 +76,7 @@
                                     <div class="grid gap-5">
 
                                         <div class="w-full">
-                                            <label class="form-label">Business Type</label>
+                                            <label class="form-label">{{ translate('Business Type') }}</label>
                                             <input class="input @error('name.en') border-red-500 @enderror" name="name[en]"
                                                 type="text" value="{{ old('name.en', $businessType->name ?? '') }}"
                                                 required />
@@ -87,32 +86,33 @@
                                         </div>
 
                                         <div class="w-full">
-                                            <label class="form-label">Risk Level <span class="text-danger">*</span></label>
+                                            <label class="form-label">{{ translate('Risk Level') }} <span
+                                                    class="text-danger">*</span></label>
                                             <select class="input @error('risk_level') border-red-500 @enderror"
                                                 name="risk_level" required>
                                                 <option value="" disabled
                                                     {{ old('risk_level', $businessType->risk_level) ? '' : 'selected' }}>
-                                                    Select risk level
+                                                    {{ translate('Select risk level') }}
                                                 </option>
                                                 <option value="low"
                                                     {{ old('risk_level', $businessType->risk_level) == 'low' ? 'selected' : '' }}>
-                                                    Low
+                                                    {{ translate('Low') }}
                                                 </option>
                                                 <option value="medium-low"
                                                     {{ old('risk_level', $businessType->risk_level) == 'medium-low' ? 'selected' : '' }}>
-                                                    Medium Low
+                                                    {{ translate('Medium Low') }}
                                                 </option>
                                                 <option value="medium"
                                                     {{ old('risk_level', $businessType->risk_level) == 'medium' ? 'selected' : '' }}>
-                                                    Medium
+                                                    {{ translate('Medium') }}
                                                 </option>
                                                 <option value="high"
                                                     {{ old('risk_level', $businessType->risk_level) == 'high' ? 'selected' : '' }}>
-                                                    High
+                                                    {{ translate('High') }}
                                                 </option>
                                                 <option value="very-high"
                                                     {{ old('risk_level', $businessType->risk_level) == 'very-high' ? 'selected' : '' }}>
-                                                    Very High
+                                                    {{ translate('Very High') }}
                                                 </option>
                                             </select>
 
@@ -121,17 +121,16 @@
                                             @enderror
                                         </div>
 
-
                                         <div class="w-full">
-                                            <label class="form-label">Featured</label>
+                                            <label class="form-label">{{ translate('Featured') }}</label>
                                             <select class="input @error('featured') border-red-500 @enderror"
                                                 name="featured">
                                                 <option value="true"
                                                     {{ old('featured', $businessType->featured) == true ? 'selected' : '' }}>
-                                                    Yes</option>
+                                                    {{ translate('Yes') }}</option>
                                                 <option value="false"
                                                     {{ old('featured', $businessType->featured) == false ? 'selected' : '' }}>
-                                                    No</option>
+                                                    {{ translate('No') }}</option>
                                             </select>
                                             @error('featured')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
@@ -139,7 +138,7 @@
                                         </div>
 
                                         <div class="w-full">
-                                            <label class="form-label">Order Level</label>
+                                            <label class="form-label">{{ translate('Order Level') }}</label>
                                             <input class="input @error('order_level') border-red-500 @enderror"
                                                 name="order_level" type="number"
                                                 value="{{ old('order_level', $businessType->order_level) }}" />
@@ -150,14 +149,14 @@
 
                                         @include('media.single', [
                                             'name' => 'icon',
-                                            'label' => 'Business Type Icon',
+                                            'label' => translate('Business Type Icon'),
                                             'required' => false,
                                             'value' => old('icon', $businessType->icon),
                                         ])
 
                                         @include('media.single', [
                                             'name' => 'banner',
-                                            'label' => 'Business Type Banner',
+                                            'label' => translate('Business Type Banner'),
                                             'required' => false,
                                             'value' => old('banner', $businessType->banner),
                                         ])
@@ -167,7 +166,7 @@
                                 <div class="tab-content hidden" id="tab-ar">
                                     <div class="grid gap-5">
                                         <div class="w-full">
-                                            <label class="form-label">Business Type (Arabic)</label>
+                                            <label class="form-label">{{ translate('Business Type (Arabic)') }}</label>
                                             <input class="input @error('name.ar') border-red-500 @enderror" name="name[ar]"
                                                 type="text"
                                                 value="{{ old('name.ar', $businessType->translations->where('locale', 'ar')->first()->name ?? '') }}" />
@@ -179,7 +178,7 @@
                                 </div>
 
                                 <div class="flex justify-end pt-2.5">
-                                    <button class="btn btn-primary">Save Changes</button>
+                                    <button class="btn btn-primary">{{ translate('Save Changes') }}</button>
                                 </div>
                             </div>
                         </form>
@@ -188,4 +187,5 @@
             </div>
         </div>
     </main>
+
 @endsection

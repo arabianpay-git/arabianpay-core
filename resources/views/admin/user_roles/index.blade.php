@@ -6,7 +6,7 @@
             <div class="flex flex-wrap items-center justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        User Roles
+                        {{ translate('User Roles') }}
                     </h1>
                 </div>
             </div>
@@ -16,13 +16,13 @@
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
-                        <h3 class="card-title font-medium text-sm">User Roles</h3>
+                        <h3 class="card-title font-medium text-sm">{{ translate('User Roles') }}</h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"></i>
-                                    <input data-datatable-search="#role_permission_table" placeholder="Search users"
-                                        type="text" />
+                                    <input data-datatable-search="#role_permission_table"
+                                        placeholder="{{ translate('Search users') }}" type="text" />
                                 </label>
                             </div>
                         </div>
@@ -34,10 +34,10 @@
                                 <table class="table table-auto table-border" data-datatable-table="true">
                                     <thead>
                                         <tr>
-                                            <th class="w-[60px] text-center">No</th>
-                                            <th>User</th>
-                                            <th>Roles</th>
-                                            <th>Action</th>
+                                            <th class="w-[60px] text-center">{{ translate('No') }}</th>
+                                            <th>{{ translate('User') }}</th>
+                                            <th>{{ translate('Roles') }}</th>
+                                            <th>{{ translate('Action') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -49,10 +49,9 @@
                                                     @foreach ($user->department->roles ?? [] as $role)
                                                         <span
                                                             class="badge badge-sm badge-info badge-outline me-1 mb-1 inline-block">
-                                                            {{ ucfirst($role->name) }}
+                                                            {{ ucfirst(translate($role->name)) }}
                                                         </span>
                                                     @endforeach
-
                                                 </td>
                                                 <td>
                                                     <div class="flex gap-1">
