@@ -376,6 +376,7 @@ return [
     'Next' => 'Next',
     'No' => 'No',
     'No data loaded' => 'No data loaded',
+    'No manager data available.' => 'No manager data available.',
     'Not uploaded' => 'Not uploaded',
     'Notifications' => 'Notifications',
     'Number of Invoices' => 'Number of Invoices',

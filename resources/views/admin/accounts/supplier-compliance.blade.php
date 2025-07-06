@@ -102,16 +102,20 @@
 
                                                 @if ($item['title'] === translate('Supplier Contract'))
                                                     @php
-                                                        $startDate = $contract->created_at
-                                                            ? Carbon\Carbon::parse($contract->created_at)->format(
-                                                                'F j, Y, h:i A',
-                                                            )
-                                                            : null;
-                                                        $endDate = $contract->contract_end_date
-                                                            ? Carbon\Carbon::parse(
-                                                                $contract->contract_end_date,
-                                                            )->format('F j, Y, h:i A')
-                                                            : null;
+
+                                                        $startDate =
+                                                            $contract && $contract->created_at
+                                                                ? Carbon\Carbon::parse($contract->created_at)->format(
+                                                                    'F j, Y, h:i A',
+                                                                )
+                                                                : null;
+
+                                                        $endDate =
+                                                            $contract && $contract->contract_end_date
+                                                                ? Carbon\Carbon::parse(
+                                                                    $contract->contract_end_date,
+                                                                )->format('F j, Y, h:i A')
+                                                                : null;
                                                     @endphp
 
                                                     @if ($startDate)
@@ -128,8 +132,6 @@
                                                 @endif
                                             </div>
                                         </div>
-
-
 
                                         @if ($item['file'])
                                             <a href="{{ asset($item['file']) }}" target="_blank"
