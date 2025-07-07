@@ -72,10 +72,11 @@
                                     ],
                                     [
                                         'title' => translate('IBAN Certificate'),
-                                        'file' => supplierMedia($supplierBank->iban_certificate),
+                                        'file' => supplierMedia(optional($supplierBank)->iban_certificate),
                                         'status' => null,
                                     ],
                                 ];
+
                                 if ($merchant->is_manager) {
                                     $compliance[] = [
                                         'title' => translate('Company Approval Letter for Manager'),
@@ -84,6 +85,7 @@
                                     ];
                                 }
                             @endphp
+
 
                             @foreach ($compliance as $item)
                                 <div
