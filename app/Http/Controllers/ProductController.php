@@ -46,13 +46,18 @@ class ProductController extends Controller
 
     public function create()
     {
+        $categories = Category::orderBy('parent_id')
+            ->orderBy('name')
+            ->get();
+
         return view('admin.products.create', [
-            'categories' => Category::orderBy('name')->get(),
+            'categories' => $categories,
             'brands' => Brand::orderBy('name')->get(),
             'attributes' => Attribute::orderBy('name')->get(),
             'merchants' => User::where('user_type', 'merchant')->select('id', 'business_name')->get(),
         ]);
     }
+
 
     public function store(StoreProductRequest $request)
     {
@@ -109,7 +114,7 @@ class ProductController extends Controller
 
         return view('admin.products.edit', [
             'product' => $product,
-            'categories' => Category::orderBy('name')->get(),
+            'categories' => Category::orderBy('parent_id')->orderBy('name')->get(),
             'brands' => Brand::orderBy('name')->get(),
             'attributes' => $attributes,
             'merchants' => User::where('user_type', 'merchant')->get(),
