@@ -171,7 +171,7 @@ class CategoryController extends Controller
             return response()->json(['units' => []]);
         }
 
-        // If category has parent, get parent's units instead
+        // Use parent's units if parent exists
         if ($category->parent_id) {
             $parentCategory = Category::find($category->parent_id);
             $units = $parentCategory ? $parentCategory->unit : null;
@@ -179,6 +179,7 @@ class CategoryController extends Controller
             $units = $category->unit;
         }
 
+        // Convert units string or array to array of trimmed strings
         if (is_string($units)) {
             $units = explode(',', $units);
         } elseif (is_array($units)) {
@@ -186,7 +187,7 @@ class CategoryController extends Controller
                 $units = explode(',', $units[0]);
             }
         } else {
-            $units = []; // fallback if unexpected
+            $units = [];
         }
 
         return response()->json([
