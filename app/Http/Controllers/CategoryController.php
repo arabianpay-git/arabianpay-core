@@ -13,7 +13,7 @@ class CategoryController extends Controller
 {
     public function index(Request $request)
     {
-        $categories = Category::with('parent')->select('categories.*')->paginate(10);
+        $categories = Category::with('parent')->select('categories.*')->orderBy('id', 'desc')->paginate(10);
 
         return view('admin.categories.index', compact('categories'));
     }
@@ -31,6 +31,7 @@ class CategoryController extends Controller
             'order_level' => ['nullable', 'numeric'],
             'meta_title' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
             'meta_description' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
+            'unit' => ['nullable', 'array'],
         ]);
 
         DB::beginTransaction();
@@ -45,6 +46,7 @@ class CategoryController extends Controller
                 'featured' => $request->boolean('featured'),
                 'meta_title' => $request->meta_title,
                 'meta_description' => $request->meta_description,
+                'unit' => $request->unit,
             ]);
 
             $this->storeOrUpdateTranslation($category, $request);
@@ -79,6 +81,7 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
+        dd($request->all());
         $request->validate([
             'name.en' => [
                 'required',
@@ -90,6 +93,7 @@ class CategoryController extends Controller
             'order_level' => ['nullable', 'numeric'],
             'meta_title.en' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
             'meta_description.en' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
+            'unit' => ['nullable', 'array'],
         ]);
 
         DB::beginTransaction();
@@ -104,6 +108,7 @@ class CategoryController extends Controller
                 'featured' => $request->boolean('featured'),
                 'meta_title' => $request->meta_title['en'],
                 'meta_description' => $request->meta_description['en'],
+                'unit' => $request->unit,
             ]);
 
             $this->storeOrUpdateTranslation($category, $request);

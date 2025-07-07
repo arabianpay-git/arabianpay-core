@@ -15,6 +15,7 @@ class Category extends Model
         'parent_id',
         'name',
         'slug',
+        'unit',
         'order_level',
         'banner',
         'icon',
@@ -29,6 +30,10 @@ class Category extends Model
         'name',
         'meta_title',
         'meta_description',
+    ];
+
+    protected $casts = [
+        'unit' => 'array',
     ];
 
     protected $with = ['translations'];

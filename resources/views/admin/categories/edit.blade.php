@@ -1,5 +1,36 @@
 @extends('layouts.base')
+@push('styles')
+    <style>
+        .choices__inner {
+            min-height: 2.4rem !important;
+            height: 2.4rem !important;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            border-radius: 0.375rem;
+        }
 
+        .choices__input {
+            height: auto !important;
+
+            margin: 0 !important;
+        }
+
+        .choices__list--multiple .choices__item {
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            padding: 0 7px;
+        }
+
+        .choices__list {
+            position: relative !important;
+            z-index: 9999 !important;
+        }
+
+        .choices {
+            position: relative !important;
+        }
+    </style>
+@endpush
 @section('content')
     <main class="grow content pt-5" id="content" role="content">
         <div class="container-fixed">
@@ -10,7 +41,6 @@
                             <h3 class="card-title">{{ translate('Edit Category') }}</h3>
                         </div>
 
-                        <!-- Language Tabs -->
                         <div class="border-b border-gray-200">
                             <nav class="-mb-px flex gap-4" id="langTabs">
                                 <button class="tab-btn active" data-tab="en">{{ translate('English') }}</button>
@@ -18,7 +48,6 @@
                             </nav>
                         </div>
 
-                        <!-- Update Form -->
                         <form action="{{ route('categories.update', $category->id) }}" method="POST">
                             @csrf
                             @method('PUT')
@@ -28,14 +57,37 @@
                                 <div class="tab-content" id="tab-en">
                                     <div class="grid gap-5">
 
-                                        <div class="w-full">
-                                            <label class="form-label">{{ translate('Category Name') }}</label>
-                                            <input class="input @error('name.en') border-red-500 @enderror" name="name[en]"
-                                                type="text" value="{{ old('name.en', $category->name ?? '') }}"
-                                                required />
-                                            @error('name.en')
-                                                <span class="text-danger text-sm">{{ $message }}</span>
-                                            @enderror
+                                        <div class="flex gap-4">
+                                            {{-- Category Name --}}
+                                            <div class="w-full">
+                                                <div class="flex items-baseline flex-wrap gap-2.5">
+                                                    <label class="form-label flex items-center gap-1 max-w-56">
+                                                        {{ translate('Category Name') }} <span class="text-danger">*</span>
+                                                    </label>
+                                                    <input class="input @error('name') border-red-500 @enderror"
+                                                        name="name" type="text"
+                                                        value="{{ old('name', $category->name ?? '') }}" required />
+                                                </div>
+                                                @error('name')
+                                                    <span class="text-danger text-sm">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+
+                                            {{-- Units --}}
+                                            <div class="w-full">
+                                                <div class="flex flex-col gap-2.5">
+                                                    <label class="form-label">{{ translate('Units') }}</label>
+                                                    <input id="unit-input" type="text" name="unit"
+                                                        class="input w-full @error('unit') border-red-500 @enderror"
+                                                        placeholder="{{ translate('Type unit and press Enter') }}"
+                                                        value="{{ old('unit', is_array($category->unit) ? implode(',', $category->unit) : $category->unit) }}" />
+                                                </div>
+                                                @error('unit')
+                                                    <span class="text-danger text-sm">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+
+
                                         </div>
 
                                         <div class="w-full">
@@ -160,3 +212,18 @@
         </div>
     </main>
 @endsection
+
+
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        const unitChoices = new Choices('#unit-input', {
+            removeItemButton: true,
+            duplicateItemsAllowed: false,
+            delimiter: ',',
+            editItems: true,
+            paste: true,
+            placeholder: true,
+        });
+    </script>
+@endpush

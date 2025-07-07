@@ -1,4 +1,37 @@
-@extends('layouts.base') @section('content')
+@extends('layouts.base')
+@push('styles')
+    <style>
+        .choices__inner {
+            min-height: 2.4rem !important;
+            height: 2.4rem !important;
+            padding-top: 0.25rem;
+            padding-bottom: 0.25rem;
+            border-radius: 0.375rem;
+        }
+
+        .choices__input {
+            height: auto !important;
+
+            margin: 0 !important;
+        }
+
+        .choices__list--multiple .choices__item {
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            padding: 0 7px;
+        }
+
+        .choices__list {
+            position: relative !important;
+            z-index: 9999 !important;
+        }
+
+        .choices {
+            position: relative !important;
+        }
+    </style>
+@endpush
+@section('content')
     <main class="grow content pt-5" id="content" role="content">
         <div class="container-fixed">
             <div class="flex grow gap-5 lg:gap-7.5">
@@ -13,22 +46,39 @@
                         <form action="{{ route('categories.store') }}" method="POST">
                             @csrf
                             <div class="card-body grid gap-5">
-                                <div class="w-full">
-                                    <div class="flex items-baseline flex-wrap gap-2.5">
-                                        <label class="form-label flex items-center gap-1 max-w-56">
-                                            {{ translate('Category Name') }} <span class="text-danger">*</span>
-                                        </label>
-                                        <input class="input @error('name') border-red-500 @enderror" name="name"
-                                            type="text" value="{{ old('name') }}" required />
+                                <div class="flex gap-4">
+                                    <div class="w-full">
+                                        <div class="flex items-baseline flex-wrap gap-2.5">
+                                            <label class="form-label flex items-center gap-1 max-w-56">
+                                                {{ translate('Category Name') }} <span class="text-danger">*</span>
+                                            </label>
+                                            <input class="input @error('name') border-red-500 @enderror" name="name"
+                                                type="text" value="{{ old('name') }}" required />
+                                        </div>
+                                        @error('name')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
                                     </div>
-                                    @error('name')
-                                        <span class="text-danger text-sm">{{ $message }}</span>
-                                    @enderror
+
+                                    <div class="w-full">
+                                        <div class="flex flex-col gap-2.5">
+                                            <label class="form-label">
+                                                {{ translate('Units') }}
+                                            </label>
+                                            <input id="unit-input" type="text" name="unit[]"
+                                                class="input w-full @error('unit') border-red-500 @enderror"
+                                                placeholder="{{ translate('Type unit and press Enter') }}" multiple />
+                                        </div>
+                                        @error('unit')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
                                 </div>
 
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">
-                                        <label class="form-label flex items-center gap-1 max-w-56">
+                                        <label class="form-label flex items-center gap-1">
                                             {{ translate('Parent') }}
                                         </label>
                                         <select class="input @error('category_id') border-red-500 @enderror"
@@ -134,3 +184,16 @@
         </div>
     </main>
 @endsection
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+    <script>
+        const unitChoices = new Choices('#unit-input', {
+            removeItemButton: true,
+            duplicateItemsAllowed: false,
+            delimiter: ',',
+            editItems: true,
+            paste: true,
+            placeholder: true,
+        });
+    </script>
+@endpush

@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('parent_id')->nullable()->constrained('categories')->onDelete('cascade');
             $table->string('name');
             $table->string('slug');
+            $table->json('unit');
             $table->integer('order_level')->default(0);
             $table->text('banner')->nullable();
             $table->text('icon')->nullable();
