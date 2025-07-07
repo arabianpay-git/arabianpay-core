@@ -193,19 +193,19 @@
                                                 <label class="form-label">
                                                     {{ translate('Category') }}
                                                 </label>
-                                                <select id="parent_id"
-                                                    class="select w-full @error('parent_id') border-red-500 @enderror"
-                                                    name="parent_id" required>
+                                                <select id="category_id"
+                                                    class="select w-full @error('category_id') border-red-500 @enderror"
+                                                    name="category_id" required>
                                                     <option value="">{{ translate('Select Category') }}</option>
                                                     @foreach ($categories as $category)
                                                         <option value="{{ $category->id }}"
-                                                            {{ old('parent_id') == $category->id ? 'selected' : '' }}>
+                                                            {{ old('category_id') == $category->id ? 'selected' : '' }}>
                                                             {{ $category->name }}
                                                         </option>
                                                     @endforeach
                                                 </select>
                                             </div>
-                                            @error('parent_id')
+                                            @error('category_id')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
                                             @enderror
                                         </div>

@@ -81,18 +81,17 @@
                                         <label class="form-label flex items-center gap-1">
                                             {{ translate('Parent') }}
                                         </label>
-                                        <select class="input @error('category_id') border-red-500 @enderror"
-                                            name="category_id">
+                                        <select class="input @error('parent_id') border-red-500 @enderror" name="parent_id">
                                             <option value="">{{ translate('Select Parent Category') }}</option>
                                             @foreach ($categories as $category)
                                                 <option value="{{ $category->id }}"
-                                                    {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                                    {{ old('parent_id') == $category->id ? 'selected' : '' }}>
                                                     {{ $category->name }}
                                                 </option>
                                             @endforeach
                                         </select>
                                     </div>
-                                    @error('category_id')
+                                    @error('parent_id')
                                         <span class="text-danger text-sm">{{ $message }}</span>
                                     @enderror
                                 </div>
