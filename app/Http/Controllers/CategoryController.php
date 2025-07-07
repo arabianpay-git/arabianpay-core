@@ -171,7 +171,13 @@ class CategoryController extends Controller
             return response()->json(['units' => []]);
         }
 
-        $units = $category->unit;
+        // If category has parent, get parent's units instead
+        if ($category->parent_id) {
+            $parentCategory = Category::find($category->parent_id);
+            $units = $parentCategory ? $parentCategory->unit : null;
+        } else {
+            $units = $category->unit;
+        }
 
         if (is_string($units)) {
             $units = explode(',', $units);
