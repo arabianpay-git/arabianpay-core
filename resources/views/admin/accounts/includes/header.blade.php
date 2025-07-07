@@ -2,112 +2,114 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 @endpush
 
-@can('supplier.manage')
-    <div class="container-fixed">
-        <div
-            class="flex items-center flex-wrap md:flex-nowrap lg:items-end justify-between border-b border-b-gray-200 dark:border-b-coal-100 gap-3 lg:gap-6 mb-5 lg:mb-10">
-            <div class="grid">
-                <div class="scrollable-x-auto">
-                    <div class="menu gap-3" data-menu="true">
-                        <div
-                            class="menu-item border-b-2 border-b-transparent 
-                        {{ Route::is('supplierProfile') ? 'border-b-primary' : '' }} menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                            <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
-                                href="{{ route('supplierProfile', ['id' => $merchant->user_id]) }}">
-                                <span
-                                    class="menu-title text-nowrap font-medium text-sm text-gray-700 
-                                {{ Route::is('supplierProfile') ? 'text-primary font-semibold' : 'menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary' }}">
-                                    Profile
-                                </span>
-                            </a>
-                        </div>
 
-                        <div
-                            class="menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                            <a class="{{ Route::is('supplierTransactions') ? 'border-b-primary' : '' }} menu-link gap-1.5 pb-2 lg:pb-4 px-2"
-                                href="{{ route('supplierTransactions', ['id' => $merchant->user_id]) }}">
-                                <span
-                                    class="menu-title text-nowrap font-medium text-sm text-gray-700 
+<div class="container-fixed">
+    <div
+        class="flex items-center flex-wrap md:flex-nowrap lg:items-end justify-between border-b border-b-gray-200 dark:border-b-coal-100 gap-3 lg:gap-6 mb-5 lg:mb-10">
+        <div class="grid">
+            <div class="scrollable-x-auto">
+                <div class="menu gap-3" data-menu="true">
+                    <div
+                        class="menu-item border-b-2 border-b-transparent 
+                        {{ Route::is('supplierProfile') ? 'border-b-primary' : '' }} menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('supplierProfile', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 
+                                {{ Route::is('supplierProfile') ? 'text-primary font-semibold' : 'menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary' }}">
+                                Profile
+                            </span>
+                        </a>
+                    </div>
+
+                    <div
+                        class="menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="{{ Route::is('supplierTransactions') ? 'border-b-primary' : '' }} menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('supplierTransactions', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 
                                 {{ Route::is('supplierTransactions') ? 'border-b-primary' : '' }}
                                  menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                    Transactions
-                                </span>
-                            </a>
-                        </div>
+                                Transactions
+                            </span>
+                        </a>
+                    </div>
 
-                        <div
-                            class="{{ Route::is('supplierOrders') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                            <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
-                                href="{{ route('supplierOrders', ['id' => $merchant->user_id]) }}">
-                                <span
-                                    class="menu-title text-nowrap font-medium text-sm text-gray-700 
+                    <div
+                        class="{{ Route::is('supplierOrders') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('supplierOrders', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 
                                 {{ Route::is('supplierOrders') ? 'border-b-primary' : '' }} menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                    Orders
-                                </span>
-                            </a>
-                        </div>
+                                Orders
+                            </span>
+                        </a>
+                    </div>
 
-                        <div
-                            class="{{ Route::is('supplierPayments') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                            <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
-                                href="{{ route('supplierPayments', ['id' => $merchant->user_id]) }}">
-                                <span
-                                    class="menu-title text-nowrap font-medium text-sm text-gray-700 {{ Route::is('supplierPayments') ? 'border-b-primary' : '' }}
+                    <div
+                        class="{{ Route::is('supplierPayments') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('supplierPayments', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 {{ Route::is('supplierPayments') ? 'border-b-primary' : '' }}
                                 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                    Payments
-                                </span>
-                            </a>
-                        </div>
+                                Payments
+                            </span>
+                        </a>
+                    </div>
 
-                        <div
-                            class="{{ Route::is('supplierFinance') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                            <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
-                                href="{{ route('supplierFinance', ['id' => $merchant->user_id]) }}">
-                                <span
-                                    class="menu-title text-nowrap font-medium text-sm text-gray-700 {{ Route::is('supplierFinance') ? 'border-b-primary' : '' }}
+                    <div
+                        class="{{ Route::is('supplierFinance') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('supplierFinance', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 {{ Route::is('supplierFinance') ? 'border-b-primary' : '' }}
                                 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                    Finance
-                                </span>
-                            </a>
-                        </div>
+                                Finance
+                            </span>
+                        </a>
+                    </div>
 
-                        <div
-                            class="menu-item border-b-2 border-b-transparent 
+                    <div
+                        class="menu-item border-b-2 border-b-transparent 
                         {{ Route::is('supplierProducts') ? 'border-b-primary' : '' }} menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                            <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
-                                href="{{ route('supplierProducts', ['id' => $merchant->user_id]) }}">
-                                <span
-                                    class="menu-title text-nowrap font-medium text-sm text-gray-700 
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('supplierProducts', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 
                                 {{ Route::is('supplierProducts') ? 'text-primary font-semibold' : 'menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary' }}">
-                                    Products
-                                </span>
-                            </a>
-                        </div>
+                                Products
+                            </span>
+                        </a>
+                    </div>
 
-                        <div
-                            class="{{ Route::is('supplierSales') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                            <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
-                                href="{{ route('supplierSales', ['id' => $merchant->user_id]) }}">
-                                <span
-                                    class="{{ Route::is('supplierSales') ? 'border-b-primary' : '' }} menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                    Sales
-                                </span>
-                            </a>
-                        </div>
+                    <div
+                        class="{{ Route::is('supplierSales') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('supplierSales', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="{{ Route::is('supplierSales') ? 'border-b-primary' : '' }} menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
+                                Sales
+                            </span>
+                        </a>
+                    </div>
 
-                        <div
-                            class="{{ Route::is('supplierCompliance') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
-                            <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
-                                href="{{ route('supplierCompliance', ['id' => $merchant->user_id]) }}">
-                                <span
-                                    class="{{ Route::is('supplierCompliance') ? 'border-b-primary' : '' }} menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                    Compliance
-                                </span>
-                            </a>
-                        </div>
+                    <div
+                        class="{{ Route::is('supplierCompliance') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('supplierCompliance', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="{{ Route::is('supplierCompliance') ? 'border-b-primary' : '' }} menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
+                                Compliance
+                            </span>
+                        </a>
                     </div>
                 </div>
             </div>
+        </div>
+
+        @can('supplier.manage')
             <div class="flex items-center justify-end grow lg:grow-0 lg:pb-4 gap-2.5 mb-3 lg:mb-0">
                 <div class="dropdown" data-dropdown="true" data-dropdown-placement="bottom-end"
                     data-dropdown-placement-rtl="bottom-start" data-dropdown-trigger="click">
@@ -170,9 +172,10 @@
 
                 </div>
             </div>
-        </div>
+        @endcan
     </div>
-@endcan
+</div>
+
 
 <div class="modal" data-modal="true" id="approve_modal">
     <div class="modal-content max-w-[600px] top-[5%]">
