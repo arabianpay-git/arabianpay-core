@@ -137,6 +137,9 @@ Route::group([
 
             Route::get('/departments/{department}/access', [EmployeeController::class, 'getDepartmentAccess'])
                 ->name('departments.access');
+
+            Route::get('/get-category-units/{id}', [CategoryController::class, 'getUnits']);
+
             //
             // Master-data CRUD
             //
@@ -160,8 +163,6 @@ Route::group([
                 'activity-logs'     => ActivityLogsController::class,
                 'departments'       => DepartmentController::class,
             ]);
-
-
 
             // one-off attribute route
             Route::get(

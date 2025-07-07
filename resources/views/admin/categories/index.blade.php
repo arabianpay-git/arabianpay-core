@@ -73,6 +73,16 @@
                                             <th>
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
+                                                        {{ translate('Units') }}
+                                                    </span>
+                                                    <span class="sort-icon"> </span>
+                                                </span>
+                                            </th>
+
+
+                                            <th>
+                                                <span class="sort asc">
+                                                    <span class="sort-label font-normal text-gray-700">
                                                         {{ translate('Parent') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
@@ -132,6 +142,23 @@
                                                 </td>
 
                                                 <td>{{ $category->name }}</td>
+
+                                                <td>
+                                                    @if ($category->unit)
+                                                        @php
+                                                            $units = is_array($category->unit)
+                                                                ? explode(',', $category->unit[0])
+                                                                : explode(',', $category->unit);
+                                                        @endphp
+
+                                                        @foreach ($units as $unit)
+                                                            <button type="button"
+                                                                class="badge badge-sm badge-outline badge-success">
+                                                                {{ trim($unit) }}
+                                                            </button>
+                                                        @endforeach
+                                                    @endif
+                                                </td>
 
                                                 <td>{{ $category->parent?->name ?? '—' }}</td>
 

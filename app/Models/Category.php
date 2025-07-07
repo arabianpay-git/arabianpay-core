@@ -24,6 +24,10 @@ class Category extends Model
         'meta_description',
     ];
 
+    protected $casts = [
+        'unit' => 'array',
+    ];
+
     protected $encryptableAttributes = ['name'];
 
     protected array $translatable = [
@@ -32,9 +36,6 @@ class Category extends Model
         'meta_description',
     ];
 
-    protected $casts = [
-        'unit' => 'array',
-    ];
 
     protected $with = ['translations'];
 

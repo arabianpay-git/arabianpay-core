@@ -81,6 +81,7 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
+        // dd($request->all());
         $request->validate([
             'name.en' => [
                 'required',
@@ -160,5 +161,30 @@ class CategoryController extends Controller
                 ]
             );
         }
+    }
+
+    public function getUnits($id)
+    {
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json(['units' => []]);
+        }
+
+        $units = $category->unit;
+
+        if (is_string($units)) {
+            $units = explode(',', $units);
+        } elseif (is_array($units)) {
+            if (count($units) === 1 && str_contains($units[0], ',')) {
+                $units = explode(',', $units[0]);
+            }
+        } else {
+            $units = []; // fallback if unexpected
+        }
+
+        return response()->json([
+            'units' => array_map('trim', $units),
+        ]);
     }
 }

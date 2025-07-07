@@ -65,7 +65,7 @@
                                                         {{ translate('Category Name') }} <span class="text-danger">*</span>
                                                     </label>
                                                     <input class="input @error('name') border-red-500 @enderror"
-                                                        name="name" type="text"
+                                                        name="name[en]" type="text"
                                                         value="{{ old('name', $category->name ?? '') }}" required />
                                                 </div>
                                                 @error('name')
@@ -77,7 +77,7 @@
                                             <div class="w-full">
                                                 <div class="flex flex-col gap-2.5">
                                                     <label class="form-label">{{ translate('Units') }}</label>
-                                                    <input id="unit-input" type="text" name="unit"
+                                                    <input id="unit-input" type="text" name="unit[]"
                                                         class="input w-full @error('unit') border-red-500 @enderror"
                                                         placeholder="{{ translate('Type unit and press Enter') }}"
                                                         value="{{ old('unit', is_array($category->unit) ? implode(',', $category->unit) : $category->unit) }}" />
@@ -86,8 +86,6 @@
                                                     <span class="text-danger text-sm">{{ $message }}</span>
                                                 @enderror
                                             </div>
-
-
                                         </div>
 
                                         <div class="w-full">
