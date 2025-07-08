@@ -147,7 +147,7 @@
                                                     @if ($category->unit)
                                                         @foreach ($category->unit as $unit)
                                                             <button type="button"
-                                                                class="badge badge-sm badge-outline badge-success">
+                                                                class="badge badge-sm badge-outline badge-success mt-1">
                                                                 {{ $unit }}
                                                             </button>
                                                         @endforeach
