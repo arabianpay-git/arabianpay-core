@@ -73,34 +73,37 @@
                                                 @enderror
                                             </div>
 
-                                            {{-- Units --}}
                                             <div class="w-full">
-                                                <div class="flex flex-col gap-2.5">
-                                                    <label class="form-label">{{ translate('Units') }}</label>
-                                                    <input id="unit-input" type="text" name="unit[]"
-                                                        class="input w-full @error('unit') border-red-500 @enderror"
-                                                        placeholder="{{ translate('Type unit and press Enter') }}"
-                                                        value="{{ old('unit', is_array($category->unit) ? implode(',', $category->unit) : $category->unit) }}" />
-                                                </div>
-                                                @error('unit')
+                                                <label class="form-label flex items-center gap-1 max-w-56 mb-2">
+                                                    {{ translate('Parent Category') }}
+                                                </label>
+                                                <select name="parent_id"
+                                                    class="select @error('parent_id') border-red-500 @enderror">
+                                                    <option value="">{{ translate('Select Parent Category') }}
+                                                    </option>
+                                                    @foreach ($categories as $categoryOption)
+                                                        <option value="{{ $categoryOption->id }}"
+                                                            {{ old('parent_id', $category->parent_id) == $categoryOption->id ? 'selected' : '' }}>
+                                                            {{ $categoryOption->name }}
+                                                        </option>
+                                                    @endforeach
+                                                </select>
+                                                @error('parent_id')
                                                     <span class="text-danger text-sm">{{ $message }}</span>
                                                 @enderror
                                             </div>
                                         </div>
 
-                                        <div class="w-full">
-                                            <label class="form-label">{{ translate('Parent Category') }}</label>
-                                            <select name="parent_id"
-                                                class="input @error('parent_id') border-red-500 @enderror">
-                                                <option value="">{{ translate('Select Parent Category') }}</option>
-                                                @foreach ($categories as $categoryOption)
-                                                    <option value="{{ $categoryOption->id }}"
-                                                        {{ old('parent_id', $category->parent_id) == $categoryOption->id ? 'selected' : '' }}>
-                                                        {{ $categoryOption->name }}
-                                                    </option>
-                                                @endforeach
-                                            </select>
-                                            @error('parent_id')
+                                        <div class="w-full" id="unit-field-wrapper">
+
+                                            <div class="flex flex-col gap-2.5">
+                                                <label class="form-label">{{ translate('Units') }}</label>
+                                                <input id="unit-input" type="text" name="unit[]"
+                                                    class="input w-full @error('unit') border-red-500 @enderror"
+                                                    placeholder="{{ translate('Type unit and press Enter') }}"
+                                                    value="{{ old('unit', is_array($category->unit) ? implode(',', $category->unit) : $category->unit) }}" />
+                                            </div>
+                                            @error('unit')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
                                             @enderror
                                         </div>
@@ -211,17 +214,42 @@
     </main>
 @endsection
 
-
 @push('scripts')
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script>
-        const unitChoices = new Choices('#unit-input', {
-            removeItemButton: true,
-            duplicateItemsAllowed: false,
-            delimiter: ',',
-            editItems: true,
-            paste: true,
-            placeholder: true,
+        let unitChoices;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            unitChoices = new Choices('#unit-input', {
+                removeItemButton: true,
+                duplicateItemsAllowed: false,
+                delimiter: ',',
+                editItems: true,
+                paste: true,
+                placeholder: true,
+            });
+
+            const parentSelect = document.querySelector('[name="parent_id"]');
+            toggleUnitField(); // Initial call
+            parentSelect.addEventListener('change', toggleUnitField);
         });
+
+        function toggleUnitField() {
+            const parentSelect = document.querySelector('[name="parent_id"]');
+            const unitFieldWrapper = document.getElementById('unit-field-wrapper');
+
+            if (parentSelect.value) {
+                // Hide and clear units
+                unitFieldWrapper.style.display = 'none';
+                if (unitChoices) {
+                    unitChoices.clearStore(); // Clear dropdown state
+                    unitChoices.removeActiveItems(); // Remove selected values
+                    unitChoices.input.value = ''; // Clear raw input
+                }
+            } else {
+                // Show units
+                unitFieldWrapper.style.display = '';
+            }
+        }
     </script>
 @endpush

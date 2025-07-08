@@ -40,13 +40,13 @@ class CategoryController extends Controller
             $category = Category::create([
                 'parent_id' => $request->parent_id,
                 'name' => $request->name,
-                'order_level' => $request->order_level,
+                'order_level' => $request->order_level ?? 1,
                 'banner' => $request->banner,
                 'icon' => $request->icon,
                 'featured' => $request->boolean('featured'),
                 'meta_title' => $request->meta_title,
                 'meta_description' => $request->meta_description,
-                'unit' => $request->unit,
+                'unit' => collect($request->unit)->flatMap(fn($item) => explode(',', $item))->map('trim')->filter()->values(),
             ]);
 
             $this->storeOrUpdateTranslation($category, $request);
@@ -81,18 +81,10 @@ class CategoryController extends Controller
 
     public function update(Request $request, Category $category)
     {
-        // dd($request->all());
         $request->validate([
-            'name.en' => [
-                'required',
-                'string',
-                'max:255',
-                'regex:/^[a-zA-Z\s]*$/',
-                Rule::unique('categories', 'name')->ignore($category->id),
-            ],
-            'order_level' => ['nullable', 'numeric'],
-            'meta_title.en' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
-            'meta_description.en' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
+            'name.en' => ['required', 'string', 'max:255'],
+            'meta_title.en' => ['nullable', 'string', 'max:255'],
+            'meta_description.en' => ['nullable', 'string', 'max:1000'],
             'unit' => ['nullable', 'array'],
         ]);
 
@@ -108,23 +100,12 @@ class CategoryController extends Controller
                 'featured' => $request->boolean('featured'),
                 'meta_title' => $request->meta_title['en'],
                 'meta_description' => $request->meta_description['en'],
-                'unit' => $request->unit,
+                'unit' => collect($request->unit)->flatMap(fn($item) => explode(',', $item))->map('trim')->filter()->values(),
             ]);
 
             $this->storeOrUpdateTranslation($category, $request);
 
             DB::commit();
-
-            //Log the update of the category
-            $batchUuid = (string) Str::uuid();
-            $category->logModelAction(
-                event: 'update',
-                description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated category: {$category->name} [$category->id]",
-                properties: [
-                    'ip' => request()->ip(),
-                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
-                ],
-            );
 
             return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
         } catch (\Exception $e) {
@@ -132,6 +113,7 @@ class CategoryController extends Controller
             return back()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
+
 
     public function destroy(Category $category)
     {

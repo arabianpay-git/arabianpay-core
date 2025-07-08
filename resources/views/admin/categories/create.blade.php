@@ -61,37 +61,37 @@
                                     </div>
 
                                     <div class="w-full">
-                                        <div class="flex flex-col gap-2.5">
-                                            <label class="form-label">
-                                                {{ translate('Units') }}
+                                        <div class="flex items-baseline flex-wrap gap-2.5">
+                                            <label class="form-label flex items-center gap-1">
+                                                {{ translate('Parent') }}
                                             </label>
-                                            <input id="unit-input" type="text" name="unit[]"
-                                                class="input w-full @error('unit') border-red-500 @enderror"
-                                                placeholder="{{ translate('Type unit and press Enter') }}" multiple />
+                                            <select class="input @error('parent_id') border-red-500 @enderror"
+                                                name="parent_id">
+                                                <option value="">{{ translate('Select Parent Category') }}</option>
+                                                @foreach ($categories as $category)
+                                                    <option value="{{ $category->id }}"
+                                                        {{ old('parent_id') == $category->id ? 'selected' : '' }}>
+                                                        {{ $category->name }}
+                                                    </option>
+                                                @endforeach
+                                            </select>
                                         </div>
-                                        @error('unit')
+                                        @error('parent_id')
                                             <span class="text-danger text-sm">{{ $message }}</span>
                                         @enderror
                                     </div>
-
                                 </div>
 
-                                <div class="w-full">
-                                    <div class="flex items-baseline flex-wrap gap-2.5">
-                                        <label class="form-label flex items-center gap-1">
-                                            {{ translate('Parent') }}
+                                <div class="w-full" id="unit-field-wrapper">
+                                    <div class="flex flex-col gap-2.5">
+                                        <label class="form-label">
+                                            {{ translate('Units') }}
                                         </label>
-                                        <select class="input @error('parent_id') border-red-500 @enderror" name="parent_id">
-                                            <option value="">{{ translate('Select Parent Category') }}</option>
-                                            @foreach ($categories as $category)
-                                                <option value="{{ $category->id }}"
-                                                    {{ old('parent_id') == $category->id ? 'selected' : '' }}>
-                                                    {{ $category->name }}
-                                                </option>
-                                            @endforeach
-                                        </select>
+                                        <input id="unit-input" type="text" name="unit[]"
+                                            class="input w-full @error('unit') border-red-500 @enderror"
+                                            placeholder="{{ translate('Type unit and press Enter') }}" multiple />
                                     </div>
-                                    @error('parent_id')
+                                    @error('unit')
                                         <span class="text-danger text-sm">{{ $message }}</span>
                                     @enderror
                                 </div>
@@ -193,6 +193,22 @@
             editItems: true,
             paste: true,
             placeholder: true,
+        });
+
+        function toggleUnitField() {
+            const parentSelect = document.querySelector('[name="parent_id"]');
+            const unitFieldWrapper = document.getElementById('unit-field-wrapper'); // FIXED
+            if (parentSelect.value) {
+                unitFieldWrapper.style.display = 'none';
+            } else {
+                unitFieldWrapper.style.display = '';
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', function() {
+            const parentSelect = document.querySelector('[name="parent_id"]');
+            toggleUnitField();
+            parentSelect.addEventListener('change', toggleUnitField);
         });
     </script>
 @endpush

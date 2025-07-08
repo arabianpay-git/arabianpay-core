@@ -145,16 +145,10 @@
 
                                                 <td>
                                                     @if ($category->unit)
-                                                        @php
-                                                            $units = is_array($category->unit)
-                                                                ? explode(',', $category->unit[0])
-                                                                : explode(',', $category->unit);
-                                                        @endphp
-
-                                                        @foreach ($units as $unit)
+                                                        @foreach ($category->unit as $unit)
                                                             <button type="button"
                                                                 class="badge badge-sm badge-outline badge-success">
-                                                                {{ trim($unit) }}
+                                                                {{ $unit }}
                                                             </button>
                                                         @endforeach
                                                     @endif
