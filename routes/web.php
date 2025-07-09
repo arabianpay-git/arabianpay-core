@@ -206,6 +206,8 @@ Route::group([
 
                 Route::get('suppliers',            'suppliers')->name('suppliers');
                 Route::get('supplier/{id}',        'supplierProfile')->name('supplierProfile');
+                Route::get('supplier-shop-settings/{id}',        'supplierShop')->name('supplierShop');
+                Route::post('shop-settings', 'supplierShopSubmit')->name('supplierShopSubmit');
                 Route::get('supplier-transactions/{id}', 'supplierTransactions')->name('supplierTransactions');
                 Route::get('supplier-finance/{id}', 'supplierFinance')->name('supplierFinance');
                 Route::get('supplier-orders/{id}', 'supplierOrders')->name('supplierOrders');

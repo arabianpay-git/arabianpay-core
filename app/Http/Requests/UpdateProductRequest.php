@@ -57,6 +57,7 @@ class UpdateProductRequest extends FormRequest
 
             'published' => 'nullable',
             'approved' => 'nullable',
+            'reason_reject' => $this->input('approved') === 'rejected' ? 'required|string|max:255' : 'nullable',
         ];
     }
 

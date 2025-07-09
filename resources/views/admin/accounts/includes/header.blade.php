@@ -23,6 +23,19 @@
                     </div>
 
                     <div
+                        class="menu-item border-b-2 border-b-transparent 
+                        {{ Route::is('supplierShop') ? 'border-b-primary' : '' }} menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('supplierShop', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 
+                                {{ Route::is('supplierShop') ? 'text-primary font-semibold' : 'menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary' }}">
+                                Shop Settings
+                            </span>
+                        </a>
+                    </div>
+
+                    <div
                         class="menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
                         <a class="{{ Route::is('supplierTransactions') ? 'border-b-primary' : '' }} menu-link gap-1.5 pb-2 lg:pb-4 px-2"
                             href="{{ route('supplierTransactions', ['id' => $merchant->user_id]) }}">
@@ -181,7 +194,8 @@
     <div class="modal-content max-w-[600px] top-[5%]">
         <div class="modal-header py-4 px-5">
             <h5 class="modal-title">Supplier Approval</h5>
-            <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0" data-modal-dismiss="true">
+            <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0"
+                data-modal-dismiss="true">
                 <i class="ki-filled ki-cross"></i>
             </button>
         </div>

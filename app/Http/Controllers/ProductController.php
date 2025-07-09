@@ -16,7 +16,7 @@ class ProductController extends Controller
     public function index(Request $request)
     {
         $products = Product::with(['category:id,name', 'brand:id,name'])
-            ->select(['id', 'name', 'thumbnail', 'unit_price', 'brand_id', 'current_stock', 'approved', 'published', 'created_at'])
+            ->select(['id', 'name', 'thumbnail', 'unit_price', 'brand_id', 'current_stock', 'approved', 'published', 'reason_reject', 'created_at'])
             ->latest()
             ->paginate(10);
 

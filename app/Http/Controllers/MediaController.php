@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Media;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -34,46 +35,42 @@ class MediaController extends Controller
             'files'   => 'required|array',
             'files.*' => [
                 'file',
-                'mimes:jpeg,png,jpg,webp,gif,svg,pdf',
-                // Removed max-size rule because we auto-compress larger files  
-                // 'max:1048'
+                'mimes:jpeg,png,jpg,webp,gif,svg,pdf,mp4,mov,avi,mkv',
+                'max:5120', // 5MB max
             ],
         ], [
             'files.required'   => 'Please select at least one file to upload.',
             'files.*.file'     => 'Each item must be a valid file.',
-            'files.*.mimes'    => 'Only JPEG, PNG, JPG, WEBP, GIF, SVG, and PDF files are allowed.',
-            // Removed files.*.max message  
+            'files.*.mimes'    => 'Only JPEG, PNG, JPG, WEBP, GIF, SVG, PDF, and video files (MP4, MOV, AVI, MKV) are allowed.',
+            'files.*.max'      => 'Video files must not be larger than 5MB.',
         ]);
 
 
         $uploadedMedia = [];
+        $disk = 'public';
+        $folder = 'media';
 
         foreach ($request->file('files') as $file) {
             $originalName = $file->getClientOriginalName();
             $extension    = strtolower($file->getClientOriginalExtension());
-            $filename     = Str::random(40) . '.' . $extension;                   // Changed
-            $disk         = 'public';
-            $folder       = 'media';
+            $filename     = Str::random(40) . '.' . $extension;
             $fullPath     = "$folder/$filename";
 
-            // Only attempt compression for JPEG/PNG
             if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
-                // Create image resource
+                // Compress images
                 if (in_array($extension, ['jpg', 'jpeg'])) {
                     $resource = imagecreatefromjpeg($file->getPathname());
-                } else { // png
+                } else {
                     $resource = imagecreatefrompng($file->getPathname());
                     imagealphablending($resource, false);
                     imagesavealpha($resource, true);
                 }
 
                 if ($resource) {
-                    // Initial quality/compression
-                    $quality        = in_array($extension, ['jpg', 'jpeg']) ? 75 : 6; // Changed
-                    $maxBytes       = 1024 * 1024;                                   // 1 MB
+                    $quality = in_array($extension, ['jpg', 'jpeg']) ? 75 : 6;
+                    $maxBytes = 1024 * 1024;
                     $compressedData = null;
 
-                    // Loop: compress and check size until under 1MB or quality floor reached
                     do {
                         ob_start();
                         if (in_array($extension, ['jpg', 'jpeg'])) {
@@ -83,12 +80,11 @@ class MediaController extends Controller
                         }
                         $compressedData = ob_get_clean();
 
-                        // If still too big, reduce quality
                         if (strlen($compressedData) > $maxBytes) {
                             if (in_array($extension, ['jpg', 'jpeg'])) {
-                                $quality = max($quality - 5, 10);            // Changed: floor at 10
+                                $quality = max($quality - 5, 10);
                             } else {
-                                $quality = min($quality + 1, 9);             // Changed: max PNG level 9
+                                $quality = min($quality + 1, 9);
                             }
                         }
                     } while (
@@ -98,30 +94,71 @@ class MediaController extends Controller
                     );
 
                     imagedestroy($resource);
-
-                    // Store the (possibly re-compressed) data
                     Storage::disk($disk)->put($fullPath, $compressedData);
                 } else {
-                    // fallback if GD fails
                     $file->storeAs($folder, $filename, $disk);
                 }
+            } elseif (in_array($extension, ['mp4', 'mov', 'avi', 'mkv'])) {
+
+                if (in_array($extension, ['mp4', 'mov', 'avi', 'mkv'])) {
+                    // Check video duration
+                    try {
+                        $ffmpeg = \FFMpeg\FFMpeg::create();
+                        $video = $ffmpeg->open($file->getPathname());
+                        $ffprobe = \FFMpeg\FFProbe::create();
+                        $duration = $ffprobe
+                            ->format($file->getPathname()) // path to video file
+                            ->get('duration');
+
+                        if ($duration > 32) {
+                            return response()->json([
+                                'success' => false,
+                                'message' => 'Video "' . $originalName . '" is longer than 30 seconds.',
+                            ], 422);
+                        }
+
+                        // proceed with storage...
+                    } catch (\Exception $e) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Failed to read video "' . $originalName . '".',
+                        ], 422);
+                    }
+                }
+
+                // Store video
+                $file->storeAs($folder, $filename, $disk);
+
+                // Generate thumbnail using FFMpeg
+                try {
+                    $ffmpeg = \FFMpeg\FFMpeg::create();
+                    $video = $ffmpeg->open($file->getPathname());
+                    $frameName = Str::random(40) . '.jpg';
+                    $thumbnailPath = storage_path("app/public/{$folder}/$frameName");
+
+                    $video->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds(1))
+                        ->save($thumbnailPath);
+
+                    // Optionally: save thumbnail info (not required in your current DB)
+                } catch (\Exception $e) {
+                    Log::error("FFMpeg failed to generate thumbnail: " . $e->getMessage());
+                }
             } else {
-                // Non-image: store as-is
+                // Other types (pdf, svg, etc)
                 $file->storeAs($folder, $filename, $disk);
             }
 
-            // Create DB record with actual size
+            // Store DB record
             $media = Media::create([
                 'user_id'   => Auth::id(),
                 'name'      => $originalName,
                 'file_name' => $filename,
                 'mime_type' => $file->getMimeType(),
-                'size'      => Storage::disk($disk)->size($fullPath),        // Changed: accurate size
+                'size'      => Storage::disk($disk)->size($fullPath),
                 'disk'      => $disk,
                 'folder'    => $folder,
             ]);
 
-            // Log the upload action
             $media->logModelAction(
                 event: 'upload',
                 description: Auth::user()->first_name . " " . Auth::user()->last_name . " uploaded a file: {$originalName} [{$media->id}]",
@@ -141,6 +178,7 @@ class MediaController extends Controller
         ]);
     }
 
+
     public function bulkDelete(Request $request)
     {
         $request->validate([
@@ -149,11 +187,10 @@ class MediaController extends Controller
         ]);
 
         $ids = $request->input('ids');
-
         $mediaItems = Media::whereIn('id', $ids)->get();
 
         foreach ($mediaItems as $media) {
-
+            // Log delete action
             $media->logModelAction(
                 event: 'delete',
                 description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted a file: {$media->name} [{$media->id}]",
@@ -163,8 +200,20 @@ class MediaController extends Controller
                 ]
             );
 
-            Storage::disk('public')->delete('media/' . $media->file_name);
+            // Delete main file
+            $filePath = $media->folder . '/' . $media->file_name;
+            if (Storage::disk($media->disk)->exists($filePath)) {
+                Storage::disk($media->disk)->delete($filePath);
+            }
 
+            // 🔽 Optional: Delete video thumbnail (if stored)
+            // Assuming thumbnails are stored as "thumb_{$file_name}.jpg"
+            $possibleThumb = $media->folder . '/thumb_' . pathinfo($media->file_name, PATHINFO_FILENAME) . '.jpg';
+            if (Storage::disk($media->disk)->exists($possibleThumb)) {
+                Storage::disk($media->disk)->delete($possibleThumb);
+            }
+
+            // Delete DB record
             $media->delete();
         }
 

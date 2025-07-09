@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\{Approval, BusinessCategory, CrValidation, Customer, CustomerCreditLimit, Merchant, NafathVerification, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, Transaction, User, Wallet};
+use App\Rules\NoHtml;
 use App\Services\CreditAssessmentService;
 use App\Services\FirebaseService;
 use App\Services\RiskAnalyticsService;
@@ -405,6 +406,35 @@ class AccountController extends Controller
             ->paginate(10);
 
         return view('admin.accounts.suppliers', compact('merchants'));
+    }
+
+    public function supplierShop($id)
+    {
+        $merchant = Merchant::where('user_id', $id)
+            ->with('user', 'businessType')
+            ->firstOrFail();
+        $supplierShop = ShopSetting::where('user_id', $id)->first();
+        return view('admin.accounts.supplier-shop', compact('merchant', 'supplierShop'));
+    }
+
+    public function supplierShopSubmit(Request $request)
+    {
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255', new NoHtml],
+            'logo' => 'nullable|string',
+            'sliders' => 'nullable|array',
+            'sliders.*' => 'nullable|string',
+            'banner' => 'nullable|string',
+            'phone_number' => ['required', 'regex:/^(?:\+9665\d{8}|05\d{8})$/', 'string'],
+            'address' => ['required', 'string', 'max:255', new NoHtml],
+        ]);
+
+        $shopSetting = ShopSetting::updateOrCreate(
+            ['user_id' => $request->user_id],
+            $validated
+        );
+
+        return redirect()->back()->with('success', 'Shop settings saved successfully!');
     }
 
     public function supplierProducts($id)
