@@ -25,8 +25,8 @@ return [
     'Add New Attribute' => 'إضافة سمة جديدة',
     'Add New Attribute Value' => 'إضافة قيمة سمة جديدة',
     'Add New Brand' => 'إضافة علامة تجارية جديدة',
-    'Add New Business Category' => 'إضافة فئة عمل جديدة',
-    'Add New Business Type' => 'إضافة نوع عمل جديد',
+    'Add New Supplier Category' => 'إضافة فئة مورد جديدة',
+    'Add New Supplier Type' => 'إضافة نوع مورد جديد',
     'Add New Category' => 'إضافة فئة جديدة',
     'Add New City' => 'إضافة مدينة جديدة',
     'Add New Country' => 'إضافة بلد جديد',
@@ -733,4 +733,11 @@ return [
     'published' => 'منشور',
     'records' => 'سجلات',
     'to' => 'إلى',
+
+
+
+    'Supplier Category' => 'فئة الموردين',
+    'Supplier Type' => 'نوع المورد',
+    'Supplier Type & Category' => 'نوع المورد والفئة'
+
 ];

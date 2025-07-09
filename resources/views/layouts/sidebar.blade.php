@@ -1825,7 +1825,7 @@
                             </span>
                             <span
                                 class="menu-title text-2sm font-normal me-1 text-gray-800 menu-item-active:text-primary menu-item-active:font-medium menu-link-hover:!text-primary">
-                                {{ translate('Business Type & Category') }}
+                                {{ translate('Supplier Type & Category') }}
                             </span>
                             <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
                                 <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
@@ -1843,7 +1843,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            {{ translate('Business Type') }}
+                                            {{ translate('Supplier Type') }}
                                         </span>
                                     </a>
                                 </div>
@@ -1858,7 +1858,7 @@
                                         </span>
                                         <span
                                             class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                            {{ translate('Business Category') }}
+                                            {{ translate('Supplier Category') }}
                                         </span>
                                     </a>
                                 </div>
