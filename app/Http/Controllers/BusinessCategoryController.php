@@ -27,7 +27,7 @@ class BusinessCategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]*$/', 'unique:business_categories,name'],
+            'name' => ['required', 'string', 'max:255', 'unique:business_categories,name'],
             'order_level' => ['nullable', 'numeric'],
         ]);
 
@@ -77,7 +77,6 @@ class BusinessCategoryController extends Controller
                 'required',
                 'string',
                 'max:255',
-                'regex:/^[a-zA-Z\s]*$/',
                 Rule::unique('business_categories', 'name')->ignore($businessCategory->id),
             ],
             'order_level' => ['nullable', 'numeric'],
