@@ -1,5 +1,6 @@
 @php
     use Illuminate\Support\Str;
+    use Illuminate\Support\Facades\File;
 
     $inputName = $name ?? 'media';
     $inputLabel = $label ?? 'Media';
@@ -8,8 +9,19 @@
     $inputId = Str::slug($inputName, '_');
     $info = $info ?? null;
 
-    $isPdf = $inputValue && strtolower(pathinfo($inputValue, PATHINFO_EXTENSION)) === 'pdf';
     $pdfImage = asset('assets/media/images/default-pdf.png');
+    $mimeType = '';
+    $isPdf = false;
+    $isVideo = false;
+
+    if ($inputValue) {
+        $path = public_path(parse_url($inputValue, PHP_URL_PATH));
+        if (file_exists($path)) {
+            $mimeType = File::mimeType($path);
+            $isPdf = strtolower(pathinfo($inputValue, PATHINFO_EXTENSION)) === 'pdf';
+            $isVideo = str_starts_with($mimeType, 'video');
+        }
+    }
 @endphp
 
 <div class="w-full">
@@ -32,8 +44,8 @@
                 readonly value="{{ basename($inputValue) }}" data-modal-toggle="#{{ $inputId }}_modal"
                 style="padding-inline-start: 2.75rem;">
             <input type="hidden" id="{{ $inputId }}" name="{{ $inputName }}" value="{{ $inputValue }}">
-
         </div>
+
         @if ($info)
             <span style="font-size: 10px; margin-top: -.625rem;">{{ $info }}</span>
         @endif
@@ -49,24 +61,33 @@
         <img id="{{ $inputId }}_previewImage" class="media-thumb" alt="Preview" style="display:none;">
         <video id="{{ $inputId }}_previewVideo" class="media-thumb" controls muted preload="metadata"
             style="max-height: 160px; width: 100%; display:none;"></video>
-        @if ($isPdf)
-            <img id="{{ $inputId }}_previewImage" src="{{ $pdfImage }}" style="display:block;"
-                alt="PDF Preview">
-        @elseif($inputValue && preg_match('/^video\//', \File::mimeType(public_path($inputValue))))
-            <script>
-                // On page load, if the initial value is a video, set video src and show video element
-                window.addEventListener('DOMContentLoaded', () => {
-                    const video = document.getElementById('{{ $inputId }}_previewVideo');
-                    const img = document.getElementById('{{ $inputId }}_previewImage');
-                    video.src = "{{ $inputValue }}";
+
+        <script>
+            window.addEventListener('DOMContentLoaded', () => {
+                const inputValue = @json($inputValue);
+                const mimeType = @json($mimeType);
+                const isPdf = @json($isPdf);
+                const isVideo = @json($isVideo);
+
+                const video = document.getElementById('{{ $inputId }}_previewVideo');
+                const img = document.getElementById('{{ $inputId }}_previewImage');
+
+                if (isPdf) {
+                    img.src = @json($pdfImage);
+                    img.style.display = 'block';
+                    video.style.display = 'none';
+                } else if (isVideo) {
+                    video.src = inputValue;
                     video.style.display = 'block';
                     img.style.display = 'none';
-                });
-            </script>
-        @else
-            <img id="{{ $inputId }}_previewImage" src="{{ $inputValue }}" style="display:block;"
-                alt="Preview">
-        @endif
+                } else {
+                    img.src = inputValue;
+                    img.style.display = 'block';
+                    video.style.display = 'none';
+                }
+            });
+        </script>
+
         <div class="media-info">
             <div id="{{ $inputId }}_previewName" class="name">{{ basename($inputValue) }}</div>
             <div id="{{ $inputId }}_previewSize" class="size"></div>

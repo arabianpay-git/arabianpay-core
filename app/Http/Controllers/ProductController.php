@@ -125,7 +125,7 @@ class ProductController extends Controller
 
     public function update(UpdateProductRequest $request, Product $product)
     {
-
+        dd($request->all());
         $data = $request->validated();
 
         if ($error = $this->validateBusinessRules($data)) {
@@ -218,7 +218,6 @@ class ProductController extends Controller
 
     public function destroy(Product $product)
     {
-
         // Log the activity
         $batchUuid = (string) Str::uuid();
         $product->logModelAction(
@@ -236,7 +235,6 @@ class ProductController extends Controller
     }
 
     // Private Helpers
-
     private function validateBusinessRules(array $data): ?array
     {
         if (!empty($data['purchase_price']) && $data['purchase_price'] > $data['unit_price']) {
