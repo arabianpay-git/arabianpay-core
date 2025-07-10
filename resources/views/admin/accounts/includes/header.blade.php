@@ -159,13 +159,13 @@
                             </div>
 
                             <!-- Contracted Menu Item -->
-                            <div class="menu-item status {{ $merchant->status == 'contracted' ? 'active' : '' }}"
-                                data-dropdown-dismiss="true" data-status="contracted">
-                                <a class="menu-link" href="javascript:void(0)" onclick="submitStatus('contracted')">
+                            <div class="menu-item status {{ $merchant->status == 'contract_sent' ? 'active' : '' }}"
+                                data-dropdown-dismiss="true" data-status="contract_sent">
+                                <a class="menu-link" href="javascript:void(0)" onclick="submitStatus('contract_sent')">
                                     <span class="menu-icon">
                                         <i class="ki-filled ki-update-file"></i>
                                     </span>
-                                    <span class="menu-title">Contracted</span>
+                                    <span class="menu-title">Contract Sent</span>
                                 </a>
                             </div>
 

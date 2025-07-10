@@ -712,7 +712,7 @@ class AccountController extends Controller
     public function updateSupplierStatus(Request $request, $id)
     {
         $status = $request->validate([
-            'status' => 'required|in:under_review,active,contracted,approved,suspended,pending,blacklisted',
+            'status' => 'required|in:under_review,active,contract_sent,approved,suspended,pending,blacklisted',
         ])['status'];
 
         $merchant = Merchant::where('user_id', $id)->firstOrFail();
