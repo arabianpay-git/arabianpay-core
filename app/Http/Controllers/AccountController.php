@@ -11,7 +11,6 @@ use App\Services\WathqService;
 use App\Traits\EmailSender;
 use App\Traits\SmsSender;
 use Carbon\Carbon;
-use Illuminate\Encryption\Encrypter;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
@@ -713,7 +712,7 @@ class AccountController extends Controller
     public function updateSupplierStatus(Request $request, $id)
     {
         $status = $request->validate([
-            'status' => 'required|in:approved,suspended,pending,blacklisted',
+            'status' => 'required|in:under_review,active,contracted,approved,suspended,pending,blacklisted',
         ])['status'];
 
         $merchant = Merchant::where('user_id', $id)->firstOrFail();

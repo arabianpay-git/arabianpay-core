@@ -67,8 +67,48 @@
         <!-- End of Container -->
     </main>
 @endsection
-
 @push('scripts')
+    <style>
+        body.dragging::before {
+            content: "📤 Drop files to upload";
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(6px);
+            -webkit-backdrop-filter: blur(6px);
+            border: 3px dashed #0d6efd;
+            color: #0d6efd;
+            font-size: 1.75rem;
+            font-weight: 600;
+            font-family: 'Segoe UI', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            pointer-events: none;
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 0 30px rgba(13, 110, 253, 0.3);
+            animation: pulse-border 1.5s infinite;
+        }
+
+        @keyframes pulse-border {
+            0% {
+                border-color: #0d6efd;
+            }
+
+            50% {
+                border-color: #6ea8fe;
+            }
+
+            100% {
+                border-color: #0d6efd;
+            }
+        }
+    </style>
+
     <script>
         $(function() {
             const $window = $(window),
@@ -86,6 +126,82 @@
                 offset = {{ count($media) }},
                 loading = false,
                 noMoreMedia = false;
+
+            // === Full Page Drag and Drop ===
+            $(document).on('dragenter dragover', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $('body').addClass('dragging');
+            });
+
+            $(document).on('dragleave drop', function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+                $('body').removeClass('dragging');
+            });
+
+            $(document).on('drop', function(e) {
+                const dt = e.originalEvent.dataTransfer;
+                const files = dt.files;
+                if (!files.length) return;
+
+                const formData = new FormData();
+                Array.from(files).forEach(f => formData.append('files[]', f));
+                formData.append('_token', "{{ csrf_token() }}");
+
+                $uploadSpinner.removeClass('d-none');
+                $uploadProgressContainer.removeClass('d-none');
+                $uploadProgressBar.css('width', '0%');
+                $uploadProgressText.text('Uploading...');
+
+                $.ajax({
+                        url: "{{ route('media.upload') }}",
+                        method: 'POST',
+                        data: formData,
+                        contentType: false,
+                        processData: false,
+                        xhr: function() {
+                            const xhr = new window.XMLHttpRequest();
+                            xhr.upload.addEventListener('progress', function(e) {
+                                if (e.lengthComputable) {
+                                    const percent = Math.round((e.loaded / e.total) * 100);
+                                    $uploadProgressBar.css('width', percent + '%');
+                                    $uploadProgressText.text(`Uploading... ${percent}%`);
+                                }
+                            }, false);
+                            return xhr;
+                        }
+                    })
+                    .done(res => {
+                        if (res.success) {
+                            res.media.forEach(m => updateGrids(renderCard(m), true));
+                            Swal.fire('Uploaded!', res.message || 'Files uploaded successfully.',
+                                'success');
+                        } else {
+                            Swal.fire('Error', res.message || 'Upload failed.', 'error');
+                        }
+                    })
+                    .fail(xhr => {
+                        let msg = 'Upload failed.';
+                        if (xhr.responseJSON) {
+                            if (xhr.responseJSON.message) {
+                                msg = xhr.responseJSON.message;
+                            } else if (xhr.responseJSON.errors) {
+                                msg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
+                            }
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            html: msg
+                        });
+                    })
+                    .always(() => {
+                        $uploadSpinner.addClass('d-none');
+                        $uploadProgressContainer.addClass('d-none');
+                        $fileInput.val('');
+                    });
+            });
 
             function throttle(fn, limit) {
                 let waiting = false;
@@ -113,6 +229,7 @@
                 }
                 updateDeleteButton();
             }
+
             $document.on('click', '.media-card', function() {
                 toggleCardSelection(this);
             });
@@ -179,22 +296,23 @@
             function loadMoreMedia() {
                 if (loading || noMoreMedia) return;
                 loading = true;
-                // Add your lazy spinner show here if you have one
+
                 $.get("{{ route('media.lazyLoad') }}", {
                         offset
                     })
                     .done(res => {
-                        if (!res.media.length) noMoreMedia = true;
-                        else {
+                        if (!res.media.length) {
+                            noMoreMedia = true;
+                        } else {
                             res.media.forEach(m => updateGrids(renderCard(m)));
                             offset += res.media.length;
                         }
                     })
                     .always(() => {
                         loading = false;
-                        // Hide your lazy spinner here if you have one
                     });
             }
+
             $window.on('scroll', throttle(() => {
                 if ($window.scrollTop() + $window.height() >= $document.height() - 300) loadMoreMedia();
             }, 200));
@@ -202,6 +320,7 @@
             function startUpload() {
                 $fileInput.click();
             }
+
             $uploadBtn.on('click', startUpload);
 
             $fileInput.on('change', function() {
@@ -246,8 +365,6 @@
                     })
                     .fail(xhr => {
                         let msg = 'Upload failed.';
-
-                        // If backend returned JSON error message
                         if (xhr.responseJSON) {
                             if (xhr.responseJSON.message) {
                                 msg = xhr.responseJSON.message;
@@ -255,14 +372,12 @@
                                 msg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
                             }
                         }
-
                         Swal.fire({
                             icon: 'error',
                             title: 'Error',
                             html: msg
                         });
                     })
-
                     .always(() => {
                         $uploadSpinner.addClass('d-none');
                         $uploadProgressContainer.addClass('d-none');

@@ -290,54 +290,13 @@ if (! function_exists('supplierMedia')) {
         return $prefix . $path;
     }
 }
-
 if (!function_exists('translate')) {
     function translate($key, $replace = [], $locale = null)
     {
-        static $en = null;
-        static $updated = false;
-
-        $locale = $locale ?? app()->getLocale();
-
-        $enPath = resource_path("lang/en/main.php");
-
-        // Load files only once per request
-        if ($en === null) {
-            $en = file_exists($enPath) ? include $enPath : [];
-        }
-
-
-        // Add to English if missing
-        if (!array_key_exists($key, $en)) {
-            $en[$key] = $key;
-            $updated = true;
-        }
-
-        // Save files only if updated
-        if ($updated) {
-            saveLangFile($enPath, $en);
-            $updated = false; // reset
-        }
-
         if (!str_starts_with($key, 'main.')) {
             $key = "main.$key";
         }
 
         return __($key, $replace, $locale);
-    }
-}
-
-if (!function_exists('saveLangFile')) {
-    function saveLangFile($path, $array)
-    {
-        ksort($array);
-
-        $content = "<?php\n\nreturn [\n";
-        foreach ($array as $k => $v) {
-            $content .= '    ' . var_export($k, true) . ' => ' . var_export($v, true) . ",\n";
-        }
-        $content .= "];\n";
-
-        file_put_contents($path, $content);
     }
 }

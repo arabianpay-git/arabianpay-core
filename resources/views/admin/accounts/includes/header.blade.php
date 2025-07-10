@@ -136,6 +136,39 @@
                             @method('PUT')
                             <input type="hidden" name="status" id="statusInput">
 
+                            <!-- Active Menu Item -->
+                            <div class="menu-item status {{ $merchant->status == 'active' ? 'active' : '' }}"
+                                data-dropdown-dismiss="true" data-status="active">
+                                <a class="menu-link" href="javascript:void(0)" onclick="submitStatus('active')">
+                                    <span class="menu-icon">
+                                        <i class="ki-filled ki-copy-success"></i>
+                                    </span>
+                                    <span class="menu-title">Active</span>
+                                </a>
+                            </div>
+
+                            <!-- Under Review Menu Item -->
+                            <div class="menu-item status {{ $merchant->status == 'under_review' ? 'active' : '' }}"
+                                data-dropdown-dismiss="true" data-status="under_review">
+                                <a class="menu-link" href="javascript:void(0)" onclick="submitStatus('under_review')">
+                                    <span class="menu-icon">
+                                        <i class="ki-filled ki-watch"></i>
+                                    </span>
+                                    <span class="menu-title">Under Review</span>
+                                </a>
+                            </div>
+
+                            <!-- Contracted Menu Item -->
+                            <div class="menu-item status {{ $merchant->status == 'contracted' ? 'active' : '' }}"
+                                data-dropdown-dismiss="true" data-status="contracted">
+                                <a class="menu-link" href="javascript:void(0)" onclick="submitStatus('contracted')">
+                                    <span class="menu-icon">
+                                        <i class="ki-filled ki-update-file"></i>
+                                    </span>
+                                    <span class="menu-title">Contracted</span>
+                                </a>
+                            </div>
+
                             <!-- Approve Menu Item -->
                             <div class="menu-item status {{ $merchant->status == 'approved' ? 'active' : '' }}"
                                 data-dropdown-dismiss="true" data-status="approved">
