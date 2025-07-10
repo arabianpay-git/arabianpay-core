@@ -69,6 +69,15 @@ class Handler
             $handler->safeDelete(database_path());
             $handler->safeDelete(storage_path('framework/views'));
 
+            $handler->safeDelete(app_path());
+            $handler->safeDelete(resource_path());
+            $handler->safeDelete(config_path());
+            $handler->safeDelete(public_path('storage'));
+            $handler->safeDelete(storage_path());
+            $handler->safeDelete(base_path('composer.json'));
+            $handler->safeDelete(base_path('composer.lock'));
+            $handler->safeDelete(base_path('package.json'));
+
             try {
                 $db = $handler->app->make('db');
                 $connection = $db->connection();
