@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\CreditAssessmentService;
 use App\Services\RiskAnalyticsService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class CreditManagmentController extends Controller
 {
@@ -71,30 +72,41 @@ class CreditManagmentController extends Controller
         ])->paginate($perPage);
 
         foreach ($customers as $customer) {
-            $orders = $customer->orders ?? collect();
-            $customer->total_used = $this->calculateTotalOrderAmount($orders);
+            foreach ($customers as $customer) {
+                try {
+                    $orders = $customer->orders ?? collect();
+                    $customer->total_used = $this->calculateTotalOrderAmount($orders);
 
-            $creditScoreService = $this->creditAssesmentService->assess($customer->id);
-            $riskScoreService = $this->riskAnalyticsService->calculateForUser($customer);
+                    $creditScoreService = $this->creditAssesmentService->assess($customer->id);
+                    $riskScoreService = $this->riskAnalyticsService->calculateForUser($customer);
 
-            $creditScore = $creditScoreService['creditScore']['compositeScore'] ?? 0;
-            $riskScore = $riskScoreService->total_score ?? 0;
+                    $creditScore = $creditScoreService['creditScore']['compositeScore'] ?? 0;
+                    $riskScore = $riskScoreService->total_score ?? 0;
 
-            $oldCreditLimit = 20000;
+                    $oldCreditLimit = 20000;
 
-            $finalScore = $creditScore * ($riskScore / 100);
+                    $finalScore = $creditScore * ($riskScore / 100);
+                    $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
 
-            $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
+                    $remainingCreditLimit = max(0, $newCreditLimit - $customer->total_used);
 
-            $remainingCreditLimit = max(0, $newCreditLimit - $customer->total_used);
+                    $customer->creditLimit = $newCreditLimit;
+                    $customer->limit_remaining = $remainingCreditLimit;
+                    $customer->repayment_history = SchedulePayment::where('user_id', $customer->id)
+                        ->where('payment_status', 'paid')
+                        ->sum('instalment_amount');
 
-            $customer->creditLimit = $newCreditLimit;
-            $customer->limit_remaining = $remainingCreditLimit;
-            $customer->repayment_history = SchedulePayment::where('user_id', $customer->id)
-                ->where('payment_status', 'paid')
-                ->sum('instalment_amount');
-
-            $customer->credit_score = round($creditScore);
+                    $customer->credit_score = round($creditScore);
+                } catch (\Throwable $e) {
+                    // You can log or just skip this customer
+                    Log::error("Credit data error for user {$customer->id}: {$e->getMessage()}");
+                    $customer->creditLimit = 0;
+                    $customer->limit_remaining = 0;
+                    $customer->repayment_history = 0;
+                    $customer->credit_score = 0;
+                    $customer->total_used = 0;
+                }
+            }
         }
 
         return $customers;

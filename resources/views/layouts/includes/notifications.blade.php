@@ -52,7 +52,7 @@
         </div>
 
         <div class="border-t border-t-gray-200 p-3 text-center text-xs text-gray-400">
-            © {{ date('Y') }} All rights reserved
+            © {{ date('Y') }} {{ env('APP_NAME') }}. All rights reserved
         </div>
     </div>
 </div>

@@ -758,4 +758,9 @@ return [
     'records' => 'records',
     'rejected' => 'rejected',
     'to' => 'to',
+
+    'Customers Credit Limit' => 'Customers Credit Limit',
+    'Credit Limits' => 'Credit Limits',
+    'Customers Credit Profile' => 'Customers Credit Profile',
+    'Credit Profiles' => 'Credit Profiles',
 ];
