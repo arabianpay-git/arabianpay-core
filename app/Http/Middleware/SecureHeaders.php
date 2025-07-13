@@ -57,7 +57,6 @@ class SecureHeaders
             "form-action 'self';",
         ]);
 
-
         $response->headers->set('Content-Security-Policy', $csp);
 
         return $response;

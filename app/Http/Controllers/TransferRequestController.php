@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Models\TransferRequest;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -11,6 +12,12 @@ use Illuminate\Support\Str;
 
 class TransferRequestController extends Controller
 {
+    protected $firebase;
+
+    public function __construct(FirebaseService $firebase)
+    {
+        $this->firebase = $firebase;
+    }
     public function index()
     {
         $user = currentUser();
@@ -60,6 +67,25 @@ class TransferRequestController extends Controller
             }
 
             DB::commit();
+
+            $title = 'New Assignment';
+            $description = 'You have been assigned a new item.';
+
+            if ($request->model_type === \App\Models\Merchant::class) {
+                $title = 'New Supplier Assigned';
+                $description = "A new supplier has been assigned to you. Please review their profile.";
+                $clickAction = route('supplierProfile', ['id' => $modelId]);
+            } else {
+                $clickAction = route('suppliers');
+            }
+
+            $this->firebase->sendCustomNotification(
+                $request->to_user_id,
+                $title,
+                $description,
+                ['click_action' => $clickAction]
+            );
+
             // Log the transfer request creation
             /** @var \App\Models\User $user */
             $user = Auth::user();
@@ -119,6 +145,24 @@ class TransferRequestController extends Controller
                         $modelInstance->save();
                     }
                 }
+
+                $title = 'New Assignment';
+                $description = 'You have been assigned a new item.';
+
+                if ($request->model_type === \App\Models\Merchant::class) {
+                    $title = 'New Supplier Assigned';
+                    $description = "A new supplier has been assigned to you. Please review their profile.";
+                    $clickAction = route('supplierProfile', ['id' => $modelId]);
+                } else {
+                    $clickAction = route('suppliers');
+                }
+
+                $this->firebase->sendCustomNotification(
+                    $request->to_user_id,
+                    $title,
+                    $description,
+                    ['click_action' => $clickAction]
+                );
 
                 // Log the transfer request creation
                 /** @var \App\Models\User $user */

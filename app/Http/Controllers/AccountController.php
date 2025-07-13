@@ -26,7 +26,6 @@ class AccountController extends Controller
     protected $wathqService;
     protected $firebase;
 
-
     public function __construct(WathqService $wathqService, FirebaseService $firebase)
     {
         $this->wathqService = $wathqService;
