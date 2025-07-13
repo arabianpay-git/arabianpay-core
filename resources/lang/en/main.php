@@ -759,8 +759,14 @@ return [
     'rejected' => 'rejected',
     'to' => 'to',
 
+
+
     'Customers Credit Limit' => 'Customers Credit Limit',
     'Credit Limits' => 'Credit Limits',
     'Customers Credit Profile' => 'Customers Credit Profile',
     'Credit Profiles' => 'Credit Profiles',
+    'Total Credit Limit' => 'Total Credit Limit',
+    'Credit Used' => 'Credit Used',
+    'Remaining Credit Limit' => 'Remaining Credit Limit',
+    'Repayment History' => 'Repayment History'
 ];
