@@ -42,13 +42,13 @@
 
                 {{-- Submit --}}
                 <div class="text-end pt-2">
-                    <button type="submit" class="btn btn-primary">{{ translate('Send Bulk Request') }}</button>
+                    <button type="submit" class="btn btn-primary"
+                        id="bulk-submit-btn">{{ translate('Send Bulk Request') }}</button>
                 </div>
             </div>
         </form>
     </div>
 </div>
-
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -87,9 +87,22 @@
                 placeholder: true,
                 placeholderValue: '{{ translate('Select User') }}',
             });
+
+            // disable submit button on submit
+            const bulkForm = document.querySelector('#transfer_request_bulk form');
+            const submitBtn = document.getElementById('bulk-submit-btn');
+
+            if (bulkForm && submitBtn) {
+                bulkForm.addEventListener('submit', function() {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML =
+                        `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{{ translate('Sending...') }}`;
+                });
+            }
         });
     </script>
 @endpush
+
 @push('styles')
     <style>
         /* Choices.js dropdown scroll fix */
@@ -101,6 +114,23 @@
         .choices__list--dropdown,
         .choices__list[aria-expanded] {
             position: relative;
+        }
+
+        .spinner-border {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            vertical-align: text-bottom;
+            border: 0.15em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+        }
+
+        @keyframes spinner-border {
+            100% {
+                transform: rotate(360deg);
+            }
         }
     </style>
 @endpush

@@ -290,6 +290,7 @@ if (! function_exists('supplierMedia')) {
         return $prefix . $path;
     }
 }
+
 if (!function_exists('translate')) {
     function translate($key, $replace = [], $locale = null)
     {
@@ -298,5 +299,39 @@ if (!function_exists('translate')) {
         }
 
         return __($key, $replace, $locale);
+    }
+}
+
+use App\Services\NotificationService;
+
+if (!function_exists('create_notification')) {
+    /**
+     * Create a notification easily.
+     *
+     * @param int|null $userId
+     * @param string|null $type
+     * @param string|array $data
+     * @return \App\Models\Notification
+     */
+    function create_notification(?int $userId, ?string $type, $data)
+    {
+        $service = app(NotificationService::class);
+        return $service->createNotification($userId, $type, $data);
+    }
+}
+
+use App\Models\Notification;
+
+if (!function_exists('current_user_notifications')) {
+    function current_user_notifications()
+    {
+        if (!Auth::check()) {
+            return collect();
+        }
+
+        return Notification::where('user_id', Auth::id())
+            ->latest()
+            ->take(20)
+            ->get();
     }
 }

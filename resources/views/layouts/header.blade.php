@@ -34,7 +34,7 @@
         <!--End of Megamenu Contaoner-->
         <!-- Topbar -->
         <div class="flex items-center gap-2 lg:gap-3.5">
-            {{-- @include('layouts.includes.notifications') --}}
+            @include('layouts.includes.notifications')
             <div class="menu" data-menu="true">
                 <div class="menu-item" data-menu-item-offset="20px, 10px" data-menu-item-offset-rtl="-20px, 10px"
                     data-menu-item-placement="bottom-end" data-menu-item-placement-rtl="bottom-start"

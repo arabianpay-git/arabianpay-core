@@ -42,7 +42,9 @@
 
                 {{-- Submit --}}
                 <div class="text-end pt-2">
-                    <button type="submit" class="btn btn-primary">{{ translate('Send Request') }}</button>
+                    <button type="submit" class="btn btn-primary" id="bulk-submit-btn">
+                        {{ translate('Send Request') }}
+                    </button>
                 </div>
             </div>
         </form>
@@ -52,7 +54,8 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            const selectElement = document.querySelector('select.choices');
+            // Initialize Choices.js for the select inside #transfer_request
+            const selectElement = document.querySelector('#transfer_request select.choices');
             if (selectElement) {
                 new Choices(selectElement, {
                     searchEnabled: true,
@@ -62,6 +65,51 @@
                     placeholderValue: '{{ translate('Select User') }}',
                 });
             }
+
+            // Disable submit button on form submit inside #transfer_request
+            const bulkForm = document.querySelector('#transfer_request form');
+            const submitBtn = document.getElementById('bulk-submit-btn');
+
+            if (bulkForm && submitBtn) {
+                bulkForm.addEventListener('submit', function(event) {
+                    submitBtn.disabled = true;
+                    submitBtn.innerHTML =
+                        `<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>{{ translate('Sending...') }}`;
+                });
+            }
         });
     </script>
+@endpush
+
+@push('styles')
+    <style>
+        /* Choices.js dropdown scroll fix */
+        .choices__list--dropdown {
+            max-height: 200px !important;
+            overflow-y: auto !important;
+        }
+
+        .choices__list--dropdown,
+        .choices__list[aria-expanded] {
+            position: relative;
+        }
+
+        /* Spinner */
+        .spinner-border {
+            display: inline-block;
+            width: 1rem;
+            height: 1rem;
+            vertical-align: text-bottom;
+            border: 0.15em solid currentColor;
+            border-right-color: transparent;
+            border-radius: 50%;
+            animation: spinner-border .75s linear infinite;
+        }
+
+        @keyframes spinner-border {
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+    </style>
 @endpush

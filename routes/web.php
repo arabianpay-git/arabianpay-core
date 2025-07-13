@@ -23,6 +23,7 @@ use App\Http\Controllers\{
     FirebaseController,
     InstalmentPlanController,
     MediaController,
+    NotificationController,
     OrderController,
     OtpVerificationController,
     PackageController,
@@ -386,6 +387,12 @@ Route::group([
                 Route::post('upload',        'upload')->name('media.upload');
                 Route::post('bulk-delete',   'bulkDelete')->name('media.bulkDelete');
             });
+
+            Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+            Route::post('notifications/{id}/read', [NotificationController::class, 'markOneRead'])->name('notifications.markOneRead');
+
+            Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
+            Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
         });
 });
 
