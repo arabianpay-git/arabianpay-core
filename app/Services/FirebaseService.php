@@ -6,8 +6,6 @@ use App\Models\DeviceToken;
 use Kreait\Firebase\Factory;
 use Kreait\Firebase\Messaging\CloudMessage;
 use Kreait\Firebase\Messaging\Notification;
-use Kreait\Firebase\Exception\MessagingException;
-use Kreait\Firebase\Exception\Messaging\InvalidMessage;
 use Psr\Log\LoggerInterface;
 
 class FirebaseService
@@ -17,8 +15,7 @@ class FirebaseService
 
     public function __construct(LoggerInterface $logger)
     {
-        $factory = (new Factory)
-            ->withServiceAccount(storage_path('app/firebase/arabianpay-b76ba-firebase-adminsdk-fbsvc-5a6b74b662.json'));
+        $factory = (new Factory)->withServiceAccount(storage_path('app/firebase/arabianpay-b76ba-firebase-adminsdk-fbsvc-5a6b74b662.json'));
         $this->messaging = $factory->createMessaging();
         $this->logger = $logger;
     }
@@ -43,21 +40,12 @@ class FirebaseService
         $dataPayload = array_merge($dataPayload, $additionalData);
 
         $message = CloudMessage::withTarget('token', $deviceToken)
-            ->withNotification(Notification::create($title, $body))
+            // ->withNotification(Notification::create($title, $body))
             ->withData($dataPayload);
 
-        try {
-            $this->messaging->send($message);
-            return 'Notification sent successfully!';
-        } catch (MessagingException | InvalidMessage $e) {
-            // Handle token invalidation error and delete invalid token from DB
-            if (str_contains($e->getMessage(), 'Requested entity was not found')) {
-                DeviceToken::where('token', $deviceToken)->delete();
-                $this->logger->info("Removed invalid FCM token: {$deviceToken}");
-            }
-            // Re-throw exception so it can be logged by caller if needed
-            throw $e;
-        }
+        $this->messaging->send($message);
+
+        return 'Notification sent successfully!';
     }
 
     public function sendCustomNotification(
@@ -80,18 +68,13 @@ class FirebaseService
             ], $data);
 
             foreach ($deviceTokens as $deviceToken) {
-                try {
-                    $this->sendNotification(
-                        $deviceToken,
-                        $title,
-                        $body,
-                        $payloadData['click_action'] ?? null,
-                        $payloadData
-                    );
-                } catch (\Throwable $e) {
-                    // Log error per token, but continue with others
-                    $this->logger->error("FCM notification failed for token {$deviceToken}: " . $e->getMessage());
-                }
+                $this->sendNotification(
+                    $deviceToken,
+                    $title,
+                    $body,
+                    $payloadData['click_action'] ?? null,
+                    $payloadData
+                );
             }
         } catch (\Throwable $e) {
             $this->logger->error("FCM notification failed for user ID {$userId}: " . $e->getMessage());
