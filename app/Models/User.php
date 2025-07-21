@@ -11,11 +11,13 @@ use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
 use Laravel\Sanctum\HasApiTokens;
+use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
+use Spatie\LaravelPasskeys\Models\Concerns\InteractsWithPasskeys;
 use Spatie\Permission\Traits\HasRoles;
 
-class User extends Authenticatable
+class User extends Authenticatable implements HasPasskeys
 {
-    use HasApiTokens, HasRoles, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable, LogsModelActions, EncryptsAttributes;
+    use HasApiTokens, HasRoles, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable, LogsModelActions, EncryptsAttributes, InteractsWithPasskeys;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
     protected static $logOnlyDirty = true;
@@ -231,5 +233,20 @@ class User extends Authenticatable
     public function notifications()
     {
         return $this->hasMany(\App\Models\Notification::class)->latest();
+    }
+
+    public function getPasskeyDisplayName(): string
+    {
+        return $this->email ?? 'User';
+    }
+
+    public function getPasskeyId(): string
+    {
+        return (string) $this->getKey();
+    }
+
+    public function getPasskeyName(): string
+    {
+        return $this->email ?? 'user@example.com';
     }
 }

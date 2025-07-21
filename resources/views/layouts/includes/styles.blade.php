@@ -191,4 +191,28 @@
     .active-icon {
         color: var(--tw-primary);
     }
+
+    .bg-red-100 {
+        background-color: #fee2e2;
+    }
+
+    .text-red-700 {
+        color: #b91c1c;
+    }
+
+    .border-red-300 {
+        border-color: #fca5a5;
+    }
+
+    .bg-green-100 {
+        background-color: #d1fae5;
+    }
+
+    .text-green-700 {
+        color: #047857;
+    }
+
+    .border-green-300 {
+        border-color: #6ee7b7;
+    }
 </style>

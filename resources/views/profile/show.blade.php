@@ -32,6 +32,10 @@
             <div class="mt-10 sm:mt-0">
                 @livewire('profile.logout-other-browser-sessions-form')
             </div>
+            <hr style="margin: 2rem 0;">
+            <div class="mt-10 sm:mt-0">
+                @include('profile.passkeys')
+            </div>
 
             @if (Laravel\Jetstream\Jetstream::hasAccountDeletionFeatures())
                 <x-section-border />

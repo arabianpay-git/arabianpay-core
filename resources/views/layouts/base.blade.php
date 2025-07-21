@@ -48,6 +48,7 @@
     </div>
     <!-- End of Wrapper -->
 
+    @include('layouts.includes.passkey-modal')
     <!-- Scripts -->
     @include('layouts.includes.scripts')
 </body>

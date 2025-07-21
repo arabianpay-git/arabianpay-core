@@ -27,6 +27,7 @@ use App\Http\Controllers\{
     OrderController,
     OtpVerificationController,
     PackageController,
+    PasskeyController,
     PermissionController,
     ProductBulkUploadController,
     ProductController,
@@ -409,6 +410,19 @@ Route::get('/fcm-test', function () {
 
 Route::get('/google-reviews', [ReportController::class, 'index'])->name('google.reviews.form');
 Route::post('/google-reviews', [ReportController::class, 'getReviews'])->name('google.reviews.fetch');
+
+Route::middleware(['auth'])->group(function () {
+    Route::get('/passkeys-register', [PasskeyController::class, 'create'])->name('passkeys.create');
+    Route::post('/passkeys-register', [PasskeyController::class, 'store'])->name('passkeys.store');
+    Route::get('/passkeys/manage', [PasskeyController::class, 'manage'])->name('passkeys.manage');
+    Route::delete('/passkeys/{id}', [PasskeyController::class, 'destroy'])->name('passkeys.destroy');
+    Route::post('/passkeys/registration-options', [PasskeyController::class, 'getRegistrationOptions'])->name('passkeys.registrationOptions');
+});
+
+Route::get('/passkeys-login', [PasskeyController::class, 'login'])->name('passkeys.login');
+Route::post('/passkeys-phone', [PasskeyController::class, 'getPublicKey'])->name('passkeys.getPublicKey');
+Route::post('/passkeys-login', [PasskeyController::class, 'authenticate'])->name('passkeys.authenticate');
+
 
 use Illuminate\Support\Facades\DB;
 use App\Models\User;
@@ -1086,3 +1100,9 @@ Route::get('/admin', function () {
     $admin->save();
     dd('ok');
 });
+
+
+
+use App\Http\Controllers\DatabaseSyncController;
+
+Route::get('/sync-backup', [DatabaseSyncController::class, 'sync']);

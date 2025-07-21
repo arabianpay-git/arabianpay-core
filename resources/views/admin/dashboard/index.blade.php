@@ -38,8 +38,6 @@
         </style>
     @endpush
 
-
-
     <main class="grow content pt-5" id="content" role="content">
         <div class="container-fixed" id="content_container"></div>
         <div class="container-fixed">
@@ -53,6 +51,9 @@
                     </div>
                 </div>
                 <div class="flex items-center gap-2.5">
+                    <a class="btn btn-sm btn-primary w-auto"
+                        data-modal-toggle="#passkeyRegisterModal">{{ translate('Register Passkey') }}</a>
+
                     <div class="flex">
                         <select class="select select-sm w-40" id="loanRange">
                             <option value="1M" {{ request('date_range') == '1M' ? 'selected' : '' }}>

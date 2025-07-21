@@ -16,10 +16,10 @@
     <link href="{{ asset('assets/media/images/favicon.png') }}" rel="icon" sizes="16x16" type="image/png" />
     <link href="{{ asset('assets/media/images/favicon.png') }}" rel="shortcut icon" />
 
-    <!-- Scripts -->
-    @vite(['resources/css/app.css', 'resources/js/app.js'])
+    <!-- Scripts & Styles -->
+    {{-- Updated Vite inputs: replaced resources/js/app.js with resources/js/bootstrap.js --}}
+    @vite(['resources/css/app.css', 'resources/js/bootstrap.js'])
 
-    <!-- Styles -->
     @livewireStyles
 </head>
 

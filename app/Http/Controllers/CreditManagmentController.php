@@ -2,8 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\CustomerCreditLimit;
-use App\Models\RiskScore;
 use App\Models\SchedulePayment;
 use App\Models\User;
 use App\Services\CreditAssessmentService;

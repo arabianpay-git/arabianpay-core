@@ -72,6 +72,7 @@
     <!-- Scripts -->
     <script src="{{ asset('assets/js/core.bundle.js') }}"></script>
     <script src="{{ asset('assets/vendors/apexcharts/apexcharts.min.js') }}"></script>
+    @stack('scripts')
     <!-- End of Scripts -->
 </body>
 

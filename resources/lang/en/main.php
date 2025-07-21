@@ -768,5 +768,6 @@ return [
     'Total Credit Limit' => 'Total Credit Limit',
     'Credit Used' => 'Credit Used',
     'Remaining Credit Limit' => 'Remaining Credit Limit',
-    'Repayment History' => 'Repayment History'
+    'Repayment History' => 'Repayment History',
+    'Register Passkey' => 'Register Passkey',
 ];
