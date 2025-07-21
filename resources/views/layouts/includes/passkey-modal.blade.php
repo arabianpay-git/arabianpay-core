@@ -155,11 +155,6 @@
                 }
             }
 
-            // Modal open condition
-            if (!userHasPasskey && !localStorage.getItem(declinedKey) && modal) {
-                showModal(modal);
-            }
-
             // Modal close buttons
             document.getElementById('passkeyModalClose')?.addEventListener('click', () => {
                 localStorage.setItem(declinedKey, 'true');

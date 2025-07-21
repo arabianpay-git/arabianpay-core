@@ -175,7 +175,6 @@ body {
     margin: 0;
     /* 1 */
     line-height: inherit;
-    overflow: auto !important;
     /* 2 */
 }
 
