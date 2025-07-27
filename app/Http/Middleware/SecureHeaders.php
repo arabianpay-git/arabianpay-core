@@ -37,14 +37,14 @@ class SecureHeaders
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
         // Content Security Policy (CSP)
-        $viteDevServer = "http://adminpanel.test/:5174"; // your main vite server URL
+        $viteDevServer = "http://adminpanel.test:5174"; // your vite dev server, if any
 
         $csp = implode(' ', [
             "default-src 'self';",
             "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://code.jquery.com https://cdn.jsdelivr.net https://www.gstatic.com https://www.googleapis.com {$viteDevServer};",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdn.jsdelivr.net {$viteDevServer};",
             "font-src 'self' https://fonts.gstatic.com https://cdn.jsdelivr.net {$viteDevServer};",
-            "img-src 'self' data: https://core.arabianpay.net https://ui-avatars.com {$viteDevServer};",
+            "img-src 'self' data: https://core.arabianpay.net https://partners.arabianpay.net https://ui-avatars.com {$viteDevServer};",
             "connect-src 'self' https://fcm.googleapis.com https://firebase.googleapis.com https://www.googleapis.com https://www.gstatic.com https://firebaseinstallations.googleapis.com https://fcmregistrations.googleapis.com ws://localhost:5174 ws://localhost:5173 wss://merchant.test:5174 wss://merchant.test:5173;",
             "frame-src https://www.gstatic.com;",
             "frame-ancestors 'none';",
