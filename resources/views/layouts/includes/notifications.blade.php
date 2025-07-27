@@ -57,79 +57,82 @@
     </div>
 </div>
 
-<style>
-    .notification-item {
-        position: relative;
-        cursor: pointer;
-        transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
-        border-left: 4px solid transparent;
-        padding-right: 80px;
-    }
-
-    .notification-item:hover {
-        background-color: #f3f4f6;
-        border-left-color: #3b82f6;
-    }
-
-    .notification-item .mark-read-btn {
-        position: absolute;
-        top: 25%;
-        right: 10px;
-        transform: translateY(-50%);
-        display: none;
-        font-size: 0.75rem;
-        color: #2563eb;
-        background: none;
-        border: none;
-        cursor: pointer;
-        padding: 0;
-        text-decoration: underline;
-    }
-
-    .notification-item:hover .mark-read-btn {
-        display: inline-block;
-    }
-</style>
-
-<script>
-    document.addEventListener("DOMContentLoaded", function() {
-        loadNotifications();
-    });
-
-    function loadNotifications() {
-        showLoading('#notificationListAll');
-        showLoading('#notificationListUnread');
-
-        fetch("{{ route('notifications.index') }}")
-            .then(res => res.json())
-            .then(data => {
-                renderNotifications(data.notifications.data, '#notificationListAll');
-                renderNotifications(data.notifications.data.filter(n => !n.read_at), '#notificationListUnread');
-
-                const dot = document.getElementById('notificationUnreadDot');
-                if (dot) dot.classList.toggle('hidden', data.unread_count === 0);
-            })
-            .catch(() => {
-                showError('#notificationListAll');
-                showError('#notificationListUnread');
-            });
-    }
-
-    function renderNotifications(notifications, containerSelector) {
-        const el = document.querySelector(containerSelector);
-        el.innerHTML = "";
-
-        if (!notifications.length) {
-            el.innerHTML = `<div class="text-center py-5 text-gray-500">No notifications.</div>`;
-            return;
+@push('styles')
+    <style>
+        .notification-item {
+            position: relative;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+            border-left: 4px solid transparent;
+            padding-right: 80px;
         }
 
-        notifications.forEach(n => {
-            const data = typeof n.data === 'string' ? JSON.parse(n.data) : n.data;
-            const isRead = !!n.read_at; // true if read_at is set
-            const clickAction = data.click_action || '#';
+        .notification-item:hover {
+            background-color: #f3f4f6;
+            border-left-color: #3b82f6;
+        }
 
-            el.innerHTML += `
+        .notification-item .mark-read-btn {
+            position: absolute;
+            top: 25%;
+            right: 10px;
+            transform: translateY(-50%);
+            display: none;
+            font-size: 0.75rem;
+            color: #2563eb;
+            background: none;
+            border: none;
+            cursor: pointer;
+            padding: 0;
+            text-decoration: underline;
+        }
+
+        .notification-item:hover .mark-read-btn {
+            display: inline-block;
+        }
+    </style>
+@endpush
+
+@push('scripts')
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            loadNotifications();
+        });
+
+        function loadNotifications() {
+            showLoading('#notificationListAll');
+            showLoading('#notificationListUnread');
+
+            fetch("{{ route('notifications.index') }}")
+                .then(res => res.json())
+                .then(data => {
+                    renderNotifications(data.notifications.data, '#notificationListAll');
+                    renderNotifications(data.notifications.data.filter(n => !n.read_at), '#notificationListUnread');
+
+                    const dot = document.getElementById('notificationUnreadDot');
+                    if (dot) dot.classList.toggle('hidden', data.unread_count === 0);
+                })
+                .catch(() => {
+                    showError('#notificationListAll');
+                    showError('#notificationListUnread');
+                });
+        }
+
+        function renderNotifications(notifications, containerSelector) {
+            const el = document.querySelector(containerSelector);
+            el.innerHTML = "";
+
+            if (!notifications.length) {
+                el.innerHTML = `<div class="text-center py-5 text-gray-500">No notifications.</div>`;
+                return;
+            }
+
+            notifications.forEach(n => {
+                const data = typeof n.data === 'string' ? JSON.parse(n.data) : n.data;
+                const isRead = !!n.read_at; // true if read_at is set
+                const clickAction = data.click_action || '#';
+
+                el.innerHTML += `
                 <div
                     class="notification-item flex items-start gap-3 p-3 border-l-4 border-transparent hover:border-primary cursor-pointer"
                     onclick="window.open('${clickAction}', '_blank')"
@@ -147,46 +150,47 @@
                     ${!isRead ? `<button class="mark-read-btn" onclick="event.stopPropagation(); markNotificationRead('${n.id}')">Mark as Read</button>` : ''}
                 </div>
             `;
-        });
-    }
+            });
+        }
 
-    function showLoading(container) {
-        const el = document.querySelector(container);
-        if (el) el.innerHTML = `<div class="text-center py-5 text-gray-500">Loading...</div>`;
-    }
+        function showLoading(container) {
+            const el = document.querySelector(container);
+            if (el) el.innerHTML = `<div class="text-center py-5 text-gray-500">Loading...</div>`;
+        }
 
-    function showError(container) {
-        const el = document.querySelector(container);
-        if (el) el.innerHTML = `<div class="text-center py-5 text-red-500">Failed to load notifications.</div>`;
-    }
+        function showError(container) {
+            const el = document.querySelector(container);
+            if (el) el.innerHTML = `<div class="text-center py-5 text-red-500">Failed to load notifications.</div>`;
+        }
 
-    function markAllNotificationsRead() {
-        fetch("{{ route('notifications.markAllRead') }}", {
-            method: "POST",
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            }
-        }).then(() => loadNotifications());
-    }
+        function markAllNotificationsRead() {
+            fetch("{{ route('notifications.markAllRead') }}", {
+                method: "POST",
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            }).then(() => loadNotifications());
+        }
 
-    function deleteAllNotifications() {
-        fetch("{{ route('notifications.deleteAll') }}", {
-            method: "DELETE",
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            }
-        }).then(() => loadNotifications());
-    }
+        function deleteAllNotifications() {
+            fetch("{{ route('notifications.deleteAll') }}", {
+                method: "DELETE",
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            }).then(() => loadNotifications());
+        }
 
-    function markNotificationRead(id) {
-        fetch(`{{ url('/admin/notifications') }}/${id}/read`, {
-            method: "POST",
-            headers: {
-                'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                'Accept': 'application/json'
-            }
-        }).then(() => loadNotifications());
-    }
-</script>
+        function markNotificationRead(id) {
+            fetch(`{{ url('/admin/notifications') }}/${id}/read`, {
+                method: "POST",
+                headers: {
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                    'Accept': 'application/json'
+                }
+            }).then(() => loadNotifications());
+        }
+    </script>
+@endpush

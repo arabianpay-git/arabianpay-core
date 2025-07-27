@@ -129,7 +129,7 @@
                                                 <td class="text-center">{{ $loop->iteration }}</td>
                                                 <td>
                                                     @if ($product->thumbnail)
-                                                        <img src="{{ supplierMedia($product->thumbnail) }}"
+                                                        <img src="{{ productMedia($product->thumbnail) }}"
                                                             alt="{{ $product->name }}"
                                                             class="w-10 h-10 object-contain border-7">
                                                     @else

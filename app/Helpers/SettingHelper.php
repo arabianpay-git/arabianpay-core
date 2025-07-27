@@ -291,6 +291,30 @@ if (! function_exists('supplierMedia')) {
     }
 }
 
+if (! function_exists('productMedia')) {
+    /**
+     * Similar to supplierMedia, but ensures the path includes '/public/'.
+     *
+     * @param string|null $path
+     * @param string|null $defaultUrl Optional default URL if path is missing
+     * @return string|null
+     */
+    function productMedia(?string $path, ?string $defaultUrl = null): ?string
+    {
+        if (!$path) {
+            return $defaultUrl;
+        }
+
+        $prefix = 'https://partners.arabianpay.net/public/';
+
+        if (str_starts_with($path, 'http')) {
+            return $path;
+        }
+
+        return rtrim($prefix, '/') . '/' . ltrim($path, '/');
+    }
+}
+
 if (!function_exists('translate')) {
     function translate($key, $replace = [], $locale = null)
     {
