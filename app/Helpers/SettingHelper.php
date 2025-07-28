@@ -73,8 +73,8 @@ if (!function_exists('calculate_order_tax')) {
             // Get tax value, use setting fallback if null
             $productTax = $product->tax ?? get_setting('tax', 0);
 
-            // Calculate item total price (sum attribute prices × quantity)
-            $attributePrice = collect($item['attributes'])->sum('price');
+            // Safely access attributes
+            $attributePrice = collect($item['attributes'] ?? [])->sum('price');
             $totalPrice = $attributePrice * $item['quantity'];
 
             if ($product->tax_type === 'percent') {

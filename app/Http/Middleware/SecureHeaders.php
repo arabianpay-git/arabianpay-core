@@ -37,7 +37,7 @@ class SecureHeaders
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');
 
         // Content Security Policy (CSP)
-        $viteDevServer = "http://adminpanel.test:5174"; // your vite dev server, if any
+        $viteDevServer = "http://adminpanel.test:5174";
 
         $csp = implode(' ', [
             "default-src 'self';",
