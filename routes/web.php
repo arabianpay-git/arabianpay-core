@@ -91,7 +91,6 @@ Route::group([
 
             Route::post('/device-token', [DeviceTokenController::class, 'store']);
 
-
             //
             // Dashboard
             //

@@ -68,13 +68,17 @@ class DashboardController extends Controller
         })->values();
 
         // 6. Category Wise Stock
-        $categoryStock = Category::with('products')->get()->map(function ($category) {
-            $stock = $category->products->sum('current_stock');
-            return [
-                'name' => $category->name,
-                'stock' => $stock,
-            ];
-        });
+        $categoryStock = Category::with('products')->get()
+            ->map(function ($category) {
+                $stock = $category->products->sum('current_stock');
+                return [
+                    'name' => $category->name,
+                    'stock' => $stock,
+                ];
+            })
+            ->sortByDesc('stock')
+            ->take(12)
+            ->values();
 
         return view('admin.dashboard.index', compact(
             'loanData',
