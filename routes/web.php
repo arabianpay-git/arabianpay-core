@@ -372,10 +372,27 @@ Route::group([
             //
             // Reports
             //
-            Route::controller(ReportController::class)->group(function () {
+            Route::controller(ReportController::class)->prefix('reports')->group(function () {
                 Route::get('product-stock', 'productStock')->name('productStock');
                 Route::get('product-wishlist', 'productWishlist')->name('productWishlist');
                 Route::get('user-search', 'userSearch')->name('userSearch');
+
+                // Report routes
+                Route::get('portfolio-performance', 'portfolioPerformanceReport')->name('portfolioPerformanceReport');
+                Route::get('merchant-credit-history', 'merchantCreditHistoryReport')->name('merchantCreditHistoryReport');
+                Route::get('supplier-transaction', 'supplierTransactionReport')->name('supplierTransactionReport');
+                Route::get('instalment-repayment', 'instalmentRepaymentReport')->name('instalmentRepaymentReport');
+                Route::get('risk-exposure', 'riskExposureAnalysis')->name('riskExposureAnalysis');
+                Route::get('aml-activity', 'amlActivityReport')->name('amlActivityReport');
+                Route::get('collection-efficiency', 'collectionEfficiencyReport')->name('collectionEfficiencyReport');
+                Route::get('onboarding-funnel', 'onboardingFunnelReport')->name('onboardingFunnelReport');
+                Route::get('regulatory-compliance', 'regulatoryComplianceReport')->name('regulatoryComplianceReport');
+                Route::get('system-activity-audit', 'systemActivityAuditReport')->name('systemActivityAuditReport');
+                Route::get('financial-summary', 'financialSummaryReport')->name('financialSummaryReport');
+                Route::get('delinquency-aging', 'delinquencyAgingReport')->name('delinquencyAgingReport');
+                Route::get('product-sku-performance', 'productSkuPerformanceReport')->name('productSkuPerformanceReport');
+                Route::get('support-ticket-resolution', 'supportTicketResolutionReport')->name('supportTicketResolutionReport');
+                Route::get('campaign-effectiveness', 'campaignEffectivenessReport')->name('campaignEffectivenessReport');
             });
 
             //

@@ -22,6 +22,12 @@
                 @endcan
             </div>
         </div>
+
+
+        @include('admin.reports.includes.filter', [
+            'filterHeading' => 'Filter Products',
+        ])
+
         <!-- End of Container -->
         <!-- Container -->
         <div class="container-fixed">
