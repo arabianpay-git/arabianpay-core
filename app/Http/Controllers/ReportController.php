@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Customer;
+use App\Models\Department;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\Product;
@@ -148,7 +149,7 @@ class ReportController extends Controller
                 $creditScore = $creditScoreService['creditScore']['compositeScore'] ?? 0;
                 $riskScore = $riskScoreService->total_score ?? 0;
 
-                $oldCreditLimit = 20000; // Static or from DB if dynamic
+                $oldCreditLimit = 20000;
 
                 $finalScore = $creditScore * ($riskScore / 100);
                 $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
@@ -163,7 +164,7 @@ class ReportController extends Controller
                 $customer->credit_limit = $newCreditLimit;
                 $customer->utilized_amount = $utilizedAmount;
                 $customer->repayment_rate = round($repaymentRate, 2);
-                $customer->score_change = $finalScore - 100;
+                $customer->score_change = $finalScore;
             } catch (\Throwable $e) {
                 report($e);
                 $customer->first_name = '-';
@@ -300,7 +301,9 @@ class ReportController extends Controller
 
     public function instalmentRepaymentReport(Request $request)
     {
-        $query = SchedulePayment::query();
+        $query = SchedulePayment::query()
+            ->with('user')
+            ->orderBy('due_date', 'asc');
 
         if ($request->filled('from')) {
             $query->whereDate('due_date', '>=', $request->input('from'));
@@ -314,13 +317,22 @@ class ReportController extends Controller
             $query->where('user_id', $request->input('customer_id'));
         }
 
-        $query->orderBy('due_date', 'desc');
+        // Get all and group
+        $grouped = $query->get()->groupBy('order_id');
 
-        $instalments = $query->paginate(10)->withQueryString();
+        // Manual pagination
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $perPage = 10;
+        $groupedPaginated = new LengthAwarePaginator(
+            $grouped->forPage($page, $perPage),
+            $grouped->count(),
+            $perPage,
+            $page,
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
 
-        // Pass instalments and filters to view
         return view('admin.reports.instalment_repayment_report', [
-            'instalments' => $instalments,
+            'instalments' => $groupedPaginated,
         ]);
     }
 
@@ -473,9 +485,22 @@ class ReportController extends Controller
             $end = Carbon::parse($month . '-01')->endOfMonth();
 
             $applications_submitted = Merchant::whereBetween('created_at', [$start, $end])->count();
-            $verified = Merchant::whereBetween('created_at', [$start, $end])->where('status', 'active')->count();
-            $approved = Merchant::whereBetween('created_at', [$start, $end])->where('status', 'approved')->count();
-            $kyc_passed = Merchant::whereBetween('created_at', [$start, $end])->where('status', 'contract_sent')->count();
+            $verified = Merchant::whereBetween('created_at', [$start, $end])->whereIn('status', [
+                'active',
+                'approved',
+            ])->count();
+            $approved = Merchant::whereBetween('created_at', [$start, $end])->whereIn('status', [
+                'under_review',
+                'contract_sent',
+                'approved',
+            ])->count();
+            $kyc_passed = Merchant::whereBetween('created_at', [$start, $end])->whereIn('status', [
+                'under_review',
+                'contract_sent',
+                'active',
+                'pending',
+                'approved',
+            ])->count();
 
             $conversion_rate = $applications_submitted > 0
                 ? round(($kyc_passed / $applications_submitted) * 100, 2)
@@ -505,150 +530,108 @@ class ReportController extends Controller
         $queryMerchants = Merchant::with('user');
         $queryCustomers = Customer::with('user');
 
-        // Apply filters from request
+        // Get filters from request
         $from = request('from');
         $to = request('to');
-        $merchantId = request('merchant_id');
+        $merchantId = request('merchant_id');  // filter by merchant user_id
+        $customerId = request('customer_id');  // filter by customer id
 
-        // Filter merchants by merchant_id if provided
+        // Filter merchants by user_id (merchant)
         if ($merchantId) {
             $queryMerchants->where('user_id', $merchantId);
-            $queryCustomers->where('user_id', $merchantId);
+            // Don't include customers when merchant is being filtered
+            $queryCustomers = collect(); // empty collection
         }
 
-        // Filter by created_at or any relevant date column (adjust as per your model)
+        // Filter customers by customer id
+        if ($customerId) {
+            $queryCustomers->where('user_id', $customerId);
+            // Don't include merchants when customer is being filtered
+            $queryMerchants = collect(); // empty collection
+        }
+
+        // Filter by created_at date range
         if ($from) {
             $fromDate = Carbon::parse($from)->startOfDay();
-            $queryMerchants->where('created_at', '>=', $fromDate);
-            $queryCustomers->where('created_at', '>=', $fromDate);
-        }
-        if ($to) {
-            $toDate = Carbon::parse($to)->endOfDay();
-            $queryMerchants->where('created_at', '<=', $toDate);
-            $queryCustomers->where('created_at', '<=', $toDate);
+            if ($queryMerchants instanceof \Illuminate\Database\Eloquent\Builder) {
+                $queryMerchants->where('created_at', '>=', $fromDate);
+            }
+            if ($queryCustomers instanceof \Illuminate\Database\Eloquent\Builder) {
+                $queryCustomers->where('created_at', '>=', $fromDate);
+            }
         }
 
-        $merchantFiles = $queryMerchants->get()->map(function ($merchant) {
-            $userName = trim(($merchant->user->first_name ?? '') . ' ' . ($merchant->user->last_name ?? ''));
-            if (!$userName) {
-                $userName = 'Unnamed Merchant';
+        if ($to) {
+            $toDate = Carbon::parse($to)->endOfDay();
+            if ($queryMerchants instanceof \Illuminate\Database\Eloquent\Builder) {
+                $queryMerchants->where('created_at', '<=', $toDate);
             }
+            if ($queryCustomers instanceof \Illuminate\Database\Eloquent\Builder) {
+                $queryCustomers->where('created_at', '<=', $toDate);
+            }
+        }
+
+        // Fetch merchants and customers
+        $merchants = $queryMerchants instanceof \Illuminate\Database\Eloquent\Builder ? $queryMerchants->get() : $queryMerchants;
+        $customers = $queryCustomers instanceof \Illuminate\Database\Eloquent\Builder ? $queryCustomers->get() : $queryCustomers;
+
+        // Map merchant files
+        $merchantFiles = $merchants->map(function ($merchant) {
+            $userName = trim(($merchant->user->first_name ?? '') . ' ' . ($merchant->user->last_name ?? '')) ?: 'Unnamed Merchant';
 
             return [
                 'name' => $userName,
                 'type' => 'Merchant',
                 'files' => [
-                    'ID Document' => [
-                        'status' => $merchant->id_document ? 'Uploaded' : 'Not uploaded',
-                        'path' => $merchant->id_document,
-                    ],
-                    'CR Certificate' => [
-                        'status' => $merchant->cr_certificate ? 'Uploaded' : 'Not uploaded',
-                        'path' => $merchant->cr_certificate,
-                    ],
-                    'VAT Certificate' => [
-                        'status' => $merchant->vat_certificate ? 'Uploaded' : 'Not uploaded',
-                        'path' => $merchant->vat_certificate,
-                    ],
-                    'Registration Form' => [
-                        'status' => $merchant->registration_form ? 'Uploaded' : 'Not uploaded',
-                        'path' => $merchant->registration_form,
-                    ],
-                    'VAT Register File' => [
-                        'status' => $merchant->vat_register_file ? 'Uploaded' : 'Not uploaded',
-                        'path' => $merchant->vat_register_file,
-                    ],
-                    'Return Policy File' => [
-                        'status' => $merchant->return_policy_file ? 'Uploaded' : 'Not uploaded',
-                        'path' => $merchant->return_policy_file,
-                    ],
-                    'Delivery Policy File' => [
-                        'status' => $merchant->delivery_policy_file ? 'Uploaded' : 'Not uploaded',
-                        'path' => $merchant->delivery_policy_file,
-                    ],
-                    'Cancel Policy File' => [
-                        'status' => $merchant->cancel_policy_file ? 'Uploaded' : 'Not uploaded',
-                        'path' => $merchant->cancel_policy_file,
-                    ],
-                    'Owner Iqama Image' => [
-                        'status' => $merchant->owner_iqama_image ? 'Uploaded' : 'Not uploaded',
-                        'path' => $merchant->owner_iqama_image,
-                    ],
+                    'ID Document' => ['status' => $merchant->id_document ? 'Uploaded' : 'Not uploaded', 'path' => $merchant->id_document],
+                    'CR Certificate' => ['status' => $merchant->cr_certificate ? 'Uploaded' : 'Not uploaded', 'path' => $merchant->cr_certificate],
+                    'VAT Certificate' => ['status' => $merchant->vat_certificate ? 'Uploaded' : 'Not uploaded', 'path' => $merchant->vat_certificate],
+                    'Registration Form' => ['status' => $merchant->registration_form ? 'Uploaded' : 'Not uploaded', 'path' => $merchant->registration_form],
+                    'VAT Register File' => ['status' => $merchant->vat_register_file ? 'Uploaded' : 'Not uploaded', 'path' => $merchant->vat_register_file],
+                    'Return Policy File' => ['status' => $merchant->return_policy_file ? 'Uploaded' : 'Not uploaded', 'path' => $merchant->return_policy_file],
+                    'Delivery Policy File' => ['status' => $merchant->delivery_policy_file ? 'Uploaded' : 'Not uploaded', 'path' => $merchant->delivery_policy_file],
+                    'Cancel Policy File' => ['status' => $merchant->cancel_policy_file ? 'Uploaded' : 'Not uploaded', 'path' => $merchant->cancel_policy_file],
+                    'Owner Iqama Image' => ['status' => $merchant->owner_iqama_image ? 'Uploaded' : 'Not uploaded', 'path' => $merchant->owner_iqama_image],
                 ],
             ];
         });
 
-        $customerFiles = $queryCustomers->get()->map(function ($customer) {
-            $userName = trim(($customer->user->first_name ?? '') . ' ' . ($customer->user->last_name ?? ''));
-            if (!$userName) {
-                $userName = 'Unnamed Customer';
-            }
+        // Map customer files
+        $customerFiles = $customers->map(function ($customer) {
+            $userName = trim(($customer->user->first_name ?? '') . ' ' . ($customer->user->last_name ?? '')) ?: 'Unnamed Customer';
 
             return [
                 'name' => $userName,
                 'type' => 'Customer',
                 'files' => [
-                    'ID Document' => [
-                        'status' => $customer->id_document ? 'Uploaded' : 'Not uploaded',
-                        'path' => $customer->id_document,
-                    ],
-                    'CR Certificate' => [
-                        'status' => $customer->cr_certificate ? 'Uploaded' : 'Not uploaded',
-                        'path' => $customer->cr_certificate,
-                    ],
-                    'VAT Certificate' => [
-                        'status' => $customer->vat_certificate ? 'Uploaded' : 'Not uploaded',
-                        'path' => $customer->vat_certificate,
-                    ],
-                    'Registration Form' => [
-                        'status' => $customer->registration_form ? 'Uploaded' : 'Not uploaded',
-                        'path' => $customer->registration_form,
-                    ],
-                    'VAT Register File' => [
-                        'status' => $customer->vat_register_file ? 'Uploaded' : 'Not uploaded',
-                        'path' => $customer->vat_register_file,
-                    ],
-                    'Return Policy File' => [
-                        'status' => $customer->return_policy_file ? 'Uploaded' : 'Not uploaded',
-                        'path' => $customer->return_policy_file,
-                    ],
-                    'Delivery Policy File' => [
-                        'status' => $customer->delivery_policy_file ? 'Uploaded' : 'Not uploaded',
-                        'path' => $customer->delivery_policy_file,
-                    ],
-                    'Cancel Policy File' => [
-                        'status' => $customer->cancel_policy_file ? 'Uploaded' : 'Not uploaded',
-                        'path' => $customer->cancel_policy_file,
-                    ],
-                    'Owner Iqama Image' => [
-                        'status' => $customer->owner_iqama_image ? 'Uploaded' : 'Not uploaded',
-                        'path' => $customer->owner_iqama_image,
-                    ],
+                    'ID Document' => ['status' => $customer->id_document ? 'Uploaded' : 'Not uploaded', 'path' => $customer->id_document],
+                    'CR Certificate' => ['status' => $customer->cr_certificate ? 'Uploaded' : 'Not uploaded', 'path' => $customer->cr_certificate],
+                    'VAT Certificate' => ['status' => $customer->vat_certificate ? 'Uploaded' : 'Not uploaded', 'path' => $customer->vat_certificate],
+                    'Registration Form' => ['status' => $customer->registration_form ? 'Uploaded' : 'Not uploaded', 'path' => $customer->registration_form],
+                    'VAT Register File' => ['status' => $customer->vat_register_file ? 'Uploaded' : 'Not uploaded', 'path' => $customer->vat_register_file],
+                    'Return Policy File' => ['status' => $customer->return_policy_file ? 'Uploaded' : 'Not uploaded', 'path' => $customer->return_policy_file],
+                    'Delivery Policy File' => ['status' => $customer->delivery_policy_file ? 'Uploaded' : 'Not uploaded', 'path' => $customer->delivery_policy_file],
+                    'Cancel Policy File' => ['status' => $customer->cancel_policy_file ? 'Uploaded' : 'Not uploaded', 'path' => $customer->cancel_policy_file],
+                    'Owner Iqama Image' => ['status' => $customer->owner_iqama_image ? 'Uploaded' : 'Not uploaded', 'path' => $customer->owner_iqama_image],
                 ],
             ];
         });
 
-        // Merge collections
+        // Merge merchant and customer collections
         $merged = $merchantFiles->merge($customerFiles);
 
-        // Pagination parameters
+        // Pagination
         $perPage = 10;
         $page = request()->get('page', 1);
         $total = $merged->count();
-
-        // Slice for current page
         $itemsForCurrentPage = $merged->slice(($page - 1) * $perPage, $perPage)->values();
 
-        // Create paginator
         $complianceFiles = new LengthAwarePaginator(
             $itemsForCurrentPage,
             $total,
             $perPage,
             $page,
-            [
-                'path' => request()->url(),
-                'query' => request()->query(),
-            ]
+            ['path' => request()->url(), 'query' => request()->query()]
         );
 
         return view('admin.reports.regulatory_compliance_report', compact('complianceFiles'));
@@ -684,7 +667,8 @@ class ReportController extends Controller
             ->paginate(10)
             ->appends(['search' => $search, 'order' => $order]);
 
-        return view('admin.reports.system_activity_audit_report', compact('logs'));
+        $departments = Department::select('name', 'id')->get();
+        return view('admin.reports.system_activity_audit_report', compact('logs', 'departments'));
     }
 
     public function financialSummaryReport(Request $request)

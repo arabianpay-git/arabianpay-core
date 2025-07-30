@@ -220,7 +220,7 @@ class PortfolioPerformanceService
                         $total += $order->late_fee;
                     }
 
-                    return $total * 1.15; // VAT
+                    return $total * 1.15;
                 });
 
             $credits[] = round($monthlyAmount, 2);

@@ -875,5 +875,17 @@ return [
     'Incremental Orders %' => 'نسبة الطلبات الإضافية',
     'ROI' => 'العائد على الاستثمار',
     'No campaign data available.' => 'لا توجد بيانات حملة متاحة.',
-    'Paid Date' => 'تاريخ الدفع'
+    'Paid Date' => 'تاريخ الدفع',
+    'Supplier Transaction Report' => 'تقرير معاملات الموردين',
+    'Instalments'       => 'أقساط',
+    'Merchant'          => 'التاجر',
+    'Entity Name'       => 'اسم الكيان',
+    'File'              => 'ملف',
+    'Search alerts'       => 'بحث في التنبيهات',
+    'Select Department'   => 'اختر القسم',
+    'Select User Type'    => 'اختر نوع المستخدم',
+    'Employee'            => 'موظف',
+    'Manager'             => 'مدير',
+    'Select Module'       => 'اختر الوحدة',
+    'Filter'              => 'تصفية',
 ];

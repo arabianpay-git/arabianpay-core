@@ -1,10 +1,27 @@
 @extends('layouts.base')
 
 @section('content')
+    @push('styles')
+        <style>
+            .order-link {
+                color: #2563eb;
+                /* Tailwind blue-600 */
+                text-decoration: underline;
+                font-weight: 600;
+                transition: color 0.2s ease;
+            }
+
+            .order-link:hover {
+                color: #1d4ed8;
+                /* Tailwind blue-700 */
+                text-decoration: underline;
+            }
+        </style>
+    @endpush
     <main class="grow content pt-5" id="content" role="content">
-        <!-- Header Container -->
+        <!-- Header -->
         <div class="container-fixed mb-5">
-            <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
+            <div class="flex flex-wrap items-center justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
                         {{ translate('Instalment Repayment Report') }}
@@ -13,11 +30,12 @@
             </div>
         </div>
 
+        <!-- Filter -->
         @include('admin.reports.includes.customer-filter', [
             'filterHeading' => 'Instalment Repayment Filter',
         ])
 
-        <!-- Table Container -->
+        <!-- Table -->
         <div class="container-fixed">
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="card card-grid min-w-full">
@@ -28,75 +46,119 @@
                     </div>
 
                     <div class="card-body">
-                        <div data-datatable="true" data-datatable-city-save="false" id="instalment_repayment_table">
+                        <div id="instalment_repayment_table">
                             <div class="scrollable-x-auto">
-                                <table class="table table-auto table-border" data-datatable-table="true">
+                                <table class="table table-auto table-border w-full">
                                     <thead>
                                         <tr>
-                                            <th>{{ translate('Merchant ID') }}</th>
-                                            <th class="text-center">{{ translate('Instalment ID') }}</th>
-                                            <th>{{ translate('Due Date') }}</th>
-                                            <th>{{ translate('Amount') }}</th>
-                                            <th>{{ translate('Paid Date') }}</th>
-                                            <th>{{ translate('Status') }}</th>
+                                            <th>{{ translate('Merchant') }}</th>
+                                            <th class="text-center">{{ translate('Order ID') }}</th>
+                                            <th colspan="4" class="text-center">{{ translate('Instalments') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($instalments as $instalment)
+                                        @forelse ($instalments as $orderId => $groupedInstalments)
+                                            @php
+                                                $user = $groupedInstalments->first()->user;
+                                            @endphp
                                             <tr>
-                                                <td>
-                                                    <div class="whitespace-nowrap">
-                                                        <strong>ID:</strong> {{ $instalment->user->id ?? '-' }}<br>
+                                                <!-- Merchant -->
+                                                <td class="align-top w-1/4">
+                                                    <div class="whitespace-nowrap text-sm">
+                                                        <strong>ID:</strong> {{ $user->id ?? '-' }}<br>
                                                         <strong>Name:</strong>
-                                                        {{ trim(($instalment->user->first_name ?? '') . ' ' . ($instalment->user->last_name ?? '')) ?: '-' }}
-                                                        <br>
-                                                        <small class="text-gray-500">
-                                                            &mdash; {{ $instalment->user->business_name ?? '—' }}
-                                                        </small>
+                                                        {{ trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: '-' }}<br>
+                                                        <span class="text-gray-500 text-xs">—
+                                                            {{ $user->business_name ?? '—' }}</span>
                                                     </div>
                                                 </td>
 
-                                                <td class="text-center">{{ $instalment->id }}</td>
-                                                <td>{{ $instalment->due_date->format('Y-m-d') }}</td>
-                                                <td><span class="icon-saudi_riyal"></span>
-                                                    {{ number_format($instalment->instalment_amount, 2) }}</td>
-                                                <td>{{ $instalment->updated_at ? $instalment->updated_at->format('Y-m-d') : '-' }}
-                                                </td>
-                                                <td>
-                                                    @switch($instalment->payment_status)
-                                                        @case('paid')
-                                                            <span
-                                                                class="badge badge-outline badge-success">{{ translate('Paid') }}</span>
-                                                        @break
+                                                <!-- Order ID -->
 
-                                                        @case('late')
-                                                            <span
-                                                                class="badge badge-outline badge-danger">{{ translate('Late') }}</span>
-                                                        @break
-
-                                                        @case('pending')
-                                                            <span
-                                                                class="badge badge-outline badge-warning">{{ translate('Pending') }}</span>
-                                                        @break
-
-                                                        @default
-                                                            <span
-                                                                class="badge badge-outline badge-secondary">{{ ucfirst($instalment->payment_status) }}</span>
-                                                    @endswitch
+                                                <td class="align-top font-medium w-60">
+                                                    <div class="text-sm leading-snug">
+                                                        <a href="{{ route('orders.details', $orderId) }}"
+                                                            class="order-link font-semibold">
+                                                            #{{ $orderId }}
+                                                        </a><br>
+                                                        <span class="text-xs text-gray-500">
+                                                            {{ $groupedInstalments->first()->created_at->format('Y-m-d') }}
+                                                        </span>
+                                                        @if ($groupedInstalments->first()->order && $groupedInstalments->first()->order->products_count ?? false)
+                                                            <br>
+                                                            <span class="text-xs text-gray-400">
+                                                                {{ $groupedInstalments->first()->order->products_count }}
+                                                                products
+                                                            </span>
+                                                        @endif
+                                                    </div>
                                                 </td>
 
+                                                <!-- Instalments -->
+                                                <td colspan="4">
+                                                    <div
+                                                        class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3">
+                                                        @foreach ($groupedInstalments as $instalment)
+                                                            <div
+                                                                class="border border-gray-200 rounded-md p-2 bg-white text-xs">
+                                                                <div class="font-semibold text-gray-700">
+                                                                    #{{ $instalment->id }} •
+                                                                    {{ $instalment->due_date->format('Y-m-d') }}
+                                                                </div>
+                                                                <div class="text-gray-600">
+                                                                    <span class="icon-saudi_riyal"></span>
+                                                                    {{ number_format($instalment->instalment_amount, 2) }}
+                                                                    •
+                                                                    {{ $instalment->updated_at ? $instalment->updated_at->format('Y-m-d') : '-' }}
+                                                                </div>
+                                                                <div>
+                                                                    @switch($instalment->payment_status)
+                                                                        @case('paid')
+                                                                            <span
+                                                                                class="text-green-600 font-medium">{{ translate('Paid') }}</span>
+                                                                        @break
+
+                                                                        @case('late')
+                                                                            <span
+                                                                                class="text-red-600 font-medium">{{ translate('Late') }}</span>
+                                                                        @break
+
+                                                                        @case('pending')
+                                                                            <span
+                                                                                class="text-yellow-600 font-medium">{{ translate('Pending') }}</span>
+                                                                        @break
+
+                                                                        @default
+                                                                            <span
+                                                                                class="text-gray-500">{{ ucfirst($instalment->payment_status) }}</span>
+                                                                    @endswitch
+                                                                </div>
+                                                            </div>
+                                                        @endforeach
+                                                    </div>
+                                                </td>
                                             </tr>
-                                        @endforeach
-                                    </tbody>
-                                </table>
-                            </div>
+                                            @empty
+                                                <tr>
+                                                    <td colspan="6" class="text-center py-6 text-gray-500">
+                                                        {{ translate('No instalment records found.') }}
+                                                    </td>
+                                                </tr>
+                                            @endforelse
+                                        </tbody>
+                                    </table>
+                                </div>
 
-                            <!-- Pagination Footer -->
-                            @include('layouts.includes.table-pagination', ['paginator' => $instalments])
+                                <!-- Pagination -->
+                                @if ($instalments instanceof \Illuminate\Pagination\LengthAwarePaginator)
+                                    @include('layouts.includes.table-pagination', [
+                                        'paginator' => $instalments,
+                                    ])
+                                @endif
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
-    </main>
-@endsection
+        </main>
+    @endsection
