@@ -875,4 +875,5 @@ return [
     'Incremental Orders %' => 'نسبة الطلبات الإضافية',
     'ROI' => 'العائد على الاستثمار',
     'No campaign data available.' => 'لا توجد بيانات حملة متاحة.',
+    'Paid Date' => 'تاريخ الدفع'
 ];

@@ -899,4 +899,5 @@ return [
     'Incremental Orders %' => 'Incremental Orders %',
     'ROI' => 'ROI',
     'No campaign data available.' => 'No campaign data available.',
+    'Paid Date' => 'Paid Date',
 ];

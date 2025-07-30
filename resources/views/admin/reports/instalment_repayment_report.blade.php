@@ -59,7 +59,7 @@
                                                 <td class="text-center">{{ $instalment->id }}</td>
                                                 <td>{{ $instalment->due_date->format('Y-m-d') }}</td>
                                                 <td><span class="icon-saudi_riyal"></span>
-                                                    {{ number_format($instalment->amount, 2) }}</td>
+                                                    {{ number_format($instalment->instalment_amount, 2) }}</td>
                                                 <td>{{ $instalment->updated_at ? $instalment->updated_at->format('Y-m-d') : '-' }}
                                                 </td>
                                                 <td>
