@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Customer;
 use App\Models\Order;
 use App\Models\User;
 use App\Models\SchedulePayment;
@@ -161,14 +162,14 @@ class PortfolioPerformanceService
 
     private function calculateTotalCreditLimitFromUsers(): float
     {
-        $users = User::where('user_type', 'user')->get();
+        $users = Customer::where('status', 'approved')->get();
 
         $total = 0;
 
         foreach ($users as $user) {
             try {
-                $creditScoreData = $this->creditAssessmentService->assess($user->id);
-                $riskScoreData   = $this->riskAnalyticsService->calculateForUser($user);
+                $creditScoreData = $this->creditAssessmentService->assess($user->user_id);
+                $riskScoreData   = $this->riskAnalyticsService->calculateForUser($user->user);
 
                 $creditScore = $creditScoreData['creditScore']['compositeScore'] ?? 0;
                 $riskScore   = $riskScoreData->total_score ?? 0;
@@ -179,7 +180,7 @@ class PortfolioPerformanceService
 
                 $total += $newCreditLimit;
             } catch (\Throwable $e) {
-                continue; // skip errors
+                continue;
             }
         }
 

@@ -1323,7 +1323,7 @@
                 @endcan
 
                 @can('report.view')
-                    {{-- <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+                    <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                         <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
                             tabindex="0">
                             <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
@@ -1575,7 +1575,7 @@
                                 </a>
                             </div>
                         </div>
-                    </div> --}}
+                    </div>
                 @endcan
 
                 @can('refund.manage')

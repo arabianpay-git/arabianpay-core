@@ -11,8 +11,14 @@ class SupportTicketController extends Controller
 {
     public function index()
     {
+        $user = Auth::user();
+
+        // Check user type
+        if (!in_array($user->user_type, ['admin', 'manager'])) {
+            abort(403, 'Unauthorized');
+        }
+
         $tickets = SupportTicket::selectRaw('MAX(id) as id, ticket_number, MAX(user_id) as user_id, MAX(subject) as subject, MAX(details) as details, MAX(files) as files, MAX(reply) as reply, MAX(status) as status, MAX(created_at) as created_at')
-            ->whereNull('assigned_to')
             ->groupBy('ticket_number')
             ->orderByDesc('id')
             ->paginate(10);

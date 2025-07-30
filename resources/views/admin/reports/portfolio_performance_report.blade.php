@@ -3,7 +3,9 @@
 @section('content')
     <main class="grow content pt-5" id="content" role="content">
         <!-- Filter Card -->
-        @include('admin.reports.includes.filter')
+        @include('admin.reports.includes.filter', [
+            'filterHeading' => 'Filter Performance Performance',
+        ])
 
         <div class="container-fixed">
             <div class="grid lg:grid-cols-3 gap-5 lg:gap-7.5 items-stretch">
@@ -11,12 +13,12 @@
                 <div class="lg:col-span-1">
                     <div class="card h-full">
                         <div class="card-header">
-                            <h3 class="card-title">Highlights</h3>
+                            <h3 class="card-title">{{ __('Highlights') }}</h3>
                         </div>
                         <div class="card-body flex flex-col gap-4 p-5 lg:p-7.5 lg:pt-4">
                             <!-- Credit Summary -->
                             <div class="flex flex-col gap-0.5">
-                                <span class="text-sm font-normal text-gray-700">Total Credit Issued</span>
+                                <span class="text-sm font-normal text-gray-700">{{ __('Total Credit Issued') }}</span>
                                 <div class="flex items-center gap-2.5">
                                     <span class="text-3xl font-semibold text-primary">
                                         {{ number_format($reports['total_credit_issued'], 2) }}
@@ -33,14 +35,16 @@
                                 <div class="flex items-center gap-1.5">
                                     <span class="badge badge-dot size-2 badge-success"></span>
                                     <span class="text-xs text-gray-800">
-                                        Used <strong>{{ number_format($reports['utilized_amount'], 2) }}</strong> <span
+                                        {{ __('Used') }}
+                                        <strong>{{ number_format($reports['utilized_amount'], 2) }}</strong> <span
                                             class="icon-saudi_riyal"></span> [{{ $reports['utilized_percent'] }}%]
                                     </span>
                                 </div>
                                 <div class="flex items-center gap-1.5">
                                     <span class="badge badge-dot size-2 badge-gray-100"></span>
                                     <span class="text-xs text-gray-800">
-                                        Unused <strong>{{ number_format($reports['unused_amount'], 2) }}</strong> <span
+                                        {{ __('Unused') }}
+                                        <strong>{{ number_format($reports['unused_amount'], 2) }}</strong> <span
                                             class="icon-saudi_riyal"></span> [{{ $reports['unused_percent'] }}%]
                                     </span>
                                 </div>
@@ -49,7 +53,7 @@
 
                             <!-- Stats -->
                             <div class="grid gap-3">
-                                @foreach ([['title' => 'Repayment rate', 'value' => $reports['current_repayment_rate'], 'change' => $reports['previous_repayment_rate'], 'icon' => 'ki-shop'], ['title' => 'Average DPD', 'value' => $reports['current_average_dpd'], 'change' => $reports['avg_dpd_change'], 'icon' => 'ki-facebook'], ['title' => 'NPL Ratio', 'value' => $reports['current_npl_ratio'], 'change' => $reports['previous_npl_ratio'], 'icon' => 'ki-instagram']] as $stat)
+                                @foreach ([['title' => 'Repayment rate', 'value' => $reports['current_repayment_rate'], 'change' => $reports['previous_repayment_rate'], 'icon' => 'ki-shop'], ['title' => 'Average DPD', 'value' => $reports['current_average_dpd'], 'change' => $reports['avg_dpd_change'], 'icon' => 'ki-disconnect'], ['title' => 'NPL Ratio', 'value' => $reports['current_npl_ratio'], 'change' => $reports['previous_npl_ratio'], 'icon' => 'ki-archive']] as $stat)
                                     <div class="grid grid-cols-2 items-center gap-2">
                                         <div class="flex items-center gap-1.5">
                                             <i class="ki-filled {{ $stat['icon'] }} text-base text-gray-500"></i>
@@ -74,7 +78,7 @@
                 <div class="lg:col-span-2">
                     <div class="card h-full">
                         <div class="card-header">
-                            <h3 class="card-title">Credit Issued</h3>
+                            <h3 class="card-title">{{ __('Credit Issued') }}</h3>
                         </div>
                         <div class="card-body flex flex-col justify-end items-stretch grow px-3 py-1">
                             <div id="creditlimit_chart" class="h-[300px] w-full bg-white rounded shadow p-4"></div>

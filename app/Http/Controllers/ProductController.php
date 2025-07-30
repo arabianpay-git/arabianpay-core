@@ -18,7 +18,6 @@ class ProductController extends Controller
         $query = Product::with(['category:id,name', 'brand:id,name'])
             ->select(['id', 'name', 'thumbnail', 'unit_price', 'brand_id', 'current_stock', 'approved', 'published', 'reason_reject', 'created_at']);
 
-        // Validate dates
         $request->validate([
             'from' => ['nullable', 'date'],
             'to' => ['nullable', 'date', 'after_or_equal:from'],
@@ -26,25 +25,21 @@ class ProductController extends Controller
             'to.after_or_equal' => '"To Date" must be equal or after "From Date".',
         ]);
 
-        // Filter by date range using whereBetween if both dates present
         if ($request->filled('from') && $request->filled('to')) {
             $query->whereBetween('created_at', [
                 $request->input('from') . ' 00:00:00',
                 $request->input('to') . ' 23:59:59',
             ]);
         } else {
-            // If only from date is present
             if ($request->filled('from')) {
                 $query->whereDate('created_at', '>=', $request->input('from'));
             }
 
-            // If only to date is present
             if ($request->filled('to')) {
                 $query->whereDate('created_at', '<=', $request->input('to'));
             }
         }
 
-        // Continue other filters...
         if ($request->filled('merchant_id')) {
             $query->where('user_id', $request->input('merchant_id'));
         }
