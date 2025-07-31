@@ -68,7 +68,7 @@
                                                         <strong>ID:</strong> {{ $user->id ?? '-' }}<br>
                                                         <strong>Name:</strong>
                                                         {{ trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) ?: '-' }}<br>
-                                                        <span class="text-gray-500 text-xs">—
+                                                        <span class="text-secondary text-xs">—
                                                             {{ $user->business_name ?? '—' }}</span>
                                                     </div>
                                                 </td>
@@ -81,7 +81,7 @@
                                                             class="order-link font-semibold">
                                                             #{{ $orderId }}
                                                         </a><br>
-                                                        <span class="text-xs text-gray-500">
+                                                        <span class="text-xs text-secondary">
                                                             {{ $groupedInstalments->first()->created_at->format('Y-m-d') }}
                                                         </span>
                                                         @if ($groupedInstalments->first()->order && $groupedInstalments->first()->order->products_count ?? false)
@@ -115,22 +115,22 @@
                                                                     @switch($instalment->payment_status)
                                                                         @case('paid')
                                                                             <span
-                                                                                class="text-green-600 font-medium">{{ translate('Paid') }}</span>
+                                                                                class="text-success font-medium">{{ translate('Paid') }}</span>
                                                                         @break
 
                                                                         @case('late')
                                                                             <span
-                                                                                class="text-red-600 font-medium">{{ translate('Late') }}</span>
+                                                                                class="text-danger font-medium">{{ translate('Late') }}</span>
                                                                         @break
 
                                                                         @case('pending')
                                                                             <span
-                                                                                class="text-yellow-600 font-medium">{{ translate('Pending') }}</span>
+                                                                                class="text-warning font-medium">{{ translate('Pending') }}</span>
                                                                         @break
 
                                                                         @default
                                                                             <span
-                                                                                class="text-gray-500">{{ ucfirst($instalment->payment_status) }}</span>
+                                                                                class="text-secondary">{{ ucfirst($instalment->payment_status) }}</span>
                                                                     @endswitch
                                                                 </div>
                                                             </div>
@@ -140,7 +140,7 @@
                                             </tr>
                                             @empty
                                                 <tr>
-                                                    <td colspan="6" class="text-center py-6 text-gray-500">
+                                                    <td colspan="6" class="text-center py-6 text-secondary">
                                                         {{ translate('No instalment records found.') }}
                                                     </td>
                                                 </tr>
