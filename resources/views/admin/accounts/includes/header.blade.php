@@ -249,18 +249,27 @@
 
             @php
                 $branches = App\Models\Branch::where('merchant_id', $merchant->id)->get();
+                $mainBranchActivity = $merchant->main_branch ?? null;
             @endphp
 
             <div class="mb-4">
                 <label for="selected_activity" class="block text-sm font-medium text-gray-700">Select Activity</label>
                 <select name="selected_activity" id="selected_activity" class="input" required>
                     <option value="">-- Select Activity --</option>
+
+                    {{-- Show main_branch activity if exists --}}
+                    @if (!is_null($mainBranchActivity))
+                        <option value="{{ $mainBranchActivity }}">{{ $mainBranchActivity }}</option>
+                    @endif
+
+                    {{-- Show all branch activities except the main_branch to avoid duplicates --}}
                     @foreach ($branches as $activity)
-                        <option value="{{ $activity->activity }}">{{ $activity->activity }}</option>
+                        @if ($activity->activity !== $mainBranchActivity)
+                            <option value="{{ $activity->activity }}">{{ $activity->activity }}</option>
+                        @endif
                     @endforeach
                 </select>
             </div>
-
 
             <div class="mb-4">
                 <label for="commission" class="block text-sm font-medium text-gray-700">Commission Percentage</label>
