@@ -248,7 +248,7 @@
             <input type="hidden" name="fahman_score" value="{{ $riskScore->total_score }}">
 
             @php
-                $branches = App\Models\Branch::where('user_id', $merchant->user_id)->get();
+                $branches = App\Models\Branch::where('merchant_id', $merchant->id)->get();
             @endphp
 
             <div class="mb-4">
