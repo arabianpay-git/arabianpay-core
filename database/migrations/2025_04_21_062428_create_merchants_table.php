@@ -19,6 +19,7 @@ return new class extends Migration
             $table->string('business_category_id')->nullable();
             $table->string('is_manager')->nullable();
             $table->text('manager_approval')->nullable();
+            $table->string('main_branch')->nullable();
             $table->json('goverment_data')->nullable();
             $table->string('cr_number')->unique()->nullable();
             $table->string('pos_revenue')->nullable();

@@ -34,12 +34,21 @@
                         <div class="card-body space-y-6">
 
                             @php
-                                $compliance = [
-                                    [
+
+                                $compliance = [];
+
+                                $approvals = App\Models\Approval::where('user_id', $merchant->user_id)->get();
+
+                                foreach ($approvals as $approval) {
+                                    $compliance[] = [
                                         'title' => translate('Supplier Contract'),
-                                        'file' => $contract->contract ?? null,
+                                        'file' => $approval->contract,
                                         'status' => 'submitted',
-                                    ],
+                                    ];
+                                }
+
+                                // Add fixed compliance documents
+                                $compliance = array_merge($compliance, [
                                     [
                                         'title' => translate('CR File'),
                                         'file' => supplierMedia($merchant->registration_number_form),
@@ -75,7 +84,7 @@
                                         'file' => supplierMedia(optional($supplierBank)->iban_certificate),
                                         'status' => null,
                                     ],
-                                ];
+                                ]);
 
                                 if ($merchant->is_manager) {
                                     $compliance[] = [
@@ -85,6 +94,7 @@
                                     ];
                                 }
                             @endphp
+
 
 
                             @foreach ($compliance as $item)

@@ -638,10 +638,6 @@ class AccountController extends Controller
     {
         $merchant = Merchant::where('user_id', $id)->firstOrFail();
 
-        if ($merchant->status == 'approved') {
-            return redirect()->back()->with('error', 'This supplier has already been approved.');
-        }
-
         $request->validate([
             'commission' => 'required|numeric|min:0|max:100',
             'reason' => 'nullable|string|max:1000',

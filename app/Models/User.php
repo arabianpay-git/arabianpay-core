@@ -34,6 +34,7 @@ class User extends Authenticatable implements HasPasskeys
         'email',
         'business_name',
         'phone_number',
+        'merchant_id',
         'department_id',
         'is_manager',
         'country_id',

@@ -23,6 +23,7 @@ class Merchant extends Model
         'goverment_data',
         'is_manager',
         'manager_approval',
+        'main_branch',
         'cr_number',
         'pos_revenue',
         'registration_number_form',

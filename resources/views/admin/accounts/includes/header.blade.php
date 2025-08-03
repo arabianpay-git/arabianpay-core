@@ -247,6 +247,21 @@
 
             <input type="hidden" name="fahman_score" value="{{ $riskScore->total_score }}">
 
+            @php
+                $branches = App\Models\Branch::where('user_id', $merchant->user_id)->get();
+            @endphp
+
+            <div class="mb-4">
+                <label for="selected_activity" class="block text-sm font-medium text-gray-700">Select Activity</label>
+                <select name="selected_activity" id="selected_activity" class="input" required>
+                    <option value="">-- Select Activity --</option>
+                    @foreach ($branches as $activity)
+                        <option value="{{ $activity->activity }}">{{ $activity->activity }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+
             <div class="mb-4">
                 <label for="commission" class="block text-sm font-medium text-gray-700">Commission Percentage</label>
                 <input type="number" name="commission" id="commission" class="input" step="0.01"
