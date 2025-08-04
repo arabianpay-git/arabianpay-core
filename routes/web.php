@@ -98,7 +98,9 @@ Route::group([
             Route::controller(DashboardController::class)->group(function () {
                 Route::get('/dashboard', 'index')->name('dashboard');
                 Route::get('/dashboard/data', 'filterData');
+                Route::get('/impersonate-user/{id}', 'redirectToPartner')->name('impersonate.redirect');
             });
+
 
             //
             // Role and Permission

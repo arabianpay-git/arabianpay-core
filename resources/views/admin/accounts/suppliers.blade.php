@@ -161,6 +161,13 @@
                                                             data-model-type="App\Models\Merchant">
                                                             <i class="ki-filled ki-disconnect"></i>
                                                         </button>
+
+                                                        <a target="__blank"
+                                                            class="btn btn-sm btn-icon btn-clear btn-warning"
+                                                            href="{{ route('impersonate.redirect', ['id' => $item->user_id]) }}"
+                                                            onclick="return confirm('Login to this partner account?')">
+                                                            <i class="ki-filled ki-wrench"> </i>
+                                                        </a>
                                                     </div>
                                                 </td>
                                             </tr>

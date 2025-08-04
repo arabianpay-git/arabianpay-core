@@ -12,10 +12,13 @@ use App\Models\RefundRequest;
 use App\Models\CustomerCreditLimit;
 use App\Models\Product;
 use App\Models\State;
+use App\Models\User;
 use App\Models\Wallet;
 use App\Services\RiskAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\URL;
 
 class DashboardController extends Controller
 {
@@ -148,5 +151,39 @@ class DashboardController extends Controller
     {
         $cities = City::all();
         return view('welcome', compact('cities'));
+    }
+
+    public function redirectToPartner($id)
+    {
+        if (Auth::user()->user_type !== 'admin') {
+            abort(403);
+        }
+
+        $user = User::findOrFail($id);
+
+        $encryptedUserId = Crypt::encrypt($user->id);
+
+        if (env('APP_ENV') == 'local') {
+            $baseUrl = 'https://merchant.test/impersonate-login';
+        } else {
+            $baseUrl = 'https://partners.arabianpay.net/impersonate-login';
+        }
+
+        $params = [
+            'token' => $encryptedUserId,
+            'expires' => now()->addMinutes(2)->timestamp,
+        ];
+
+        $signature = hash_hmac(
+            'sha256',
+            '/impersonate-login?token=' . urlencode($params['token']) . '&expires=' . $params['expires'],
+            config('app.key')
+        );
+
+        $params['signature'] = $signature;
+
+        $finalUrl = $baseUrl . '?' . http_build_query($params);
+
+        return redirect()->away($finalUrl);
     }
 }
