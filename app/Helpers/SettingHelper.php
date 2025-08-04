@@ -45,7 +45,7 @@ if (!function_exists('get_seller_commission')) {
     function get_seller_commission($user_id, $default = 5.00)
     {
         $commission = Approval::where('user_id', $user_id)->latest()->first();
-        return $commission ? $commission->comission : $default;
+        return $commission ? $commission->commission : $default;
     }
 }
 
