@@ -49,21 +49,13 @@ if (!function_exists('get_seller_commission')) {
     }
 }
 
-if (!function_exists('get_seller__total_commission')) {
-    function get_seller__total_commission($user_id, $default = 5.00)
-    {
-        $totalCommission = Approval::where('user_id', $user_id)->sum('commission');
-
-        return $totalCommission > 0 ? round($totalCommission, 2) : $default;
-    }
-}
-
 if (!function_exists('get_system_commission')) {
     function get_system_commission($default = 0)
     {
         return get_setting('system_commission', $default);
     }
 }
+
 
 if (!function_exists('calculate_order_tax')) {
     function calculate_order_tax($order)

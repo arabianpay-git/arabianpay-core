@@ -590,7 +590,7 @@ class AccountController extends Controller
         }
 
         // Commission percentage
-        $totalCommissionPercentage = get_seller__total_commission($merchant->user_id);
+        $totalCommissionPercentage = get_seller_commission($merchant->user_id);
         $totalCommission = round(($totalEntitlement * $totalCommissionPercentage) / 100, 2);
 
 
