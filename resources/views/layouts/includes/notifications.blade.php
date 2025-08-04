@@ -1,3 +1,36 @@
+<style>
+    .notification-item {
+        position: relative;
+        cursor: pointer;
+        transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
+        border-left: 4px solid transparent;
+        padding-right: 80px;
+    }
+
+    .notification-item:hover {
+        background-color: #f3f4f6;
+        border-left-color: #3b82f6;
+    }
+
+    .notification-item .mark-read-btn {
+        position: absolute;
+        top: 25%;
+        right: 10px;
+        transform: translateY(-50%);
+        display: none;
+        font-size: 0.75rem;
+        color: #2563eb;
+        background: none;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        text-decoration: underline;
+    }
+
+    .notification-item:hover .mark-read-btn {
+        display: inline-block;
+    }
+</style>
 <div class="dropdown" data-dropdown="true" data-dropdown-offset="70px, 10px" data-dropdown-offset-rtl="-70px, 10px"
     data-dropdown-placement="bottom-end" data-dropdown-placement-rtl="bottom-start" data-dropdown-trigger="click|lg:click">
     <button
@@ -56,42 +89,6 @@
         </div>
     </div>
 </div>
-
-@push('styles')
-    <style>
-        .notification-item {
-            position: relative;
-            cursor: pointer;
-            transition: background-color 0.2s ease-in-out, border-color 0.2s ease-in-out;
-            border-left: 4px solid transparent;
-            padding-right: 80px;
-        }
-
-        .notification-item:hover {
-            background-color: #f3f4f6;
-            border-left-color: #3b82f6;
-        }
-
-        .notification-item .mark-read-btn {
-            position: absolute;
-            top: 25%;
-            right: 10px;
-            transform: translateY(-50%);
-            display: none;
-            font-size: 0.75rem;
-            color: #2563eb;
-            background: none;
-            border: none;
-            cursor: pointer;
-            padding: 0;
-            text-decoration: underline;
-        }
-
-        .notification-item:hover .mark-read-btn {
-            display: inline-block;
-        }
-    </style>
-@endpush
 
 @push('scripts')
     <script>
