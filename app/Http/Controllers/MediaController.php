@@ -51,13 +51,18 @@ class MediaController extends Controller
                 'file_name' => $m->file_name,
                 'size' => $m->size,
                 'mime_type' => $m->mime_type,
-                // Use helper to resolve URL (adjust if needed)
                 'url' => supplierMedia('storage/media/' . $m->file_name),
+                // Include user first_name and last_name for JS use
+                'user' => $m->user ? [
+                    'first_name' => $m->user->first_name,
+                    'last_name' => $m->user->last_name,
+                ] : null,
             ];
         })->toArray();
 
         return response()->json(['media' => $media]);
     }
+
 
     public function upload(Request $request)
     {
