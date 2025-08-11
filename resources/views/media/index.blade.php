@@ -40,20 +40,30 @@
             <div class="grid gap-5 lg:gap-7.5">
                 <div class="media-grid" id="mediaGrid" style="padding:0">
                     @foreach ($media as $item)
+                        @php
+                            // resolveMedia helper wrapper — supplierMedia keeps backward compatibility
+                            // We check in public/storage/media first, then partners if missing.
+                            $mediaUrl = supplierMedia(
+                                'storage/media/' . $item->file_name,
+                                asset('images/default-media.png'),
+                            );
+                        @endphp
+
                         <div class="media-card position-relative" data-id="{{ $item->id }}"
-                            data-url="{{ asset('storage/media/' . $item->file_name) }}" data-name="{{ $item->name }}"
-                            data-size="{{ $item->size }}" data-mime="{{ $item->mime_type }}"
-                            style="overflow: visible; padding: 0.25rem;">
+                            data-url="{{ $mediaUrl }}" data-file-name="{{ $item->file_name }}"
+                            data-name="{{ $item->name }}" data-size="{{ $item->size }}"
+                            data-mime="{{ $item->mime_type }}" style="overflow: visible; padding: 0.25rem;">
                             @php
                                 $isVideo = str_starts_with($item->mime_type, 'video');
                             @endphp
+
                             @if ($isVideo)
-                                <video src="{{ asset('storage/media/' . $item->file_name) }}" class="media-thumb" controls
-                                    muted preload="metadata" style="max-height: 150px; width: auto;"></video>
+                                <video src="{{ $mediaUrl }}" class="media-thumb" controls muted preload="metadata"
+                                    style="max-height: 150px; width: auto;"></video>
                             @else
-                                <img src="{{ asset('storage/media/' . $item->file_name) }}" class="media-thumb"
-                                    loading="lazy" alt="media">
+                                <img src="{{ $mediaUrl }}" class="media-thumb" loading="lazy" alt="{{ $item->name }}">
                             @endif
+
                             <div class="media-info">
                                 <div class="name">{{ $item->name }}</div>
                                 <div class="size">{{ number_format($item->size / 1024, 1) }} KB</div>

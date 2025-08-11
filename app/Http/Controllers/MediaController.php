@@ -35,7 +35,6 @@ class MediaController extends Controller
 
         $items = $query->skip($offset)->take($limit)->get();
 
-        // map to light JSON-friendly shape and add url
         $media = $items->map(function ($m) {
             return [
                 'id' => $m->id,
@@ -43,13 +42,12 @@ class MediaController extends Controller
                 'file_name' => $m->file_name,
                 'size' => $m->size,
                 'mime_type' => $m->mime_type,
-                'url' => asset('storage/media/' . $m->file_name),
+                // Use same helper as blade so client receives resolved url
+                'url' => supplierMedia('storage/media/' . $m->file_name),
             ];
         })->toArray();
 
-        return response()->json([
-            'media' => $media,
-        ]);
+        return response()->json(['media' => $media]);
     }
 
     public function upload(Request $request)
