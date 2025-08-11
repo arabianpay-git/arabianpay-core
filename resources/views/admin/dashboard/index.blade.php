@@ -302,6 +302,11 @@
                         }
                     ],
                     xaxis: {
+                        labels: {
+                            style: {
+                                fontSize: '10px'
+                            }
+                        },
                         categories: @json($loanData['disbursement_vs_repayment']['months'])
                     },
                     colors: ['#3B82F6', '#10B981']
@@ -349,9 +354,9 @@
                         enabled: false
                     },
                     series: @json($riskData['default_rates']),
-                    colors: ['#10B981', '#F59E0B', '#EF4444'], // ✅ COMMA ADDED HERE
+                    colors: ['#10B981', '#F59E0B', '#EF4444'],
                     yaxis: {
-                        categories: ['abc', 'def', 'ghi'] // ✅ Static categories
+                        categories: ['abc', 'def', 'ghi']
                     }
                 }).render();
 

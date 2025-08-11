@@ -13,7 +13,12 @@ class MediaController extends Controller
 {
     public function index()
     {
-        $media = Media::where('user_id', Auth::user()->id)->latest()->take(18)->get();
+        if (Auth::user()->user_type === 'admin') {
+            $media = Media::latest()->take(18)->get();
+        } else {
+            $media = Media::where('user_id', Auth::user()->id)->latest()->take(18)->get();
+        }
+
         return view('media.index', compact('media'));
     }
 
@@ -22,7 +27,18 @@ class MediaController extends Controller
         $offset = $request->input('offset', 0);
         $limit = 18;
 
-        $media = Media::where('user_id', Auth::user()->id)->latest()->skip($offset)->take($limit)->get();
+        if (Auth::user()->user_type === 'admin') {
+            $media = Media::latest()
+                ->skip($offset)
+                ->take($limit)
+                ->get();
+        } else {
+            $media = Media::where('user_id', Auth::user()->id)
+                ->latest()
+                ->skip($offset)
+                ->take($limit)
+                ->get();
+        }
 
         return response()->json([
             'media' => $media,
