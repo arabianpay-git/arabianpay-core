@@ -35,9 +35,9 @@ class MediaController extends Controller
         $limit = 18;
 
         if (Auth::user()->user_type === 'admin') {
-            $query = Media::where('mime_type', '!=', 'application/pdf')->latest();
+            $query = Media::with('user')->where('mime_type', '!=', 'application/pdf')->latest();
         } else {
-            $query = Media::where('user_id', Auth::user()->id)
+            $query = Media::with('user')->where('user_id', Auth::user()->id)
                 ->where('mime_type', '!=', 'application/pdf')
                 ->latest();
         }
