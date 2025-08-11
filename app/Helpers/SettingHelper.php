@@ -265,55 +265,145 @@ if (! function_exists('hijriToGregorian')) {
     }
 }
 
+use Illuminate\Support\Str;
+
+/**
+ * Resolve a media URL by checking local first, then partner host, then default.
+ *
+ * @param string|null $path         Path or URL (can be relative path like "images/foo.jpg" or "/storage/foo.jpg")
+ * @param array       $options      Options:
+ *                                  - 'type' => 'supplier'|'product' (controls partner prefix)
+ *                                  - 'default' => fallback URL if not found
+ *                                  - 'partner_prefix' => override partner prefix
+ *                                  - 'check_remote' => bool (whether to HEAD-check remote partner) default true
+ * @return string|null
+ */
+if (! function_exists('resolveMedia')) {
+    function resolveMedia(?string $path, array $options = []): ?string
+    {
+        $options = array_merge([
+            'type' => 'supplier', // 'supplier' | 'product'
+            'default' => null,
+            'partner_prefix' => null,
+            'check_remote' => true,
+            'http_timeout' => 2, // seconds
+        ], $options);
+
+        if (empty($path)) {
+            return $options['default'];
+        }
+
+        // If it's already a full URL, return as-is
+        if (Str::startsWith($path, ['http://', 'https://'])) {
+            return $path;
+        }
+
+        // 1) Check local (public) file existence.
+        // Accept paths like:
+        // - "/storage/media/xxx.jpg"
+        // - "storage/media/xxx.jpg"
+        // - "media/xxx.jpg" (we'll check in /storage/<path>)
+        $candidates = [];
+
+        // If path starts with slash, check public_path(trim leading '/')
+        if (Str::startsWith($path, '/')) {
+            $candidates[] = public_path(ltrim($path, '/'));
+        } else {
+            // check exact public path
+            $candidates[] = public_path($path);
+            // also check under public/storage (common for Laravel storage:link)
+            $candidates[] = public_path('storage/' . ltrim($path, '/'));
+        }
+
+        foreach ($candidates as $fullPath) {
+            if ($fullPath && file_exists($fullPath) && is_file($fullPath)) {
+                // Build a web-accessible URL using asset() and the relative path
+                // Compute relative path from public_path()
+                $rel = str_replace('\\', '/', ltrim(str_replace(public_path(), '', $fullPath), '/'));
+                // If rel is empty (shouldn't), fallback to path
+                $rel = $rel ?: ltrim($path, '/');
+                return asset($rel);
+            }
+        }
+
+        // 2) Not found locally - construct partner URL based on type
+        if ($options['partner_prefix']) {
+            $prefix = rtrim($options['partner_prefix'], '/');
+        } else {
+            $prefix = $options['type'] === 'product'
+                ? rtrim('https://partners.arabianpay.net/public', '/')
+                : rtrim('https://partners.arabianpay.net', '/');
+        }
+
+        // ensure single slash between prefix and path
+        $partnerUrl = $prefix . '/' . ltrim($path, '/');
+
+        // If caller doesn't want remote checks, just return partner url (useful if offline)
+        if (! $options['check_remote']) {
+            return $partnerUrl;
+        }
+
+        // 3) HEAD-check partner URL to ensure file exists (fast)
+        try {
+            $response = Http::withOptions(['timeout' => (float) $options['http_timeout']])
+                ->head($partnerUrl);
+            if ($response->successful()) {
+                return $partnerUrl;
+            }
+
+            // Some servers disallow HEAD; try GET with range (small) as fallback
+            if ($response->status() === 405 || $response->status() === 403 || $response->status() === 0) {
+                // Try GET with short timeout and small bytes request (may still be blocked by CORS or server)
+                $response2 = Http::withOptions(['timeout' => (float) $options['http_timeout']])
+                    ->get($partnerUrl);
+                if ($response2->successful()) {
+                    return $partnerUrl;
+                }
+            }
+        } catch (\Throwable $e) {
+            // network or DNS error — swallow and fall back to default
+            // optionally log: \Log::debug('resolveMedia remote check failed: '.$e->getMessage());
+        }
+
+        // 4) not found anywhere — return default (may be null)
+        return $options['default'];
+    }
+}
+
+/**
+ * Backwards-compatible supplierMedia wrapper.
+ *
+ * @param string|null $path
+ * @param string|null $defaultUrl
+ * @return string|null
+ */
 if (! function_exists('supplierMedia')) {
-    /**
-     * Prefix the given path with https://partners.arabianpay.net if not already prefixed,
-     * return default URL if path is empty or null.
-     *
-     * @param string|null $path
-     * @param string|null $defaultUrl Optional default URL if path is missing
-     * @return string|null
-     */
     function supplierMedia(?string $path, ?string $defaultUrl = null): ?string
     {
-        if (!$path) {
-            return $defaultUrl;
-        }
-
-        $prefix = 'https://partners.arabianpay.net';
-
-        if (str_starts_with($path, 'http')) {
-            // Already a full URL (any domain), return as is
-            return $path;
-        }
-
-        return $prefix . $path;
+        return resolveMedia($path, [
+            'type' => 'supplier',
+            'default' => $defaultUrl,
+        ]);
     }
 }
 
+/**
+ * Backwards-compatible productMedia wrapper.
+ *
+ * @param string|null $path
+ * @param string|null $defaultUrl
+ * @return string|null
+ */
 if (! function_exists('productMedia')) {
-    /**
-     * Similar to supplierMedia, but ensures the path includes '/public/'.
-     *
-     * @param string|null $path
-     * @param string|null $defaultUrl Optional default URL if path is missing
-     * @return string|null
-     */
     function productMedia(?string $path, ?string $defaultUrl = null): ?string
     {
-        if (!$path) {
-            return $defaultUrl;
-        }
-
-        $prefix = 'https://partners.arabianpay.net/public/';
-
-        if (str_starts_with($path, 'http')) {
-            return $path;
-        }
-
-        return rtrim($prefix, '/') . '/' . ltrim($path, '/');
+        return resolveMedia($path, [
+            'type' => 'product',
+            'default' => $defaultUrl,
+        ]);
     }
 }
+
 
 if (!function_exists('translate')) {
     function translate($key, $replace = [], $locale = null)

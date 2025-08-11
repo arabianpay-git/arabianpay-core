@@ -62,11 +62,23 @@
                         </div>
                     @endforeach
                 </div>
+
+                {{-- Load more button + loader + end message --}}
+                <div class="w-full text-center py-3" id="loadMoreWrapper">
+                    <button id="loadMoreBtn" class="btn btn-sm btn-outline btn-secondary">
+                        Load more
+                        <span id="loadMoreSpinner" class="spinner-border spinner-border-sm d-none ml-2" role="status"
+                            aria-hidden="true"></span>
+                    </button>
+                    <div id="loadMoreEnd" class="text-muted small mt-2 d-none">No more media</div>
+                </div>
+
             </div>
         </div>
         <!-- End of Container -->
     </main>
 @endsection
+
 @push('scripts')
     <style>
         body.dragging::before {
@@ -111,127 +123,133 @@
 
     <script>
         $(function() {
-            const $window = $(window),
-                $document = $(document),
-                $deleteBtn = $('#deleteSelectedBtn'),
+            const $deleteBtn = $('#deleteSelectedBtn'),
                 $uploadBtn = $('#uploadBtn'),
                 $fileInput = $('#fileInput'),
                 $uploadSpinner = $('#uploadSpinner'),
                 $uploadProgressContainer = $('#uploadProgressContainer'),
                 $uploadProgressBar = $('#uploadProgressBar'),
                 $uploadProgressText = $('#uploadProgressText'),
-                $mediaGrid = $('#mediaGrid');
+                $mediaGrid = $('#mediaGrid'),
+                $loadMoreBtn = $('#loadMoreBtn'),
+                $loadMoreSpinner = $('#loadMoreSpinner'),
+                $loadMoreEnd = $('#loadMoreEnd');
 
+            // initial offset based on server-rendered items
             let selected = [],
-                offset = {{ count($media) }},
+                offset = parseInt({{ count($media) ?? 0 }}, 10) || 0,
+                limit = 18,
                 loading = false,
-                noMoreMedia = false;
+                noMoreMedia = false,
+                attemptedLoad = false;
 
-            // === Full Page Drag and Drop ===
-            $(document).on('dragenter dragover', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                $('body').addClass('dragging');
-            });
-
-            $(document).on('dragleave drop', function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-                $('body').removeClass('dragging');
-            });
-
-            $(document).on('drop', function(e) {
-                const dt = e.originalEvent.dataTransfer;
-                const files = dt.files;
-                if (!files.length) return;
-
-                const formData = new FormData();
-                Array.from(files).forEach(f => formData.append('files[]', f));
-                formData.append('_token', "{{ csrf_token() }}");
-
-                $uploadSpinner.removeClass('d-none');
-                $uploadProgressContainer.removeClass('d-none');
-                $uploadProgressBar.css('width', '0%');
-                $uploadProgressText.text('Uploading...');
-
-                $.ajax({
-                        url: "{{ route('media.upload') }}",
-                        method: 'POST',
-                        data: formData,
-                        contentType: false,
-                        processData: false,
-                        xhr: function() {
-                            const xhr = new window.XMLHttpRequest();
-                            xhr.upload.addEventListener('progress', function(e) {
-                                if (e.lengthComputable) {
-                                    const percent = Math.round((e.loaded / e.total) * 100);
-                                    $uploadProgressBar.css('width', percent + '%');
-                                    $uploadProgressText.text(`Uploading... ${percent}%`);
-                                }
-                            }, false);
-                            return xhr;
-                        }
-                    })
-                    .done(res => {
-                        if (res.success) {
-                            res.media.forEach(m => updateGrids(renderCard(m), true));
-                            Swal.fire('Uploaded!', res.message || 'Files uploaded successfully.',
-                                'success');
-                        } else {
-                            Swal.fire('Error', res.message || 'Upload failed.', 'error');
-                        }
-                    })
-                    .fail(xhr => {
-                        let msg = 'Upload failed.';
-                        if (xhr.responseJSON) {
-                            if (xhr.responseJSON.message) {
-                                msg = xhr.responseJSON.message;
-                            } else if (xhr.responseJSON.errors) {
-                                msg = Object.values(xhr.responseJSON.errors).flat().join('<br>');
-                            }
-                        }
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            html: msg
-                        });
-                    })
-                    .always(() => {
-                        $uploadSpinner.addClass('d-none');
-                        $uploadProgressContainer.addClass('d-none');
-                        $fileInput.val('');
-                    });
-            });
-
-            function throttle(fn, limit) {
-                let waiting = false;
-                return function(...args) {
-                    if (!waiting) {
-                        fn.apply(this, args);
-                        waiting = true;
-                        setTimeout(() => waiting = false, limit);
-                    }
-                };
+            // If initial set is less than limit, hide load more and show "No more" immediately
+            if (offset < limit) {
+                noMoreMedia = true;
+                $loadMoreBtn.hide();
+                $loadMoreEnd.removeClass('d-none');
             }
 
+            function renderCard(media) {
+                const isVideo = media.mime_type && media.mime_type.startsWith('video');
+                const url = media.url || (`/storage/media/${media.file_name}`);
+                let thumbHtml = '';
+
+                if (isVideo) {
+                    thumbHtml =
+                        `<video src="${url}" class="media-thumb" controls muted preload="metadata" style="max-height:150px; width:auto;"></video>`;
+                } else {
+                    thumbHtml =
+                        `<img src="${url}" class="media-thumb" loading="lazy" alt="media">`;
+                }
+
+                return `
+                <div class="media-card position-relative" data-id="${media.id}" data-url="${url}" data-name="${media.name}" data-size="${media.size}" data-mime="${media.mime_type}" style="overflow: visible; padding: 0.25rem;">
+                    ${thumbHtml}
+                    <div class="media-info">
+                        <div class="name">${media.name}</div>
+                        <div class="size">${(media.size/1024).toFixed(1)} KB</div>
+                    </div>
+                    <div class="overlay-check"><i class="fas fa-check"></i></div>
+                </div>`;
+            }
+
+            function appendCards(list) {
+                list.forEach(m => $mediaGrid.append(renderCard(m)));
+            }
+
+            async function loadMoreMedia() {
+                if (loading || noMoreMedia) return;
+                loading = true;
+                attemptedLoad = true;
+
+                // UI: disable button & show spinner
+                $loadMoreBtn.prop('disabled', true);
+                $loadMoreSpinner.removeClass('d-none');
+
+                try {
+                    const res = await $.get("{{ route('media.lazyLoad') }}", {
+                        offset
+                    });
+
+                    if (!res || !Array.isArray(res.media)) {
+                        console.error('Unexpected lazyLoad response', res);
+                        Swal.fire('Error', 'Failed to load more media.', 'error');
+                        return;
+                    }
+
+                    const received = res.media.length || 0;
+
+                    if (received === 0) {
+                        noMoreMedia = true;
+                        $loadMoreBtn.hide();
+                        $loadMoreEnd.removeClass('d-none');
+                        return;
+                    }
+
+                    appendCards(res.media);
+                    offset += received;
+
+                    // if returned less than a full page, mark end
+                    if (received < limit) {
+                        noMoreMedia = true;
+                        $loadMoreBtn.hide();
+                        $loadMoreEnd.removeClass('d-none');
+                    } else {
+                        // re-enable button for next page
+                        $loadMoreBtn.prop('disabled', false);
+                    }
+                } catch (err) {
+                    console.error('lazyLoad error', err);
+                    Swal.fire('Error', 'Failed to load more media. Try again.');
+                    // re-enable button so user can retry
+                    $loadMoreBtn.prop('disabled', false);
+                } finally {
+                    loading = false;
+                    $loadMoreSpinner.addClass('d-none');
+                }
+            }
+
+            // wire button
+            $loadMoreBtn.on('click', function() {
+                loadMoreMedia();
+            });
+
+            // selection / delete handlers (unchanged)
             function updateDeleteButton() {
                 $deleteBtn.toggle(selected.length > 0);
             }
 
-            function toggleCardSelection(el) {
-                const id = $(el).data('id');
-                if ($(el).hasClass('selected')) {
+            $(document).on('click', '.media-card', function() {
+                const id = $(this).data('id');
+                if ($(this).hasClass('selected')) {
                     selected = selected.filter(i => i !== id);
-                    $(el).removeClass('selected');
+                    $(this).removeClass('selected');
                 } else {
                     selected.push(id);
-                    $(el).addClass('selected');
+                    $(this).addClass('selected');
                 }
                 updateDeleteButton();
-            }
-
-            $document.on('click', '.media-card', function() {
-                toggleCardSelection(this);
             });
 
             $deleteBtn.on('click', function() {
@@ -262,71 +280,18 @@
                 });
             });
 
-            function renderCard(media) {
-                const isVideo = media.mime_type && media.mime_type.startsWith('video');
-                let thumbHtml = '';
-
-                if (isVideo) {
-                    thumbHtml =
-                        `<video src="/storage/media/${media.file_name}" class="media-thumb" controls muted preload="metadata" style="max-height:150px; width:auto;"></video>`;
-                } else {
-                    thumbHtml =
-                        `<img src="/storage/media/${media.file_name}" class="media-thumb" loading="lazy" alt="media">`;
-                }
-
-                return `
-                    <div class="media-card position-relative" data-id="${media.id}" data-url="${media.url}" data-name="${media.name}" data-size="${media.size}" data-mime="${media.mime_type}">
-                        ${thumbHtml}
-                        <div class="media-info">
-                            <div class="name">${media.name}</div>
-                            <div class="size">${(media.size/1024).toFixed(1)} KB</div>
-                        </div>
-                        <div class="overlay-check"><i class="fas fa-check"></i></div>
-                    </div>`;
-            }
-
-            function updateGrids(html, prepend = false) {
-                if (prepend) {
-                    $mediaGrid.prepend(html);
-                } else {
-                    $mediaGrid.append(html);
-                }
-            }
-
-            function loadMoreMedia() {
-                if (loading || noMoreMedia) return;
-                loading = true;
-
-                $.get("{{ route('media.lazyLoad') }}", {
-                        offset
-                    })
-                    .done(res => {
-                        if (!res.media.length) {
-                            noMoreMedia = true;
-                        } else {
-                            res.media.forEach(m => updateGrids(renderCard(m)));
-                            offset += res.media.length;
-                        }
-                    })
-                    .always(() => {
-                        loading = false;
-                    });
-            }
-
-            $window.on('scroll', throttle(() => {
-                if ($window.scrollTop() + $window.height() >= $document.height() - 300) loadMoreMedia();
-            }, 200));
-
+            // upload handlers (unchanged)
             function startUpload() {
                 $fileInput.click();
             }
-
             $uploadBtn.on('click', startUpload);
 
             $fileInput.on('change', function() {
-                const files = this.files;
-                if (!files.length) return;
+                if (!this.files.length) return;
+                uploadFiles(this.files);
+            });
 
+            function uploadFiles(files) {
                 const formData = new FormData();
                 Array.from(files).forEach(f => formData.append('files[]', f));
                 formData.append('_token', "{{ csrf_token() }}");
@@ -356,9 +321,14 @@
                     })
                     .done(res => {
                         if (res.success) {
-                            res.media.forEach(m => updateGrids(renderCard(m), true));
-                            Swal.fire('Uploaded!', res.message || 'Files uploaded successfully.',
-                                'success');
+                            if (res.media && Array.isArray(res.media)) {
+                                res.media.forEach(m => {
+                                    if (!m.url && m.file_name) m.url = `/storage/media/${m.file_name}`;
+                                    $mediaGrid.prepend(renderCard(m));
+                                });
+                                offset += res.media.length;
+                            }
+                            Swal.fire('Uploaded!', res.message || 'Files uploaded successfully.', 'success');
                         } else {
                             Swal.fire('Error', res.message || 'Upload failed.', 'error');
                         }
@@ -383,7 +353,7 @@
                         $uploadProgressContainer.addClass('d-none');
                         $fileInput.val('');
                     });
-            });
+            }
         });
     </script>
 @endpush

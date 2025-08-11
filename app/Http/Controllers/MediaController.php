@@ -24,21 +24,28 @@ class MediaController extends Controller
 
     public function lazyLoad(Request $request)
     {
-        $offset = $request->input('offset', 0);
+        $offset = (int) $request->input('offset', 0);
         $limit = 18;
 
         if (Auth::user()->user_type === 'admin') {
-            $media = Media::latest()
-                ->skip($offset)
-                ->take($limit)
-                ->get();
+            $query = Media::latest();
         } else {
-            $media = Media::where('user_id', Auth::user()->id)
-                ->latest()
-                ->skip($offset)
-                ->take($limit)
-                ->get();
+            $query = Media::where('user_id', Auth::user()->id)->latest();
         }
+
+        $items = $query->skip($offset)->take($limit)->get();
+
+        // map to light JSON-friendly shape and add url
+        $media = $items->map(function ($m) {
+            return [
+                'id' => $m->id,
+                'name' => $m->name,
+                'file_name' => $m->file_name,
+                'size' => $m->size,
+                'mime_type' => $m->mime_type,
+                'url' => asset('storage/media/' . $m->file_name),
+            ];
+        })->toArray();
 
         return response()->json([
             'media' => $media,
