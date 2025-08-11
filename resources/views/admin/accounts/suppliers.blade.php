@@ -21,7 +21,7 @@
                         <h3 class="card-title font-medium text-sm">
                             {{ translate('Suppliers') }}
                         </h3>
-                        <div class="flex flex-wrap gap-2 lg:gap-5">
+                        <div class="flex flex-wrap">
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"></i>
