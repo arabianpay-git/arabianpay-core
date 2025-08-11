@@ -190,15 +190,23 @@
                         `<img src="${url}" class="media-thumb" loading="lazy" alt="media">`;
                 }
 
+                // Compose user full name or fallback text
+                const userName = media.user ?
+                    (media.user.first_name || '') + ' ' + (media.user.last_name || '') :
+                    'Unknown Supplier';
+
                 return `
-                <div class="media-card position-relative" data-id="${media.id}" data-url="${url}" data-name="${media.name}" data-size="${media.size}" data-mime="${media.mime_type}" style="overflow: visible; padding: 0.25rem;">
-                    ${thumbHtml}
-                    <div class="media-info">
-                        <div class="name">${media.name}</div>
-                        <div class="size">${(media.size/1024).toFixed(1)} KB</div>
-                    </div>
-                    <div class="overlay-check"><i class="fas fa-check"></i></div>
-                </div>`;
+                    <div class="media-card position-relative" data-id="${media.id}" data-url="${url}" data-name="${media.name}" data-size="${media.size}" data-mime="${media.mime_type}" style="overflow: visible; padding: 0.25rem;">
+                        ${thumbHtml}
+                        <div class="media-info">
+                            <div class="name">${media.name}</div>
+                            <div class="size">${(media.size / 1024).toFixed(1)} KB</div>
+                        </div>
+                        <div class="supplier-name">
+                            User: ${userName}
+                        </div>
+                        <div class="overlay-check"><i class="fas fa-check"></i></div>
+                    </div>`;
             }
 
             function appendCards(list) {
