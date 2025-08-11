@@ -29,4 +29,9 @@ class Media extends Model
     protected $casts = [
         'custom_properties' => 'array',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
 }

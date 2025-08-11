@@ -41,8 +41,6 @@
                 <div class="media-grid" id="mediaGrid" style="padding:0">
                     @foreach ($media as $item)
                         @php
-                            // resolveMedia helper wrapper — supplierMedia keeps backward compatibility
-                            // We check in public/storage/media first, then partners if missing.
                             $mediaUrl = supplierMedia(
                                 'storage/media/' . $item->file_name,
                                 asset('images/default-media.png'),
@@ -68,10 +66,17 @@
                                 <div class="name">{{ $item->name }}</div>
                                 <div class="size">{{ number_format($item->size / 1024, 1) }} KB</div>
                             </div>
+
+                            <div class="supplier-name">
+                                User:
+                                {{ $item->user ? $item->user->first_name . $item->user->last_namename : 'Unknown Supplier' }}
+                            </div>
+
                             <div class="overlay-check"><i class="fas fa-check"></i></div>
                         </div>
                     @endforeach
                 </div>
+
 
                 {{-- Load more button + loader + end message --}}
                 <div class="w-full text-center py-3" id="loadMoreWrapper">
@@ -91,6 +96,18 @@
 
 @push('scripts')
     <style>
+        .supplier-name {
+            font-size: 0.75rem;
+            font-weight: 300;
+            font-style: italic;
+            color: #999;
+            margin-top: 0.3rem;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 100%;
+        }
+
         body.dragging::before {
             content: "📤 Drop files to upload";
             position: fixed;

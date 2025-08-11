@@ -14,12 +14,12 @@ class MediaController extends Controller
     public function index()
     {
         if (Auth::user()->user_type === 'admin') {
-            $media = Media::where('mime_type', '!=', 'application/pdf')
+            $media = Media::with('user')->where('mime_type', '!=', 'application/pdf')
                 ->latest()
                 ->take(18)
                 ->get();
         } else {
-            $media = Media::where('user_id', Auth::user()->id)
+            $media = Media::with('user')->where('user_id', Auth::user()->id)
                 ->where('mime_type', '!=', 'application/pdf')
                 ->latest()
                 ->take(18)

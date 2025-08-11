@@ -385,26 +385,61 @@ class AccountController extends Controller
 
     // ---- Supplier Methods (similarly optimized) ----
 
-    public function suppliers()
+    public function suppliers(Request $request)
     {
         $user = currentUser();
+        $search = $request->input('search');
 
-        $merchants = Merchant::with('user', 'businessType', 'assigned')
+        // Base merchant query
+        $merchantsQuery = Merchant::with('user', 'businessType', 'assigned')
             ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to', 'created_at')
             ->when(
-                !(
-                    $user->user_type === 'employee' && $user->is_manager
-                ) && $user->user_type !== 'admin',
-                function ($query) use ($user) {
-                    $query->where('assigned_to', $user->id);
+                !($user->user_type === 'employee' && $user->is_manager) && $user->user_type !== 'admin',
+                fn($query) => $query->where('assigned_to', $user->id)
+            );
+
+        if ($search) {
+            $searchTerms = explode(' ', trim($search));
+
+            $merchantsQuery->where(function ($query) use ($search, $searchTerms) {
+                // First group: email exact OR business_name like
+                $query->whereHas('user', function ($q) use ($search) {
+                    $q->whereEncrypted('email', $search)
+                        ->orWhere('business_name', 'like', '%' . $search . '%');
+                });
+
+                // For each search term, test multiple case variants for encrypted fields
+                foreach ($searchTerms as $term) {
+                    $termLower = strtolower($term);
+                    $termUpper = strtoupper($term);
+                    $termUcFirst = ucfirst($termLower);
+
+                    $query->orWhereHas('user', function ($q) use ($termLower, $termUpper, $termUcFirst) {
+                        $q->whereEncrypted('first_name', $termLower)
+                            ->orWhereEncrypted('first_name', $termUpper)
+                            ->orWhereEncrypted('first_name', $termUcFirst);
+                    });
+
+                    $query->orWhereHas('user', function ($q) use ($termLower, $termUpper, $termUcFirst) {
+                        $q->whereEncrypted('last_name', $termLower)
+                            ->orWhereEncrypted('last_name', $termUpper)
+                            ->orWhereEncrypted('last_name', $termUcFirst);
+                    });
                 }
-            )
-            ->orderByDesc('id')
+            });
+        }
+
+        $merchants = $merchantsQuery->orderByDesc('id')
             ->orderByRaw('ISNULL(assigned_to) DESC')
             ->paginate(10);
 
+        if ($request->ajax()) {
+            return view('admin.accounts.partials.suppliers-table', compact('merchants'))->render();
+        }
+
         return view('admin.accounts.suppliers', compact('merchants'));
     }
+
 
     public function supplierShop($id)
     {
