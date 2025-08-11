@@ -14,9 +14,16 @@ class MediaController extends Controller
     public function index()
     {
         if (Auth::user()->user_type === 'admin') {
-            $media = Media::latest()->take(18)->get();
+            $media = Media::where('mime_type', '!=', 'application/pdf')
+                ->latest()
+                ->take(18)
+                ->get();
         } else {
-            $media = Media::where('user_id', Auth::user()->id)->latest()->take(18)->get();
+            $media = Media::where('user_id', Auth::user()->id)
+                ->where('mime_type', '!=', 'application/pdf')
+                ->latest()
+                ->take(18)
+                ->get();
         }
 
         return view('media.index', compact('media'));
@@ -28,9 +35,11 @@ class MediaController extends Controller
         $limit = 18;
 
         if (Auth::user()->user_type === 'admin') {
-            $query = Media::latest();
+            $query = Media::where('mime_type', '!=', 'application/pdf')->latest();
         } else {
-            $query = Media::where('user_id', Auth::user()->id)->latest();
+            $query = Media::where('user_id', Auth::user()->id)
+                ->where('mime_type', '!=', 'application/pdf')
+                ->latest();
         }
 
         $items = $query->skip($offset)->take($limit)->get();
@@ -42,7 +51,7 @@ class MediaController extends Controller
                 'file_name' => $m->file_name,
                 'size' => $m->size,
                 'mime_type' => $m->mime_type,
-                // Use same helper as blade so client receives resolved url
+                // Use helper to resolve URL (adjust if needed)
                 'url' => supplierMedia('storage/media/' . $m->file_name),
             ];
         })->toArray();
