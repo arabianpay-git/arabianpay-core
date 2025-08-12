@@ -325,6 +325,12 @@
                                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 pb-3">
                                     @foreach (array_chunk($g['activities'], 2) as $chunk)
                                         @foreach ($chunk as $index => $activity)
+                                            @php
+                                                $groupName = DB::table('activities')
+                                                    ->where('activity_code', $activity['id'])
+                                                    ->value('group_name');
+                                            @endphp
+
                                             <div class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
                                                 <div class="bg-gray-100 px-4 py-3">
                                                     <h3 class="text-base font-semibold text-gray-800">
@@ -335,6 +341,14 @@
                                                 <div class="overflow-x-auto">
                                                     <table class="table-auto w-full text-sm">
                                                         <tbody>
+                                                            @if ($groupName)
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">
+                                                                        {{ translate('Group Name') }}</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ $groupName ?? '-' }}</td>
+                                                                </tr>
+                                                            @endif
                                                             <tr>
                                                                 <td class="text-gray-600 py-2 px-4">
                                                                     {{ translate('Activity ID') }}</td>

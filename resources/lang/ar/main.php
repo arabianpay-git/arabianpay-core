@@ -888,4 +888,5 @@ return [
     'Manager'             => 'مدير',
     'Select Module'       => 'اختر الوحدة',
     'Filter'              => 'تصفية',
+    'Group Name' => 'اسم المجموعة',
 ];

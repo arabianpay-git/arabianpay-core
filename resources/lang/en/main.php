@@ -911,4 +911,5 @@ return [
     'Manager'             => 'Manager',
     'Select Module'       => 'Select Module',
     'Filter'              => 'Filter',
+    'Group Name' => 'Group Name',
 ];
