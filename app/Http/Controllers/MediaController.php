@@ -13,7 +13,7 @@ class MediaController extends Controller
 {
     public function index()
     {
-        if (Auth::user()->user_type === 'admin') {
+        if (in_array(Auth::user()->user_type, ['admin', 'employee'])) {
             $media = Media::with('user')->where('mime_type', '!=', 'application/pdf')
                 ->latest()
                 ->take(18)
@@ -34,7 +34,7 @@ class MediaController extends Controller
         $offset = (int) $request->input('offset', 0);
         $limit = 18;
 
-        if (Auth::user()->user_type === 'admin') {
+        if (in_array(Auth::user()->user_type, ['admin', 'employee'])) {
             $query = Media::with('user')->where('mime_type', '!=', 'application/pdf')->latest();
         } else {
             $query = Media::with('user')->where('user_id', Auth::user()->id)
