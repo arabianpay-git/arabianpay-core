@@ -69,7 +69,7 @@
 
                             <div class="supplier-name">
                                 User:
-                                {{ $item->user ? $item->user->first_name . $item->user->last_namename : 'Unknown Supplier' }}
+                                {{ $item->user ? $item->user->business_name : 'Unknown Supplier' }}
                             </div>
 
                             <div class="overlay-check"><i class="fas fa-check"></i></div>
@@ -191,8 +191,8 @@
                 }
 
                 // Compose user full name or fallback text
-                const userName = media.user ?
-                    (media.user.first_name || '') + ' ' + (media.user.last_name || '') :
+                const userBusinessName = media.user ?
+                    (media.user.business_name || '') :
                     'Unknown Supplier';
 
                 return `
@@ -203,7 +203,7 @@
                             <div class="size">${(media.size / 1024).toFixed(1)} KB</div>
                         </div>
                         <div class="supplier-name">
-                            User: ${userName}
+                            User: ${userBusinessName}
                         </div>
                         <div class="overlay-check"><i class="fas fa-check"></i></div>
                     </div>`;
