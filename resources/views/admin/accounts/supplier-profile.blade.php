@@ -326,9 +326,12 @@
                                     @foreach (array_chunk($g['activities'], 2) as $chunk)
                                         @foreach ($chunk as $index => $activity)
                                             @php
-                                                $groupName = DB::table('activities')
-                                                    ->where('activity_code', $activity['id'])
-                                                    ->value('group_name');
+                                                $groupName = null;
+                                                if (!empty($activity['id'])) {
+                                                    $groupName = DB::table('activities')
+                                                        ->where('activity_code', $activity['id'])
+                                                        ->value('group_name');
+                                                }
                                             @endphp
 
                                             <div class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
