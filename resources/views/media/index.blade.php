@@ -48,7 +48,7 @@
                         @endphp
 
                         <div class="media-card position-relative" data-id="{{ $item->id }}"
-                            data-url="{{ $mediaUrl }}" data-file-name="{{ $item->file_name }}"
+                            data-url="{{ supplierMedia($item->file_name) }}" data-file-name="{{ $item->file_name }}"
                             data-name="{{ $item->name }}" data-size="{{ $item->size }}"
                             data-mime="{{ $item->mime_type }}" style="overflow: visible; padding: 0.25rem;">
                             @php
