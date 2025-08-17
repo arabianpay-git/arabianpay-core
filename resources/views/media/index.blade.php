@@ -73,6 +73,7 @@
                         </div>
                     @endforeach
                 </div>
+
                 {{-- Load more button + loader + end message --}}
                 <div class="w-full text-center py-3" id="loadMoreWrapper">
                     <button id="loadMoreBtn" class="btn btn-sm btn-outline btn-secondary">
