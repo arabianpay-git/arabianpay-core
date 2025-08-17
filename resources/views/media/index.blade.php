@@ -42,13 +42,13 @@
                     @foreach ($media as $item)
                         @php
                             $mediaUrl = supplierMedia(
-                                'storage/media/' . $item->file_name,
+                                '/storage/media/' . $item->file_name,
                                 asset('images/default-media.png'),
                             );
                         @endphp
 
                         <div class="media-card position-relative" data-id="{{ $item->id }}"
-                            data-url="{{ supplierMedia($item->file_name) }}" data-file-name="{{ $item->file_name }}"
+                            data-url="{{ $mediaUrl }}" data-file-name="{{ $item->file_name }}"
                             data-name="{{ $item->name }}" data-size="{{ $item->size }}"
                             data-mime="{{ $item->mime_type }}" style="overflow: visible; padding: 0.25rem;">
                             @php
