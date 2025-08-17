@@ -41,7 +41,10 @@
                 <div class="media-grid" id="mediaGrid" style="padding:0">
                     @foreach ($media as $item)
                         @php
-                            $mediaUrl = supplierMedia('storage/media/' . $item->file_name);
+                            $mediaUrl = supplierMedia(
+                                'storage/media/' . $item->file_name,
+                                asset('images/default-media.png'),
+                            );
                         @endphp
 
                         <div class="media-card position-relative" data-id="{{ $item->id }}"
@@ -73,6 +76,7 @@
                         </div>
                     @endforeach
                 </div>
+
 
                 {{-- Load more button + loader + end message --}}
                 <div class="w-full text-center py-3" id="loadMoreWrapper">
