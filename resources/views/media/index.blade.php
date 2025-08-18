@@ -42,7 +42,7 @@
                     @foreach ($media as $item)
                         @php
                             $mediaUrl = supplierMedia(
-                                '/storage/media/' . $item->file_name,
+                                'storage/media/' . $item->file_name,
                                 asset('images/default-media.png'),
                             );
                         @endphp
