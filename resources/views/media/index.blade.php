@@ -43,7 +43,7 @@
                         @php
                             $mediaUrl = supplierMedia(
                                 'storage/media/' . $item->file_name,
-                                asset('images/default-media.png'),
+                                asset('assets/media/images/default-image.png'),
                             );
                         @endphp
 
