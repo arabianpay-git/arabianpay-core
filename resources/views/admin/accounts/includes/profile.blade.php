@@ -15,7 +15,7 @@
         </div>
         <div class="flex items-center gap-1.5">
             <div class="text-lg leading-5 font-semibold text-gray-900">
-                {{ $merchant->user?->first_name }} {{ $merchant->user?->last_name }}
+                {{ $merchant->user?->business_name }}
             </div>
             @php
                 $status = strtolower($merchant->status);
@@ -60,7 +60,7 @@
             <div class="flex gap-1.25 items-center">
                 <i class="ki-filled ki-abstract-41 text-gray-500 text-sm"> </i>
                 <span class="text-gray-600 font-medium">
-                    {{ $merchant->user?->business_name }}
+                    {{ $merchant->user?->first_name }} {{ $merchant->user?->last_name }}
                 </span>
             </div>
 

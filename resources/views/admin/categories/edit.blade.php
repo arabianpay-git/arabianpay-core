@@ -95,7 +95,6 @@
                                         </div>
 
                                         <div class="w-full" id="unit-field-wrapper">
-
                                             <div class="flex flex-col gap-2.5">
                                                 <label class="form-label">{{ translate('Units') }}</label>
                                                 <input id="unit-input" type="text" name="unit[]"
