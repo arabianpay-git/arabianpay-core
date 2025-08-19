@@ -966,63 +966,64 @@
                 </div>
             </div>
         </div>
+    </main>
 
+@endsection
 
-        <script>
-            window.onload = () => {
-                const modalEl = KTDom.getElement('#modal_fahman');
-                const modal = KTModal.getInstance(modalEl);
-                modal?.show();
-            };
-        </script>
+@push('scripts')
+    <script>
+        window.onload = () => {
+            const modalEl = KTDom.getElement('#modal_fahman');
+            const modal = KTModal.getInstance(modalEl);
+            modal?.show();
+        };
+    </script>
 
-        <script>
-            document.addEventListener("DOMContentLoaded", function() {
-                const fahmanBody = document.getElementById("modal_fahman_body");
-                // Fetch the initial data for fahman results
-                const url = "{{ url('admin/fahman-supplier-results/' . $merchant->id) }}";
-                setTimeout(() => {
-                    fetch(url)
-                        .then(response => response.text())
-                        .then(html => {
-                            fahmanBody.innerHTML = html;
-                        })
-                        .catch(error => {
-                            console.error("Failed to get data:", error);
-                            fahmanBody.innerHTML = `
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const fahmanBody = document.getElementById("modal_fahman_body");
+            // Fetch the initial data for fahman results
+            const url = "{{ url('admin/fahman-supplier-results/' . $merchant->id) }}";
+            setTimeout(() => {
+                fetch(url)
+                    .then(response => response.text())
+                    .then(html => {
+                        fahmanBody.innerHTML = html;
+                    })
+                    .catch(error => {
+                        console.error("Failed to get data:", error);
+                        fahmanBody.innerHTML = `
                         <span>
                             Failed to get data
                         </span>
                     `;
-                        });
-                }, 3000); // 3000 milliseconds = 3 seconds
-            });
-        </script>
-        <script>
-            function showSupplierRiskDetails() {
-                const modalElF = KTDom.getElement('#fahmanSupplierDetailsModal');
-                const modalF = KTModal.getInstance(modalElF);
-
-                modalF?.show();
-                const detailsBody = document.getElementById('fahman-supplier-details-body');
-
-                // عرض المودال
-                //modal.show();
-                const url = "{{ url('admin/fahman-supplier-details/' . $merchant->id) }}";
-                // تحميل التفاصيل
-                fetch(url)
-                    .then(response => response.text())
-                    .then(html => {
-                        console.log(html);
-                        detailsBody.innerHTML = html;
-                    })
-                    .catch(error => {
-                        console.error(error);
-                        detailsBody.innerHTML = `<div class="text-danger">Failed to load details</div>`;
                     });
-            }
-        </script>
-    </main>
+            }, 3000); // 3000 milliseconds = 3 seconds
+        });
+    </script>
+    <script>
+        function showSupplierRiskDetails() {
+            const modalElF = KTDom.getElement('#fahmanSupplierDetailsModal');
+            const modalF = KTModal.getInstance(modalElF);
 
+            modalF?.show();
+            const detailsBody = document.getElementById('fahman-supplier-details-body');
 
-@endsection
+            // عرض المودال
+            //modal.show();
+            const url = "{{ url('admin/fahman-supplier-details/' . $merchant->id) }}";
+            // تحميل التفاصيل
+            fetch(url)
+                .then(response => response.text())
+                .then(html => {
+                    console.log(html);
+                    detailsBody.innerHTML = html;
+                })
+                .catch(error => {
+                    w
+                    console.error(error);
+                    detailsBody.innerHTML = `<div class="text-danger">Failed to load details</div>`;
+                });
+        }
+    </script>
+@endpush

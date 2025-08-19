@@ -2,7 +2,6 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 @endpush
 
-
 <div class="container-fixed">
     <div
         class="flex items-center flex-wrap md:flex-nowrap lg:items-end justify-between border-b border-b-gray-200 dark:border-b-coal-100 gap-3 lg:gap-6 mb-5 lg:mb-10">
@@ -222,7 +221,6 @@
     </div>
 </div>
 
-
 <div class="modal" data-modal="true" id="approve_modal">
     <div class="modal-content max-w-[600px] top-[5%]">
         <div class="modal-header py-4 px-5">
@@ -313,8 +311,6 @@
                 <input type="text" name="contract_end_date" id="contract_end_date" class="input w-full flatpickr"
                     value="{{ old('contract_end_date') }}" required>
             </div>
-
-
 
             <div class="flex justify-end">
                 <button type="submit" class="btn btn-primary">Submit Approval</button>
