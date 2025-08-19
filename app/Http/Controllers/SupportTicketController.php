@@ -25,7 +25,7 @@ class SupportTicketController extends Controller
     {
         $ticket = SupportTicket::findOrFail($id);
 
-        $activities = SupportTicket::where('ticket_number', $ticket->ticket_number)
+        $activities = SupportTicket::whereEncrypted('ticket_number', $ticket->ticket_number)
             ->orderBy('created_at')
             ->get();
 
