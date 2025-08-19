@@ -32,9 +32,12 @@ class SupportTicketController extends Controller
         $activityData = collect();
 
         foreach ($activities as $activity) {
+            $user = $activity->user;
             $activityData->push([
                 'id'    => $activity->id,
                 'type' => $activity->user_id == Auth::id(),
+                'user_name' => $user ? ($user->first_name . ' ' . $user->last_name) : 'N/A',
+                'user_business' => $user ? ($user->business_name) : 'N/A',
                 'message' => $activity->details,
                 'subject' => $activity->subject,
                 'created_at' => $activity->created_at,

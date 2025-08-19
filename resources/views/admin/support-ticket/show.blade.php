@@ -72,6 +72,8 @@
                                                 <div class="text-sm text-gray-800 font-semibold">
                                                     {{ $activity['subject'] }}
                                                     <small class="text-xs font-medium text-gray-500">
+                                                        {{ $activity['user_name'] }}
+                                                        ({{ $activity['user_business'] }})
                                                         @if (\Carbon\Carbon::parse($activity['created_at'])->isToday())
                                                             ({{ translate('Today') }},
                                                             {{ \Carbon\Carbon::parse($activity['created_at'])->format('g:i A') }})
