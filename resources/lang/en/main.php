@@ -912,4 +912,5 @@ return [
     'Select Module'       => 'Select Module',
     'Filter'              => 'Filter',
     'Group Name' => 'Group Name',
+    'Support Ticket' => 'Support Ticket',
 ];
