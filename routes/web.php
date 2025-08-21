@@ -451,3 +451,8 @@ Route::middleware(['auth'])->group(function () {
 Route::get('/passkeys-login', [PasskeyController::class, 'login'])->name('passkeys.login');
 Route::post('/passkeys-phone', [PasskeyController::class, 'getPublicKey'])->name('passkeys.getPublicKey');
 Route::post('/passkeys-login', [PasskeyController::class, 'authenticate'])->name('passkeys.authenticate');
+
+use App\Http\Controllers\EmailController;
+
+Route::get('/send-email', [EmailController::class, 'create'])->name('email.create');
+Route::post('/send-email', [EmailController::class, 'send'])->name('email.send');
