@@ -453,6 +453,9 @@ Route::post('/passkeys-phone', [PasskeyController::class, 'getPublicKey'])->name
 Route::post('/passkeys-login', [PasskeyController::class, 'authenticate'])->name('passkeys.authenticate');
 
 use App\Http\Controllers\EmailController;
+use App\Http\Controllers\SmsController;
 
 Route::get('/send-email', [EmailController::class, 'create'])->name('email.create');
 Route::post('/send-email', [EmailController::class, 'send'])->name('email.send');
+Route::get('/send-sms', [SmsController::class, 'create'])->name('sms.create');
+Route::post('/send-sms', [SmsController::class, 'send'])->name('sms.send');

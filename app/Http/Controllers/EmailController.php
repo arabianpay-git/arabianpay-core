@@ -41,7 +41,7 @@ class EmailController extends Controller
                     ->from(config('mail.from.address'), config('mail.from.name'));
             });
 
-            return back()->with('status', '✅ Email sent successfully.');
+            return back()->with('status', 'Email sent successfully.');
         } catch (Exception $e) {
             Log::error('Email sending failed: ' . $e->getMessage(), [
                 'to' => $validated['email'],
