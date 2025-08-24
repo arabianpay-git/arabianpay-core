@@ -889,4 +889,5 @@ return [
     'Select Module'       => 'اختر الوحدة',
     'Filter'              => 'تصفية',
     'Group Name' => 'اسم المجموعة',
+    'Included VAT' => 'شامل ضريبة القيمة المضافة',
 ];

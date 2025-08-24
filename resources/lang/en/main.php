@@ -913,4 +913,5 @@ return [
     'Filter'              => 'Filter',
     'Group Name' => 'Group Name',
     'Support Ticket' => 'Support Ticket',
+    'Included VAT' => 'Included VAT',
 ];
