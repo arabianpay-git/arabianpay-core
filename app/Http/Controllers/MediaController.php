@@ -51,7 +51,7 @@ class MediaController extends Controller
                 'file_name' => $m->file_name,
                 'size' => $m->size,
                 'mime_type' => $m->mime_type,
-                'url' => supplierMedia('storage/media/' . $m->file_name),
+                'url' => getMediaUrl($m->file_name),
                 // Include user first_name and last_name for JS use
                 'user' => $m->user ? [
                     'first_name' => $m->user->first_name,
