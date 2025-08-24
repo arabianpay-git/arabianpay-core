@@ -298,74 +298,61 @@ if (! function_exists('resolveMedia')) {
             return $path;
         }
 
-        // 1) Check local (public) file existence.
-        // Accept paths like:
-        // - "/storage/media/xxx.jpg"
-        // - "storage/media/xxx.jpg"
-        // - "media/xxx.jpg" (we'll check in /storage/<path>)
+        // 1) Check local paths
         $candidates = [];
 
-        // If path starts with slash, check public_path(trim leading '/')
-        if (Str::startsWith($path, '/')) {
-            $candidates[] = public_path(ltrim($path, '/'));
-        } else {
-            // check exact public path
-            $candidates[] = public_path($path);
-            // also check under public/storage (common for Laravel storage:link)
-            $candidates[] = public_path('storage/' . ltrim($path, '/'));
+        if ($options['type'] === 'product') {
+            // Products: check uploads symlink first
+            $candidates[] = public_path('uploads/' . $path);
         }
 
+        // Partners/supplier media
+        $candidates[] = public_path('partners-media/' . $path);
+
+        // Core storage/media fallback
+        $candidates[] = public_path('storage/media/' . $path);
+
+        // Check if any candidate exists
         foreach ($candidates as $fullPath) {
             if ($fullPath && file_exists($fullPath) && is_file($fullPath)) {
-                // Build a web-accessible URL using asset() and the relative path
-                // Compute relative path from public_path()
                 $rel = str_replace('\\', '/', ltrim(str_replace(public_path(), '', $fullPath), '/'));
-                // If rel is empty (shouldn't), fallback to path
                 $rel = $rel ?: ltrim($path, '/');
                 return asset($rel);
             }
         }
 
         // 2) Not found locally - construct partner URL based on type
-        if ($options['partner_prefix']) {
-            $prefix = rtrim($options['partner_prefix'], '/');
-        } else {
-            $prefix = $options['type'] === 'product'
-                ? rtrim('https://partners.arabianpay.net/public', '/')
-                : rtrim('https://partners.arabianpay.net', '/');
-        }
+        $prefix = $options['partner_prefix'] ?? (
+            $options['type'] === 'product'
+            ? rtrim('https://partners.arabianpay.net/public', '/')
+            : rtrim('https://partners.arabianpay.net', '/')
+        );
 
-        // ensure single slash between prefix and path
         $partnerUrl = $prefix . '/' . ltrim($path, '/');
 
-        // If caller doesn't want remote checks, just return partner url (useful if offline)
         if (! $options['check_remote']) {
             return $partnerUrl;
         }
 
         // 3) HEAD-check partner URL to ensure file exists (fast)
         try {
-            $response = Http::withOptions(['timeout' => (float) $options['http_timeout']])
-                ->head($partnerUrl);
+            $response = Http::withOptions(['timeout' => (float) $options['http_timeout']])->head($partnerUrl);
             if ($response->successful()) {
                 return $partnerUrl;
             }
 
             // Some servers disallow HEAD; try GET with range (small) as fallback
-            if ($response->status() === 405 || $response->status() === 403 || $response->status() === 0) {
-                // Try GET with short timeout and small bytes request (may still be blocked by CORS or server)
-                $response2 = Http::withOptions(['timeout' => (float) $options['http_timeout']])
-                    ->get($partnerUrl);
+            if (in_array($response->status(), [0, 403, 405])) {
+                $response2 = Http::withOptions(['timeout' => (float) $options['http_timeout']])->get($partnerUrl);
                 if ($response2->successful()) {
                     return $partnerUrl;
                 }
             }
         } catch (\Throwable $e) {
-            // network or DNS error — swallow and fall back to default
-            // optionally log: \Log::debug('resolveMedia remote check failed: '.$e->getMessage());
+            // Network error or DNS failure, fallback to default
         }
 
-        // 4) not found anywhere — return default (may be null)
+        // 4) Not found anywhere, return default
         return $options['default'];
     }
 }

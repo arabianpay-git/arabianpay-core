@@ -135,7 +135,7 @@
                                                 <td class="text-center">{{ $product->id }}</td>
                                                 <td>
                                                     @if ($product->thumbnail)
-                                                        <img src="{{ getMediaUrl($product->thumbnail) }}"
+                                                        <img src="{{ supplierMedia($product->thumbnail) }}"
                                                             alt="{{ $product->name }}"
                                                             class="w-10 h-10 object-contain border-7">
                                                     @else
