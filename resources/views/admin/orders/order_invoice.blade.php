@@ -166,9 +166,9 @@
             <thead>
                 <tr>
                     <th>Product</th>
-                    <th>Price</th> {{-- CHANGED: swapped columns --}}
-                    <th>Quantity</th> {{-- CHANGED: swapped columns --}}
-                    <th>Total</th> {{-- CHANGED: was “Price” --}}
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
                 </tr>
             </thead>
             <tbody>
@@ -177,7 +177,6 @@
                     $totalQuantity = 0;
                 @endphp
 
-                {{-- CHANGED: loop over productDetails collection --}}
                 @foreach ($productDetails as $item)
                     @php
                         $subTotal += $item['total'];
