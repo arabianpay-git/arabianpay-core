@@ -452,26 +452,24 @@ if (!function_exists('current_user_notifications')) {
 
 
 if (!function_exists('getMediaUrl')) {
-    /**
-     * Get media URL from partners-media, core storage, or default
-     *
-     * @param string $filename
-     * @param string $defaultImage
-     * @return string
-     */
     function getMediaUrl(string $filename, string $defaultImage = 'assets/media/images/default-image.png'): string
     {
+        // Check in core/public/uploads (symlinked to partners/uploads)
+        if (file_exists(public_path('uploads/' . $filename))) {
+            return asset('uploads/' . $filename);
+        }
+
         // Check in partners-media
         if (file_exists(public_path('partners-media/' . $filename))) {
             return asset('partners-media/' . $filename);
         }
 
-        // Check in core storage/public
-        if (file_exists(public_path('storage/' . $filename))) {
-            return asset('storage/' . $filename);
+        // Check in core/public/storage/media
+        if (file_exists(public_path('storage/media/' . $filename))) {
+            return asset('storage/media/' . $filename);
         }
 
-        // Fallback to default image in public folder
+        // Fallback to default image
         return asset($defaultImage);
     }
 }
