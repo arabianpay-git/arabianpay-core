@@ -455,8 +455,8 @@ if (!function_exists('getMediaUrl')) {
     function getMediaUrl(string $filename, string $defaultImage = 'assets/media/images/default-image.png'): string
     {
         // Check in core/public/uploads (symlinked to partners/uploads)
-        if (file_exists(public_path('uploads/' . $filename))) {
-            return asset('uploads/' . $filename);
+        if (file_exists(public_path($filename))) {
+            return asset($filename);
         }
 
         // Check in partners-media
