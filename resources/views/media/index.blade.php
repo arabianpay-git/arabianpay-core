@@ -41,19 +41,16 @@
                 <div class="media-grid" id="mediaGrid" style="padding:0">
                     @foreach ($media as $item)
                         @php
-                            $mediaUrl = supplierMedia(
-                                'storage/media/' . $item->file_name,
-                                asset('assets/media/images/default-image.png'),
-                            );
+                            // Use the helper to check partners-media, core storage, or fallback default
+                            $mediaUrl = getMediaUrl($item->file_name, asset('assets/media/images/default-image.png'));
+
+                            $isVideo = str_starts_with($item->mime_type, 'video');
                         @endphp
 
                         <div class="media-card position-relative" data-id="{{ $item->id }}"
                             data-url="{{ $mediaUrl }}" data-file-name="{{ $item->file_name }}"
                             data-name="{{ $item->name }}" data-size="{{ $item->size }}"
                             data-mime="{{ $item->mime_type }}" style="overflow: visible; padding: 0.25rem;">
-                            @php
-                                $isVideo = str_starts_with($item->mime_type, 'video');
-                            @endphp
 
                             @if ($isVideo)
                                 <video src="{{ $mediaUrl }}" class="media-thumb" controls muted preload="metadata"
@@ -76,6 +73,7 @@
                         </div>
                     @endforeach
                 </div>
+
 
                 {{-- Load more button + loader + end message --}}
                 <div class="w-full text-center py-3" id="loadMoreWrapper">

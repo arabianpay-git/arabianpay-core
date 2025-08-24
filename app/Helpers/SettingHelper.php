@@ -449,3 +449,29 @@ if (!function_exists('current_user_notifications')) {
             ->get();
     }
 }
+
+
+if (!function_exists('getMediaUrl')) {
+    /**
+     * Get media URL from partners-media, core storage, or default
+     *
+     * @param string $filename
+     * @param string $defaultImage
+     * @return string
+     */
+    function getMediaUrl(string $filename, string $defaultImage = 'assets/media/images/default-image.png'): string
+    {
+        // Check in partners-media
+        if (file_exists(public_path('partners-media/' . $filename))) {
+            return asset('partners-media/' . $filename);
+        }
+
+        // Check in core storage/public
+        if (file_exists(public_path('storage/' . $filename))) {
+            return asset('storage/' . $filename);
+        }
+
+        // Fallback to default image in public folder
+        return asset($defaultImage);
+    }
+}
