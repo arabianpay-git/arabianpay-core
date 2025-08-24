@@ -963,7 +963,7 @@
                                                         {{ translate('VAT') }}
                                                     </label>
                                                     <input class="input @error('tax') border-red-500 @enderror"
-                                                        name="tax" type="number" value="15"
+                                                        name="tax" type="number"
                                                         value="{{ old('tax', $product->tax ?? '') }}" />
                                                 </div>
                                                 @error('tax')
@@ -983,7 +983,8 @@
                                                         <option value="amount"
                                                             {{ old('tax_type', $product->tax_type ?? '') == 'amount' ? 'selected' : '' }}>
                                                             {{ translate('Flat') }}</option>
-                                                        <option value="percent" selected>
+                                                        <option value="percent"
+                                                            {{ old('tax_type', $product->tax_type ?? '') == 'percent' ? 'selected' : '' }}>
                                                             {{ translate('Percent') }}</option>
                                                     </select>
                                                 </div>
