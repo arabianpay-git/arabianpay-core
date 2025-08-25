@@ -17,10 +17,12 @@ return new class extends Migration
             $table->string('last_name');
             $table->enum('user_type', ['admin', 'employee', 'merchant', 'user'])->default('merchant');
             $table->string('email')->unique();
+            $table->string('role')->nullable();
             $table->string('business_name')->unique();
             $table->string('iqama')->nullable()->unique();
             $table->string('phone_number')->unique();
             $table->foreignId('merchant_id')->nullable()->constrained('merchants')->onDelete('cascade');
+            $table->foreignId('main_user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->foreignId('department_id')->nullable()->constrained('departments')->onDelete('cascade');
             $table->boolean('is_manager')->nullable();
             // $table->enum('status', ['active', 'hold', 'suspended'])->default('hold');

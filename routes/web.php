@@ -43,6 +43,7 @@ use App\Http\Controllers\{
     StateController,
     StaticsController,
     SupplierAndSalesController,
+    SupplierRoleController,
     SupportTicketController,
     TransactionController,
     TransferRequestController,
@@ -166,6 +167,8 @@ Route::group([
                 'case-management'     => CaseManagementController::class,
                 'activity-logs'     => ActivityLogsController::class,
                 'departments'       => DepartmentController::class,
+                'supplier_roles'    => SupplierRoleController::class,
+
             ]);
 
             // Branch Routes
