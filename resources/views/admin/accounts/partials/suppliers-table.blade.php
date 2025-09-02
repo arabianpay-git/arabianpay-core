@@ -35,12 +35,36 @@
                     <td>
                         <span
                             class="badge badge-sm badge-outline
-                            @if ($item->status == 'approved') badge-success
-                            @elseif($item->status == 'pending') badge-danger
-                            @else badge-warning @endif">
-                            {{ ucfirst($item->status) }}
+                                @switch($item->status)
+                                    @case('under_review')
+                                        badge-info
+                                        @break
+                                    @case('contract_sent')
+                                        badge-primary
+                                        @break
+                                    @case('active')
+                                        badge-success
+                                        @break
+                                    @case('pending')
+                                        badge-warning
+                                        @break
+                                    @case('approved')
+                                        badge-success
+                                        @break
+                                    @case('suspended')
+                                        badge-dark
+                                        @break
+                                    @case('blacklisted')
+                                        badge-danger
+                                        @break
+                                    @default
+                                        badge-secondary
+                                @endswitch
+                            ">
+                            {{ ucfirst(str_replace('_', ' ', $item->status)) }}
                         </span>
                     </td>
+
                     <td>
                         <div class="flex gap-1">
                             <a class="btn btn-sm btn-icon btn-clear btn-primary"
