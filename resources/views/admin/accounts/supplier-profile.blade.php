@@ -716,29 +716,61 @@
                                         </div>
                                     @endif
 
-                                    {{-- Iban Certificate --}}
-                                    @if (!empty($supplierBank->iban_certificate))
-                                        <div class="flex items-center gap-3">
-                                            <div class="flex items-center grow gap-2.5">
-                                                @php
-                                                    $ext = pathinfo($merchant->iban_certificate, PATHINFO_EXTENSION);
-                                                @endphp
+                                    {{-- IBAN Certificates --}}
+                                    @if ($supplierBanks->isEmpty())
+                                        <div class="flex items-center gap-3 mt-4">
+                                            <span
+                                                class="text-red-500 text-sm italic">{{ translate('No IBAN Certificates uploaded') }}</span>
+                                        </div>
+                                    @else
+                                        @foreach ($supplierBanks->groupBy('user_id') as $userId => $banks)
+                                            @php
+                                                $user = $banks->first()->user;
+                                            @endphp
 
-                                                <img src="{{ asset('assets/media/images/default-pdf.png') }}"
-                                                    class="h-10" />
+                                            <div
+                                                class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 bg-gray-50 dark:bg-gray-900 shadow-sm">
+                                                <h5 class="text-md font-semibold text-gray-800 dark:text-white mb-3">
+                                                    {{ $user->first_name }} {{ $user->last_name }}
+                                                    ({{ $user->business_name ?? translate('N/A') }})
+                                                </h5>
 
-                                                <div class="flex flex-col">
-                                                    <a href="{{ supplierMedia($merchant->iban_certificate) }}"
-                                                        target="_blank"
-                                                        class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
-                                                        {{ translate('IBAN Certificate') }}
-                                                    </a>
-                                                    <span class="text-xs text-gray-700">
-                                                        {{ Carbon\Carbon::parse($supplierBank->created_at)->format('d M Y h:i A') }}
-                                                    </span>
+                                                <div class="space-y-3">
+                                                    @foreach ($banks as $bank)
+                                                        <div
+                                                            class="flex items-center gap-3 p-2 border rounded-md bg-white dark:bg-gray-800">
+                                                            <div class="flex items-center grow gap-2.5">
+                                                                @php
+                                                                    $ext = pathinfo(
+                                                                        $bank->iban_certificate,
+                                                                        PATHINFO_EXTENSION,
+                                                                    );
+                                                                @endphp
+
+                                                                <img src="{{ asset('assets/media/images/default-pdf.png') }}"
+                                                                    class="h-10" />
+
+                                                                <div class="flex flex-col">
+                                                                    <a href="{{ supplierMedia($bank->iban_certificate) }}"
+                                                                        target="_blank"
+                                                                        class="text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-primary mb-px">
+                                                                        {{ translate('IBAN Certificate') }}
+                                                                    </a>
+                                                                    <span class="text-xs text-gray-700 dark:text-gray-300">
+                                                                        {{ Carbon\Carbon::parse($bank->created_at)->format('d M Y h:i A') }}
+                                                                    </span>
+                                                                </div>
+                                                            </div>
+
+                                                            @if (!$bank->iban_certificate)
+                                                                <span
+                                                                    class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>
+                                                            @endif
+                                                        </div>
+                                                    @endforeach
                                                 </div>
                                             </div>
-                                        </div>
+                                        @endforeach
                                     @endif
 
                                 </div>

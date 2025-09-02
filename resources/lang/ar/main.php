@@ -909,4 +909,5 @@ return [
     'Pickup Points' => 'نقاط الاستلام',
     'Reports' => 'التقارير',
     'Refunds' => 'المبالغ المستردة',
+    'IBAN Certificates' => 'شهادات IBAN',
 ];

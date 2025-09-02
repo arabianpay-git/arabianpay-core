@@ -37,15 +37,6 @@
                         <h3 class="card-title font-medium text-sm">
                             {{ translate('Products') }}
                         </h3>
-                        <div class="flex flex-wrap gap-2 lg:gap-5">
-                            <div class="flex">
-                                <label class="input input-sm">
-                                    <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#team_crew_table"
-                                        placeholder="{{ translate('Search users') }}" type="text" value="" />
-                                </label>
-                            </div>
-                        </div>
                     </div>
                     <div class="card-body">
                         <div data-datatable="true" data-datatable-city-save="false" id="team_crew_table">

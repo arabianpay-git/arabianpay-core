@@ -27,10 +27,10 @@ class CategoryController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]*$/', 'unique:categories,name'],
-            'order_level' => ['nullable', 'numeric'],
-            'meta_title' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
-            'meta_description' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
+            'name' => ['required', 'string', 'max:255', 'unique:categories,name'], // remove 'regex:/^[a-zA-Z\s]*$/'
+            'order_level' => ['required', 'numeric'],
+            'meta_title' => ['nullable', 'string', 'min:5', 'max:100',], // remove 'regex:/^[a-zA-Z\s]*$/'
+            'meta_description' => ['nullable', 'string', 'min:10', 'max:255',], // remove 'regex:/^[a-zA-Z\s]*$/'
             'unit' => ['nullable', 'array'],
         ]);
 
@@ -86,6 +86,7 @@ class CategoryController extends Controller
             'meta_title.en' => ['nullable', 'string', 'max:255'],
             'meta_description.en' => ['nullable', 'string', 'max:1000'],
             'unit' => ['nullable', 'array'],
+            'order_level' => ['required', 'numeric'],
         ]);
 
         DB::beginTransaction();

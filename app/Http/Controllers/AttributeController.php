@@ -21,7 +21,7 @@ class AttributeController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]*$/', 'unique:attributes,name'],
+            'name' => ['required', 'string', 'max:255', 'unique:attributes,name'], // remove 'regex:/^[a-zA-Z\s]*$/',
         ]);
 
         $attribute = Attribute::create([
@@ -60,7 +60,6 @@ class AttributeController extends Controller
                 'required',
                 'string',
                 'max:255',
-                'regex:/^[a-zA-Z\s]*$/',
                 Rule::unique('attributes', 'name')->ignore($attribute->id),
             ],
             'name.ar' => [

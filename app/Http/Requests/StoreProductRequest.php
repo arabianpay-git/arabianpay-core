@@ -25,7 +25,7 @@ class StoreProductRequest extends FormRequest
     public function rules()
     {
         return [
-            'name' => ['required', 'string', 'regex:/^[a-zA-Z\s]*$/', 'max:255', new NoHtml],
+            'name' => ['required', 'string', 'max:255', new NoHtml], // remove regex:/^[a-zA-Z\s]*$/
             'user_id' => 'required',
             'category_id' => 'nullable|exists:categories,id',
             'brand_id' => 'nullable|exists:brands,id',
@@ -35,7 +35,7 @@ class StoreProductRequest extends FormRequest
             'discount_type' => 'nullable',
             'discount_start_date' => 'nullable',
             'discount_end_date' => 'nullable',
-            'unit' => 'required|regex:/^[a-zA-Z\s]*$/',
+            'unit' => 'required|', // remove regex:/^[a-zA-Z\s]*$/
             'tags' => 'nullable|array',
             'tags.*' => 'string|max:255',
             'short_description' => 'nullable',
@@ -57,8 +57,8 @@ class StoreProductRequest extends FormRequest
             'est_shipping_days' => 'nullable|numeric|min:0',
             'featured' => 'nullable|boolean',
             'refundable' => 'nullable|boolean',
-            'meta_title' => 'nullable|string|max:255|regex:/^[a-zA-Z\s]*$/',
-            'meta_description' => 'nullable|string|max:255|regex:/^[a-zA-Z\s]*$/',
+            'meta_title' => 'nullable|string|max:255|', // remove regex:/^[a-zA-Z\s]*$/
+            'meta_description' => 'nullable|string|max:255|', // remove regex:/^[a-zA-Z\s]*$/
             'meta_img' => 'nullable|string|max:255',
         ];
     }

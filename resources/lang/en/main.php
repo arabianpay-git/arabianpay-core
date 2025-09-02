@@ -934,4 +934,5 @@ return [
     'Pickup Points' => 'Pickup Points',
     'Reports' => 'Reports',
     'Refunds' => 'Refunds',
+    'IBAN Certificates' => 'IBAN Certificates',
 ];

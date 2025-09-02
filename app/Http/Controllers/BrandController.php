@@ -25,11 +25,11 @@ class BrandController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]*$/', 'unique:brands,name'],
+            'name' => ['required', 'string', 'max:255', 'unique:brands,name'], // remove 'regex:/^[a-zA-Z\s]*$/'
             'logo' => ['required'],
-            'order_level' => ['nullable', 'numeric'],
-            'meta_title' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
-            'meta_description' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
+            'order_level' => ['required', 'numeric'],
+            'meta_title' => ['nullable', 'string', 'min:5', 'max:100',], // remove 'regex:/^[a-zA-Z\s]*$/'
+            'meta_description' => ['nullable', 'string', 'min:10', 'max:255',], // remove 'regex:/^[a-zA-Z\s]*$/'
         ]);
 
         DB::beginTransaction();
@@ -76,46 +76,45 @@ class BrandController extends Controller
                 'required',
                 'string',
                 'max:255',
-                'regex:/^[a-zA-Z\s]*$/',
                 Rule::unique('brands', 'name')->ignore($brand->id),
-            ],
+            ], // remove 'regex:/^[a-zA-Z\s]*$/',
             'logo' => ['required'],
-            'order_level' => ['nullable', 'numeric'],
+            'order_level' => ['required', 'numeric'],
             // 'meta_title.en' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
             // 'meta_description.en' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
         ]);
 
         DB::beginTransaction();
 
-        // try {
-        $brand->update([
-            'name' => $request->name['en'],
-            'logo' => $request->logo,
-            'order_level' => $request->order_level,
-            'featured' => $request->boolean('featured'),
-            'meta_title' => $request->meta_title['en'],
-            'meta_description' => $request->meta_description['en'],
-        ]);
+        try {
+            $brand->update([
+                'name' => $request->name['en'],
+                'logo' => $request->logo,
+                'order_level' => $request->order_level,
+                'featured' => $request->boolean('featured'),
+                'meta_title' => $request->meta_title['en'],
+                'meta_description' => $request->meta_description['en'],
+            ]);
 
-        $this->storeOrUpdateTranslations($brand, $request);
+            $this->storeOrUpdateTranslations($brand, $request);
 
-        DB::commit();
-        //Log the update of the brand
-        $batchUuid = (string) Str::uuid();
-        $brand->logModelAction(
-            event: 'update',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated brand: {$brand->name} [$brand->id]",
-            properties: [
-                'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
-            ],
-        );
+            DB::commit();
+            //Log the update of the brand
+            $batchUuid = (string) Str::uuid();
+            $brand->logModelAction(
+                event: 'update',
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated brand: {$brand->name} [$brand->id]",
+                properties: [
+                    'ip' => request()->ip(),
+                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                ],
+            );
 
-        return redirect()->route('brands.index')->with('success', 'Brand updated successfully.');
-        // } catch (\Exception $e) {
-        //     DB::rollBack();
-        //     return back()->with('error', 'Something went wrong: ' . $e->getMessage());
-        // }
+            return redirect()->route('brands.index')->with('success', 'Brand updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
     }
 
     public function destroy(Brand $brand)

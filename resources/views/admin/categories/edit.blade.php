@@ -124,7 +124,8 @@
                                         </div>
 
                                         <div class="w-full">
-                                            <label class="form-label">{{ translate('Order Level') }}</label>
+                                            <label class="form-label">{{ translate('Order Level') }}</label> <span
+                                                class="text-danger">*</span>
                                             <input class="input @error('order_level') border-red-500 @enderror"
                                                 name="order_level" type="number"
                                                 value="{{ old('order_level', $category->order_level) }}" />

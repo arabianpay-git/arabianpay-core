@@ -50,7 +50,7 @@
                                     <div class="w-full">
                                         <div class="flex items-baseline flex-wrap gap-2.5">
                                             <label class="form-label flex items-center gap-1 max-w-56">
-                                                {{ translate('Order Level') }}
+                                                {{ translate('Order Level') }} <span class="text-danger">*</span>
                                             </label>
                                             <input class="input @error('order_level') border-red-500 @enderror"
                                                 name="order_level" type="number" value="{{ old('order_level') }}" />

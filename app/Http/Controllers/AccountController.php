@@ -525,7 +525,6 @@ class AccountController extends Controller
         ];
 
         if (empty($merchant->goverment_data) && $merchant->cr_number) {
-
             $wathqData = $this->wathqService->fetchCrData($merchant->cr_number);
 
             if ($wathqData) {
@@ -534,13 +533,24 @@ class AccountController extends Controller
             }
         }
 
-        $supplierBank = SupplierBank::where('user_id', $merchant->user_id)->first();
+        // ------------------------------
+        // Get all IBANs for main user + sub-users
+        // ------------------------------
+        $mainUserId = $merchant->user->main_user_id ?: $merchant->user_id;
+
+        $relatedUserIds = \App\Models\User::where(function ($q) use ($mainUserId) {
+            $q->where('id', $mainUserId)->orWhere('main_user_id', $mainUserId);
+        })->pluck('id');
+
+        $supplierBanks = SupplierBank::whereIn('user_id', $relatedUserIds)
+            ->with('user') // eager load user to get first_name, last_name, business_name
+            ->get();
 
         return view('admin.accounts.supplier-profile', array_merge([
             'merchant'         => $merchant,
             'businessCategory' => $businessCategory,
             'sellerShop'       => $sellerShop,
-            'supplierBank'     => $supplierBank,
+            'supplierBanks'    => $supplierBanks,
         ], $stats));
     }
 

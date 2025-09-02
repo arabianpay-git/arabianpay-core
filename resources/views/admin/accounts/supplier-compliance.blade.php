@@ -34,87 +34,84 @@
                         <div class="card-body space-y-6">
 
                             @php
-
+                                // ------------------------------
+                                // 1. Global compliance documents
+                                // ------------------------------
                                 $compliance = [];
 
                                 $approvals = App\Models\Approval::where('user_id', $merchant->user_id)->get();
-
                                 foreach ($approvals as $approval) {
                                     $compliance[] = [
                                         'title' => translate('Supplier Contract'),
                                         'file' => $approval->contract,
-                                        'status' => 'submitted',
                                     ];
                                 }
 
-                                // Add fixed compliance documents
-                                $compliance = array_merge($compliance, [
+                                $fixedDocuments = [
                                     [
                                         'title' => translate('CR File'),
                                         'file' => supplierMedia($merchant->registration_number_form),
-                                        'status' => null,
                                     ],
                                     [
                                         'title' => translate('VAT Register File'),
                                         'file' => supplierMedia($merchant->vat_register_file),
-                                        'status' => null,
                                     ],
                                     [
                                         'title' => translate('Return Policy File'),
                                         'file' => supplierMedia($merchant->return_policy_file),
-                                        'status' => null,
                                     ],
                                     [
                                         'title' => translate('Delivery Policy File'),
                                         'file' => supplierMedia($merchant->exchange_policy_file),
-                                        'status' => null,
                                     ],
                                     [
                                         'title' => translate('Cancel Policy File'),
                                         'file' => supplierMedia($merchant->cancel_policy_file),
-                                        'status' => null,
                                     ],
                                     [
                                         'title' => translate('ID Image'),
                                         'file' => supplierMedia($merchant->owner_iqama_image),
-                                        'status' => null,
                                     ],
-                                    [
-                                        'title' => translate('IBAN Certificate'),
-                                        'file' => supplierMedia(optional($supplierBank)->iban_certificate),
-                                        'status' => null,
-                                    ],
-                                ]);
+                                ];
+
+                                $compliance = array_merge($compliance, $fixedDocuments);
 
                                 if ($merchant->is_manager) {
                                     $compliance[] = [
                                         'title' => translate('Company Approval Letter for Manager'),
                                         'file' => supplierMedia($merchant->manager_approval),
-                                        'status' => null,
                                     ];
                                 }
+
+                                // ------------------------------
+                                // 2. IBAN Certificates
+                                // ------------------------------
+                                $mainUserId = $merchant->user->main_user_id ?: $merchant->user_id;
+
+                                $relatedUserIds = \App\Models\User::where(function ($q) use ($mainUserId) {
+                                    $q->where('id', $mainUserId)->orWhere('main_user_id', $mainUserId);
+                                })->pluck('id');
+
+                                $ibanBanks = App\Models\SupplierBank::whereIn('user_id', $relatedUserIds)->get();
                             @endphp
 
-
-
+                            {{-- Render global compliance documents --}}
                             @foreach ($compliance as $item)
                                 <div
-                                    class="border p-4 mt-2 rounded-xl shadow-sm bg-white dark:bg-gray-800 transition-all duration-200 hover:shadow-lg">
+                                    class="border p-4 mt-2 rounded-xl shadow-sm bg-white dark:bg-gray-800 hover:shadow-lg transition-all">
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center space-x-3">
                                             @if ($item['file'])
                                                 <img src="{{ asset('assets/media/images/check.png') }}" alt="checked"
                                                     class="w-6 h-6">
                                             @endif
-
                                             <div>
                                                 <h4 class="text-lg font-medium text-gray-800 dark:text-white">
-                                                    {{ $item['title'] }}
-                                                </h4>
+                                                    {{ $item['title'] }}</h4>
 
+                                                {{-- Show contract dates if Supplier Contract --}}
                                                 @if ($item['title'] === translate('Supplier Contract'))
                                                     @php
-
                                                         $startDate =
                                                             $contract && $contract->created_at
                                                                 ? Carbon\Carbon::parse($contract->created_at)->format(
@@ -131,15 +128,13 @@
                                                     @endphp
 
                                                     @if ($startDate)
-                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
-                                                            Contract Start Date: {{ $startDate }}
-                                                        </p>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300">Contract Start
+                                                            Date: {{ $startDate }}</p>
                                                     @endif
 
                                                     @if ($endDate)
-                                                        <p class="text-sm text-gray-600 dark:text-gray-300">
-                                                            Contract End Date: {{ $endDate }}
-                                                        </p>
+                                                        <p class="text-sm text-gray-600 dark:text-gray-300">Contract End
+                                                            Date: {{ $endDate }}</p>
                                                     @endif
                                                 @endif
                                             </div>
@@ -147,7 +142,7 @@
 
                                         @if ($item['file'])
                                             <a href="{{ asset($item['file']) }}" target="_blank"
-                                                class="inline-block px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition duration-150">
+                                                class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition duration-150">
                                                 {{ translate('View') }}
                                             </a>
                                         @else
@@ -157,6 +152,63 @@
                                     </div>
                                 </div>
                             @endforeach
+
+                            {{-- Render IBAN certificates --}}
+                            @if ($ibanBanks->isEmpty())
+                                <div
+                                    class="border border-red-300 p-4 mt-4 rounded-xl shadow-sm bg-white dark:bg-gray-800 text-center">
+                                    <span
+                                        class="text-red-500 text-sm italic">{{ translate('No IBAN Certificates uploaded') }}</span>
+                                </div>
+                            @else
+                                <div
+                                    class="border border-gray-200 dark:border-gray-700 p-5 mt-4 rounded-xl shadow-sm bg-gray-50 dark:bg-gray-900 transition hover:shadow-md">
+                                    <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
+                                        {{ translate('IBAN Certificates') }}
+                                    </h4>
+
+                                    <div class="space-y-4">
+                                        @foreach ($relatedUserIds as $userId)
+                                            @php
+                                                $user = \App\Models\User::find($userId);
+                                                $userBanks = $ibanBanks->where('user_id', $userId);
+                                            @endphp
+
+                                            <div
+                                                class="border mb-3 border-gray-300 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm transition hover:shadow-md">
+                                                <h5 class="text-md font-semibold text-gray-800 dark:text-white mb-2">
+                                                    {{ $user->first_name }} {{ $user->last_name }}
+                                                    ({{ $user->business_name ?? translate('N/A') }})
+                                                </h5>
+
+                                                <div class="space-y-2">
+                                                    @forelse ($userBanks as $bank)
+                                                        <div
+                                                            class="flex justify-between items-center p-2 border rounded-md bg-gray-50 dark:bg-gray-700">
+                                                            <span class="font-medium text-gray-800 dark:text-white">
+                                                                {{ translate('IBAN') }}: {{ $bank->iban ?? 'N/A' }}
+                                                            </span>
+                                                            @if ($bank->iban_certificate)
+                                                                <a href="{{ asset(supplierMedia($bank->iban_certificate)) }}"
+                                                                    target="_blank"
+                                                                    class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition">
+                                                                    {{ translate('View') }}
+                                                                </a>
+                                                            @else
+                                                                <span
+                                                                    class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>
+                                                            @endif
+                                                        </div>
+                                                    @empty
+                                                        <div class="text-red-500 text-sm italic">
+                                                            {{ translate('Not uploaded') }}</div>
+                                                    @endforelse
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    </div>
+                                </div>
+                            @endif
 
                         </div>
                     </div>
