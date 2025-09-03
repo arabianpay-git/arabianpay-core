@@ -266,23 +266,25 @@
     </div>
 </div>
 
-
 @push('scripts')
     <script>
         $(function() {
             const prefix = @json($inputId);
-            const multipleSelect = @json($isMultipleSelect);
             const pdfImage = @json($pdfImage);
+            const isMultiple = @json($isMultipleSelect);
+            const mediaName = 'media'; // Change if needed
+
+            const $grid = $(`#${prefix}_grid`);
+            const $spinner = $(`#${prefix}_loadingSpinner`);
+            const $previewContainer = $(`#${prefix}_previewCard`);
+            const $mainPicker = $(`.media-picker[data-input-id="${prefix}"]`);
+            const $displayInput = $(`#${prefix}_display`);
+            const $fileInput = $(`#${prefix}_fileInput`);
+
             const mediaRefreshUrl = "{{ route('media.refresh') }}";
 
-            // You need to define mediaName for input hidden fields
-            // Make sure to replace 'media' below with the actual input name if different
-            const mediaName = 'media';
-
-            // Refresh media grid function
+            // --- Refresh Media Grid ---
             function refreshMediaGrid() {
-                const $grid = $(`#${prefix}_grid`);
-                const $spinner = $(`#${prefix}_loadingSpinner`);
                 $spinner.removeClass('hidden');
 
                 $.ajax({
@@ -295,9 +297,12 @@
                         $spinner.addClass('hidden');
                         if (res.html) {
                             $grid.html(res.html);
-
-                            // Reset any previously selected cards on reload
                             $grid.find('.media-card').removeClass('selected');
+
+                            // Sync selections after DOM update
+                            setTimeout(() => {
+                                syncSelectionsWithPreview();
+                            }, 100);
                         } else {
                             $grid.html('<p class="text-center text-gray-500">No media found.</p>');
                         }
@@ -324,8 +329,42 @@
                 refreshMediaGrid();
             });
 
-            // Upload files
-            $(`#${prefix}_fileInput`).on('change', function(e) {
+            // --- Sync Grid Selections with Preview ---
+            function syncSelectionsWithPreview() {
+                const selectedUrls = $mainPicker.find(`input[name="${mediaName}${isMultiple ? '[]' : ''}"]`).map(
+                    function() {
+                        return this.value;
+                    }).get();
+
+                $grid.find('.media-card').each(function() {
+                    const url = $(this).data('url');
+                    if (selectedUrls.includes(url)) {
+                        $(this).addClass('selected');
+                    }
+                });
+            }
+
+            // --- Select Media Card ---
+            $(document).on('click', `#${prefix}_grid .media-card`, function() {
+                if (!isMultiple) {
+                    // Single select: clear previous and select clicked card
+                    $grid.find('.media-card').removeClass('selected');
+                    $(this).addClass('selected');
+                } else {
+                    // Multiple select: toggle selection
+                    $(this).toggleClass('selected');
+                }
+            });
+
+            // --- External Refresh Trigger ---
+            window.addEventListener('refresh.media', function(e) {
+                if (e.detail && e.detail.inputId === prefix) {
+                    refreshMediaGrid();
+                }
+            });
+
+            // --- Upload Media ---
+            $fileInput.on('change', function(e) {
                 const files = e.target.files;
                 if (!files.length) return;
 
@@ -361,19 +400,19 @@
                             $(`#${prefix}_uploadProgressContainer`).addClass('hidden');
                         }, 500);
 
-                        if (res.success) {
+                        if (res.success && res.media.length) {
                             Swal.fire('Uploaded!', res.message || 'File(s) uploaded.',
                                 'success');
 
-                            // Refresh media grid using the custom event
+                            // Trigger refresh
                             window.dispatchEvent(new CustomEvent('refresh.media', {
                                 detail: {
                                     inputId: prefix
                                 }
                             }));
 
-                            // Clear input to allow re-upload of same files
-                            $(`#${prefix}_fileInput`).val('');
+                            // Clear file input
+                            $fileInput.val('');
                         }
                     },
                     error: function() {
@@ -383,96 +422,85 @@
                 });
             });
 
-            // Select media card in grid
-            $(document).on('click', `#${prefix}_grid .media-card`, function() {
-                const $this = $(this);
-                if (!multipleSelect) {
-                    $(`#${prefix}_grid .media-card`).removeClass('selected');
-                    $this.addClass('selected');
-                } else {
-                    $this.toggleClass('selected');
-                }
-            });
-
-            // Confirm media selection from modal
-            window.confirmMediaSelection = function(prefix, mediaNameParam, isMultiple) {
+            // --- Confirm Media Selection ---
+            window.confirmMediaSelection = function(prefix, mediaName, isMultiple) {
                 const selected = $(`#${prefix}_grid .media-card.selected`);
-
                 if (!selected.length) {
                     Swal.fire('No Selection', 'Please select at least one media item.', 'info');
                     return;
                 }
 
-                const values = [];
-                const previews = [];
+                if (!isMultiple) {
+                    $mainPicker.find(`input[name="${mediaName}"]`).remove();
+                    $previewContainer.empty();
+                }
 
                 selected.each(function() {
                     const url = $(this).data('url');
                     const name = $(this).data('name');
-                    const mime = $(this).data('mime_type');
-                    const size = $(this).data('size');
-                    const isVideo = mime && mime.startsWith('video');
+                    const mime = $(this).data('mime');
+
+                    const isVideo = mime.startsWith('video');
                     const isPdf = mime === 'application/pdf';
 
-                    values.push(url);
+                    if (isMultiple && $mainPicker.find(`input[value="${url}"]`).length) return;
 
-                    let previewHtml = '';
-                    if (isPdf) {
-                        previewHtml = `<img src="${pdfImage}" alt="PDF" class="preview-thumb">`;
-                    } else if (isVideo) {
-                        previewHtml =
-                            `<video class="preview-thumb" src="${url}" controls muted preload="metadata"></video>`;
-                    } else {
-                        previewHtml = `<img src="${url}" alt="preview" class="preview-thumb">`;
-                    }
+                    const input =
+                        `<input type="hidden" name="${mediaName}${isMultiple ? '[]' : ''}" value="${url}">`;
+                    $mainPicker.append(input);
 
-                    previews.push(`
-                    <div class="preview-card" data-url="${url}">
-                        ${previewHtml}
-                        <button type="button" class="remove-btn">&times;</button>
-                        <div class="preview-info">
-                            <div class="name">${name}</div>
-                            <div class="size">${(size / 1024).toFixed(1)} KB</div>
-                        </div>
+                    const preview = isPdf ?
+                        `<img class="media-thumb" src="${pdfImage}" alt="PDF Preview">` :
+                        isVideo ?
+                        `<video class="media-thumb" src="${url}" controls muted preload="metadata" style="max-height:160px;"></video>` :
+                        `<img class="media-thumb" src="${url}" alt="Preview">`;
+
+                    $previewContainer.append(`
+                    <div class="media-card relative" style="width: 160px;" data-url="${url}">
+                        ${preview}
+                        <div class="media-info"><div class="name">${name}</div></div>
+                        <button type="button" class="remove-btn absolute top-1 right-1 bg-white text-black rounded-full text-xs w-5 h-5 leading-5 text-center">&times;</button>
                     </div>
                 `);
                 });
 
-                const $mainPicker = $(`.media-picker[data-input-id="${prefix}"]`);
-                $mainPicker.find(`input[type=hidden][name='${mediaNameParam}${isMultiple ? "[]" : ""}']`)
-                    .remove();
-
-                values.forEach(val => {
-                    $('<input>').attr({
-                        type: 'hidden',
-                        name: `${mediaNameParam}${isMultiple ? '[]' : ''}`,
-                        value: val,
-                    }).appendTo($mainPicker);
-                });
-
-                $(`#${prefix}_display`).val(isMultiple ? values.map(v => v.split('/').pop()).join(', ') :
-                    values[0].split('/').pop());
-                $(`#${prefix}_previewCard`).html(previews.join(''));
-            };
-
-            // Remove preview card & corresponding input on clicking remove button
-            $(document).on('click', `#${prefix}_previewCard .remove-btn`, function() {
-                const $card = $(this).closest('.preview-card');
-                const urlToRemove = $card.data('url');
-                $card.remove();
-
-                const $mainPicker = $(`.media-picker[data-input-id="${prefix}"]`);
-                $mainPicker.find(`input[type=hidden][value="${urlToRemove}"]`).remove();
-
-                const remaining = $mainPicker.find(
-                        `input[type=hidden][name='${mediaName}${multipleSelect ? "[]" : ""}']`)
+                // Update display field
+                const names = $mainPicker.find(`input[name="${mediaName}${isMultiple ? '[]' : ''}"]`)
                     .map(function() {
-                        return this.value;
+                        return this.value.split('/').pop();
                     }).get();
 
-                $(`#${prefix}_display`).val(multipleSelect ? remaining.map(v => v.split('/').pop()).join(
-                    ', ') : (remaining[0] || ''));
+                $displayInput.val(names.join(', '));
+            };
+
+            // --- Remove Preview and Unselect in Modal ---
+            $(document).on('click', `.media-picker[data-input-id="${prefix}"] .remove-btn`, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+
+                const $card = $(this).closest('.media-card');
+                const url = $card.data('url');
+
+                $card.remove();
+                $mainPicker.find(`input[type="hidden"][value="${url}"]`).remove();
+
+                // Unselect in grid
+                $grid.find(`.media-card`).each(function() {
+                    if ($(this).data('url') === url) {
+                        $(this).removeClass('selected');
+                    }
+                });
+
+                // Update display
+                const names = $previewContainer.find('.media-card').map(function() {
+                    return $(this).data('url').split('/').pop();
+                }).get();
+
+                $displayInput.val(names.join(', '));
             });
+
+            // Initial load
+            refreshMediaGrid();
         });
     </script>
 @endpush
