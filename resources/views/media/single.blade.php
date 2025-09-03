@@ -57,33 +57,18 @@
 </div>
 
 <!-- Preview Card -->
-@php
-    $mediaUrl = $inputValue ? getMediaURL($inputValue) : '';
-@endphp
-
-<!-- Preview Card -->
 <div class="mt-3 {{ $inputValue ? '' : 'hidden' }}" id="{{ $inputId }}_previewCard">
-    <div class="media-card w-40" data-url="{{ $mediaUrl }}">
-        @if ($isPdf)
-            <img id="{{ $inputId }}_previewImage" class="media-thumb" src="{{ $pdfImage }}"
-                alt="PDF Preview">
-        @elseif ($isVideo)
-            <video id="{{ $inputId }}_previewVideo" class="media-thumb" controls muted preload="metadata"
-                src="{{ $mediaUrl }}" style="max-height: 160px; width: 100%;"></video>
-        @else
-            <img id="{{ $inputId }}_previewImage" class="media-thumb" src="{{ $mediaUrl }}"
-                alt="Media Preview">
-        @endif
+    <div class="media-card w-40">
+        <img id="{{ $inputId }}_previewImage" class="media-thumb hidden" alt="Preview">
+        <video id="{{ $inputId }}_previewVideo" class="media-thumb" controls muted preload="metadata"
+            style="max-height: 160px; width: 100%;" hidden></video>
 
         <div class="media-info">
             <div id="{{ $inputId }}_previewName" class="name">{{ basename($inputValue) }}</div>
-            <div id="{{ $inputId }}_previewSize" class="size text-sm text-gray-500">
-                {{-- Optionally calculate file size --}}
-            </div>
+            <div id="{{ $inputId }}_previewSize" class="size text-sm text-gray-500"></div>
         </div>
     </div>
 </div>
-
 
 @include('media.modal', ['inputId' => $inputId])
 
