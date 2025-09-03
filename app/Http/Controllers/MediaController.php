@@ -63,6 +63,26 @@ class MediaController extends Controller
         return response()->json(['media' => $media]);
     }
 
+    public function refresh(Request $request)
+    {
+        $limit = $request->get('limit', 18);
+
+        if (in_array(Auth::user()->user_type, ['admin', 'employee'])) {
+            $mediaQuery = Media::with('user')
+                ->where('mime_type', '!=', 'application/pdf')
+                ->latest();
+        } else {
+            $mediaQuery = Media::with('user')
+                ->where('user_id', Auth::id())
+                ->where('mime_type', '!=', 'application/pdf')
+                ->latest();
+        }
+
+        $media = $mediaQuery->take($limit)->get();
+        $html  = view('media._grid', compact('media'))->render();
+
+        return response()->json(['html' => $html]);
+    }
 
     public function upload(Request $request)
     {

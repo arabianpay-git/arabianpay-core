@@ -419,6 +419,7 @@ Route::group([
                 Route::get('lazy-load',      'lazyLoad')->name('media.lazyLoad');
                 Route::post('upload',        'upload')->name('media.upload');
                 Route::post('bulk-delete',   'bulkDelete')->name('media.bulkDelete');
+                Route::get('refresh', 'refresh')->name('media.refresh');
             });
 
             Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
