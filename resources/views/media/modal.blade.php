@@ -11,7 +11,7 @@
             <div class="flex items-center gap-4">
 
                 <!-- Upload Button -->
-                <button type="button" class="btn btn-primary upload-btn flex items-center gap-2"
+                <button type="button" class="btn btn-primary btn-outline upload-btn flex items-center gap-2"
                     onclick="document.getElementById('{{ $inputId }}_fileInput').click()">
                     <i class="ki-filled ki-file-up"></i> Upload File
                 </button>

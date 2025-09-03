@@ -80,7 +80,7 @@
 
     .preview-card {
         width: 160px;
-        margin: 10px;
+        margin: 10px 0;
         position: relative;
     }
 
@@ -111,7 +111,7 @@
     .preview-info {
         padding: 8px;
         font-size: 12px;
-        text-align: center;
+        /* text-align: center; */
     }
 
     .preview-info .name {
@@ -209,53 +209,63 @@
 </div>
 
 <!-- Modal -->
-<div class="modal" id="{{ $inputId }}_modal" data-modal="true">
-    <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content border-0 shadow-lg">
-            <div class="modal-header">
-                <h5 class="modal-title">Select Media</h5>
-                <button type="button" class="btn btn-primary"
-                    onclick="$('#{{ $inputId }}_fileInput').click()">Upload File</button>
-                <input type="file" id="{{ $inputId }}_fileInput" accept="image/*,video/*,.pdf" multiple hidden>
-                <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0"
-                    data-modal-dismiss="true">
-                    <i class="ki-filled ki-cross"></i>
-                </button>
-            </div>
+<div class="modal" data-modal="true" id="{{ $inputId }}_modal">
+    <div class="modal-content max-w-[70%] top-[5%]">
 
-            <div class="modal-body">
+        <!-- Modal Header -->
+        <div class="modal-header py-4 px-5 flex items-center justify-between gap-3 border-b border-gray-200">
+            <h5 class="modal-title text-lg font-semibold text-gray-800">
+                <i class="fas fa-photo-video mr-2 text-primary"></i>
+                Select Media
+            </h5>
+
+            <div class="flex items-center gap-4">
+                <!-- Upload Button -->
+                <button type="button" class="btn btn-primary btn-outline upload-btn flex items-center gap-2"
+                    onclick="document.getElementById('{{ $inputId }}_fileInput').click()">
+                    <i class="ki-filled ki-file-up"></i> Upload File
+                </button>
+
+                <!-- Hidden File Input -->
+                <input type="file" id="{{ $inputId }}_fileInput" accept="image/*,video/*,.pdf,.svg" multiple
+                    hidden>
+
                 <!-- Upload Progress Bar -->
-                <div id="{{ $inputId }}_uploadProgressContainer" class="w-full max-w-md mb-4 hidden"
-                    style="background: #eee; padding: 8px; border-radius: 4px;">
-                    <div class="bg-gray-200 rounded h-2 overflow-hidden" style="background: #ccc;">
+                <div id="{{ $inputId }}_uploadProgressContainer" class="w-full max-w-md hidden">
+                    <div class="bg-gray-200 rounded h-2 overflow-hidden">
                         <div id="{{ $inputId }}_uploadProgressBar"
-                            class="bg-primary h-full w-0 transition-all duration-300 ease-in-out"
-                            style="background: #007bff; height: 8px; width: 0;"></div>
+                            class="bg-primary h-full w-0 transition-all duration-300 ease-in-out"></div>
                     </div>
                     <small id="{{ $inputId }}_uploadProgressText"
                         class="text-sm text-gray-600">Uploading...</small>
                 </div>
+            </div>
+        </div>
 
-                <!-- Media Grid -->
-                <div class="media-grid" id="{{ $inputId }}_grid">
-                    {{-- media will be loaded here by JS on refresh --}}
-                </div>
-
-                <div id="{{ $inputId }}_loadingSpinner" class="text-center hidden mt-3">
-                    <div class="spinner-border text-primary"></div>
-                </div>
+        <!-- Modal Body -->
+        <div class="modal-body p-0 pb-5 max-h-[60vh] overflow-auto bg-white">
+            <div class="media-grid p-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"
+                id="{{ $inputId }}_grid">
+                {{-- Media items will be dynamically injected here --}}
             </div>
 
-            <div class="modal-footer justify-end border-0"
-                style="margin-right: 3rem; padding-bottom: 1rem; display: flex;">
-                <button type="button" class="btn btn-primary"
-                    onclick="confirmMediaSelection('{{ $inputId }}', '{{ $mediaName }}', {{ $isMultipleSelect ? 'true' : 'false' }})"
-                    data-modal-dismiss="true">Select</button>
-                <button type="button" class="btn btn-light" data-modal-dismiss="true">Close</button>
+            <!-- Loading Spinner -->
+            <div id="{{ $inputId }}_loadingSpinner" class="text-center hidden mt-4">
+                <div class="spinner-border text-primary"></div>
             </div>
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer px-5 pb-4 flex justify-end gap-3">
+            <button type="button" class="btn btn-primary"
+                onclick="confirmMediaSelection('{{ $inputId }}', '{{ $mediaName }}', {{ $isMultipleSelect ? 'true' : 'false' }})"
+                data-modal-dismiss="true">Select</button>
+
+            <button type="button" class="btn btn-secondary" data-modal-dismiss="true">Close</button>
         </div>
     </div>
 </div>
+
 
 @push('scripts')
     <script>

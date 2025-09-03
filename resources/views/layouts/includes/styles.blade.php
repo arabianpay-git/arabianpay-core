@@ -144,13 +144,13 @@
 
     /* Preview Styling */
     .preview-card {
-        display: flex;
+        display: block;
         align-items: center;
         border: 1px solid #ddd;
         border-radius: 8px;
         background-color: #fff;
         box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-        padding: 10px;
+        /* padding: 10px; */
     }
 
     .preview-image {
