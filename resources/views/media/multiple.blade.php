@@ -169,27 +169,28 @@
         @endif
     </div>
 
-    <div class="mt-3 flex flex-wrap gap-3" id="{{ $inputId }}_previewCard">
+    <div class="mt-3 flex flex-wrap gap-3" id="{{ $inputId }}_previewCard" style="margin-top: 10px">
         @foreach ($inputValue as $val)
             @if ($val)
-                <div class="media-card relative" style="width: 160px;" data-url="{{ $val }}">
-                    @php
-                        $ext = strtolower(pathinfo($val, PATHINFO_EXTENSION));
-                        $isVideo = in_array($ext, ['mp4', 'webm', 'ogg']);
-                        $isPdf = $ext === 'pdf';
-                    @endphp
+                @php
+                    $url = getMediaURL($val);
+                    $ext = strtolower(pathinfo($url, PATHINFO_EXTENSION));
+                    $isVideo = in_array($ext, ['mp4', 'webm', 'ogg']);
+                    $isPdf = $ext === 'pdf';
+                @endphp
 
+                <div class="media-card relative" style="width: 160px;" data-url="{{ $url }}">
                     @if ($isPdf)
                         <img class="media-thumb" src="{{ $pdfImage }}" alt="PDF Preview">
                     @elseif ($isVideo)
-                        <video class="media-thumb" src="{{ $val }}" controls muted preload="metadata"
+                        <video class="media-thumb" src="{{ $url }}" controls muted preload="metadata"
                             style="max-height:160px;"></video>
                     @else
-                        <img class="media-thumb" src="{{ $val }}" alt="Preview">
+                        <img class="media-thumb" src="{{ $url }}" alt="Preview">
                     @endif
 
                     <div class="media-info">
-                        <div class="name">{{ basename($val) }}</div>
+                        <div class="name">{{ basename($url) }}</div>
                     </div>
                     <button
                         class="remove-btn absolute top-1 right-1 bg-white text-black rounded-full text-xs w-5 h-5 leading-5 text-center">&times;</button>
