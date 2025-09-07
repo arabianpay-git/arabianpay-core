@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Brand;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
@@ -16,6 +17,37 @@ class BrandController extends Controller
         $brands = Brand::select('brands.*')->paginate(10);
         return view('admin.brands.index', compact('brands'));
     }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('query', '');
+
+        // Get all brands (or filtered encrypted fields)
+        $brands = Brand::all();
+
+        // Filter results manually for search
+        $brands = $brands->filter(function ($brand) use ($query) {
+            return str_contains(strtolower($brand->name), strtolower($query));
+        });
+
+        // Paginate manually
+        $page = $request->input('page', 1);
+        $perPage = 10;
+        $paginated = new LengthAwarePaginator(
+            $brands->forPage($page, $perPage),
+            $brands->count(),
+            $perPage,
+            $page,
+            ['path' => url()->current(), 'query' => $request->query()]
+        );
+
+        if ($request->ajax()) {
+            return view('admin.brands.partials.table', ['brands' => $paginated])->render();
+        }
+
+        return view('admin.brands.index', ['brands' => $paginated]);
+    }
+
 
     public function create()
     {

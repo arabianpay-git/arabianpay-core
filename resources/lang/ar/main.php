@@ -910,4 +910,6 @@ return [
     'Reports' => 'التقارير',
     'Refunds' => 'المبالغ المستردة',
     'IBAN Certificates' => 'شهادات IBAN',
+    'Search categories' => 'بحث في الفئات',
+    'Search brands' => 'بحث في العلامات التجارية'
 ];

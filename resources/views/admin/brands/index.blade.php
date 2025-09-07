@@ -37,8 +37,9 @@
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#team_crew_table"
-                                        placeholder="{{ translate('Search users') }}" type="text" value="" />
+                                    <input id="search_input" type="text" placeholder="{{ translate('Search brands') }}"
+                                        value="{{ request()->input('query', '') }}" />
+
                                 </label>
                             </div>
                         </div>
@@ -169,3 +170,44 @@
         <!-- End of Container -->
     </main>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let searchInput = document.getElementById('search_input');
+            let tableContainer = document.getElementById('team_crew_table');
+
+            const fetchData = (url = null) => {
+                const queryParam = `query=${encodeURIComponent(searchInput.value)}`;
+                if (!url) {
+                    url = `{{ route('brands.search') }}?${queryParam}`;
+                } else {
+                    url = url.includes('?') ? `${url}&${queryParam}` : `${url}?${queryParam}`;
+                }
+
+                fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(html => tableContainer.innerHTML = html);
+            }
+
+            // Debounced search
+            let timeout = null;
+            searchInput.addEventListener('keyup', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fetchData(), 300);
+            });
+
+            // Pagination links
+            tableContainer.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A' && e.target.closest('.pagination')) {
+                    e.preventDefault();
+                    fetchData(e.target.href);
+                }
+            });
+        });
+    </script>
+@endpush

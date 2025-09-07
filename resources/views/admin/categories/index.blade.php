@@ -37,8 +37,9 @@
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#team_crew_table"
-                                        placeholder="{{ translate('Search users') }}" type="text" value="" />
+                                    <input id="search_input" type="text"
+                                        placeholder="{{ translate('Search categories') }}" />
+
                                 </label>
                             </div>
                         </div>
@@ -130,7 +131,6 @@
                                         @foreach ($categories as $category)
                                             <tr>
                                                 <td class="text-center">{{ $loop->iteration }}</td>
-
                                                 <td>
                                                     @if ($category->icon)
                                                         <img src="{{ asset($category->icon) }}"
@@ -140,24 +140,17 @@
                                                         <span class="text-gray-400">{{ translate('N/A') }}</span>
                                                     @endif
                                                 </td>
-
                                                 <td>{{ $category->name }}</td>
-
                                                 <td>
                                                     @if ($category->unit)
                                                         @foreach ($category->unit as $unit)
                                                             <button type="button"
-                                                                class="badge badge-sm badge-outline badge-success mt-1">
-                                                                {{ $unit }}
-                                                            </button>
+                                                                class="badge badge-sm badge-outline badge-success mt-1">{{ $unit }}</button>
                                                         @endforeach
                                                     @endif
                                                 </td>
-
                                                 <td>{{ $category->parent?->name ?? '—' }}</td>
-
                                                 <td>{{ $category->order_level ?? 0 }}</td>
-
                                                 <td>
                                                     @if ($category->featured)
                                                         <span
@@ -167,14 +160,12 @@
                                                             class="badge badge-sm badge-outline badge-danger">{{ translate('No') }}</span>
                                                     @endif
                                                 </td>
-
                                                 <td>{{ $category->created_at->format('d M Y') }}</td>
-
                                                 <td>
                                                     <div class="flex gap-1">
                                                         @can('category.update')
                                                             <a class="btn btn-sm btn-icon btn-clear btn-primary"
-                                                                href="{{ route('categories.edit', $category->id) }}">
+                                                                href="{{ route('categories.edit', ['category' => $category->id, 'page' => request()->get('page', 1)]) }}">
                                                                 <i class="ki-filled ki-notepad-edit"> </i>
                                                             </a>
                                                         @endcan
@@ -202,3 +193,38 @@
         <!-- End of Container -->
     </main>
 @endsection
+
+@push('scripts')
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            let searchInput = document.getElementById('search_input');
+            let tableContainer = document.getElementById('team_crew_table');
+
+            const fetchData = (url = null) => {
+                url = url || `{{ route('categories.search') }}?query=${searchInput.value}`;
+                fetch(url, {
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(response => response.text())
+                    .then(html => tableContainer.innerHTML = html);
+            }
+
+            // Search on keyup with debounce
+            let timeout = null;
+            searchInput.addEventListener('keyup', function() {
+                clearTimeout(timeout);
+                timeout = setTimeout(() => fetchData(), 300);
+            });
+
+            // Handle pagination clicks
+            tableContainer.addEventListener('click', function(e) {
+                if (e.target.tagName === 'A' && e.target.closest('.pagination')) {
+                    e.preventDefault();
+                    fetchData(e.target.href);
+                }
+            });
+        });
+    </script>
+@endpush

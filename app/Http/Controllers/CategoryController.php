@@ -18,6 +18,38 @@ class CategoryController extends Controller
         return view('admin.categories.index', compact('categories'));
     }
 
+    public function search(Request $request)
+    {
+        $query = $request->input('query', '');
+
+        // Get all categories
+        $categories = Category::with('parent')->get();
+
+        // Filter for encrypted fields or any other field
+        $categories = $categories->filter(function ($category) use ($query) {
+            $q = strtolower($query);
+            return str_contains(strtolower($category->name), $q)
+                || str_contains(strtolower($category->parent?->name ?? ''), $q);
+        });
+
+        // Paginate filtered results
+        $page = $request->input('page', 1);
+        $perPage = 10;
+        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $categories->forPage($page, $perPage),
+            $categories->count(),
+            $perPage,
+            $page,
+            ['path' => url()->current(), 'query' => $request->query()]
+        );
+
+        if ($request->ajax()) {
+            return view('admin.categories.partials.table', ['categories' => $paginated])->render();
+        }
+
+        return view('admin.categories.index', ['categories' => $paginated]);
+    }
+
     public function create()
     {
         $categories = Category::all();

@@ -191,10 +191,11 @@
                                                     <div class="flex gap-1">
                                                         @can('product.update')
                                                             <a class="btn btn-sm btn-icon btn-clear btn-primary"
-                                                                href="{{ route('products.edit', $product->id) }}">
+                                                                href="{{ route('products.edit', ['product' => $product->id, 'page' => request()->get('page', 1)]) }}">
                                                                 <i class="ki-filled ki-notepad-edit"> </i>
                                                             </a>
                                                         @endcan
+
                                                         @can('product.delete')
                                                             <a class="btn btn-sm btn-icon btn-clear btn-danger delete-btn"
                                                                 href="{{ route('products.destroy', $product->id) }}">

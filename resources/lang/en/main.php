@@ -935,4 +935,6 @@ return [
     'Reports' => 'Reports',
     'Refunds' => 'Refunds',
     'IBAN Certificates' => 'IBAN Certificates',
+    'Search categories' => 'Search categories',
+    'Search brands' => 'Search brands',
 ];

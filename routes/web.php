@@ -144,6 +144,8 @@ Route::group([
                 ->name('departments.access');
 
             Route::get('/get-category-units/{id}', [CategoryController::class, 'getUnits']);
+            Route::get('categories/search', [CategoryController::class, 'search'])->name('categories.search');
+            Route::get('brands/search', [BrandController::class, 'search'])->name('brands.search');
 
             //
             // Master-data CRUD

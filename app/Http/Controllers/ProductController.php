@@ -110,7 +110,7 @@ class ProductController extends Controller
                 event: 'create',
                 description: Auth::user()->first_name . " " . Auth::user()->last_name . " created product: {$product->name} [$product->id]",
                 properties: [
-                    'reason' => $request->input('reason', null), // reson can be optional
+                    'reason' => $request->input('reason', null),
                     'ip' => request()->ip(),
                     'batch_uuid' => $batchUuid,
                 ],
@@ -210,13 +210,14 @@ class ProductController extends Controller
                 event: 'update',
                 description: Auth::user()->first_name . " " . Auth::user()->last_name . " update product: {$product->name} [$product->id]",
                 properties: [
-                    'reason' => $reason ?? null, // reson can be optional
+                    'reason' => $reason ?? null,
                     'ip' => request()->ip(),
                     'batch_uuid' => $batchUuid,
                 ],
             );
 
-            return redirect()->route('products.index')->with('success', 'Product updated successfully.');
+            return redirect()->route('products.index', ['page' => $request->input('page', 1)])
+                ->with('success', 'Product updated successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();
             report($e);
