@@ -29,6 +29,19 @@
         .choices {
             position: relative !important;
         }
+
+        .select2-container .select2-selection--single {
+            height: 40px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered {
+            line-height: 40px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            top: 8px !important;
+            right: 4px !important;
+        }
     </style>
 @endpush
 @section('content')
@@ -61,11 +74,12 @@
                                     </div>
 
                                     <div class="w-full">
-                                        <div class="flex items-baseline flex-wrap gap-2.5">
-                                            <label class="form-label flex items-center gap-1">
+                                        <div class="flex flex-col gap-2.5 w-full">
+                                            <label for="parent_id" class="form-label font-medium text-gray-700">
                                                 {{ translate('Parent') }}
                                             </label>
-                                            <select class="input @error('parent_id') border-red-500 @enderror"
+                                            <select id="parent_id"
+                                                class="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500 @error('parent_id') border-red-500 @enderror"
                                                 name="parent_id">
                                                 <option value="">{{ translate('Select Parent Category') }}</option>
                                                 @foreach ($categories as $category)
@@ -75,11 +89,12 @@
                                                     </option>
                                                 @endforeach
                                             </select>
+                                            @error('parent_id')
+                                                <span class="text-red-500 text-sm">{{ $message }}</span>
+                                            @enderror
                                         </div>
-                                        @error('parent_id')
-                                            <span class="text-danger text-sm">{{ $message }}</span>
-                                        @enderror
                                     </div>
+
                                 </div>
 
                                 <div class="w-full" id="unit-field-wrapper">
@@ -184,6 +199,19 @@
     </main>
 @endsection
 @push('scripts')
+    <!-- Select2 CSS & JS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            $('#parent_id').select2({
+                placeholder: '{{ translate('Select Parent Category') }}',
+                allowClear: true,
+                width: '100%'
+            });
+        });
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
     <script>
         const unitChoices = new Choices('#unit-input', {

@@ -216,7 +216,9 @@ class ProductController extends Controller
                 ],
             );
 
-            return redirect()->route('products.index', ['page' => $request->input('page', 1)])
+            $queryParams = $request->only(['page', 'from', 'to', 'merchant_id']);
+
+            return redirect()->route('products.index', $queryParams)
                 ->with('success', 'Product updated successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();
