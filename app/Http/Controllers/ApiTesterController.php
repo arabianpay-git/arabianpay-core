@@ -25,8 +25,15 @@ class ApiTesterController extends Controller
 
         $method = strtoupper($request->method);
         $url = $request->endpoint;
+
+        // Decode JSON safely
         $body = $request->body ? json_decode($request->body, true) : [];
         $headers = $request->headers ? json_decode($request->headers, true) : [];
+
+        // Ensure headers is always an array
+        if (!is_array($headers)) {
+            $headers = [];
+        }
 
         try {
             $client = Http::withHeaders($headers);
