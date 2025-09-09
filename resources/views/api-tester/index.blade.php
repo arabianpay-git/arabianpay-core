@@ -27,13 +27,13 @@
 
             <div class="mb-4">
                 <label class="block font-semibold mb-1">API Endpoint:</label>
-                <input type="text" name="endpoint" value="{{ old('endpoint') }}" class="w-full p-1 border rounded"
-                    placeholder="https://api.example.com/resource">
+                <input type="text" id="endpoint" name="endpoint" value="{{ old('endpoint') }}"
+                    class="w-full p-1 border rounded" placeholder="https://api.example.com/resource">
             </div>
 
             <div class="mb-4">
                 <label class="block font-semibold mb-1">HTTP Method:</label>
-                <select name="method" class="w-full p-2 border rounded">
+                <select id="method" name="method" class="w-full p-2 border rounded">
                     @foreach (['GET', 'POST', 'PUT', 'PATCH', 'DELETE'] as $method)
                         <option value="{{ $method }}" {{ old('method') == $method ? 'selected' : '' }}>
                             {{ $method }}</option>
@@ -43,22 +43,24 @@
 
             <div class="mb-4">
                 <label class="block font-semibold mb-1">Headers (JSON format):</label>
-                <textarea name="headers" rows="4" class="w-full p-2 border rounded"
-                    placeholder='{"Authorization": "Bearer token"}'>{{ old(
+                <textarea id="headers" name="headers" rows="4" class="w-full p-2 border rounded"
+                    placeholder='{"Authorization": "Bearer token"}'>
+                    {!! old(
                         'headers',
                         json_encode(
                             [
                                 'Content-Type' => 'application/json',
                                 'Accept' => 'application/json',
                             ],
-                            JSON_PRETTY_PRINT,
+                            JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES,
                         ),
-                    ) }}</textarea>
+                    ) !!}
+            </textarea>
             </div>
 
             <div class="mb-4">
                 <label class="block font-semibold mb-1">Body (JSON format):</label>
-                <textarea name="body" rows="6" class="w-full p-2 border rounded" placeholder='{"key": "value"}'>{{ old('body') }}</textarea>
+                <textarea id="body" name="body" rows="6" class="w-full p-2 border rounded" placeholder='{"key": "value"}'>{{ old('body', '{}') }}</textarea>
             </div>
 
             <button id="sendBtn" type="submit"
@@ -73,6 +75,7 @@
                 </svg>
             </button>
         </form>
+
     </div>
 
     <!-- Right: Response -->
@@ -85,27 +88,74 @@
             <pre class="bg-white p-4 rounded shadow overflow-auto h-[80vh] text-gray-400">Response will appear here...</pre>
         @endif
     </div>
-
     <script>
         const form = document.getElementById('apiTesterForm');
         const btn = document.getElementById('sendBtn');
         const spinner = document.getElementById('btnSpinner');
         const btnText = document.getElementById('btnText');
 
+        const endpointField = document.getElementById('endpoint');
+        const methodField = document.getElementById('method');
+        const headersField = document.getElementById('headers');
+        const bodyField = document.getElementById('body');
+        const responsePre = document.getElementById('responseArea');
+
+        // --------- Form persistence ----------
+        // Load saved values from localStorage
+        if (localStorage.getItem('apiTesterData')) {
+            const data = JSON.parse(localStorage.getItem('apiTesterData'));
+            endpointField.value = data.endpoint || endpointField.value;
+            methodField.value = data.method || methodField.value;
+            headersField.value = data.headers || headersField.value;
+            bodyField.value = data.body || bodyField.value;
+        }
+
+        // Save form values to localStorage on change
+        [endpointField, methodField, headersField, bodyField].forEach(field => {
+            field.addEventListener('input', () => {
+                const data = {
+                    endpoint: endpointField.value,
+                    method: methodField.value,
+                    headers: headersField.value,
+                    body: bodyField.value
+                };
+                localStorage.setItem('apiTesterData', JSON.stringify(data));
+            });
+        });
+
+        // --------- Button spinner ----------
         form.addEventListener('submit', function() {
             btn.disabled = true;
             btnText.innerText = "Sending...";
             spinner.classList.remove('hidden');
         });
 
-        // Format JSON response if possible
-        const pre = document.getElementById('responseArea');
-        if (pre) {
+        // --------- Response formatting ----------
+        function formatJSON(text) {
             try {
-                const json = JSON.parse(pre.innerText);
-                pre.innerText = JSON.stringify(json, null, 4);
+                const obj = JSON.parse(text);
+                return JSON.stringify(obj, null, 4);
             } catch (e) {
-                // leave as-is
+                return text; // leave as-is if invalid JSON
+            }
+        }
+
+        // Format the server response (session) on page load
+        if (responsePre) {
+            responsePre.innerText = formatJSON(responsePre.innerText);
+            if (responsePre.innerText.trim() !== "Response will appear here...") {
+                responsePre.classList.remove('text-gray-400');
+                // Save last response to localStorage
+                localStorage.setItem('apiTesterLastResponse', responsePre.innerText);
+            }
+        }
+
+        // Load last response from localStorage if no session response
+        if (!responsePre.innerText.trim() || responsePre.innerText.trim() === "Response will appear here...") {
+            const lastResp = localStorage.getItem('apiTesterLastResponse');
+            if (lastResp) {
+                responsePre.innerText = lastResp;
+                responsePre.classList.remove('text-gray-400');
             }
         }
     </script>
