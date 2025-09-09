@@ -937,4 +937,33 @@ return [
     'IBAN Certificates' => 'IBAN Certificates',
     'Search categories' => 'Search categories',
     'Search brands' => 'Search brands',
+
+    'Repaid' => 'Repaid',
+    'Disbursed' => 'Disbursed',
+    'pending' => 'pending',
+    'paid' => 'paid',
+    'due' => 'due',
+    'late' => 'late',
+    'Credit Used' => 'Credit Used',
+    'Overall Balance' => 'Overall Balance',
+    'User Payment' => 'User Payment',
+    'Loan Disbursment' => 'Loan Disbursment',
+    'Seller Payment' => 'Seller Payment',
+    'Revenue' => 'Revenue',
+    'Shipping' => 'Shipping',
+    'Discounts' => 'Discounts',
+
+    'Avg Days' => 'Avg Days',
+    'Sales' => 'Sales',
+    'Stock' => 'Stock',
+
+    'pending' => 'pending',
+    'processing' => 'processing',
+    'completed' => 'completed',
+    'cancelled' => 'cancelled',
+    'refunded' => 'refunded',
+    'settlement pending' => 'settlement pending',
+    'settled' => 'settled',
+    'failed' => 'failed',
+
 ];

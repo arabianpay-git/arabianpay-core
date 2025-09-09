@@ -240,54 +240,68 @@
             });
 
             // Infinite scroll for media modal
-            let offset = 18;
+            let offset = $(`#${prefix}_grid .media-card`).length; // start after existing items
             const limit = 18;
             let isLoading = false;
 
-            $(`#${prefix}_modal .modal-body`).on('scroll', function() {
+            // Function to load more media
+            function loadMoreMedia() {
                 if (isLoading) return;
+                isLoading = true;
 
+                $.get("{{ route('media.lazyLoad') }}", {
+                    offset,
+                    limit
+                }, response => {
+                    if (response.media.length) {
+                        offset += response.media.length; // increment by actual items loaded
+                        response.media.forEach(media => {
+                            const isPdf = media.mime_type === 'application/pdf';
+                            const isVideo = media.mime_type.startsWith('video');
+                            const imageUrl = isPdf ? pdfImage : `/storage/media/${media.file_name}`;
+
+                            $(`#${prefix}_grid`).append(`
+                    <div class="media-card position-relative"
+                         data-id="${media.id}"
+                         data-url="/storage/media/${media.file_name}"
+                         data-name="${media.name}"
+                         data-size="${media.size}"
+                         data-mime="${media.mime_type}">
+                         ${isVideo
+                            ? `<video src="/storage/media/${media.file_name}" class="media-thumb" controls muted preload="metadata" style="max-height:150px; width:auto;"></video>`
+                            : `<img src="${imageUrl}" class="media-thumb" alt="media">`}
+                        <div class="media-info">
+                            <div class="name">${media.name}</div>
+                            <div class="size">${(media.size / 1024).toFixed(1)} KB</div>
+                        </div>
+                        <div class="overlay-check"><i class="fas fa-check"></i></div>
+                    </div>
+                `);
+                        });
+                    }
+                    isLoading = false;
+                }).fail(() => {
+                    isLoading = false;
+                    Swal.fire('Error', 'Failed to load more media.', 'error');
+                });
+            }
+
+            // Scroll handler
+            $(`#${prefix}_modal .modal-body`).on('scroll', function() {
                 const container = $(this);
                 if (container.scrollTop() + container.innerHeight() >= container[0].scrollHeight - 10) {
-                    isLoading = true;
-                    $.get("{{ route('media.lazyLoad') }}", {
-                        offset,
-                        limit
-                    }, response => {
-                        if (response.media.length) {
-                            offset += limit;
-                            response.media.forEach(media => {
-                                const isPdf = media.mime_type === 'application/pdf';
-                                const isVideo = media.mime_type.startsWith('video');
-                                const imageUrl = isPdf ? pdfImage :
-                                    `/storage/media/${media.file_name}`;
-
-                                $(`#${prefix}_grid`).append(`
-                            <div class="media-card position-relative"
-                                 data-id="${media.id}"
-                                 data-url="/storage/media/${media.file_name}"
-                                 data-name="${media.name}"
-                                 data-size="${media.size}"
-                                 data-mime="${media.mime_type}">
-                                 ${isVideo
-                                    ? `<video src="/storage/media/${media.file_name}" class="media-thumb" controls muted preload="metadata" style="max-height:150px; width:auto;"></video>`
-                                    : `<img src="${imageUrl}" class="media-thumb" alt="media">`}
-                                <div class="media-info">
-                                    <div class="name">${media.name}</div>
-                                    <div class="size">${(media.size / 1024).toFixed(1)} KB</div>
-                                </div>
-                                <div class="overlay-check"><i class="fas fa-check"></i></div>
-                            </div>
-                        `);
-                            });
-                        }
-                        isLoading = false;
-                    }).fail(() => {
-                        isLoading = false;
-                        Swal.fire('Error', 'Failed to load more media.', 'error');
-                    });
+                    loadMoreMedia();
                 }
             });
+
+            // Optional: if modal content is too short, load more immediately
+            $(`#${prefix}_modal`).on('shown.bs.modal', function() {
+                const container = $(`#${prefix}_modal .modal-body`);
+                if (container[0].scrollHeight <= container.innerHeight()) {
+                    loadMoreMedia();
+                }
+            });
+
         });
     </script>
 @endpush

@@ -9,6 +9,7 @@ use Illuminate\Support\ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Blade;
+use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -25,7 +26,13 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        App::setLocale(session('locale', config('app.locale')));
+        // Set default locale
+        App::setLocale('ar');
+
+        // If you also use LaravelLocalization
+        if (class_exists(LaravelLocalization::class)) {
+            LaravelLocalization::setLocale('ar');
+        }
 
         RateLimiter::for('global', function (Request $request) {
             // Identify the user by authenticated user ID or IP

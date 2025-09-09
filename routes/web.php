@@ -55,12 +55,8 @@ use App\Http\Middleware\{
     PreventBackHistory,
     SecureHeaders
 };
-use App\Models\{
-    Customer,
-    Media,
-    Merchant,
-    SupplierBank,
-};
+
+
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
@@ -465,3 +461,6 @@ Route::get('/send-email', [EmailController::class, 'create'])->name('email.creat
 Route::post('/send-email', [EmailController::class, 'send'])->name('email.send');
 Route::get('/send-sms', [SmsController::class, 'create'])->name('sms.create');
 Route::post('/send-sms', [SmsController::class, 'send'])->name('sms.send');
+
+// routes/web.php
+require __DIR__ . '/test.php';

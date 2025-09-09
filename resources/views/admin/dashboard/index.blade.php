@@ -293,11 +293,11 @@
                         height: 350
                     },
                     series: [{
-                            name: 'Disbursed',
+                            name: '{{ translate('Disbursed') }}',
                             data: @json($loanData['disbursement_vs_repayment']['disbursed'])
                         },
                         {
-                            name: 'Repaid',
+                            name: '{{ translate('Repaid') }}',
                             data: @json($loanData['disbursement_vs_repayment']['repaid'])
                         }
                     ],
@@ -313,6 +313,7 @@
                 }).render();
 
                 // Payment Status
+
                 new ApexCharts(document.querySelector('#paymentStatusChart'), {
                     chart: {
                         type: 'donut',
@@ -324,7 +325,7 @@
                     },
                     series: @json($loanData['payment_status']->pluck('count')),
                     colors: ['#F59E0B', '#10B981', '#3B82F6', '#EF4444'],
-                    labels: @json($loanData['payment_status']->pluck('status')),
+                    labels: @json($loanData['payment_status']->pluck('status')->map(fn($status) => translate($status))),
                     plotOptions: {
                         pie: {
                             donut: {
@@ -360,7 +361,7 @@
                     }
                 }).render();
 
-                // Credit Utilization
+                // Credit Utilization Chart
                 new ApexCharts(document.querySelector('#creditUtilizationChart'), {
                     chart: {
                         type: 'radialBar',
@@ -374,7 +375,7 @@
                             }
                         }
                     },
-                    labels: ['Credit Used']
+                    labels: ['{{ translate('Credit Used') }}']
                 }).render();
 
                 // Revenue Streams
@@ -385,15 +386,15 @@
                         stacked: true
                     },
                     series: [{
-                            name: 'Revenue',
+                            name: '{{ translate('Revenue') }}',
                             data: @json($financialData['revenue_breakdown']['revenue'])
                         },
                         {
-                            name: 'Shipping',
+                            name: '{{ translate('Shipping') }}',
                             data: @json($financialData['revenue_breakdown']['shipping'])
                         },
                         {
-                            name: 'Discounts',
+                            name: '{{ translate('Discounts') }}',
                             data: @json($financialData['revenue_breakdown']['discounts'])
                         }
                     ]
@@ -406,19 +407,19 @@
                         height: 350
                     },
                     series: [{
-                            name: 'Overall Balance',
+                            name: '{{ translate('Overall Balance') }}',
                             data: @json($financialData['wallet_balances']->pluck('balance'))
                         },
                         {
-                            name: 'User Payment',
+                            name: '{{ translate('User Payment') }}',
                             data: @json($financialData['wallet_balances']->pluck('user_payment'))
                         },
                         {
-                            name: 'Loan Disbursment',
+                            name: '{{ translate('Loan Disbursment') }}',
                             data: @json($financialData['wallet_balances']->pluck('loan_disbursment'))
                         },
                         {
-                            name: 'Seller Payment',
+                            name: '{{ translate('Seller Payment') }}',
                             data: @json($financialData['wallet_balances']->pluck('seller_payment'))
                         }
                     ],
@@ -426,7 +427,6 @@
                         categories: @json($financialData['wallet_balances']->pluck('month'))
                     }
                 }).render();
-
 
                 // Operational: Order Status
                 new ApexCharts(document.querySelector('#orderStatusChart'), {
@@ -440,18 +440,19 @@
                     },
                     series: @json($operationalData['order_statuses']->pluck('count')),
                     colors: ['#F59E0B', '#10B981', '#EF4444', '#3B82F6'],
-                    labels: @json($operationalData['order_statuses']->pluck('status'))
+                    labels: @json($operationalData['order_statuses']->pluck('status')->map(fn($status) => translate($status)))
                 }).render();
 
                 // // Risk: Default Rates
                 // new ApexCharts(document.querySelector('#defaultRatesChart'), {
-                //     chart: { type: 'bar', height: 350 },
-                //     legend: { position: 'bottom', horizontalAlign: 'center'},
-                //     series: @json($riskData['default_rates']),
-                //     xaxis: {
-                //         categories: @json(array_column($riskData['default_rates'], 'name'))
-                //     }
+                // chart: { type: 'bar', height: 350 },
+                // legend: { position: 'bottom', horizontalAlign: 'center'},
+                // series: @json($riskData['default_rates']),
+                // xaxis: {
+                // categories: @json(array_column($riskData['default_rates'], 'name'))
+                // }
                 // }).render();
+
 
                 // Operational: Fulfillment Times
                 new ApexCharts(document.querySelector('#fulfillmentChart'), {
@@ -460,7 +461,7 @@
                         height: 350
                     },
                     series: [{
-                        name: 'Avg Days',
+                        name: '{{ translate('Avg Days') }}',
                         data: @json($operationalData['fulfillment_times']['series'])
                     }],
                     xaxis: {
@@ -480,8 +481,7 @@
                     },
                     series: @json($operationalData['settlement_status']->pluck('count')),
                     colors: ['#10B981', '#EF4444', '#F59E0B'],
-
-                    labels: @json($operationalData['settlement_status']->pluck('settlement_status'))
+                    labels: @json($operationalData['settlement_status']->pluck('settlement_status')->map(fn($status) => translate($status)))
                 }).render();
 
                 // Category: Sales
@@ -491,10 +491,10 @@
                         height: 350
                     },
                     xaxis: {
-                        categories: @json($categorySales->pluck('name'))
+                        categories: @json($categorySales->pluck('name')->map(fn($name) => $name))
                     },
                     series: [{
-                        name: 'Sales',
+                        name: '{{ translate('Sales') }}',
                         data: @json($categorySales->pluck('sales'))
                     }],
                     colors: ['#3B82F6']
@@ -507,10 +507,10 @@
                         height: 350
                     },
                     xaxis: {
-                        categories: @json($categoryStock->pluck('name'))
+                        categories: @json($categoryStock->pluck('name')->map(fn($name) => $name))
                     },
                     series: [{
-                        name: 'Stock',
+                        name: '{{ translate('Stock') }}',
                         data: @json($categoryStock->pluck('stock'))
                     }],
                     colors: ['#10B981']
@@ -519,7 +519,21 @@
                 // date-range filter reload
                 document.querySelectorAll('.select').forEach(sel => {
                     sel.addEventListener('change', function() {
-                        window.location = `/admin/dashboard?date_range=${this.value}`;
+                        const dateRange = this.value;
+
+                        // Get current locale from the URL (first segment)
+                        const segments = window.location.pathname.split('/');
+                        const locale = segments[1]; // "ar" or "en"
+
+                        // Get current path without locale
+                        const path = segments.slice(2).join('/'); // e.g., "admin/dashboard"
+
+                        // Preserve existing query parameters
+                        const params = new URLSearchParams(window.location.search);
+                        params.set('date_range', dateRange); // update date_range
+
+                        // Redirect to new URL with locale
+                        window.location.href = `/${locale}/${path}?${params.toString()}`;
                     });
                 });
             });
