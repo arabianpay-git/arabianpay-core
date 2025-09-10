@@ -30,6 +30,13 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         // dd(Auth::user()->getAllPermissions()->toArray());
+        $user = Auth::user();
+
+        // Restrict employees who are not managers
+        if ($user->user_type === 'employee' && !$user->is_manager) {
+            return view('admin.dashboard.employee');
+        }
+
         $dateRange = $request->input('date_range', '12M');
 
         // 1. Loan Performance Charts
@@ -93,7 +100,6 @@ class DashboardController extends Controller
             'categoryStock',
         ));
     }
-
 
     private function getLoanPerformanceData($range)
     {

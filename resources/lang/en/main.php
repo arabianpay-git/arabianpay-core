@@ -966,4 +966,7 @@ return [
     'settled' => 'settled',
     'failed' => 'failed',
 
+    'Welcome Back!' => 'Welcome Back!',
+    'You are logged in as an employee. This is your home page.' => 'You are logged in as an employee. This is your home page.'
+
 ];

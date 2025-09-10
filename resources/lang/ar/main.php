@@ -940,4 +940,7 @@ return [
     'settlement pending'    => 'تسوية معلقة',
     'settled'               => 'تمت التسوية',
     'failed'                => 'فشل',
+
+    'Welcome Back!' => 'مرحبًا بعودتك!',
+    'You are logged in as an employee. This is your home page.' => 'أنت مسجل الدخول كموظف. هذه هي صفحتك الرئيسية.',
 ];
