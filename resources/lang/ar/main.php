@@ -942,5 +942,5 @@ return [
     'failed'                => 'فشل',
 
     'Welcome Back!' => 'مرحبًا بعودتك!',
-    'You are logged in as an employee. This is your home page.' => 'أنت مسجل الدخول كموظف. هذه هي صفحتك الرئيسية.',
+    'Glad to see you again! Here is your employee dashboard.' => 'سعداء لرؤيتك مرة أخرى! إليك لوحة معلومات الموظف الخاصة بك.'
 ];
