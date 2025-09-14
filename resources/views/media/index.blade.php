@@ -41,10 +41,9 @@
                 <div class="media-grid" id="mediaGrid" style="padding:0">
                     @foreach ($media as $item)
                         @php
-                            // Use the helper to check partners-media, core storage, or fallback default
                             $mediaUrl = getMediaUrl($item->file_name, asset('assets/media/images/default-image.png'));
-
                             $isVideo = str_starts_with($item->mime_type, 'video');
+                            $isPdf = $item->mime_type === 'application/pdf';
                         @endphp
 
                         <div class="media-card position-relative" data-id="{{ $item->id }}"
@@ -55,6 +54,9 @@
                             @if ($isVideo)
                                 <video src="{{ $mediaUrl }}" class="media-thumb" controls muted preload="metadata"
                                     style="max-height: 150px; width: auto;"></video>
+                            @elseif ($isPdf)
+                                <img src="{{ asset('assets/media/images/default-pdf.png') }}" class="media-thumb"
+                                    alt="PDF file">
                             @else
                                 <img src="{{ $mediaUrl }}" class="media-thumb" loading="lazy" alt="{{ $item->name }}">
                             @endif
@@ -65,8 +67,7 @@
                             </div>
 
                             <div class="supplier-name">
-                                User:
-                                {{ $item->user ? $item->user->business_name : 'Unknown Supplier' }}
+                                User: {{ $item->user ? $item->user->business_name : 'Unknown Supplier' }}
                             </div>
 
                             <div class="overlay-check"><i class="fas fa-check"></i></div>
@@ -175,31 +176,34 @@
 
             function renderCard(media) {
                 const isVideo = media.mime_type && media.mime_type.startsWith('video');
-                const url = media.url || (`/storage/media/${media.file_name}`);
+                const isPdf = media.mime_type === 'application/pdf';
                 let thumbHtml = '';
 
                 if (isVideo) {
                     thumbHtml =
-                        `<video src="${url}" class="media-thumb" controls muted preload="metadata" style="max-height:150px; width:auto;"></video>`;
+                        `<video src="/storage/media/${media.file_name}" class="media-thumb" controls muted preload="metadata" style="max-height:150px; width:auto;"></video>`;
+                } else if (isPdf) {
+                    // Show a PDF icon, clickable to open in new tab
+                    thumbHtml =
+                        `<a href="/storage/media/${media.file_name}" target="_blank">
+                            <img src="/assets/media/images/default-pdf.png" class="media-thumb" alt="PDF File" style="max-height:150px; width:auto;">
+                        </a>`;
                 } else {
                     thumbHtml =
-                        `<img src="${url}" class="media-thumb" loading="lazy" alt="media">`;
+                        `<img src="/storage/media/${media.file_name}" class="media-thumb" loading="lazy" alt="media">`;
                 }
 
-                // Compose user full name or fallback text
-                const userBusinessName = media.user ?
-                    (media.user.business_name || '') :
-                    'Unknown Supplier';
-
                 return `
-                    <div class="media-card position-relative" data-id="${media.id}" data-url="${url}" data-name="${media.name}" data-size="${media.size}" data-mime="${media.mime_type}" style="overflow: visible; padding: 0.25rem;">
+                    <div class="media-card position-relative"
+                        data-id="${media.id}"
+                        data-url="${media.url}"
+                        data-name="${media.name}"
+                        data-size="${media.size}"
+                        data-mime="${media.mime_type}">
                         ${thumbHtml}
                         <div class="media-info">
                             <div class="name">${media.name}</div>
-                            <div class="size">${(media.size / 1024).toFixed(1)} KB</div>
-                        </div>
-                        <div class="supplier-name">
-                            User: ${userBusinessName}
+                            <div class="size">${(media.size/1024).toFixed(1)} KB</div>
                         </div>
                         <div class="overlay-check"><i class="fas fa-check"></i></div>
                     </div>`;

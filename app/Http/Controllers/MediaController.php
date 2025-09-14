@@ -14,13 +14,12 @@ class MediaController extends Controller
     public function index()
     {
         if (in_array(Auth::user()->user_type, ['admin', 'employee'])) {
-            $media = Media::with('user')->where('mime_type', '!=', 'application/pdf')
+            $media = Media::with('user')
                 ->latest()
                 ->take(18)
                 ->get();
         } else {
             $media = Media::with('user')->where('user_id', Auth::user()->id)
-                ->where('mime_type', '!=', 'application/pdf')
                 ->latest()
                 ->take(18)
                 ->get();
@@ -35,10 +34,9 @@ class MediaController extends Controller
         $limit = 18;
 
         if (in_array(Auth::user()->user_type, ['admin', 'employee'])) {
-            $query = Media::with('user')->where('mime_type', '!=', 'application/pdf')->latest();
+            $query = Media::with('user')->latest();
         } else {
             $query = Media::with('user')->where('user_id', Auth::user()->id)
-                ->where('mime_type', '!=', 'application/pdf')
                 ->latest();
         }
 
@@ -69,12 +67,11 @@ class MediaController extends Controller
 
         if (in_array(Auth::user()->user_type, ['admin', 'employee'])) {
             $mediaQuery = Media::with('user')
-                ->where('mime_type', '!=', 'application/pdf')
+
                 ->latest();
         } else {
             $mediaQuery = Media::with('user')
                 ->where('user_id', Auth::id())
-                ->where('mime_type', '!=', 'application/pdf')
                 ->latest();
         }
 
@@ -99,7 +96,6 @@ class MediaController extends Controller
             'files.*.mimes'    => 'Only JPEG, PNG, JPG, WEBP, GIF, SVG, PDF, and video files (MP4, MOV, AVI, MKV) are allowed.',
             'files.*.max'      => 'Video files must not be larger than 5MB.',
         ]);
-
 
         $uploadedMedia = [];
         $disk = 'public';
@@ -151,40 +147,35 @@ class MediaController extends Controller
                     imagedestroy($resource);
                     Storage::disk($disk)->put($fullPath, $compressedData);
                 } else {
-                    $file->storeAs($folder, $filename, $disk);
+                    Storage::disk($disk)->putFileAs($folder, $file, $filename);
                 }
             } elseif (in_array($extension, ['mp4', 'mov', 'avi', 'mkv'])) {
+                // Video handling
+                try {
+                    $ffmpeg = \FFMpeg\FFMpeg::create();
+                    $video = $ffmpeg->open($file->getPathname());
+                    $ffprobe = \FFMpeg\FFProbe::create();
+                    $duration = $ffprobe
+                        ->format($file->getPathname())
+                        ->get('duration');
 
-                if (in_array($extension, ['mp4', 'mov', 'avi', 'mkv'])) {
-                    // Check video duration
-                    try {
-                        $ffmpeg = \FFMpeg\FFMpeg::create();
-                        $video = $ffmpeg->open($file->getPathname());
-                        $ffprobe = \FFMpeg\FFProbe::create();
-                        $duration = $ffprobe
-                            ->format($file->getPathname()) // path to video file
-                            ->get('duration');
-
-                        if ($duration > 32) {
-                            return response()->json([
-                                'success' => false,
-                                'message' => 'Video "' . $originalName . '" is longer than 30 seconds.',
-                            ], 422);
-                        }
-
-                        // proceed with storage...
-                    } catch (\Exception $e) {
+                    if ($duration > 32) {
                         return response()->json([
                             'success' => false,
-                            'message' => 'Failed to read video "' . $originalName . '".',
+                            'message' => 'Video "' . $originalName . '" is longer than 30 seconds.',
                         ], 422);
                     }
+                } catch (\Exception $e) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Failed to read video "' . $originalName . '".',
+                    ], 422);
                 }
 
                 // Store video
-                $file->storeAs($folder, $filename, $disk);
+                Storage::disk($disk)->putFileAs($folder, $file, $filename);
 
-                // Generate thumbnail using FFMpeg
+                // Generate thumbnail
                 try {
                     $ffmpeg = \FFMpeg\FFMpeg::create();
                     $video = $ffmpeg->open($file->getPathname());
@@ -193,14 +184,12 @@ class MediaController extends Controller
 
                     $video->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds(1))
                         ->save($thumbnailPath);
-
-                    // Optionally: save thumbnail info (not required in your current DB)
                 } catch (\Exception $e) {
                     Log::error("FFMpeg failed to generate thumbnail: " . $e->getMessage());
                 }
             } else {
-                // Other types (pdf, svg, etc)
-                $file->storeAs($folder, $filename, $disk);
+                // ✅ FIX: PDFs & others stored consistently
+                Storage::disk($disk)->putFileAs($folder, $file, $filename);
             }
 
             // Store DB record
@@ -209,7 +198,7 @@ class MediaController extends Controller
                 'name'      => $originalName,
                 'file_name' => $filename,
                 'mime_type' => $file->getMimeType(),
-                'size'      => Storage::disk($disk)->size($fullPath),
+                'size'      => Storage::disk($disk)->size($fullPath), // now always exists
                 'disk'      => $disk,
                 'folder'    => $folder,
             ]);
@@ -232,7 +221,6 @@ class MediaController extends Controller
             'media'   => $uploadedMedia,
         ]);
     }
-
 
     public function bulkDelete(Request $request)
     {
