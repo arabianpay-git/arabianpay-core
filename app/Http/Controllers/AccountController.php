@@ -396,50 +396,68 @@ class AccountController extends Controller
             ->when(
                 !($user->user_type === 'employee' && $user->is_manager) && $user->user_type !== 'admin',
                 fn($query) => $query->where('assigned_to', $user->id)
-            );
+            )
+            ->orderByDesc('id')
+            ->orderByRaw('ISNULL(assigned_to) DESC');
 
+        // Get collection first
+        $merchants = $merchantsQuery->get();
+
+        // Apply search via private function
         if ($search) {
-            $searchTerms = explode(' ', trim($search));
-
-            $merchantsQuery->where(function ($query) use ($search, $searchTerms) {
-                // First group: email exact OR business_name like
-                $query->whereHas('user', function ($q) use ($search) {
-                    $q->whereEncrypted('email', $search)
-                        ->orWhere('business_name', 'like', '%' . $search . '%');
-                });
-
-                // For each search term, test multiple case variants for encrypted fields
-                foreach ($searchTerms as $term) {
-                    $termLower = strtolower($term);
-                    $termUpper = strtoupper($term);
-                    $termUcFirst = ucfirst($termLower);
-
-                    $query->orWhereHas('user', function ($q) use ($termLower, $termUpper, $termUcFirst) {
-                        $q->whereEncrypted('first_name', $termLower)
-                            ->orWhereEncrypted('first_name', $termUpper)
-                            ->orWhereEncrypted('first_name', $termUcFirst);
-                    });
-
-                    $query->orWhereHas('user', function ($q) use ($termLower, $termUpper, $termUcFirst) {
-                        $q->whereEncrypted('last_name', $termLower)
-                            ->orWhereEncrypted('last_name', $termUpper)
-                            ->orWhereEncrypted('last_name', $termUcFirst);
-                    });
-                }
-            });
+            $merchants = $this->filterMerchants($merchants, $search);
         }
 
-        $merchants = $merchantsQuery->orderByDesc('id')
-            ->orderByRaw('ISNULL(assigned_to) DESC')
-            ->paginate(10);
+        // Paginate manually
+        $page = $request->input('page', 1);
+        $perPage = 10;
+        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $merchants->forPage($page, $perPage),
+            $merchants->count(),
+            $perPage,
+            $page,
+            ['path' => url()->current(), 'query' => $request->query()]
+        );
 
         if ($request->ajax()) {
-            return view('admin.accounts.partials.suppliers-table', compact('merchants'))->render();
+            return view('admin.accounts.partials.suppliers-table', ['merchants' => $paginated])->render();
         }
 
-        return view('admin.accounts.suppliers', compact('merchants'));
+        return view('admin.accounts.suppliers', ['merchants' => $paginated]);
     }
 
+    /**
+     * Private function to filter merchants collection based on search input
+     */
+    private function filterMerchants($merchants, $search)
+    {
+        $search = strtolower(trim($search));
+        $searchTerms = explode(' ', $search);
+
+        return $merchants->filter(function ($merchant) use ($search, $searchTerms) {
+            $user = $merchant->user;
+
+            // Check full email and business_name
+            if (
+                str_contains(strtolower($user->email), $search) ||
+                str_contains(strtolower($user->business_name), $search)
+            ) {
+                return true;
+            }
+
+            // Check first_name and last_name for each search term
+            foreach ($searchTerms as $term) {
+                if (
+                    str_contains(strtolower($user->first_name), $term) ||
+                    str_contains(strtolower($user->last_name), $term)
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
+    }
 
     public function supplierShop($id)
     {

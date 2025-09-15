@@ -47,8 +47,7 @@
                         <option value="">All Merchants</option>
                         @foreach ($merchants as $merchant)
                             <option value="{{ $merchant->id }}" @selected(request('merchant_id') == $merchant->id)>
-                                {{ $merchant->first_name }} {{ $merchant->last_name }}
-                                ({{ $merchant->business_name }})
+                                {{ $merchant->business_name }}
                             </option>
                         @endforeach
                     </select>
