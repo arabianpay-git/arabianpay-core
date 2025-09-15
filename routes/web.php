@@ -24,6 +24,7 @@ use App\Http\Controllers\{
     FirebaseController,
     InstalmentPlanController,
     MediaController,
+    MerchantUpdateController,
     NotificationController,
     OrderController,
     OtpVerificationController,
@@ -426,6 +427,10 @@ Route::group([
             Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
             Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
         });
+
+    Route::get('/merchants', [MerchantUpdateController::class, 'index'])->name('merchants.index');
+    Route::get('/merchants/search', [MerchantUpdateController::class, 'search'])->name('merchants.search');
+    Route::post('/merchants/{id}/update', [MerchantUpdateController::class, 'update'])->name('merchants.update');
 });
 
 //
