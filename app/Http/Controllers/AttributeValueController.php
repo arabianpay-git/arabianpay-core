@@ -16,7 +16,7 @@ class AttributeValueController extends Controller
             'attribute_id' => 'required|exists:attributes,id',
         ]);
 
-        $attributeValue = AttributeValue::create([
+        AttributeValue::create([
             'attribute_id' => $request->attribute_id,
             'value' => $request->value,
             'color_code' => $request->color_code ?? null,

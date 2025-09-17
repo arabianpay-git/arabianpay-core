@@ -131,8 +131,21 @@ class ProductController extends Controller
         $attributes = Attribute::with('values')->orderBy('name')->get();
         $attributeValues = [];
         foreach ($attributes as $attribute) {
-            $attributeValues[$attribute->id] = $attribute->values->pluck('value')->toArray();
+            if ($attribute->name === 'Color') {
+                // For colors, include value and color_code
+                $attributeValues[$attribute->id] = $attribute->values->map(function ($v) {
+                    return [
+                        'value' => $v->value,
+                        'color_code' => $v->color_code,
+                        'ar' => $v->translations->where('locale', 'ar')->first()?->value ?? $v->value,
+                    ];
+                })->toArray();
+            } else {
+                // For other attributes, just use value
+                $attributeValues[$attribute->id] = $attribute->values->pluck('value')->toArray();
+            }
         }
+
 
         $selectedAttributes = $product->attributes->mapWithKeys(function ($attribute) {
             return [$attribute->id => $attribute->pivot->attribute_value_id];

@@ -24,6 +24,16 @@
                             @method('PUT')
 
                             <div class="p-5">
+                                @php
+                                    $isColor = strtolower($attributeValue->attribute->name) === 'color';
+                                    $valueEn = old('value.en', $attributeValue->value);
+                                    $valueAr = old(
+                                        'value.ar',
+                                        $attributeValue->translations->where('locale', 'ar')->first()->value ?? '',
+                                    );
+                                    $colorCode = old('color_code', $attributeValue->color_code ?? '#1976D2');
+                                @endphp
+
                                 <div class="tab-content" id="tab-en">
                                     <div class="grid gap-5">
                                         <div class="w-full">
@@ -32,13 +42,36 @@
                                                     {{ translate('Attribute Value') }}
                                                 </label>
                                                 <input class="input @error('value.en') border-red-500 @enderror"
-                                                    name="value[en]" type="text"
-                                                    value="{{ old('value.en', $attributeValue->value) }}" required />
+                                                    name="value[en]" type="text" value="{{ $valueEn }}" required />
                                             </div>
                                             @error('value.en')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
                                             @enderror
                                         </div>
+
+                                        @if ($isColor)
+                                            <div class="w-full">
+                                                <label
+                                                    class="form-label flex items-center gap-1 mb-2">{{ translate('Pick Color') }}</label>
+                                                <div class="flex items-center gap-2 relative">
+                                                    <!-- Color swatch -->
+                                                    <div id="color-swatch" class="w-10 h-10 border rounded cursor-pointer"
+                                                        style="background-color: {{ $colorCode }};"></div>
+
+                                                    <!-- Hidden color picker -->
+                                                    <input type="color" id="color-picker" value="{{ $colorCode }}"
+                                                        class="absolute top-0 left-0 w-10 h-10 opacity-0 cursor-pointer appearance-none border-none p-0 m-0" />
+
+                                                    <!-- Hex input -->
+                                                    <input type="text" id="color-hex" name="color_code"
+                                                        value="{{ $colorCode }}" placeholder="#1976D2"
+                                                        class="input w-28 h-10 text-sm px-2 rounded border" />
+                                                </div>
+                                                @error('color_code')
+                                                    <span class="text-danger text-sm">{{ $message }}</span>
+                                                @enderror
+                                            </div>
+                                        @endif
                                     </div>
                                 </div>
 
@@ -50,8 +83,7 @@
                                                     {{ translate('Attribute Value') }}
                                                 </label>
                                                 <input class="input @error('value.ar') border-red-500 @enderror"
-                                                    name="value[ar]" type="text"
-                                                    value="{{ old('value.ar', $attributeValue->translations->where('locale', 'ar')->first()->value ?? '') }}" />
+                                                    name="value[ar]" type="text" value="{{ $valueAr }}" />
                                             </div>
                                             @error('value.ar')
                                                 <span class="text-danger text-sm">{{ $message }}</span>
@@ -62,9 +94,7 @@
 
                                 <div class="flex justify-between pt-2.5">
                                     <a href="{{ route('attributes.editAttributeValue', $attributeValue->attribute_id) }}"
-                                        class="btn btn-danger">
-                                        {{ translate('Go Back') }}
-                                    </a>
+                                        class="btn btn-danger">{{ translate('Go Back') }}</a>
                                     <button class="btn btn-primary">{{ translate('Save Changes') }}</button>
                                 </div>
                             </div>
@@ -74,4 +104,27 @@
             </div>
         </div>
     </main>
+
+    @if ($isColor)
+        <script>
+            const swatch = document.getElementById('color-swatch');
+            const picker = document.getElementById('color-picker');
+            const hexInput = document.getElementById('color-hex');
+
+            swatch.addEventListener('click', () => picker.click());
+
+            picker.addEventListener('input', () => {
+                swatch.style.backgroundColor = picker.value;
+                hexInput.value = picker.value;
+            });
+
+            hexInput.addEventListener('input', () => {
+                const val = hexInput.value;
+                if (/^#([0-9A-Fa-f]{6})$/.test(val)) {
+                    picker.value = val;
+                    swatch.style.backgroundColor = val;
+                }
+            });
+        </script>
+    @endif
 @endsection

@@ -967,6 +967,8 @@ return [
     'failed' => 'failed',
 
     'Welcome Back!' => 'Welcome Back!',
-    'Glad to see you again! Here is your employee dashboard.' => 'Glad to see you again! Here is your employee dashboard.'
-
+    'Glad to see you again! Here is your employee dashboard.' => 'Glad to see you again! Here is your employee dashboard.',
+    'Pick Color' => 'Pick Color',
+    'Go Back' => 'Go Back',
+    'Edit Attribute Value' => 'Edit Attribute Value',
 ];

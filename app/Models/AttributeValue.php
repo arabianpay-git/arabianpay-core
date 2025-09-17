@@ -14,6 +14,7 @@ class AttributeValue extends Model
         'value',
         'color_code',
     ];
+
     protected $encryptableAttributes = ['value', 'color_code'];
 
     protected array $translatable = ['value'];

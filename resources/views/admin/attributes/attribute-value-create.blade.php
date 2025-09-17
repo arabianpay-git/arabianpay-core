@@ -133,6 +133,58 @@
                                     @enderror
                                 </div>
 
+                                @if (strtolower($attribute->name) === 'color')
+                                    <div class="w-full">
+                                        <label
+                                            class="form-label flex items-center gap-1 mb-2">{{ translate('Pick Color') }}</label>
+
+                                        <div class="flex items-center gap-2 relative">
+                                            <!-- Color swatch -->
+                                            <div id="color-swatch" class="w-10 h-10 border rounded cursor-pointer"
+                                                style="background-color: {{ old('color_code', '#000000') }};">
+                                            </div>
+
+                                            <!-- Transparent color picker overlay -->
+                                            <input type="color" id="color-picker"
+                                                value="{{ old('color_code', '#000000') }}"
+                                                class="absolute top-0 left-0 w-10 h-10 opacity-0 cursor-pointer appearance-none border-none p-0 m-0" />
+
+
+                                            <!-- Hex input -->
+                                            <input type="text" id="color-hex" name="color_code"
+                                                value="{{ old('color_code', '#000000') }}" placeholder="#000000"
+                                                class="input w-28 h-10 text-sm px-2 rounded border" />
+                                        </div>
+
+                                        @error('color_code')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    @push('scripts')
+                                        <script>
+                                            const swatch = document.getElementById('color-swatch');
+                                            const picker = document.getElementById('color-picker');
+                                            const hexInput = document.getElementById('color-hex');
+
+                                            // Sync picker and swatch/hex input
+                                            picker.addEventListener('input', () => {
+                                                swatch.style.backgroundColor = picker.value;
+                                                hexInput.value = picker.value;
+                                            });
+
+                                            hexInput.addEventListener('input', () => {
+                                                const val = hexInput.value;
+                                                if (/^#([0-9A-Fa-f]{6})$/.test(val)) {
+                                                    picker.value = val;
+                                                    swatch.style.backgroundColor = val;
+                                                }
+                                            });
+                                        </script>
+                                    @endpush
+                                @endif
+
+
                                 <div class="flex justify-end pt-2.5">
                                     <button class="btn btn-primary">
                                         {{ translate('Save Changes') }}
@@ -143,6 +195,7 @@
                     </div>
                 </div>
             </div>
+
         </div>
         <!-- End of Container -->
     </main>
