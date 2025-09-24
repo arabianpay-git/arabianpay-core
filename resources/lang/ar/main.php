@@ -942,5 +942,10 @@ return [
     'failed'                => 'فشل',
 
     'Welcome Back!' => 'مرحبًا بعودتك!',
-    'Glad to see you again! Here is your employee dashboard.' => 'سعداء لرؤيتك مرة أخرى! إليك لوحة معلومات الموظف الخاصة بك.'
+    'Glad to see you again! Here is your employee dashboard.' => 'سعداء لرؤيتك مرة أخرى! إليك لوحة معلومات الموظف الخاصة بك.',
+
+    "You haven't registered a passkey. Would you like to register one now for easier login?" => 'لم تقم بتسجيل مفتاح مرور. هل ترغب في تسجيل واحد الآن لتسهيل تسجيل الدخول؟',
+    'Registering a passkey allows you to log in quickly and securely without needing to enter your password each time.' => 'يسمح لك تسجيل مفتاح مرور بتسجيل الدخول بسرعة وأمان دون الحاجة إلى إدخال كلمة المرور في كل مرة.',
+    'Yes, register' => 'نعم، سجل',
+    'No, thanks' => 'لا، شكرًا',
 ];

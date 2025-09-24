@@ -971,4 +971,8 @@ return [
     'Pick Color' => 'Pick Color',
     'Go Back' => 'Go Back',
     'Edit Attribute Value' => 'Edit Attribute Value',
+
+    "You haven't registered a passkey. Would you like to register one now for easier login?" => "You haven't registered a passkey. Would you like to register one now for easier login?",
+    'Yes, register' => 'Yes, register',
+    'No, thanks' => 'No, thanks',
 ];

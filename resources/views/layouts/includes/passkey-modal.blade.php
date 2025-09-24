@@ -3,7 +3,8 @@
         aria-labelledby="passkeyModalTitle">
         <div class="modal-content max-w-[600px] top-[5%]">
             <div class="modal-header py-4 px-5 flex items-center justify-between gap-3">
-                <h5 class="modal-title text-lg font-semibold" id="passkeyModalTitle">Register Passkey</h5>
+                <h5 class="modal-title text-lg font-semibold" id="passkeyModalTitle">{{ translate('Register Passkey') }}
+                </h5>
                 <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0" id="passkeyModalClose"
                     data-modal-dismiss="true" aria-label="Close modal">
                     <i class="ki-filled ki-cross"></i>
@@ -11,15 +12,18 @@
             </div>
 
             <div class="modal-body px-5 pb-5">
-                <p>You haven't registered a passkey. Would you like to register one now for easier login?</p>
+                <p>{{ translate("You haven't registered a passkey. Would you like to register one now for easier login?") }}
+                </p>
                 <div id="passkeyMessage" class="mt-3 hidden p-3 rounded-md border text-sm" role="alert"
                     aria-live="polite"></div>
             </div>
 
             <div class="modal-footer px-5 pb-4 flex justify-end gap-3">
-                <button type="button" class="btn btn-secondary" id="passkeyModalClose2" data-modal-dismiss="true">No,
-                    thanks</button>
-                <button type="button" class="btn btn-primary" id="passkeyYesBtn">Yes, register</button>
+                <button type="button" class="btn btn-secondary" id="passkeyModalClose2" data-modal-dismiss="true">
+                    {{ translate('No, thanks') }}
+                </button>
+                <button type="button" class="btn btn-primary"
+                    id="passkeyYesBtn">{{ translate('Yes, register') }}</button>
             </div>
         </div>
     </div>
