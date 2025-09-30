@@ -1100,4 +1100,5 @@ return [
     'Account Balances' => 'Account Balances',
     'Summary' => 'Summary',
     'Overall Balance Summary' => 'Overall Balance Summary',
+    'Financial Analysis' => 'Financial Analysis',
 ];

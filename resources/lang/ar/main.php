@@ -1074,4 +1074,5 @@ return [
     'Account Balances' => 'أرصدة الحسابات',
     'Summary' => 'الملخص',
     'Overall Balance Summary' => 'ملخص الرصيد الإجمالي',
+    'Financial Analysis' => 'التحليل المالي',
 ];
