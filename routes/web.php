@@ -41,6 +41,7 @@ use App\Http\Controllers\{
     RoleController,
     RolePermissionController,
     SchedulePaymentController,
+    SingleViewController,
     StateController,
     StaticsController,
     SupplierAndSalesController,
@@ -238,6 +239,26 @@ Route::group([
                 Route::get('suppliers-statics',    'suppliersStatics')->name('suppliers.statics');
 
                 Route::get('nafath', 'nafath')->name('nafath');
+            });
+
+            //
+            // Single View
+            //
+            Route::controller(SingleViewController::class)->prefix('singleview')->group(function () {
+                Route::get('/{id}', 'index')->name('singleview.index');
+                Route::get('/{id}/fetch-accounts', 'fetchAccountsAjax')->name('singleview.fetchAccounts');
+                Route::get('/{id}/fetch-accounts-balance', 'fetchAccountsBalance')->name('singleview.fetchAccountsBalance');
+                Route::get('/{id}/fetch-credit-check', 'fetchCreditCheck')->name('singleview.fetchCreditCheck');
+
+                Route::post('/consent', 'createConsent')->name('singleview.createConsent');
+                Route::get('/consent/{bankCode}/{consentId}', 'getConsentDetails')->name('singleview.getConsentDetails');
+                Route::get('/accounts/{bankCode}/{consentId}', 'getAccounts')->name('singleview.getAccounts');
+                Route::get('/e-statements/{bankCode}/{consentId}/{accountId}', 'getEStatements')->name('singleview.getEStatements');
+                Route::get('/credit-check-basic/{bankCode}/{consentId}', 'creditCheckBasic')->name('singleview.creditCheckBasic');
+                Route::get('/credit-check-advanced/{bankCode}/{consentId}', 'creditCheckAdvanced')->name('singleview.creditCheckAdvanced');
+
+                Route::get('/{id}/fetch-income-check-advanced', 'fetchIncomeCheckAdvanced')->name('singleview.fetchIncomeCheckAdvanced');
+                Route::get('/income-check-advanced/{bankCode}/{consentId}', 'incomeCheckAdvanced')->name('singleview.incomeCheckAdvanced');
             });
 
             //

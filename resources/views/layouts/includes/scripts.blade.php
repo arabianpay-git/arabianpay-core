@@ -13,6 +13,7 @@
 <script src="{{ asset('assets/js/layouts/demo1.js') }}"></script>
 
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
 @if (session('success'))
     <script>
         Swal.fire({

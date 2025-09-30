@@ -132,13 +132,14 @@
                                             <tr>
                                                 <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                     {{ translate('Full Name') }}</td>
-                                                <td class="text-sm text-gray-800">{{ $order->user->first_name }}
+                                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                                    {{ $order->user->first_name }}
                                                     {{ $order->user->last_name }}</td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                     {{ translate('Email') }}</td>
-                                                <td class="text-sm text-gray-800">
+                                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                     <a href="mailto:{{ $order->user->email }}"
                                                         class="text-primary hover:underline">
                                                         {{ $order->user->email }}
@@ -149,7 +150,7 @@
                                                 <tr>
                                                     <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                         {{ translate('Phone Number') }}</td>
-                                                    <td class="text-sm text-gray-800">
+                                                    <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                         <a href="tel:{{ $order->user->phone_number }}"
                                                             class="text-primary hover:underline">
                                                             {{ $order->user->phone_number }}
@@ -160,7 +161,8 @@
                                             <tr>
                                                 <td class="text-sm text-gray-600 min-w-36 pb-5 pe-6">
                                                     {{ translate('Member Since') }}</td>
-                                                <td class="flex items-center gap-2.5 text-sm text-gray-800">
+                                                <td
+                                                    class="flex items-center gap-2.5 text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                     {{ $order->user->created_at->format('d M, Y') }}
                                                 </td>
                                             </tr>
@@ -177,44 +179,51 @@
                                             <tr>
                                                 <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                     {{ translate('Recipient') }}</td>
-                                                <td class="text-sm text-gray-800">{{ $order->shipping_first_name }}
+                                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                                    {{ $order->shipping_first_name }}
                                                     {{ $order->shipping_last_name }}</td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                     {{ translate('Address Line 1') }}</td>
-                                                <td class="text-sm text-gray-800">{{ $order->shipping_address_line1 }}</td>
+                                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                                    {{ $order->shipping_address_line1 }}</td>
                                             </tr>
                                             @if ($order->shipping_address_line2)
                                                 <tr>
                                                     <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                         {{ translate('Address Line 2') }}</td>
-                                                    <td class="text-sm text-gray-800">{{ $order->shipping_address_line2 }}
+                                                    <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                                        {{ $order->shipping_address_line2 }}
                                                     </td>
                                                 </tr>
                                             @endif
                                             <tr>
                                                 <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                     {{ translate('City/State/ZIP') }}</td>
-                                                <td class="text-sm text-gray-800">{{ $order->shipping_city }},
+                                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                                    {{ $order->shipping_city }},
                                                     {{ $order->shipping_state }} {{ $order->shipping_postal_code }}</td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                     {{ translate('Country') }}</td>
-                                                <td class="text-sm text-gray-800">{{ $order->shipping_country }}</td>
+                                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                                    {{ $order->shipping_country }}</td>
                                             </tr>
                                             @if ($order->shipping_email)
                                                 <tr>
                                                     <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                         {{ translate('Email') }}</td>
-                                                    <td class="text-sm text-gray-800">{{ $order->shipping_email }}</td>
+                                                    <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                                        {{ $order->shipping_email }}</td>
                                                 </tr>
                                             @endif
                                             <tr>
                                                 <td class="text-sm text-gray-600 min-w-36 pb-5 pe-6">
                                                     {{ translate('Shipping Method') }}</td>
-                                                <td class="flex items-center gap-2.5 text-sm text-gray-800">
+                                                <td
+                                                    class="flex items-center gap-2.5 text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                                     <i class="ki-filled ki-truck-fast text-primary"></i>
                                                     {{ $order->shipping_type ?? translate('Standard Shipping') }}
                                                 </td>
@@ -317,7 +326,7 @@
 
                                 <!-- Submit Button -->
                                 <div class="flex justify-end pt-2.5">
-                                    <button type="submit" class="btn btn-primary">
+                                    <button type="submit" class="btn btn-sm btn-primary">
                                         {{ translate('Update Status') }}
                                     </button>
                                 </div>
@@ -343,19 +352,20 @@
                                     <tr>
                                         <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Quantity') }}
                                         </td>
-                                        <td class="text-sm text-gray-800">{{ number_format($totalQuantity) }}</td>
+                                        <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                            {{ number_format($totalQuantity) }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Sub Amount') }}
                                         </td>
-                                        <td class="text-sm text-gray-800">
+                                        <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                             <span class="icon-saudi_riyal"></span> {{ number_format($subTotal, 2) }}
                                         </td>
                                     </tr>
                                     <tr>
                                         <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Discount') }}
                                         </td>
-                                        <td class="text-sm text-gray-800">
+                                        <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                             <span class="icon-saudi_riyal"></span>
                                             {{ number_format($order->coupon_discount, 2) }}
                                         </td>
@@ -363,7 +373,7 @@
                                     <tr>
                                         <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
                                             {{ translate('Shipping Fee') }}</td>
-                                        <td class="text-sm text-gray-800">
+                                        <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                             @if ($totalShippingFee)
                                                 <span class="icon-saudi_riyal"></span>
                                                 {{ number_format($totalShippingFee, 2) }}
@@ -375,7 +385,7 @@
                                     <tr>
                                         <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
                                             {{ translate('Total Amount') }}</td>
-                                        <td class="text-sm text-gray-800">
+                                        <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                             <span class="icon-saudi_riyal"></span>
                                             {{ number_format($subTotal + $order->shipping_fee - $order->coupon_discount, 2) }}
                                         </td>
@@ -383,7 +393,7 @@
                                     <tr>
                                         <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
                                             {{ translate('Payment Status') }}</td>
-                                        <td class="text-sm text-gray-800">
+                                        <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                             @php
                                                 $status = strtolower($order->payment_status);
                                             @endphp
@@ -422,25 +432,26 @@
                                     <tr>
                                         <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
                                             {{ translate('Payment Method') }}</td>
-                                        <td class="text-sm text-gray-800">
+                                        <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                             {{ $order->payment_method ?? translate('N/A') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
                                             {{ translate('Payment Gateway') }}</td>
-                                        <td class="text-sm text-gray-800">
+                                        <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                             {{ $order->payment_gateway ?? translate('N/A') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
                                             {{ translate('Transaction ID') }}</td>
-                                        <td class="text-sm text-gray-800">
+                                        <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                             {{ $order->transaction_id ?? translate('N/A') }}</td>
                                     </tr>
                                     <tr>
                                         <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
                                             {{ translate('Order Date') }}</td>
-                                        <td class="text-sm text-gray-800">{{ $order->created_at->format('d M, Y') }}</td>
+                                        <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                            {{ $order->created_at->format('d M, Y') }}</td>
                                     </tr>
                                 </tbody>
                             </table>

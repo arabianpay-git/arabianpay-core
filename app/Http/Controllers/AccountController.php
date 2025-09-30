@@ -7,6 +7,7 @@ use App\Rules\NoHtml;
 use App\Services\CreditAssessmentService;
 use App\Services\FirebaseService;
 use App\Services\RiskAnalyticsService;
+use App\Services\SingleViewService;
 use App\Services\WathqService;
 use App\Traits\EmailSender;
 use App\Traits\SmsSender;

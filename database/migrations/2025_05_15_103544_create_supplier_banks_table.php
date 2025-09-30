@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('user_id')->nullable()->constrained('users')->onDelete('cascade');
             $table->string('bank_name', 255);
+            $table->string('code', 255)->nullable();
             $table->string('account_name', 255);
             $table->string('iban', 34);
             $table->text('iban_certificate');

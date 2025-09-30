@@ -16,7 +16,20 @@
                             <span
                                 class="menu-title text-nowrap font-medium text-sm text-gray-700 
                                 {{ Route::is('supplierProfile') ? 'text-primary font-semibold' : 'menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary' }}">
-                                Profile
+                                {{ translate('Profile') }}
+                            </span>
+                        </a>
+                    </div>
+
+                    <div
+                        class="menu-item border-b-2 border-b-transparent 
+                        {{ Route::is('singleview.index') ? 'border-b-primary' : '' }} menu-item-active:border-b-primary menu-item-here:border-b-primary">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('singleview.index', ['id' => $merchant->user_id]) }}">
+                            <span
+                                class="menu-title text-nowrap font-medium text-sm text-gray-700 
+                                {{ Route::is('singleview.index') ? 'text-primary font-semibold' : 'menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary' }}">
+                                {{ translate('Single View') }}
                             </span>
                         </a>
                     </div>
@@ -29,7 +42,7 @@
                             <span
                                 class="menu-title text-nowrap font-medium text-sm text-gray-700 
                                 {{ Route::is('supplierShop') ? 'text-primary font-semibold' : 'menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary' }}">
-                                Shop Settings
+                                {{ translate('Shop Settings') }}
                             </span>
                         </a>
                     </div>
@@ -42,7 +55,7 @@
                                 class="menu-title text-nowrap font-medium text-sm text-gray-700 
                                 {{ Route::is('supplierTransactions') ? 'border-b-primary' : '' }}
                                  menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                Transactions
+                                {{ translate('Transactions') }}
                             </span>
                         </a>
                     </div>
@@ -54,7 +67,7 @@
                             <span
                                 class="menu-title text-nowrap font-medium text-sm text-gray-700 
                                 {{ Route::is('supplierOrders') ? 'border-b-primary' : '' }} menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                Orders
+                                {{ translate('Orders') }}
                             </span>
                         </a>
                     </div>
@@ -66,7 +79,7 @@
                             <span
                                 class="menu-title text-nowrap font-medium text-sm text-gray-700 {{ Route::is('supplierPayments') ? 'border-b-primary' : '' }}
                                 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                Payments
+                                {{ translate('Payments') }}
                             </span>
                         </a>
                     </div>
@@ -78,7 +91,7 @@
                             <span
                                 class="menu-title text-nowrap font-medium text-sm text-gray-700 {{ Route::is('supplierFinance') ? 'border-b-primary' : '' }}
                                 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                Finance
+                                {{ translate('Finance') }}
                             </span>
                         </a>
                     </div>
@@ -91,7 +104,7 @@
                             <span
                                 class="menu-title text-nowrap font-medium text-sm text-gray-700 
                                 {{ Route::is('supplierProducts') ? 'text-primary font-semibold' : 'menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary' }}">
-                                Products
+                                {{ translate('Products') }}
                             </span>
                         </a>
                     </div>
@@ -102,7 +115,7 @@
                             href="{{ route('supplierSales', ['id' => $merchant->user_id]) }}">
                             <span
                                 class="{{ Route::is('supplierSales') ? 'border-b-primary' : '' }} menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                Sales
+                                {{ translate('Sales') }}
                             </span>
                         </a>
                     </div>
@@ -113,7 +126,7 @@
                             href="{{ route('supplierCompliance', ['id' => $merchant->user_id]) }}">
                             <span
                                 class="{{ Route::is('supplierCompliance') ? 'border-b-primary' : '' }} menu-title text-nowrap font-medium text-sm text-gray-700 menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary">
-                                Compliance
+                                {{ translate('Compliance') }}
                             </span>
                         </a>
                     </div>
@@ -142,7 +155,7 @@
                                     <span class="menu-icon">
                                         <i class="ki-filled ki-copy-success"></i>
                                     </span>
-                                    <span class="menu-title">Active</span>
+                                    <span class="menu-title">{{ translate('Active') }}</span>
                                 </a>
                             </div>
 
@@ -153,7 +166,7 @@
                                     <span class="menu-icon">
                                         <i class="ki-filled ki-watch"></i>
                                     </span>
-                                    <span class="menu-title">Under Review</span>
+                                    <span class="menu-title">{{ translate('Under Review') }}</span>
                                 </a>
                             </div>
 
@@ -164,7 +177,7 @@
                                     <span class="menu-icon">
                                         <i class="ki-filled ki-update-file"></i>
                                     </span>
-                                    <span class="menu-title">Contract Sent</span>
+                                    <span class="menu-title">{{ translate('Contract Sent') }}</span>
                                 </a>
                             </div>
 
@@ -175,7 +188,7 @@
                                     <span class="menu-icon">
                                         <i class="ki-filled ki-shield-tick"></i>
                                     </span>
-                                    <span class="menu-title">Approve</span>
+                                    <span class="menu-title">{{ translate('Approve') }}</span>
                                 </button>
                             </div>
 
@@ -186,7 +199,7 @@
                                     <span class="menu-icon">
                                         <i class="ki-filled ki-shield-cross"></i>
                                     </span>
-                                    <span class="menu-title">Suspended</span>
+                                    <span class="menu-title">{{ translate('Suspended') }}</span>
                                 </a>
                             </div>
 
@@ -197,7 +210,7 @@
                                     <span class="menu-icon">
                                         <i class="ki-filled ki-watch"></i>
                                     </span>
-                                    <span class="menu-title">Pending</span>
+                                    <span class="menu-title">{{ translate('Pending') }}</span>
                                 </a>
                             </div>
 
@@ -208,7 +221,7 @@
                                     <span class="menu-icon">
                                         <i class="ki-filled ki-wrench"></i>
                                     </span>
-                                    <span class="menu-title">Blacklisted</span>
+                                    <span class="menu-title">{{ translate('Blacklisted') }}</span>
                                 </a>
                             </div>
                         </form>
@@ -224,7 +237,7 @@
 <div class="modal" data-modal="true" id="approve_modal">
     <div class="modal-content max-w-[600px] top-[5%]">
         <div class="modal-header py-4 px-5">
-            <h5 class="modal-title">Supplier Approval</h5>
+            <h5 class="modal-title">{{ translate('Supplier Approval') }}</h5>
             <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0"
                 data-modal-dismiss="true">
                 <i class="ki-filled ki-cross"></i>
@@ -251,9 +264,10 @@
             @endphp
 
             <div class="mb-4">
-                <label for="selected_activity" class="block text-sm font-medium text-gray-700">Select Activity</label>
+                <label for="selected_activity"
+                    class="block text-sm font-medium text-gray-700">{{ translate('Select Activity') }}</label>
                 <select name="selected_activity" id="selected_activity" class="input" required>
-                    <option value="">-- Select Activity --</option>
+                    <option value="">-- {{ translate('Select Activity') }} --</option>
 
                     {{-- Show main_branch activity if exists --}}
                     @if (!is_null($mainBranchActivity))
@@ -270,20 +284,23 @@
             </div>
 
             <div class="mb-4">
-                <label for="commission" class="block text-sm font-medium text-gray-700">Commission Percentage</label>
+                <label for="commission"
+                    class="block text-sm font-medium text-gray-700">{{ translate('Commission Percentage') }}</label>
                 <input type="number" name="commission" id="commission" class="input" step="0.01"
                     min="0" max="100" value="{{ old('commission') }}" required>
             </div>
 
             <div class="mb-4">
-                <label for="payment_schedule" class="block text-sm font-medium text-gray-700">Payment Schedule
-                    (Days)</label>
+                <label for="payment_schedule" class="block text-sm font-medium text-gray-700">
+                    {{ translate('Payment Schedule (in days)') }}
+                </label>
                 <input type="number" name="payment_schedule" id="payment_schedule" class="input" step="1"
                     min="0" max="100" value="{{ old('payment_schedule') }}" required>
             </div>
 
             <div class="mb-4">
-                <label for="reason" class="block text-sm font-medium text-gray-700">Reason to Approve</label>
+                <label for="reason"
+                    class="block text-sm font-medium text-gray-700">{{ translate('Reason to Approve') }}</label>
                 <textarea name="reason" id="reason" rows="3" class="textarea" required>{{ old('reason') }}</textarea>
             </div>
 
@@ -306,14 +323,15 @@
             </div>
 
             <div class="mb-4">
-                <label for="contract_end_date" class="block text-sm font-medium text-gray-700">Contract End
-                    Date</label>
+                <label for="contract_end_date" class="block text-sm font-medium text-gray-700">
+                    {{ translate('Contract End Date') }}
+                </label>
                 <input type="text" name="contract_end_date" id="contract_end_date" class="input w-full flatpickr"
                     value="{{ old('contract_end_date') }}" required>
             </div>
 
             <div class="flex justify-end">
-                <button type="submit" class="btn btn-primary">Submit Approval</button>
+                <button type="submit" class="btn btn-primary">{{ translate('Submit Approval') }}</button>
             </div>
         </form>
 
