@@ -29,7 +29,7 @@
                             <span
                                 class="menu-title text-nowrap font-medium text-sm text-gray-700 
                                 {{ Route::is('singleview.index') ? 'text-primary font-semibold' : 'menu-item-active:text-primary menu-item-active:font-semibold menu-item-here:text-primary menu-item-here:font-semibold menu-item-show:text-primary menu-link-hover:text-primary' }}">
-                                {{ translate('Single View') }}
+                                {{ translate('Financial Analysis') }}
                             </span>
                         </a>
                     </div>
