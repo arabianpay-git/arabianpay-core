@@ -133,7 +133,7 @@ class SingleViewController extends Controller
                 'line' => $e->getLine(),
             ]);
 
-            if (stripos($e->getMessage(), 'Invalid Consent Data') !== false) {
+            if (stripos($e->getMessage(), 'API call failed: accounts') !== false) {
                 Log::info('Caught Invalid Consent Data exception, attempting to create new consent.');
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
@@ -213,7 +213,7 @@ class SingleViewController extends Controller
                 'line' => $e->getLine(),
             ]);
 
-            if (stripos($e->getMessage(), 'Invalid Consent Data') !== false) {
+            if (stripos($e->getMessage(), 'API call failed: all_accounts_balance') !== false) {
                 Log::info('Caught Invalid Consent Data exception, attempting to create new consent.');
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
@@ -290,7 +290,7 @@ class SingleViewController extends Controller
                 'line' => $e->getLine(),
             ]);
 
-            if (stripos($e->getMessage(), 'Invalid Consent Data') !== false) {
+            if (stripos($e->getMessage(), 'API call failed: e_statement') !== false) {
                 Log::info('Caught Invalid Consent Data exception, attempting to create new consent.');
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
@@ -484,7 +484,7 @@ class SingleViewController extends Controller
                 'line' => $e->getLine(),
             ]);
 
-            if (stripos($e->getMessage(), 'Invalid Consent Data') !== false) {
+            if (stripos($e->getMessage(), 'API call failed: e_statement') !== false) {
                 Log::info('Caught Invalid Consent Data exception (income check), attempting to create new consent.');
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
