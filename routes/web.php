@@ -470,7 +470,7 @@ Route::get('/fcm-test', function () {
 
 Route::get('/send-fcm', function () {
     return view('send-fcm');
-})->name('fcm');
+})->name('fcm.send');
 
 
 Route::get('/google-reviews', [ReportController::class, 'index'])->name('google.reviews.form');
