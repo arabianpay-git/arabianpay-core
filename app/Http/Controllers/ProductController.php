@@ -217,13 +217,31 @@ class ProductController extends Controller
 
             DB::commit();
             // Log the activity
+            // Generate unique batch UUID
             $batchUuid = (string) Str::uuid();
 
+            // Sanitize all dynamic values
+            $userFirst = e(Auth::user()->first_name);
+            $userLast = e(Auth::user()->last_name);
+            $productName = e($product->name);
+            $productId = (int) $product->id;
+            $reason = isset($reason) ? e($reason) : null;
+
+            // Safe, formatted log description
+            $description = sprintf(
+                '%s %s updated product: %s [%d]',
+                $userFirst,
+                $userLast,
+                $productName,
+                $productId
+            );
+
+            // Log the update safely
             $product->logModelAction(
                 event: 'update',
-                description: Auth::user()->first_name . " " . Auth::user()->last_name . " update product: {$product->name} [$product->id]",
+                description: $description,
                 properties: [
-                    'reason' => $reason ?? null,
+                    'reason' => $reason,
                     'ip' => request()->ip(),
                     'batch_uuid' => $batchUuid,
                 ],

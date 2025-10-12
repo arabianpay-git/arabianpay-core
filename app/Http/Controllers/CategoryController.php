@@ -150,16 +150,34 @@ class CategoryController extends Controller
 
     public function destroy(Category $category)
     {
-        //Log the deletion of the category
+        // Generate unique batch UUID
         $batchUuid = (string) Str::uuid();
+
+        // Sanitize dynamic values
+        $userFirst = e(Auth::user()->first_name);
+        $userLast = e(Auth::user()->last_name);
+        $categoryName = e($category->name);
+        $categoryId = (int) $category->id;
+
+        // Safe, formatted log description
+        $description = sprintf(
+            '%s %s deleted category: %s [%d]',
+            $userFirst,
+            $userLast,
+            $categoryName,
+            $categoryId
+        );
+
+        // Log the deletion safely
         $category->logModelAction(
             event: 'delete',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " delete category: {$category->name} [$category->id]",
+            description: $description,
             properties: [
                 'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                'batch_uuid' => $batchUuid,
             ],
         );
+
         $category->delete();
         return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
     }
