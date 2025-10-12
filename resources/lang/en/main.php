@@ -1101,4 +1101,7 @@ return [
     'Summary' => 'Summary',
     'Overall Balance Summary' => 'Overall Balance Summary',
     'Financial Analysis' => 'Financial Analysis',
+    'Third Parties' => 'Third Parties',
+    'Select All' => 'Select All',
+    'Selected Role' => 'Selected Role',
 ];

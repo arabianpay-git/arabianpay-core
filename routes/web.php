@@ -47,6 +47,7 @@ use App\Http\Controllers\{
     SupplierAndSalesController,
     SupplierRoleController,
     SupportTicketController,
+    ThirdPatryController,
     TransactionController,
     TransferRequestController,
     UserRoleController,
@@ -449,6 +450,9 @@ Route::group([
             Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
         });
 
+    // Third party api control
+    Route::get('/third-party', [ThirdPatryController::class, 'index'])->name('thirdParty.index');
+
     Route::get('/merchants', [MerchantUpdateController::class, 'index'])->name('merchants.index');
     Route::get('/merchants/search', [MerchantUpdateController::class, 'search'])->name('merchants.search');
     Route::post('/merchants/{id}/update', [MerchantUpdateController::class, 'update'])->name('merchants.update');
@@ -462,6 +466,10 @@ Route::post('/send-fcm', [FirebaseController::class, 'sendNotification']);
 
 Route::get('/fcm-test', function () {
     return view('fcm');
+})->name('fcm');
+
+Route::get('/send-fcm', function () {
+    return view('send-fcm');
 })->name('fcm');
 
 

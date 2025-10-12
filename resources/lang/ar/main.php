@@ -1075,4 +1075,7 @@ return [
     'Summary' => 'الملخص',
     'Overall Balance Summary' => 'ملخص الرصيد الإجمالي',
     'Financial Analysis' => 'التحليل المالي',
+    'Third Parties' => 'أطراف ثالثة',
+    'Select All' => 'تحديد الكل',
+    'Selected Role' => 'الدور المحدد',
 ];
