@@ -216,16 +216,39 @@ class AccountController extends Controller
 
         $customer->update(['package_id' => $request->package_id]);
 
-        // Log the activity
+        // Generate unique batch ID
         $batchUuid = (string) Str::uuid();
 
+        // Sanitize dynamic values
+        $userFirst = e(Auth::user()->first_name);
+        $userLast = e(Auth::user()->last_name);
+        $customerFirst = e($customer->user->first_name);
+        $customerLast = e($customer->user->last_name);
+        $customerId = (int) $customer->id;
+        $oldPackage = e($oldPackage);
+        $newPackage = e($customer->package->name);
+        $reason = isset($reason) ? e($reason) : null;
+
+        // Build safe, scanner-friendly description
+        $description = sprintf(
+            '%s %s upgraded Customer: %s %s [%d] package from %s to %s',
+            $userFirst,
+            $userLast,
+            $customerFirst,
+            $customerLast,
+            $customerId,
+            $oldPackage,
+            $newPackage
+        );
+
+        // Log the activity safely
         $customer->logModelAction(
             event: 'update',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " upgrade Customer: {$customer->user->first_name} {$customer->user->last_name} [$customer->id] package from $oldPackage to {$customer->package->name}",
+            description: $description,
             properties: [
                 'old_status' => $oldPackage,
-                'new_status' => $customer->package->name,
-                'reason' => $reason ?? null,
+                'new_status' => $newPackage,
+                'reason' => $reason,
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,
             ],
@@ -281,17 +304,36 @@ class AccountController extends Controller
         // Log the activity
         $batchUuid = (string) Str::uuid();
 
+        $firstName = e(Auth::user()->first_name);
+        $lastName = e(Auth::user()->last_name);
+        $customerFirst = e($customer->user->first_name);
+        $customerLast = e($customer->user->last_name);
+        $oldStatus = e($oldStatus);
+        $newStatus = e($customer->status);
+
+        $description = sprintf(
+            '%s %s updated Customer: %s %s [%d] status from %s to %s',
+            $firstName,
+            $lastName,
+            $customerFirst,
+            $customerLast,
+            $customer->id,
+            $oldStatus,
+            $newStatus
+        );
+
         $customer->logModelAction(
             event: 'update',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " update Customer: {$customer->user->first_name} {$customer->user->last_name} [$customer->id] status from $oldStatus to {$customer->status}",
+            description: $description,
             properties: [
                 'old_status' => $oldStatus,
-                'new_status' => $customer->status,
-                'reason' => $reason ?? null, // reson can be optional
+                'new_status' => $newStatus,
+                'reason' => $reason ?? null,
                 'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                'batch_uuid' => $batchUuid,
             ],
         );
+
 
         if ($status === 'approved') {
 
@@ -752,13 +794,34 @@ class AccountController extends Controller
             // Log the activity with batch UUID
             $batchUuid = (string) Str::uuid();
 
+            // Sanitize all variables to prevent injection or unsafe content
+            $userFirst = e(Auth::user()->first_name);
+            $userLast = e(Auth::user()->last_name);
+            $supplierFirst = e($merchant->user->first_name);
+            $supplierLast = e($merchant->user->last_name);
+            $merchantId = (int) $merchant->id;
+            $oldStatus = e($oldStatus);
+            $newStatus = e($merchant->status);
+            $reason = isset($request->reason) ? e($request->reason) : null;
+
+            $description = sprintf(
+                '%s %s updated Supplier: %s %s [%d] status from %s to %s',
+                $userFirst,
+                $userLast,
+                $supplierFirst,
+                $supplierLast,
+                $merchantId,
+                $oldStatus,
+                $newStatus
+            );
+
             $merchant->logModelAction(
                 event: 'update',
-                description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated Supplier: {$merchant->user->first_name} {$merchant->user->last_name} [$merchant->id] status from $oldStatus to {$merchant->status}",
+                description: $description,
                 properties: [
                     'old_status' => $oldStatus,
-                    'new_status' => $merchant->status,
-                    'reason' => $request->reason ?? null,
+                    'new_status' => $newStatus,
+                    'reason' => $reason,
                     'ip' => request()->ip(),
                     'batch_uuid' => $batchUuid,
                 ],
@@ -781,17 +844,39 @@ class AccountController extends Controller
 
         $merchant->update(['status' => $status]);
 
-        $description = Auth::user()->first_name . " " . Auth::user()->last_name . " update Supplier: {$merchant->user->first_name} {$merchant->user->last_name} [$merchant->id] status from $oldStatus to {$merchant->status}";
-        // Log the activity
+        // Generate unique batch ID
         $batchUuid = (string) Str::uuid();
 
+        // Sanitize all dynamic values
+        $userFirst = e(Auth::user()->first_name);
+        $userLast = e(Auth::user()->last_name);
+        $supplierFirst = e($merchant->user->first_name);
+        $supplierLast = e($merchant->user->last_name);
+        $merchantId = (int) $merchant->id;
+        $oldStatus = e($oldStatus);
+        $newStatus = e($merchant->status);
+        $reason = isset($reason) ? e($reason) : null;
+
+        // Safe, formatted description
+        $description = sprintf(
+            '%s %s updated Supplier: %s %s [%d] status from %s to %s',
+            $userFirst,
+            $userLast,
+            $supplierFirst,
+            $supplierLast,
+            $merchantId,
+            $oldStatus,
+            $newStatus
+        );
+
+        // Log the activity safely
         $merchant->logModelAction(
             event: 'update',
             description: $description,
             properties: [
                 'old_status' => $oldStatus,
-                'new_status' => $merchant->status,
-                'reason' => $reason ?? null,
+                'new_status' => $newStatus,
+                'reason' => $reason,
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,
             ],
