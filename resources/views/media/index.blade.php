@@ -413,7 +413,7 @@
                             })
                             .done(r => {
                                 selected.forEach(id => $(`.media-card[data-id="${id}"]`)
-                                .remove());
+                                    .remove());
                                 selected = [];
                                 updateDeleteButton();
                                 Swal.fire('Deleted!', r.message, 'success');
@@ -538,7 +538,6 @@
                 });
             }
 
-            // Initialize drag and drop
             setupDragAndDrop();
         });
     </script>
