@@ -284,7 +284,7 @@
                     thumbHtml =
                         `<video src="/storage/media/${media.file_name}" class="media-thumb" controls muted preload="metadata"></video>`;
                 } else if (isPdf) {
-                    thumbHtml = `<a href="/storage/media/${media.file_name}" target="_blank">
+                    thumbHtml = `<a href="#" target="_blank">
                             <img src="/assets/media/images/default-pdf.png" class="media-thumb" alt="PDF File">
                         </a>`;
                 } else {
