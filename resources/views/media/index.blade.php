@@ -38,7 +38,7 @@
         <!-- Media Grid -->
         <div class="container-fixed">
             <div class="grid gap-5 lg:gap-7.5">
-                <div class="media-grid" id="mediaGrid" style="padding:0">
+                <div class="media-grid" id="mediaGrid">
                     @foreach ($media as $item)
                         @php
                             $mediaUrl = getMediaUrl($item->file_name, asset('assets/media/images/default-image.png'));
@@ -46,14 +46,13 @@
                             $isPdf = $item->mime_type === 'application/pdf';
                         @endphp
 
-                        <div class="media-card position-relative" data-id="{{ $item->id }}"
-                            data-url="{{ $mediaUrl }}" data-file-name="{{ $item->file_name }}"
-                            data-name="{{ $item->name }}" data-size="{{ $item->size }}"
-                            data-mime="{{ $item->mime_type }}" style="overflow: visible; padding: 0.25rem;">
+                        <div class="media-card" data-id="{{ $item->id }}" data-url="{{ $mediaUrl }}"
+                            data-file-name="{{ $item->file_name }}" data-name="{{ $item->name }}"
+                            data-size="{{ $item->size }}" data-mime="{{ $item->mime_type }}">
 
                             @if ($isVideo)
-                                <video src="{{ $mediaUrl }}" class="media-thumb" controls muted preload="metadata"
-                                    style="max-height: 150px; width: auto;"></video>
+                                <video src="{{ $mediaUrl }}" class="media-thumb" controls muted
+                                    preload="metadata"></video>
                             @elseif ($isPdf)
                                 <img src="{{ asset('assets/media/images/default-pdf.png') }}" class="media-thumb"
                                     alt="PDF file">
@@ -91,18 +90,102 @@
     </main>
 @endsection
 
-@push('scripts')
+@push('styles')
     <style>
+        .media-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1.5rem;
+            padding: 0;
+        }
+
+        .media-card {
+            position: relative;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            background: white;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            min-height: 220px;
+        }
+
+        .media-card:hover {
+            border-color: #3b82f6;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .media-card.selected {
+            border-color: #3b82f6;
+            background-color: #f0f9ff;
+        }
+
+        .media-thumb {
+            width: 100%;
+            height: 120px;
+            object-fit: contain;
+            border-radius: 0.375rem;
+            background: #f9fafb;
+            margin-bottom: 0.75rem;
+        }
+
+        .media-info {
+            flex: 1;
+            min-height: 3rem;
+        }
+
+        .media-info .name {
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: #374151;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 0.25rem;
+        }
+
+        .media-info .size {
+            font-size: 0.75rem;
+            color: #6b7280;
+        }
+
         .supplier-name {
             font-size: 0.75rem;
             font-weight: 300;
             font-style: italic;
             color: #999;
-            margin-top: 0.3rem;
+            margin-top: 0.5rem;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            max-width: 100%;
+        }
+
+        .overlay-check {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            width: 1.5rem;
+            height: 1.5rem;
+            background: #3b82f6;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.75rem;
+            opacity: 0;
+            transform: scale(0.8);
+            transition: all 0.2s ease-in-out;
+        }
+
+        .media-card.selected .overlay-check {
+            opacity: 1;
+            transform: scale(1);
         }
 
         body.dragging::before {
@@ -143,8 +226,27 @@
                 border-color: #0d6efd;
             }
         }
-    </style>
 
+        /* Responsive adjustments */
+        @media (max-width: 640px) {
+            .media-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+                gap: 1rem;
+            }
+
+            .media-card {
+                min-height: 200px;
+                padding: 0.5rem;
+            }
+
+            .media-thumb {
+                height: 100px;
+            }
+        }
+    </style>
+@endpush
+
+@push('scripts')
     <script>
         $(function() {
             const $deleteBtn = $('#deleteSelectedBtn'),
@@ -159,7 +261,6 @@
                 $loadMoreSpinner = $('#loadMoreSpinner'),
                 $loadMoreEnd = $('#loadMoreEnd');
 
-            // initial offset based on server-rendered items
             let selected = [],
                 offset = parseInt({{ count($media) ?? 0 }}, 10) || 0,
                 limit = 18,
@@ -181,36 +282,45 @@
 
                 if (isVideo) {
                     thumbHtml =
-                        `<video src="/storage/media/${media.file_name}" class="media-thumb" controls muted preload="metadata" style="max-height:150px; width:auto;"></video>`;
+                        `<video src="/storage/media/${media.file_name}" class="media-thumb" controls muted preload="metadata"></video>`;
                 } else if (isPdf) {
-                    // Show a PDF icon, clickable to open in new tab
-                    thumbHtml =
-                        `<a href="/storage/media/${media.file_name}" target="_blank">
-                            <img src="/assets/media/images/default-pdf.png" class="media-thumb" alt="PDF File" style="max-height:150px; width:auto;">
+                    thumbHtml = `<a href="/storage/media/${media.file_name}" target="_blank">
+                            <img src="/assets/media/images/default-pdf.png" class="media-thumb" alt="PDF File">
                         </a>`;
                 } else {
                     thumbHtml =
-                        `<img src="/storage/media/${media.file_name}" class="media-thumb" loading="lazy" alt="media">`;
+                        `<img src="/storage/media/${media.file_name}" class="media-thumb" loading="lazy" alt="${media.name}">`;
                 }
 
                 return `
-                    <div class="media-card position-relative"
-                        data-id="${media.id}"
-                        data-url="${media.url}"
-                        data-name="${media.name}"
-                        data-size="${media.size}"
-                        data-mime="${media.mime_type}">
-                        ${thumbHtml}
-                        <div class="media-info">
-                            <div class="name">${media.name}</div>
-                            <div class="size">${(media.size/1024).toFixed(1)} KB</div>
-                        </div>
-                        <div class="overlay-check"><i class="fas fa-check"></i></div>
-                    </div>`;
+                <div class="media-card" 
+                    data-id="${media.id}"
+                    data-url="/storage/media/${media.file_name}"
+                    data-name="${media.name}"
+                    data-size="${media.size}"
+                    data-mime="${media.mime_type}">
+                    ${thumbHtml}
+                    <div class="media-info">
+                        <div class="name">${media.name}</div>
+                        <div class="size">${(media.size/1024).toFixed(1)} KB</div>
+                    </div>
+                    <div class="supplier-name">
+                        User: ${media.user ? media.user.business_name : 'Unknown Supplier'}
+                    </div>
+                    <div class="overlay-check"><i class="fas fa-check"></i></div>
+                </div>`;
             }
 
             function appendCards(list) {
-                list.forEach(m => $mediaGrid.append(renderCard(m)));
+                const fragment = document.createDocumentFragment();
+
+                list.forEach(media => {
+                    const tempDiv = document.createElement('div');
+                    tempDiv.innerHTML = renderCard(media).trim();
+                    fragment.appendChild(tempDiv.firstChild);
+                });
+
+                $mediaGrid[0].appendChild(fragment);
             }
 
             async function loadMoreMedia() {
@@ -218,7 +328,6 @@
                 loading = true;
                 attemptedLoad = true;
 
-                // UI: disable button & show spinner
                 $loadMoreBtn.prop('disabled', true);
                 $loadMoreSpinner.removeClass('d-none');
 
@@ -245,19 +354,16 @@
                     appendCards(res.media);
                     offset += received;
 
-                    // if returned less than a full page, mark end
                     if (received < limit) {
                         noMoreMedia = true;
                         $loadMoreBtn.hide();
                         $loadMoreEnd.removeClass('d-none');
                     } else {
-                        // re-enable button for next page
                         $loadMoreBtn.prop('disabled', false);
                     }
                 } catch (err) {
                     console.error('lazyLoad error', err);
                     Swal.fire('Error', 'Failed to load more media. Try again.');
-                    // re-enable button so user can retry
                     $loadMoreBtn.prop('disabled', false);
                 } finally {
                     loading = false;
@@ -265,33 +371,35 @@
                 }
             }
 
-            // wire button
-            $loadMoreBtn.on('click', function() {
-                loadMoreMedia();
-            });
+            // Load more button event
+            $loadMoreBtn.on('click', loadMoreMedia);
 
-            // selection / delete handlers (unchanged)
+            // Selection management
             function updateDeleteButton() {
-                $deleteBtn.toggle(selected.length > 0);
+                $deleteBtn.toggleClass('d-none', selected.length === 0);
             }
 
             $(document).on('click', '.media-card', function() {
-                const id = $(this).data('id');
-                if ($(this).hasClass('selected')) {
+                const $card = $(this);
+                const id = $card.data('id');
+
+                if ($card.hasClass('selected')) {
                     selected = selected.filter(i => i !== id);
-                    $(this).removeClass('selected');
+                    $card.removeClass('selected');
                 } else {
                     selected.push(id);
-                    $(this).addClass('selected');
+                    $card.addClass('selected');
                 }
                 updateDeleteButton();
             });
 
+            // Delete selected media
             $deleteBtn.on('click', function() {
                 if (!selected.length) return;
+
                 Swal.fire({
                     title: 'Delete selected?',
-                    text: 'These files will be permanently removed.',
+                    text: `${selected.length} file(s) will be permanently removed.`,
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#dc3545',
@@ -305,7 +413,7 @@
                             })
                             .done(r => {
                                 selected.forEach(id => $(`.media-card[data-id="${id}"]`)
-                                    .remove());
+                                .remove());
                                 selected = [];
                                 updateDeleteButton();
                                 Swal.fire('Deleted!', r.message, 'success');
@@ -315,10 +423,11 @@
                 });
             });
 
-            // upload handlers (unchanged)
+            // Upload functionality
             function startUpload() {
                 $fileInput.click();
             }
+
             $uploadBtn.on('click', startUpload);
 
             $fileInput.on('change', function() {
@@ -358,8 +467,13 @@
                         if (res.success) {
                             if (res.media && Array.isArray(res.media)) {
                                 res.media.forEach(m => {
-                                    if (!m.url && m.file_name) m.url = `/storage/media/${m.file_name}`;
-                                    $mediaGrid.prepend(renderCard(m));
+                                    if (!m.url && m.file_name) {
+                                        m.url = `/storage/media/${m.file_name}`;
+                                    }
+                                    // Prepend new cards using the same rendering method
+                                    const tempDiv = document.createElement('div');
+                                    tempDiv.innerHTML = renderCard(m).trim();
+                                    $mediaGrid.prepend(tempDiv.firstChild);
                                 });
                                 offset += res.media.length;
                             }
@@ -389,6 +503,43 @@
                         $fileInput.val('');
                     });
             }
+
+            // Drag and drop functionality
+            function setupDragAndDrop() {
+                const $body = $('body');
+
+                $(document).on('dragover', function(e) {
+                    e.preventDefault();
+                    if (!e.originalEvent.dataTransfer.types.includes('Files')) return;
+                    $body.addClass('dragging');
+                });
+
+                $(document).on('dragleave', function(e) {
+                    if (e.originalEvent.clientX <= 0 || e.originalEvent.clientY <= 0 ||
+                        e.originalEvent.clientX >= window.innerWidth || e.originalEvent.clientY >= window
+                        .innerHeight) {
+                        $body.removeClass('dragging');
+                    }
+                });
+
+                $(document).on('drop', function(e) {
+                    e.preventDefault();
+                    $body.removeClass('dragging');
+
+                    const files = e.originalEvent.dataTransfer.files;
+                    if (files.length > 0) {
+                        uploadFiles(files);
+                    }
+                });
+
+                // Prevent default behavior for drag events
+                $(document).on('dragenter dragover drop', function(e) {
+                    e.preventDefault();
+                });
+            }
+
+            // Initialize drag and drop
+            setupDragAndDrop();
         });
     </script>
 @endpush
