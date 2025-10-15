@@ -140,7 +140,7 @@
                                                         <br>
                                                         <small class="text-gray-500">
                                                             —
-                                                            {{ $product->brand?->name ?? ($product->category?->name ?? '—') }}
+                                                            {{ $product->user?->business_name ?? translate('N/A') }}
                                                         </small>
                                                     </div>
                                                 </td>

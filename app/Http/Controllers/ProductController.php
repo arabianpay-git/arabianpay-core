@@ -15,8 +15,20 @@ class ProductController extends Controller
 {
     public function index(Request $request)
     {
-        $query = Product::with(['category:id,name', 'brand:id,name'])
-            ->select(['id', 'name', 'thumbnail', 'unit_price', 'brand_id', 'current_stock', 'approved', 'published', 'reason_reject', 'created_at']);
+        $query = Product::with(['category:id,name', 'brand:id,name', 'user:id,business_name'])
+            ->select([
+                'id',
+                'name',
+                'thumbnail',
+                'unit_price',
+                'brand_id',
+                'user_id',
+                'current_stock',
+                'approved',
+                'published',
+                'reason_reject',
+                'created_at'
+            ]);
 
         $request->validate([
             'from' => ['nullable', 'date'],

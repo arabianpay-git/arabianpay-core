@@ -334,7 +334,6 @@ class AccountController extends Controller
             ],
         );
 
-
         if ($status === 'approved') {
 
             $this->sendEmail(
