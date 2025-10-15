@@ -124,7 +124,7 @@
                                                         {{ \Illuminate\Support\Str::limit($product->name, 20) }}
                                                         <br>
                                                         <small class="text-gray-500">
-                                                            — {{ $product->brand?->name ?? '—' }}
+                                                            — {{ $product->user?->business_name ?? translate('N/A') }}
                                                         </small>
                                                     </div>
                                                 </td>

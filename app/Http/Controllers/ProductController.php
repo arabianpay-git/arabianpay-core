@@ -63,9 +63,9 @@ class ProductController extends Controller
 
     public function productApproval(Request $request)
     {
-        $products = Product::with(['category:id,name', 'brand:id,name'])
+        $products = Product::with(['category:id,name', 'brand:id,name', 'user:id,business_name'])
             ->where('approved', '!=', 'approved')
-            ->select(['id', 'name', 'thumbnail', 'unit_price', 'brand_id', 'current_stock', 'approved', 'published', 'created_at'])
+            ->select(['id', 'name', 'thumbnail', 'unit_price', 'brand_id', 'user_id', 'current_stock', 'approved', 'published', 'created_at'])
             ->latest()
             ->paginate(10);
 
@@ -74,8 +74,8 @@ class ProductController extends Controller
 
     public function productReviews(Request $request)
     {
-        $products = Product::with(['brand:id,name'])
-            ->select(['id', 'name', 'thumbnail', 'brand_id', 'current_stock', 'approved', 'rating', 'created_at'])
+        $products = Product::with(['user:id,business_name'])
+            ->select(['id', 'name', 'thumbnail', 'brand_id', 'user_id', 'current_stock', 'approved', 'rating', 'created_at'])
             ->latest()
             ->paginate(10);
 
