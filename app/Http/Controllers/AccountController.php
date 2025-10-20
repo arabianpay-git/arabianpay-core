@@ -432,8 +432,8 @@ class AccountController extends Controller
         $user = currentUser();
         $search = $request->input('search');
 
-        // Base merchant query
-        $merchantsQuery = Merchant::with('user', 'businessType', 'assigned')
+        // Base merchant query with approval relation
+        $merchantsQuery = Merchant::with(['user', 'businessType', 'assigned', 'approval'])
             ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to', 'created_at')
             ->when(
                 !($user->user_type === 'employee' && $user->is_manager) && $user->user_type !== 'admin',
@@ -442,10 +442,10 @@ class AccountController extends Controller
             ->orderByDesc('id')
             ->orderByRaw('ISNULL(assigned_to) DESC');
 
-        // Get collection first
+        // Get collection
         $merchants = $merchantsQuery->get();
 
-        // Apply search via private function
+        // Apply search
         if ($search) {
             $merchants = $this->filterMerchants($merchants, $search);
         }
@@ -467,6 +467,21 @@ class AccountController extends Controller
 
         return view('admin.accounts.suppliers', ['merchants' => $paginated]);
     }
+
+    public function updateCommission(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|exists:users,id',
+            'commission' => 'required'
+        ]);
+
+        $approval = Approval::firstOrNew(['user_id' => $request->user_id]);
+        $approval->commission = $request->commission;
+        $approval->save();
+
+        return response()->json(['success' => true]);
+    }
+
 
     /**
      * Private function to filter merchants collection based on search input

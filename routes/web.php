@@ -223,6 +223,7 @@ Route::group([
                 Route::get('custoemr-transactions', 'transactions')->name('transactions');
 
                 Route::get('suppliers',            'suppliers')->name('suppliers');
+                Route::post('update-commission',            'updateCommission')->name('updateCommission');
                 Route::get('supplier/{id}',        'supplierProfile')->name('supplierProfile');
                 Route::get('supplier-shop-settings/{id}',        'supplierShop')->name('supplierShop');
                 Route::post('shop-settings', 'supplierShopSubmit')->name('supplierShopSubmit');

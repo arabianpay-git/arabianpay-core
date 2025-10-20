@@ -95,4 +95,9 @@ class Merchant extends Model
     {
         return $this->hasOne(RiskManagement::class, 'user_id', 'user_id');
     }
+
+    public function approval()
+    {
+        return $this->hasOne(\App\Models\Approval::class, 'user_id', 'user_id');
+    }
 }

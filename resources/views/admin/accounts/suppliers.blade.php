@@ -48,6 +48,7 @@
                             @include('admin.accounts.partials.suppliers-table', [
                                 'merchants' => $merchants,
                             ])
+                            {{-- @include('admin.accounts.partials.commission-update-modal') --}}
                         </div>
                     </div>
                 </div>

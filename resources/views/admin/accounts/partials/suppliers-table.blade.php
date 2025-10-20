@@ -12,6 +12,7 @@
                 <th>{{ translate('Business Type') }}</th>
                 <th>{{ translate('Assigned To') }}</th>
                 <th>{{ translate('Status') }}</th>
+                <th>{{ translate('Commission') }}</th>
                 <th>{{ translate('Action') }}</th>
             </tr>
         </thead>
@@ -63,6 +64,18 @@
                             ">
                             {{ ucfirst(str_replace('_', ' ', $item->status)) }}
                         </span>
+                    </td>
+
+                    <td class="text-center">
+                        <!-- Commission inline -->
+                        <div class="ml-2 flex items-center gap-1">
+                            <span class="text-sm text-gray-600">{{ $item->approval?->commission ?? '—' }}</span>
+                            {{-- <button class="btn btn-xs btn-primary update-commission-btn"
+                                data-user-id="{{ $item->user_id }}"
+                                data-current-commission="{{ $item->approval?->commission ?? '' }}">
+                                Update
+                            </button> --}}
+                        </div>
                     </td>
 
                     <td>
