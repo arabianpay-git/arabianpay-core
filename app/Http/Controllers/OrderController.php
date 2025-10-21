@@ -168,13 +168,28 @@ class OrderController extends Controller
             $newDeliveryStatus = $request->delivery_status ?? $oldDeliveryStatus;
             $newGeneralStatus = $request->general_status ?? $oldGeneralStatus;
 
-            // 🚨 Handle validation logic BEFORE starting transaction
+            /**
+             * DELIVERY STATUS VALIDATION
+             */
             if (array_search($newDeliveryStatus, $deliveryFlow) < array_search($oldDeliveryStatus, $deliveryFlow)) {
                 return back()->with('error', "Cannot move delivery status backward from '{$oldDeliveryStatus}' to '{$newDeliveryStatus}'.");
             }
 
+            // Once delivered, it cannot be returned
+            if ($oldDeliveryStatus === 'delivered' && $newDeliveryStatus === 'returned') {
+                return back()->with('error', "Cannot change delivery status from 'delivered' to 'returned'.");
+            }
+
+            /**
+             * GENERAL STATUS VALIDATION
+             */
             if (array_search($newGeneralStatus, $generalFlow) < array_search($oldGeneralStatus, $generalFlow)) {
                 return back()->with('error', "Cannot move general status backward from '{$oldGeneralStatus}' to '{$newGeneralStatus}'.");
+            }
+
+            // Once accepted, it cannot be cancelled or failed
+            if ($oldGeneralStatus === 'accepted' && in_array($newGeneralStatus, ['cancelled', 'failed'])) {
+                return back()->with('error', "Cannot change general status from 'accepted' to '{$newGeneralStatus}'.");
             }
 
             DB::beginTransaction();
