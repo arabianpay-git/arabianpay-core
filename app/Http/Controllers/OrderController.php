@@ -74,6 +74,7 @@ class OrderController extends Controller
         if ($status) $query->where('general_status', $status);
         if ($shippingStatus) $query->where('delivery_status', $shippingStatus);
 
+        $query->orderBy('created_at', 'desc');
         return $query->orderByRaw('assigned_to IS NULL DESC')->paginate(10);
     }
 
