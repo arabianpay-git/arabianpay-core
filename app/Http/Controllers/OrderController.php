@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Detection\MobileDetect;
+use Illuminate\Support\Str;
 
 class OrderController extends Controller
 {
@@ -236,8 +237,20 @@ class OrderController extends Controller
         DB::beginTransaction(); // Start transaction
         try {
             if ($request->hasFile('invoice_file')) {
-                // Store logic should be wrapped in transaction if possible, but store() usually happens outside
-                $order->invoice_file = $request->file('invoice_file')->store('media');
+                $disk = 'public';
+                $folder = 'media';
+                $file = $request->file('invoice_file');
+
+                $originalName = $file->getClientOriginalName();
+                $extension = strtolower($file->getClientOriginalExtension());
+                $filename = Str::random(40) . '.' . $extension;
+                $fullPath = "$folder/$filename";
+
+                // Store in storage/app/public/media
+                $file->storeAs($folder, $filename, $disk);
+
+                // Save file path relative to storage
+                $order->invoice_file = $fullPath;
             }
 
             $order->invoice_number = $request->invoice_number;
