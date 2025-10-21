@@ -84,19 +84,21 @@
                 </div>
 
                 <!-- General Status -->
-                <div class="w-full mt-4">
-                    <label for="general_status"
-                        class="block text-sm font-medium text-gray-700 mb-1">{{ translate('General Status') }}</label>
-                    <select name="general_status" id="general_status" class="select">
-                        <option value="">{{ translate('-- Select Status --') }}</option>
-                        <option value="processing" {{ $order->general_status === 'processing' ? 'selected' : '' }}>
-                            {{ translate('Processing') }}</option>
-                        <option value="cancelled" {{ $order->general_status === 'cancelled' ? 'selected' : '' }}>
-                            {{ translate('Cancelled') }}</option>
-                        <option value="failed" {{ $order->general_status === 'failed' ? 'selected' : '' }}>
-                            {{ translate('Failed') }}</option>
-                    </select>
-                </div>
+                @if ($order->general_status != 'accepted')
+                    <div class="w-full mt-4">
+                        <label for="general_status"
+                            class="block text-sm font-medium text-gray-700 mb-1">{{ translate('General Status') }}</label>
+                        <select name="general_status" id="general_status" class="select">
+                            <option value="">{{ translate('-- Select Status --') }}</option>
+                            <option value="processing" {{ $order->general_status === 'processing' ? 'selected' : '' }}>
+                                {{ translate('Processing') }}</option>
+                            <option value="cancelled" {{ $order->general_status === 'cancelled' ? 'selected' : '' }}>
+                                {{ translate('Cancelled') }}</option>
+                            <option value="failed" {{ $order->general_status === 'failed' ? 'selected' : '' }}>
+                                {{ translate('Failed') }}</option>
+                        </select>
+                    </div>
+                @endif
 
                 <!-- Submit Button -->
                 <div class="flex justify-end pt-2.5">

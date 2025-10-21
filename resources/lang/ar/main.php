@@ -1161,4 +1161,6 @@ return [
     'OVERDUE'  => 'متأخر',
     'DUE' => 'حق',
     'UPCOMING' => 'القادم',
+    'Service Fees' => 'رسوم الخدمة',
+    'Delivery Otp Send Failed' => 'فشل إرسال كلمة مرور التسليم',
 ];

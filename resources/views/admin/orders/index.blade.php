@@ -156,21 +156,31 @@
                                                 </td>
 
                                                 <td class="text-center">{{ $item->payment_type }}</td>
+
                                                 <td class="text-center">
-                                                    @if ($item->payment_status == 'completed')
-                                                        <span
-                                                            class="badge badge-sm badge-outline badge-success">{{ ucfirst($item->payment_status) }}</span>
-                                                    @elseif($item->payment_status == 'pending')
-                                                        <span
-                                                            class="badge badge-sm badge-outline badge-warning">{{ ucfirst($item->payment_status) }}</span>
-                                                    @elseif($item->payment_status == 'failed')
-                                                        <span
-                                                            class="badge badge-sm badge-outline badge-danger">{{ ucfirst($item->payment_status) }}</span>
-                                                    @else
-                                                        <span
-                                                            class="badge badge-sm badge-outline badge-info">{{ ucfirst($item->payment_status) }}</span>
-                                                    @endif
+                                                    <div class="flex justify-center align-items-center flex-wrap"
+                                                        style="gap:5px;">
+                                                        @forelse ($item->schedulePayments as $payment)
+                                                            @php
+                                                                $statusClass = match ($payment->payment_status) {
+                                                                    'paid' => 'badge-success',
+                                                                    'pending' => 'badge-warning',
+                                                                    'due' => 'badge-primary',
+                                                                    'late' => 'badge-danger',
+                                                                    'failed' => 'badge-dark',
+                                                                    default => 'badge-info',
+                                                                };
+                                                            @endphp
+                                                            <span class="badge badge-sm badge-outline {{ $statusClass }}">
+                                                                {{ ucfirst($payment->payment_status) }}
+                                                            </span>
+                                                        @empty
+                                                            <span class="badge badge-sm badge-outline badge-secondary">No
+                                                                Payments</span>
+                                                        @endforelse
+                                                    </div>
                                                 </td>
+
                                                 <td class="text-center">{{ number_format((float) $item->grand_total, 2) }}
                                                 </td>
                                                 <td class="text-center">

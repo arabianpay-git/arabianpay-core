@@ -104,9 +104,9 @@ class Order extends Model
         return $this->hasMany(Payment::class, 'order_id');
     }
 
-    public function schedulePayment()
+    public function schedulePayments()
     {
-        return $this->hasMany(SchedulePayment::class, 'order_id');
+        return $this->hasMany(SchedulePayment::class);
     }
 
     public function refund()

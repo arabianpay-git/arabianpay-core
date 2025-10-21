@@ -61,6 +61,7 @@ class OrderController extends Controller
     protected function statusView(string $status, string $type)
     {
         $orders = $this->getOrdersByStatus($status);
+
         return view('admin.orders.index', compact('orders', 'type'));
     }
 
@@ -68,7 +69,8 @@ class OrderController extends Controller
     private function getOrdersByStatus(?string $status = null, $shippingStatus = null)
     {
         $user = Auth::user();
-        $query = Order::with(['user', 'pickupPoint', 'assigned'])
+
+        $query = Order::with(['user', 'pickupPoint', 'assigned', 'schedulePayments']) // eager load schedulePayments
             ->when($user->user_type !== 'admin', fn($q) => $q->where('assigned_to', $user->id));
 
         if ($status) $query->where('general_status', $status);
@@ -500,7 +502,7 @@ class OrderController extends Controller
         $order->delivery_otp = $otp;
         $order->save();
 
-        $message = "Your delivery OTP is {$otp}. Please share this code with the supplier to confirm your order delivery.";
+        $message = "Please submit this OTP on the ArabianPay mobile app to confirm your order delivery: {$otp}";
         $description = "Delivery OTP ({$otp}) generated and attempt to send to customer.";
 
         try {

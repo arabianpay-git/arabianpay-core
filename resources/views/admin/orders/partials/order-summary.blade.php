@@ -14,29 +14,24 @@
         <table class="table-auto w-full text-sm text-gray-700">
             <tbody>
                 <tr>
-                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Quantity') }}
-                    </td>
-                    <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
-                        {{ number_format($totalQuantity) }}</td>
+                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Quantity') }}</td>
+                    <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">{{ number_format($totalQuantity) }}</td>
                 </tr>
                 <tr>
-                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Sub Amount') }}
-                    </td>
+                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Sub Amount') }}</td>
                     <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                         <span class="icon-saudi_riyal"></span> {{ number_format($subTotal, 2) }}
                     </td>
                 </tr>
                 <tr>
-                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Discount') }}
-                    </td>
+                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Discount') }}</td>
                     <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                         <span class="icon-saudi_riyal"></span>
                         {{ number_format($order->coupon_discount, 2) }}
                     </td>
                 </tr>
                 <tr>
-                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
-                        {{ translate('Shipping Fee') }}</td>
+                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Shipping Fee') }}</td>
                     <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                         @if ($totalShippingFee)
                             <span class="icon-saudi_riyal"></span>
@@ -46,34 +41,21 @@
                         @endif
                     </td>
                 </tr>
+                <!-- Service Fees 1% of subTotal -->
+                @php
+                    $serviceFee = $subTotal * 0.01;
+                @endphp
                 <tr>
-                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
-                        {{ translate('Total Amount') }}</td>
+                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Service Fees') }} (1%)</td>
                     <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
-                        <span class="icon-saudi_riyal"></span>
-                        {{ number_format($subTotal + $order->shipping_fee - $order->coupon_discount, 2) }}
+                        <span class="icon-saudi_riyal"></span> {{ number_format($serviceFee, 2) }}
                     </td>
                 </tr>
                 <tr>
-                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
-                        {{ translate('Payment Status') }}</td>
+                    <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Total Amount') }}</td>
                     <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
-                        @php
-                            $status = strtolower($order->payment_status);
-                        @endphp
-                        @if ($status == 'pending')
-                            <span class="badge badge-sm badge-warning badge-outline">{{ translate('Pending') }}</span>
-                        @elseif($status == 'completed')
-                            <span
-                                class="badge badge-sm badge-success badge-outline">{{ translate('Completed') }}</span>
-                        @elseif($status == 'failed')
-                            <span class="badge badge-sm badge-error badge-outline">{{ translate('Failed') }}</span>
-                        @elseif($status == 'refunded')
-                            <span class="badge badge-sm badge-info badge-outline">{{ translate('Refunded') }}</span>
-                        @else
-                            <span
-                                class="badge badge-sm badge-secondary badge-outline">{{ translate('Unknown') }}</span>
-                        @endif
+                        <span class="icon-saudi_riyal"></span>
+                        {{ number_format($subTotal + $serviceFee + ($totalShippingFee ?? 0) - $order->coupon_discount, 2) }}
                     </td>
                 </tr>
             </tbody>

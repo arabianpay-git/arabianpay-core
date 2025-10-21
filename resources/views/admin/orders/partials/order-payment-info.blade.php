@@ -27,23 +27,28 @@
                     <span class="font-medium text-gray-600">{{ translate('Order Date') }}</span>
                     <span class="text-gray-800">{{ $order->created_at->format('d M, Y') }}</span>
                 </div>
-                <div class="flex justify-between items-center mb-2">
+
+                <div class="flex justify-between flex-wrap items-center gap-2 mb-2">
                     <span class="font-medium text-gray-600">{{ translate('Payment Status') }}</span>
-                    @php
-                        $paymentStatusClasses = [
-                            'pending' => 'badge badge-sm badge-outline badge-info',
-                            'due' => 'badge badge-sm badge-outline badge-warning',
-                            'late' => 'badge badge-sm badge-outline badge-error',
-                            'paid' => 'badge badge-sm badge-outline badge-success',
-                            'failed' => 'badge badge-sm badge-outline badge-danger',
-                        ];
-                        $paymentStatusClass =
-                            $paymentStatusClasses[$transaction->payment_status ?? 'pending'] ??
-                            'badge badge-sm badge-outline';
-                    @endphp
-                    <span class="{{ $paymentStatusClass }}">
-                        {{ ucfirst($transaction->payment_status ?? 'N/A') }}
-                    </span>
+                    @forelse ($transaction->schedulePayments as $payment)
+                        @php
+                            $paymentStatusClasses = [
+                                'pending' => 'badge badge-sm badge-outline badge-info',
+                                'due' => 'badge badge-sm badge-outline badge-warning',
+                                'late' => 'badge badge-sm badge-outline badge-error',
+                                'paid' => 'badge badge-sm badge-outline badge-success',
+                                'failed' => 'badge badge-sm badge-outline badge-danger',
+                            ];
+                            $paymentStatusClass =
+                                $paymentStatusClasses[$payment->payment_status ?? 'pending'] ??
+                                'badge badge-sm badge-outline';
+                        @endphp
+                        <span class="{{ $paymentStatusClass }}">
+                            {{ ucfirst($payment->payment_status ?? 'N/A') }}
+                        </span>
+                    @empty
+                        <span class="badge badge-sm badge-outline badge-secondary">No Payments</span>
+                    @endforelse
                 </div>
 
                 <div class="flex justify-between items-center mb-2">

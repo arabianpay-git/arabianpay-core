@@ -1186,5 +1186,7 @@ return [
     'OVERDUE'  => 'OVERDUE',
     'DUE' => 'DUE',
     'UPCOMING' => 'UPCOMING',
+    'Service Fees' => 'Service Fees',
+    'Delivery Otp Send Failed' => 'Delivery Otp Send Failed',
 
 ];
