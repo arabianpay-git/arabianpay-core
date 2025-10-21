@@ -33,6 +33,26 @@
     </script>
 @endif
 
+@if (session('error'))
+    <script>
+        Swal.fire({
+            icon: 'error',
+            title: '{{ translate('Error') }}',
+            html: `{!! session('error') !!}`,
+            toast: true,
+            position: 'bottom-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            }
+        });
+    </script>
+@endif
+
+
 @if ($errors->any())
     <script>
         Swal.fire({
@@ -52,24 +72,6 @@
     </script>
 @endif
 
-@if (session('error'))
-    <script>
-        Swal.fire({
-            icon: 'error',
-            title: '{{ translate('Error') }}',
-            text: "{{ session('error') }}",
-            toast: true,
-            position: 'bottom-end',
-            showConfirmButton: false,
-            timer: 3000,
-            timerProgressBar: true,
-            didOpen: (toast) => {
-                toast.addEventListener('mouseenter', Swal.stopTimer);
-                toast.addEventListener('mouseleave', Swal.resumeTimer);
-            }
-        });
-    </script>
-@endif
 
 <!-- Tabs JS -->
 <script>

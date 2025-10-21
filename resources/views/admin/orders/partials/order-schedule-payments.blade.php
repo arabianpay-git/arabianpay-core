@@ -14,10 +14,10 @@
                     // --- Status Mapping Logic ---
                     $statusClass = match ($status) {
                         'paid' => 'paid',
-                        'due' => 'pending', // Use 'pending' class for 'due' status (blue/upcoming style)
-                        'pending' => 'upcoming', // Use 'upcoming' class for 'pending' status (blue/upcoming style)
-                        'late' => 'late', // Separate class for 'late' status (red style)
-                        'failed' => 'failed', // Separate class for 'failed' status (gray/dark style)
+                        'due' => 'pending',
+                        'pending' => 'upcoming',
+                        'late' => 'late',
+                        'failed' => 'failed',
                         default => 'upcoming',
                     };
 
@@ -27,7 +27,7 @@
                         'due' => translate('DUE'),
                         'late' => translate('OVERDUE'),
                         'failed' => translate('FAILED'),
-                        default => translate('UPCOMING'), // Covers 'pending'
+                        default => translate('UPCOMING'),
                     };
 
                     $dueDate = $dueDateCarbon->format('d M Y');
@@ -37,11 +37,10 @@
                 @endphp
 
                 <div class="sp-card {{ $statusClass }}">
-                    {{-- START: Diagonal Ribbon --}}
+
                     <div class="sp-ribbon">
                         <span class="sp-ribbon-text">{{ $ribbonText }}</span>
                     </div>
-                    {{-- END: Diagonal Ribbon --}}
 
                     <div class="sp-card-content">
                         <div class="sp-card-top">
@@ -85,7 +84,6 @@
                             </div>
 
                             <div class="sp-row mt-2">
-                                {{-- Use due-late for 'late' status, otherwise standard text-gray-600 --}}
                                 <div class="due text-xs {{ $status === 'late' ? 'due-late' : 'text-gray-600' }}">
                                     {{ $dueDate }}</div>
 
@@ -97,7 +95,6 @@
                                         <button
                                             class="btn btn-sm btn-outline btn-warning">{{ translate('Pay Now') }}</button>
                                     @else
-                                        {{-- pending --}}
                                         <span
                                             class="badge badge-sm badge-outline badge-primary">{{ translate('Upcoming') }}</span>
                                     @endif

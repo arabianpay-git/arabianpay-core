@@ -150,7 +150,6 @@ class OrderController extends Controller
     /** Update order status */
     public function updateStatus(Request $request, int $id)
     {
-        DB::beginTransaction(); // Start transaction
         try {
             $request->validate([
                 'delivery_status' => 'nullable|in:pending,shipped,delivered,returned',
@@ -159,21 +158,36 @@ class OrderController extends Controller
 
             $order = Order::findOrFail($id);
 
-            // Capture old statuses before update
+            $deliveryFlow = ['pending', 'shipped', 'delivered', 'returned'];
+            $generalFlow = ['processing', 'accepted', 'cancelled', 'failed'];
+
             $oldDeliveryStatus = $order->delivery_status;
             $oldGeneralStatus = $order->general_status;
 
-            if ($request->delivery_status === 'delivered') {
+            $newDeliveryStatus = $request->delivery_status ?? $oldDeliveryStatus;
+            $newGeneralStatus = $request->general_status ?? $oldGeneralStatus;
+
+            // 🚨 Handle validation logic BEFORE starting transaction
+            if (array_search($newDeliveryStatus, $deliveryFlow) < array_search($oldDeliveryStatus, $deliveryFlow)) {
+                return back()->with('error', "Cannot move delivery status backward from '{$oldDeliveryStatus}' to '{$newDeliveryStatus}'.");
+            }
+
+            if (array_search($newGeneralStatus, $generalFlow) < array_search($oldGeneralStatus, $generalFlow)) {
+                return back()->with('error', "Cannot move general status backward from '{$oldGeneralStatus}' to '{$newGeneralStatus}'.");
+            }
+
+            DB::beginTransaction();
+
+            // Handle delivered OTP
+            if ($newDeliveryStatus === 'delivered' && $oldDeliveryStatus !== 'delivered') {
                 $this->handleDeliveredStatus($order);
             }
 
-            $order->update($request->only(['delivery_status', 'general_status']));
+            $order->update([
+                'delivery_status' => $newDeliveryStatus,
+                'general_status' => $newGeneralStatus,
+            ]);
 
-            // Capture new statuses after update
-            $newDeliveryStatus = $order->delivery_status;
-            $newGeneralStatus = $order->general_status;
-
-            // Construct log description
             $descriptionParts = [];
             if ($oldDeliveryStatus !== $newDeliveryStatus) {
                 $descriptionParts[] = "Delivery status changed from '{$oldDeliveryStatus}' to '{$newDeliveryStatus}'";
@@ -181,28 +195,24 @@ class OrderController extends Controller
             if ($oldGeneralStatus !== $newGeneralStatus) {
                 $descriptionParts[] = "General status changed from '{$oldGeneralStatus}' to '{$newGeneralStatus}'";
             }
-            $description = !empty($descriptionParts) ? implode(' and ', $descriptionParts) : 'Order status updated.';
+            $description = implode(' and ', $descriptionParts) ?: 'Order status updated.';
 
             $this->logOrderAction(
                 $order,
                 'update_status',
                 $description,
-                [
-                    'old_delivery_status' => $oldDeliveryStatus,
-                    'new_delivery_status' => $newDeliveryStatus,
-                    'old_general_status' => $oldGeneralStatus,
-                    'new_general_status' => $newGeneralStatus,
-                ]
+                compact('oldDeliveryStatus', 'newDeliveryStatus', 'oldGeneralStatus', 'newGeneralStatus')
             );
 
-            DB::commit(); // Commit transaction
-            return back()->withSuccess('Order status updated successfully.');
+            DB::commit();
+            return back()->with('success', 'Order status updated successfully.');
         } catch (\Throwable $e) {
-            DB::rollBack(); // Rollback transaction on error
+            DB::rollBack();
             Log::error("Failed to update order status: {$e->getMessage()}", ['order_id' => $id]);
-            return back()->withError('Failed to update order status. Please try again.');
+            return back()->with('error', 'Failed to update order status. Please try again.');
         }
     }
+
 
     /** Accept order */
     public function acceptOrder(Request $request)
@@ -320,6 +330,13 @@ class OrderController extends Controller
      */
     private function createSchedulePayments(Order $order): void
     {
+        // Check if order already has 3 schedule payments
+        $existingPayments = SchedulePayment::where('order_id', $order->id)->count();
+        if ($existingPayments >= 3) {
+            // Already created, skip
+            return;
+        }
+
         // Calculate the installment amount, rounded to 2 decimal places
         $installmentAmount = round($order->grand_total / 3, 2);
         $sellerId = $order->seller_id;
@@ -347,6 +364,7 @@ class OrderController extends Controller
             ['instalment_count' => 3, 'first_due_date' => now()->addDays(30)->format('Y-m-d')]
         );
     }
+
 
     /**
      * Create Nafith SANAD if order meets criteria.

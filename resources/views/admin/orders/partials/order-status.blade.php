@@ -89,8 +89,6 @@
                         class="block text-sm font-medium text-gray-700 mb-1">{{ translate('General Status') }}</label>
                     <select name="general_status" id="general_status" class="select">
                         <option value="">{{ translate('-- Select Status --') }}</option>
-                        <option value="accepted" {{ $order->general_status === 'accepted' ? 'selected' : '' }}>
-                            {{ translate('Accepted') }}</option>
                         <option value="processing" {{ $order->general_status === 'processing' ? 'selected' : '' }}>
                             {{ translate('Processing') }}</option>
                         <option value="cancelled" {{ $order->general_status === 'cancelled' ? 'selected' : '' }}>
