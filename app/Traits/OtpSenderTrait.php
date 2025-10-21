@@ -10,18 +10,10 @@ trait OtpSenderTrait
 {
     /**
      * Send OTP via SMS
-     *
-     * @param string|array $phones
-     * @param string $otp
-     * @param string|null $message
-     * @return array
      */
     public function sendSmsOtp(array|string $phones, string $otp, ?string $message = null): array
     {
-        // Ensure array
         $phones = is_array($phones) ? $phones : [$phones];
-
-        // Use custom or default message
         $message = $message ?? "Your OTP is: {$otp}";
 
         $postData = [
@@ -55,19 +47,11 @@ trait OtpSenderTrait
 
     /**
      * Send OTP via Email
-     *
-     * @param string $email
-     * @param string $otp
-     * @param string $subject
-     * @param string|null $message
-     * @return array
      */
     public function sendEmailOtp(string $email, string $otp, string $subject = 'Your OTP Code', ?string $message = null): array
     {
-        // Use custom or default message
         $messageText = $message ?? "Your OTP code is {$otp}. This OTP will expire in 10 minutes.";
 
-        // Compose email HTML
         $html = "
             <div style='font-family: Arial, sans-serif; padding: 20px; background-color: #f7f7f7;'>
                 <div style='max-width: 600px; margin: 0 auto; background: #fff; padding: 20px; border-radius: 8px;'>
@@ -83,10 +67,10 @@ trait OtpSenderTrait
         ";
 
         try {
-            Mail::send([], [], function ($messageMail) use ($email, $subject, $html) {
+            Mail::html($html, function ($messageMail) use ($email, $subject) {
                 $messageMail->to($email)
                     ->subject($subject)
-                    ->setBody($html, 'text/html');
+                    ->from(config('mail.from.address'), config('mail.from.name'));
             });
 
             return ['otp' => $otp, 'status' => 'sent'];
