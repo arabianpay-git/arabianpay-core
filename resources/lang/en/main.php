@@ -1181,4 +1181,10 @@ return [
     'Schedule Payments Created' => 'Schedule Payments Created',
     'This order has been completed.' => 'This order has been completed.',
     'Search product' => 'Search product',
+
+    'PAID'     => 'PAID',
+    'OVERDUE'  => 'OVERDUE',
+    'DUE' => 'DUE',
+    'UPCOMING' => 'UPCOMING',
+
 ];

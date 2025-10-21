@@ -1157,4 +1157,8 @@ return [
     'Schedule Payments Created' => 'تم إنشاء مدفوعات الجدول الزمني',
     'This order has been completed.' => 'لقد تم إكمال هذا الطلب.',
     'Search product' => 'بحث عن المنتج',
+    'PAID'     => 'مدفوع',
+    'OVERDUE'  => 'متأخر',
+    'DUE' => 'حق',
+    'UPCOMING' => 'القادم',
 ];
