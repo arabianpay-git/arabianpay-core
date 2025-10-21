@@ -42,6 +42,10 @@ return new class extends Migration
             $table->string('coupon_discount')->nullable();
             $table->string('code')->nullable();
             $table->string('invoice_number')->nullable();
+            $table->text('invoice_file')->nullable();
+            $table->timestamps('estimated_delivery_date')->nullable();
+            $table->timestamps('delivered_at')->nullable();
+            $table->string('delivery_otp')->nullable();
             $table->string('tracking')->nullable();
 
             // Order status tracking

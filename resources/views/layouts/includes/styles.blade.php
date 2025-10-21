@@ -215,4 +215,103 @@
     .border-green-300 {
         border-color: #6ee7b7;
     }
+
+    .underline {
+        text-decoration-line: underline;
+        /* enable underline */
+        text-decoration-style: dashed;
+        /* make it dashed */
+        text-decoration-color: currentColor;
+        /* use text color */
+        text-underline-offset: 2px;
+        /* optional: move underline a bit lower */
+        transition: color 0.2s ease;
+        /* optional: smooth color change on hover */
+    }
+
+    .underline:hover {
+        color: #1d4ed8;
+        /* change color on hover if needed */
+    }
+</style>
+
+<style>
+    /* COMMON CLASSES */
+    .rounded {
+        border-radius: 0.25rem;
+        /* 4px */
+    }
+
+    .font-medium {
+        font-weight: 500;
+    }
+
+    .text-sm {
+        font-size: 0.875rem;
+        /* 14px */
+    }
+
+    .p-2 {
+        padding: 0.5rem;
+    }
+
+    .mt-4 {
+        margin-top: 1rem;
+    }
+
+    .mb-4 {
+        margin-bottom: 1rem;
+    }
+
+    .border-l-4 {
+        border-left-width: 4px;
+    }
+
+    /* WARNING ALERT */
+    .bg-yellow-100 {
+        background-color: #fef9c3;
+        /* light yellow */
+    }
+
+    .border-yellow-500 {
+        border-left-color: #f59e0b;
+        /* amber-500 */
+    }
+
+    .text-yellow-700 {
+        color: #b45309;
+        /* amber-700 */
+    }
+
+    /* SUCCESS ALERT */
+    .bg-green-100 {
+        background-color: #dcfce7;
+        /* light green */
+    }
+
+    .border-green-500 {
+        border-left-color: #22c55e;
+        /* green-500 */
+    }
+
+    .text-green-700 {
+        color: #15803d;
+        /* green-700 */
+    }
+
+    /* ERROR ALERT */
+    .bg-red-100 {
+        background-color: #fee2e2;
+        /* light red */
+    }
+
+    .border-red-500 {
+        border-left-color: #ef4444;
+        /* red-500 */
+    }
+
+    .text-red-700 {
+        color: #b91c1c;
+        /* red-700 */
+    }
 </style>

@@ -320,6 +320,9 @@ Route::group([
                 Route::get('/track/{tracking}', 'trackShipment')->name('trackShipment');
 
                 Route::get('order/{orderId}/download-invoice',  'downloadInvoice')->name('order.downloadInvoice');
+
+                Route::post('/orders/accept', 'acceptOrder')->name('orders.accept');
+                Route::post('/orders/reject', 'rejectOrder')->name('orders.reject');
             });
 
             //

@@ -57,7 +57,7 @@
                                             <th class="w-[60px] text-center">ID</th>
                                             <th class="text-left">
                                                 <span class="sort asc">
-                                                    <span class="sort-label font-normal text-gray-700">User</span>
+                                                    <span class="sort-label font-normal text-gray-700">Customer</span>
                                                     <span class="sort-icon"> </span>
                                                 </span>
                                             </th>

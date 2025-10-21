@@ -37,7 +37,13 @@ class Order extends Model
         'code',
         'tracking',
         'delivery_status',
-        'general_status'
+        'general_status',
+        'invoice_number',
+        'invoice_file',
+        'estimated_delivery_date',
+        'delivered_at',
+        'delivery_otp',
+        'rejection_reason',
     ];
 
     protected $encryptableAttributes = [
