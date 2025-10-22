@@ -72,6 +72,10 @@
                                         'title' => translate('ID Image'),
                                         'file' => supplierMedia($merchant->owner_iqama_image),
                                     ],
+                                    [
+                                        'title' => translate('Balady Certificate'),
+                                        'file' => supplierMedia($merchant->balady_certificate),
+                                    ],
                                 ];
 
                                 $compliance = array_merge($compliance, $fixedDocuments);

@@ -1163,4 +1163,5 @@ return [
     'UPCOMING' => 'القادم',
     'Service Fees' => 'رسوم الخدمة',
     'Delivery Otp Send Failed' => 'فشل إرسال كلمة مرور التسليم',
+    'Balady Certificate' => 'شهادة بلدي',
 ];

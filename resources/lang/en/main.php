@@ -1188,5 +1188,5 @@ return [
     'UPCOMING' => 'UPCOMING',
     'Service Fees' => 'Service Fees',
     'Delivery Otp Send Failed' => 'Delivery Otp Send Failed',
-
+    'Balady Certificate' => 'Balady Certificate',
 ];
