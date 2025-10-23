@@ -1189,4 +1189,6 @@ return [
     'Service Fees' => 'Service Fees',
     'Delivery Otp Send Failed' => 'Delivery Otp Send Failed',
     'Balady Certificate' => 'Balady Certificate',
+    'No IBAN Certificates uploaded' => 'No IBAN Certificates uploaded',
+    'No bank details found' => 'No bank details found',
 ];

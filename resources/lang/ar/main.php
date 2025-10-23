@@ -1164,4 +1164,6 @@ return [
     'Service Fees' => 'رسوم الخدمة',
     'Delivery Otp Send Failed' => 'فشل إرسال كلمة مرور التسليم',
     'Balady Certificate' => 'شهادة بلدي',
+    'No IBAN Certificates uploaded' => 'لم يتم تحميل شهادات IBAN',
+    'No bank details found' => 'لم يتم العثور على تفاصيل البنك',
 ];

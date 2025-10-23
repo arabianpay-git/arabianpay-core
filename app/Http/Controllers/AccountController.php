@@ -618,7 +618,7 @@ class AccountController extends Controller
         })->pluck('id');
 
         $supplierBanks = SupplierBank::whereIn('user_id', $relatedUserIds)
-            ->with('user') // eager load user to get first_name, last_name, business_name
+            ->with('user')
             ->get();
 
         return view('admin.accounts.supplier-profile', array_merge([

@@ -784,32 +784,47 @@
                                 </h3>
                             </div>
                             <div class="card-body pt-3.5 pb-3.5">
-                                <table class="table-auto">
-                                    <tbody>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
+                                <table class="table-auto w-full border-collapse">
+                                    <thead>
+                                        <tr class="border-b">
+                                            <th class="text-left text-sm font-semibold text-gray-700 pb-3 pe-4 lg:pe-10">
+                                                {{ translate('Supplier Name') }}
+                                            </th>
+                                            <th class="text-left text-sm font-semibold text-gray-700 pb-3 pe-4 lg:pe-10">
                                                 {{ translate('Bank Name') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 pb-3">
-                                                {{ $supplierBank->bank_name ?? '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
+                                            </th>
+                                            <th class="text-left text-sm font-semibold text-gray-700 pb-3 pe-4 lg:pe-10">
                                                 {{ translate('Bank Account Name') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 pb-3">
-                                                {{ $supplierBank->account_name ?? '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
+                                            </th>
+                                            <th class="text-left text-sm font-semibold text-gray-700 pb-3 pe-4 lg:pe-10">
                                                 {{ translate('IBAN') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 pb-3">
-                                                {{ $supplierBank->iban ?? '-' }}
-                                            </td>
+                                            </th>
                                         </tr>
+                                    </thead>
+                                    <tbody>
+                                        @forelse($supplierBanks as $supplierBank)
+                                            <tr class="border-b">
+                                                <td class="text-sm text-gray-900 pb-3 pe-4 lg:pe-10">
+                                                    {{ $supplierBank->user->first_name ?? '-' }}
+                                                    {{ $supplierBank->user->last_name ?? '' }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 pb-3 pe-4 lg:pe-10">
+                                                    {{ $supplierBank->bank_name ?? '-' }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 pb-3 pe-4 lg:pe-10">
+                                                    {{ $supplierBank->account_name ?? '-' }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 pb-3">
+                                                    {{ $supplierBank->iban ?? '-' }}
+                                                </td>
+                                            </tr>
+                                        @empty
+                                            <tr>
+                                                <td colspan="4" class="text-center text-sm text-gray-500 py-3">
+                                                    {{ translate('No bank details found') }}
+                                                </td>
+                                            </tr>
+                                        @endforelse
                                     </tbody>
                                 </table>
                             </div>
