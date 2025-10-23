@@ -12,6 +12,21 @@
             .dark .hero-bg {
                 background-image: url("{{ asset('assets/media/images/2600x1200/bg-1-dark.png') }}");
             }
+
+            /* Badge small tweaks so it looks consistent and not clipped */
+            .card .relative {
+                overflow: visible;
+            }
+
+            /* optional: slightly increase z-index for badges on stacked elements */
+            .badge-wrapper {
+                z-index: 12;
+                pointer-events: none;
+            }
+
+            .border-radius {
+                border-radius: 5px;
+            }
         </style>
 
         <div class="bg-center bg-cover bg-no-repeat hero-bg">
@@ -102,13 +117,25 @@
                             {{-- Render global compliance documents --}}
                             @foreach ($compliance as $item)
                                 <div
-                                    class="border p-4 mt-2 rounded-xl shadow-sm bg-white dark:bg-gray-800 hover:shadow-lg transition-all">
+                                    class="relative border p-4 mt-2 rounded-xl shadow-sm bg-white dark:bg-gray-800 hover:shadow-lg transition-all">
+
+                                    {{-- Badge (top-left) --}}
+                                    <div class="top-3 left-3 badge-wrapper">
+                                        @if ($item['file'])
+                                            <span
+                                                class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 border-radius shadow-sm">
+                                                COMPLIANT
+                                            </span>
+                                        @else
+                                            <span
+                                                class="bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 border-radius shadow-sm">
+                                                MISSING
+                                            </span>
+                                        @endif
+                                    </div>
+
                                     <div class="flex items-center justify-between">
                                         <div class="flex items-center space-x-3">
-                                            @if ($item['file'])
-                                                <img src="{{ asset('assets/media/images/check.png') }}" alt="checked"
-                                                    class="w-6 h-6">
-                                            @endif
                                             <div>
                                                 <h4 class="text-lg font-medium text-gray-800 dark:text-white">
                                                     {{ $item['title'] }}</h4>
@@ -150,8 +177,7 @@
                                                 {{ translate('View') }}
                                             </a>
                                         @else
-                                            <span
-                                                class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>
+                                            <span class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>
                                         @endif
                                     </div>
                                 </div>
@@ -179,7 +205,29 @@
                                             @endphp
 
                                             <div
-                                                class="border mb-3 border-gray-300 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm transition hover:shadow-md">
+                                                class="border mb-3 border-gray-300 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm transition hover:shadow-md relative">
+                                                {{-- Badge for the user-card as a whole:
+                                                     If any bank for this user has certificate, show COMPLIANT,
+                                                     otherwise MISSING. --}}
+                                                @php
+                                                    $hasAnyCert = $userBanks->contains(function ($b) {
+                                                        return !empty($b->iban_certificate);
+                                                    });
+                                                @endphp
+                                                <div class="top-3 left-3 badge-wrapper">
+                                                    @if ($hasAnyCert)
+                                                        <span
+                                                            class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 border-radius shadow-sm">
+                                                            COMPLIANT
+                                                        </span>
+                                                    @else
+                                                        <span
+                                                            class="bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 border-radius shadow-sm">
+                                                            MISSING
+                                                        </span>
+                                                    @endif
+                                                </div>
+
                                                 <h5 class="text-md font-semibold text-gray-800 dark:text-white mb-2">
                                                     {{ $user->first_name }} {{ $user->last_name }}
                                                     ({{ $user->business_name ?? translate('N/A') }})
@@ -213,12 +261,10 @@
                                     </div>
                                 </div>
                             @endif
-
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
     </main>
 @endsection
