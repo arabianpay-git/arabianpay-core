@@ -851,20 +851,6 @@
                                                 {{ $merchant->businessType?->name }}
                                             </td>
                                         </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
-                                                {{ translate('Category') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 pb-3">
-                                                <div class="flex flex-wrap gap-2.5">
-                                                    @foreach ($businessCategory as $item)
-                                                        <span class="badge badge-outline">
-                                                            {{ $item->name }}
-                                                        </span>
-                                                    @endforeach
-                                                </div>
-                                            </td>
-                                        </tr>
 
                                         <tr>
                                             <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
@@ -880,7 +866,7 @@
                                                 {{ translate('Register VAT') }}
                                             </td>
                                             <td class="text-sm text-gray-900 pb-3">
-                                                @if ($merchant->vat_register)
+                                                @if ($merchant->vat_register_file || $merchant->vat_register_number)
                                                     <span class="badge badge-sm badge-success badge-outline">
                                                         {{ translate('Yes') }}
                                                     </span>
@@ -901,48 +887,26 @@
                                             </td>
                                         </tr>
 
+                                        <tr>
+                                            <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
+                                                {{ translate('Category') }}
+                                            </td>
+                                            <td class="text-sm text-gray-900 pb-3">
+                                                <div class="flex flex-wrap gap-2.5">
+                                                    @foreach ($businessCategory as $item)
+                                                        <span class="badge badge-sm badge-outline badge-info">
+                                                            {{ $item->name }}
+                                                        </span>
+                                                    @endforeach
+                                                </div>
+                                            </td>
+                                        </tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
 
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">
-                                    {{ translate('Company Policy') }}
-                                </h3>
-                            </div>
-                            <div class="card-body">
-                                <table class="table-auto">
-                                    <tbody>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
-                                                {{ translate('Number of days for return') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 pb-3">
-                                                {{ $merchant->return_day_count ?? '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
-                                                {{ translate('Number of days for exchange') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 pb-3">
-                                                {{ $merchant->exchange_day_count ?? '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 pb-3 pe-4 lg:pe-10">
-                                                {{ translate('Number of days for cancel') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 pb-3">
-                                                {{ $merchant->cancel_day_count ?? '-' }}
-                                            </td>
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
+                        @include('admin.accounts.includes.profile-compliance')
                     </div>
                 </div>
             </div>
