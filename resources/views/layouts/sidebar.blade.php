@@ -1224,7 +1224,7 @@
                                     </a>
                                 </div>
                             @endcan
-                            @can('collection.penalties')
+                            {{-- @can('collection.penalties')
                                 <div class="menu-item">
                                     <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
                                         href="{{ route('collections.penalties') }}" tabindex="0">
@@ -1236,7 +1236,7 @@
                                         </span>
                                     </a>
                                 </div>
-                            @endcan
+                            @endcan --}}
                         </div>
                     </div>
                 @endcanany

@@ -1480,4 +1480,5 @@ return [
 
     'Server Error' => 'Server Error',
     'Unable to submit partial payment. Try again later.' => 'Unable to submit partial payment. Try again later.',
+    'No promises available.' => 'No promises available.',
 ];

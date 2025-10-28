@@ -1371,4 +1371,7 @@ return [
     'Automatic' => 'آلي',
     'Manual Override' => 'تجاوز يدوي',
     'Search order' => 'بحث عن الطلب',
+    'Server Error' => 'خطأ في الخادم',
+    'Unable to submit partial payment. Try again later.' => 'غير قادر على إرسال الدفع الجزئي. حاول مرة أخرى لاحقًا.',
+    'No promises available.' => 'لا توجد وعود متاحة.',
 ];
