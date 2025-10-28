@@ -12,6 +12,7 @@ use App\Http\Controllers\{
     CaseManagementController,
     CategoryController,
     CityController,
+    CollectionController,
     CountryController,
     CouponController,
     CreditManagmentController,
@@ -19,20 +20,24 @@ use App\Http\Controllers\{
     DashboardController,
     DepartmentController,
     DeviceTokenController,
+    DunningTemplateController,
     EmployeeController,
     FahmanController,
     FirebaseController,
     InstalmentPlanController,
     MediaController,
     MerchantUpdateController,
+    NoteController,
     NotificationController,
     OrderController,
     OtpVerificationController,
     PackageController,
+    PartialPaymentController,
     PasskeyController,
     PermissionController,
     ProductBulkUploadController,
     ProductController,
+    PromiseController,
     RealTimeAlertController,
     RefundRequestController,
     ReportController,
@@ -272,6 +277,54 @@ Route::group([
                 Route::get('export/pdf', 'exportPdf')->name('risk.exportPdf');
                 Route::get('export/csv', 'exportCsv')->withoutMiddleware([PreventBackHistory::class])->name('risk.exportCsv');
             });
+
+            //
+            // Collection Department
+            //
+            Route::prefix('collections')->as('collections.')->controller(CollectionController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/installments', 'installments')->name('installments');
+                Route::get('/installments-calander', 'installmentsCalander')->name('installmentsCalander');
+                Route::get('/installment/{id}', 'installmentDetails')->name('installmentDetails');
+                Route::get('/promise-to-pay', 'promisetopay')->name('promisetopay');
+                Route::get('/allocations', 'allocations')->name('allocations');
+                Route::get('/penalties', 'penalties')->name('penalties');
+                Route::get('alerts', 'viewAlerts')->name('alerts');
+                Route::get('flags', 'viewFlags')->name('flags');
+            });
+
+            Route::get('promisetopay/unpaid-installments/{user}', [CollectionController::class, 'getUnpaidInstallments']);
+
+            Route::get('/dunning-templates/{id}', [DunningTemplateController::class, 'show'])->name('dunning.template.show');
+            Route::post('/dunning-templates/{id}', [DunningTemplateController::class, 'update'])->name('dunning.update');
+            Route::prefix('dunning')->name('dunning.')->group(function () {
+                Route::get('/', [DunningTemplateController::class, 'index'])->name('index');
+                Route::post('/store', [DunningTemplateController::class, 'store'])->name('store');
+
+                Route::delete('/delete/{id}', [DunningTemplateController::class, 'destroy'])->name('destroy');
+            });
+
+            Route::get('/user/{userId}/notes', [NoteController::class, 'index'])->name('notes.index');
+            Route::post('/notes', [NoteController::class, 'store'])->name('notes.store');
+            Route::put('/notes/{note}', [NoteController::class, 'update'])->name('notes.update');
+            Route::delete('/notes/{note}', [NoteController::class, 'destroy'])->name('notes.destroy');
+
+            Route::post('/promises', [PromiseController::class, 'store'])->name('promises.store');
+            Route::put('/promises/{promise}', [PromiseController::class, 'update'])->name('promises.update');
+            Route::delete('/promises/{promise}', [PromiseController::class, 'destroy'])->name('promises.destroy');
+
+            Route::prefix('partial-payments')->controller(PartialPaymentController::class)->group(function () {
+                Route::post('/', 'store')->name('partial-payments.store');
+                Route::get('/{id}/edit', 'edit')->name('partial-payments.edit');
+                Route::put('/{id}', 'update')->name('partial-payments.update');
+                Route::delete('/{id}', 'destroy')->name('partial-payments.destroy');
+            });
+
+            Route::put('schedule-payments/{id}', [SchedulePaymentController::class, 'update'])
+                ->name('schedule-payments.update');
+
+            Route::post('/schedule-payments/pay-now', [SchedulePaymentController::class, 'payNow'])
+                ->name('schedule-payments.pay-now');
 
             //
             // Activity logs

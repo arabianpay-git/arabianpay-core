@@ -233,6 +233,11 @@
         color: #1d4ed8;
         /* change color on hover if needed */
     }
+
+    .icon-saudi_riyal {
+        font-size: 18px;
+        margin-right: 3px;
+    }
 </style>
 
 <style>

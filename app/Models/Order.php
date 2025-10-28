@@ -62,7 +62,6 @@ class Order extends Model
         'grand_total',
         'coupon_discount',
         'code',
-        'tracking',
     ];
 
     protected $casts = [

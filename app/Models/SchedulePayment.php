@@ -31,6 +31,8 @@ class SchedulePayment extends Model
         'is_late',
         'late_days',
         'payment_status',
+        'receipt',
+        'payment_method',
     ];
 
     protected $casts = [
@@ -67,6 +69,16 @@ class SchedulePayment extends Model
         return $this->belongsTo(Order::class);
     }
 
+    public function partialPayments()
+    {
+        return $this->hasMany(PartialPayment::class, 'schedule_payment_id');
+    }
+
+    public function promise()
+    {
+        return $this->hasOne(Promise::class, 'schedule_payment_id');
+    }
+
     /**
      * Payment status distribution.
      */
@@ -78,6 +90,9 @@ class SchedulePayment extends Model
             ->get();
     }
 
+    /**
+     * Overdue instalment trend + current delinquency rate.
+     */
     /**
      * Overdue instalment trend + current delinquency rate.
      */
@@ -95,8 +110,7 @@ class SchedulePayment extends Model
 
         $raw = DB::table('schedule_payments')
             ->select(DB::raw("DATE_FORMAT(due_date, '%b %Y') as month"), DB::raw('COUNT(*) as total'))
-            ->where('due_date', '<', $end)
-            ->where('payment_status', '!=', 'paid')
+            ->whereIn('payment_status', ['due', 'late'])
             ->whereBetween('due_date', [$start, $end])
             ->groupBy('month')
             ->pluck('total', 'month')
@@ -107,7 +121,7 @@ class SchedulePayment extends Model
         }
 
         $total   = DB::table('schedule_payments')->count();
-        $overdue = DB::table('schedule_payments')->where('due_date', '<', $end)->where('payment_status', '!=', 'paid')->count();
+        $overdue = DB::table('schedule_payments')->whereIn('payment_status', ['due', 'late'])->where('due_date', '<', $end)->count();
         $rate    = $total ? round($overdue / $total * 100, 1) : 0;
 
         return ['months' => $labels, 'series' => $series, 'rate' => $rate];

@@ -95,7 +95,7 @@
                                                             {{ $seller->business_name ?? translate('N/A') }}</small>
                                                     </td>
                                                     <td>
-                                                        {{ $wallet->order->code }} <br>
+                                                        {{ $wallet->order->code ?? '-' }} <br>
                                                         <small class="text-gray-500">—
                                                             {{ $wallet->order->created_at->format('Y-m-d') }}</small>
                                                     </td>

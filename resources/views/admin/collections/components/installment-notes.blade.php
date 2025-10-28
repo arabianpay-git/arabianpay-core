@@ -1,0 +1,205 @@
+@php
+
+    // Fetch notes for the user (replace $user with actual user object)
+    $notes = App\Models\Note::with('employee')->where('user_id', $order->user_id)->orderBy('created_at', 'desc')->get();
+@endphp
+
+@push('styles')
+    <style>
+        .badge {
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            cursor: pointer;
+        }
+
+        .badge-info {
+            background-color: #3b82f6;
+            color: #fff;
+        }
+
+        .badge-warning {
+            background-color: #facc15;
+            color: #111827;
+        }
+
+        .badge-danger {
+            background-color: #ef4444;
+            color: #fff;
+        }
+    </style>
+@endpush
+
+<div class="card grow shadow-lg rounded-lg bg-white mt-5">
+    <div class="card-header flex justify-between items-center p-4 border-b">
+        <h3 class="card-title font-semibold text-xl text-gray-800">{{ translate('User Notes') }}</h3>
+        <button class="btn btn-info btn-sm" data-modal-toggle="#add_note_modal">
+            {{ translate('Add Note') }}
+        </button>
+    </div>
+
+    <div class="card-body pt-4 pb-3 px-4 sm:px-6 space-y-3 text-sm text-gray-700">
+        @forelse($notes as $note)
+            <div class="flex justify-between items-center p-3 border rounded gap-2">
+                <div>
+                    <p>{{ $note->note }}</p>
+                    <small class="text-gray-500">{{ $note->created_at->format('d M, Y H:i') }} by
+                        {{ $note->employee ? $note->employee->first_name . ' ' . $note->employee->last_name : '-' }}
+                    </small>
+                </div>
+                <div class="flex gap-2">
+                    {{-- Edit Button --}}
+                    <button class="badge badge-info" data-modal-toggle="#edit_note_{{ $note->id }}">
+                        <i class="ki-filled ki-notepad-edit"></i>
+                    </button>
+
+                    {{-- Delete Button --}}
+                    <form action="{{ route('notes.destroy', $note->id) }}" method="POST" class="delete-note-form">
+                        @csrf
+                        @method('DELETE')
+                        <button type="submit" class="badge badge-danger">
+                            <i class="ki ki-filled ki-trash"></i>
+                        </button>
+                    </form>
+                </div>
+            </div>
+
+            {{-- Edit Modal --}}
+            <div class="modal" data-modal="true" id="edit_note_{{ $note->id }}">
+                <div class="modal-content max-w-[600px] top-[5%]">
+                    <div class="modal-header py-4 px-5">
+                        <h5 class="modal-title">{{ translate('Edit Note') }}</h5>
+                        <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0"
+                            data-modal-dismiss="true">
+                            <i class="ki-filled ki-cross"></i>
+                        </button>
+                    </div>
+                    <div class="modal-body p-5">
+                        <form action="{{ route('notes.update', $note->id) }}" method="POST" class="edit-note-form">
+                            @csrf
+                            @method('PUT')
+                            <div class="mb-3">
+                                <label class="form-label">{{ translate('Note') }}</label>
+                                <textarea name="note" class="textarea" rows="4" required>{{ $note->note }}</textarea>
+                            </div>
+                            <button type="submit" class="btn btn-info">{{ translate('Update Note') }}</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        @empty
+            <div class="text-gray-500 text-sm">{{ translate('No notes available.') }}</div>
+        @endforelse
+    </div>
+</div>
+
+{{-- Add Note Modal --}}
+<div class="modal" data-modal="true" id="add_note_modal">
+    <div class="modal-content max-w-[600px] top-[5%]">
+        <div class="modal-header py-4 px-5">
+            <h5 class="modal-title">{{ translate('Add Note') }}</h5>
+            <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0" data-modal-dismiss="true">
+                <i class="ki-filled ki-cross"></i>
+            </button>
+        </div>
+        <div class="modal-body p-5">
+            <form action="{{ route('notes.store') }}" method="POST" id="add-note-form">
+                @csrf
+                <input type="hidden" name="user_id" value="{{ $order->user_id }}">
+                <div class="mb-3">
+                    <label class="form-label">{{ translate('Note') }}</label>
+                    <textarea name="note" class="textarea" rows="4" required></textarea>
+                </div>
+                <button type="submit" class="btn btn-info">{{ translate('Save Note') }}</button>
+            </form>
+        </div>
+    </div>
+</div>
+@push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Add Note AJAX
+            document.querySelector('#add-note-form')?.addEventListener('submit', function(e) {
+                e.preventDefault();
+                const form = this;
+                fetch(form.action, {
+                        method: 'POST',
+                        body: new FormData(form),
+                        headers: {
+                            'X-Requested-With': 'XMLHttpRequest'
+                        }
+                    })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.success) {
+                            Swal.fire('Success', data.message, 'success').then(() => location.reload());
+                        } else if (data.error) {
+                            Swal.fire('Error', data.error, 'error');
+                        }
+                    })
+                    .catch(err => console.error(err));
+            });
+
+            // Edit Notes AJAX
+            document.querySelectorAll('.edit-note-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    fetch(form.action, {
+                            method: 'POST',
+                            body: new FormData(form),
+                            headers: {
+                                'X-Requested-With': 'XMLHttpRequest'
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire('Success', data.message, 'success').then(() =>
+                                    location.reload());
+                            } else if (data.error) {
+                                Swal.fire('Error', data.error, 'error');
+                            }
+                        })
+                        .catch(err => console.error(err));
+                });
+            });
+
+            // Delete Notes AJAX
+            document.querySelectorAll('.delete-note-form').forEach(form => {
+                form.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    Swal.fire({
+                        title: '{{ translate('Are you sure?') }}',
+                        text: '{{ translate('This action cannot be undone!') }}',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#d33',
+                        cancelButtonColor: '#3085d6',
+                        confirmButtonText: '{{ translate('Yes, delete it!') }}'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+                            fetch(form.action, {
+                                    method: 'POST',
+                                    body: new FormData(form),
+                                    headers: {
+                                        'X-Requested-With': 'XMLHttpRequest'
+                                    }
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire('Deleted!', data.message, 'success')
+                                            .then(() => location.reload());
+                                    } else if (data.error) {
+                                        Swal.fire('Error', data.error, 'error');
+                                    }
+                                })
+                                .catch(err => console.error(err));
+                        }
+                    });
+                });
+            });
+        });
+    </script>
+@endpush

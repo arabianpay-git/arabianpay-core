@@ -1135,6 +1135,112 @@
                     </div>
                 @endcan
 
+                @canany(['collection.managment', 'collection.installments', 'collection.dunning',
+                    'collection.promisetopay', 'collection.allocations', 'collection.penalties'])
+                    <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                            tabindex="0">
+                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                                <i class="ki-filled ki-chart-line-up text-lg"></i>
+                            </span>
+                            <span
+                                class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                                {{ translate('Collections') }}
+                            </span>
+                            <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                                <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"></i>
+                                <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex"></i>
+                            </span>
+                        </div>
+
+                        <div
+                            class="menu-accordion gap-0.5 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
+                            @can('collection.managment')
+                                <div class="menu-item">
+                                    <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                        href="{{ route('collections.index') }}" tabindex="0">
+                                        <span
+                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
+                                        <span
+                                            class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                            {{ translate('Dashboard') }}
+                                        </span>
+                                    </a>
+                                </div>
+                            @endcan
+
+                            @can('collection.installments')
+                                <div class="menu-item">
+                                    <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                        href="{{ route('collections.installments') }}" tabindex="0">
+                                        <span
+                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
+                                        <span
+                                            class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                            {{ translate('Installments') }}
+                                        </span>
+                                    </a>
+                                </div>
+                            @endcan
+
+                            @can('collection.dunning')
+                                <div class="menu-item">
+                                    <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                        href="{{ route('dunning.index') }}" tabindex="0">
+                                        <span
+                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
+                                        <span
+                                            class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                            {{ translate('Dunning') }}
+                                        </span>
+                                    </a>
+                                </div>
+                            @endcan
+
+                            @can('collection.promisetopay')
+                                <div class="menu-item">
+                                    <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                        href="{{ route('collections.promisetopay') }}" tabindex="0">
+                                        <span
+                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
+                                        <span
+                                            class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                            {{ translate('Promise to pay') }}
+                                        </span>
+                                    </a>
+                                </div>
+                            @endcan
+
+                            @can('collection.allocations')
+                                <div class="menu-item">
+                                    <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                        href="{{ route('collections.allocations') }}" tabindex="0">
+                                        <span
+                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
+                                        <span
+                                            class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                            {{ translate('Allocations') }}
+                                        </span>
+                                    </a>
+                                </div>
+                            @endcan
+                            @can('collection.penalties')
+                                <div class="menu-item">
+                                    <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                        href="{{ route('collections.penalties') }}" tabindex="0">
+                                        <span
+                                            class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary"></span>
+                                        <span
+                                            class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                            {{ translate('Penalties & Fees') }}
+                                        </span>
+                                    </a>
+                                </div>
+                            @endcan
+                        </div>
+                    </div>
+                @endcanany
+
                 @can('plan.read')
                     <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                         <a href="{{ route('instalment-plans.index') }}">

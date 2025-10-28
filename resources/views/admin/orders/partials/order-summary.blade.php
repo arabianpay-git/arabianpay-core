@@ -1,14 +1,16 @@
-<div class="card grow shadow-lg rounded-lg bg-white mt-5">
+<div
+    class="card grow shadow-lg rounded-lg bg-white {{ request()->routeIs('collections.installmentDetails') ? '' : 'mt-5' }}">
     <div class="card-header flex justify-between items-center p-4 border-b">
         <h3 class="card-title font-semibold text-xl text-gray-800">
             {{ translate('Order Summary') }}
         </h3>
-        <!-- Download Invoice Button -->
-        <button class="btn btn-light btn-sm bg-gray-100 text-gray-800 hover:bg-gray-200">
-            <a href="{{ route('order.downloadInvoice', $order->id) }}">
-                <i class="ki-filled ki-exit-down"> </i> {{ translate('Download Invoice') }}
-            </a>
-        </button>
+        @if (!request()->routeIs('collections.installmentDetails'))
+            <button class="btn btn-light btn-sm bg-gray-100 text-gray-800 hover:bg-gray-200">
+                <a href="{{ route('order.downloadInvoice', $order->id) }}">
+                    <i class="ki-filled ki-exit-down"> </i> {{ translate('Download Invoice') }}
+                </a>
+            </button>
+        @endif
     </div>
     <div class="card-body pt-4 pb-3">
         <table class="table-auto w-full text-sm text-gray-700">

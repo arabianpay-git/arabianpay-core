@@ -124,12 +124,12 @@
                                         @if ($item['file'])
                                             <span
                                                 class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 border-radius shadow-sm">
-                                                COMPLIANT
+                                                {{ translate('COMPLIANT') }}
                                             </span>
                                         @else
                                             <span
                                                 class="bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 border-radius shadow-sm">
-                                                MISSING
+                                                {{ translate('MISSING') }}
                                             </span>
                                         @endif
                                     </div>
@@ -177,7 +177,8 @@
                                                 {{ translate('View') }}
                                             </a>
                                         @else
-                                            <span class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>
+                                            <span
+                                                class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>
                                         @endif
                                     </div>
                                 </div>
@@ -207,8 +208,8 @@
                                             <div
                                                 class="border mb-3 border-gray-300 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm transition hover:shadow-md relative">
                                                 {{-- Badge for the user-card as a whole:
-                                                     If any bank for this user has certificate, show COMPLIANT,
-                                                     otherwise MISSING. --}}
+                                                     If any bank for this user has certificate, show {{ translate('COMPLIANT') }},
+                                                     otherwise {{ translate('MISSING') }}. --}}
                                                 @php
                                                     $hasAnyCert = $userBanks->contains(function ($b) {
                                                         return !empty($b->iban_certificate);
@@ -218,12 +219,12 @@
                                                     @if ($hasAnyCert)
                                                         <span
                                                             class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 border-radius shadow-sm">
-                                                            COMPLIANT
+                                                            {{ translate('COMPLIANT') }}
                                                         </span>
                                                     @else
                                                         <span
                                                             class="bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 border-radius shadow-sm">
-                                                            MISSING
+                                                            {{ translate('MISSING') }}
                                                         </span>
                                                     @endif
                                                 </div>
