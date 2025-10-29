@@ -1477,8 +1477,17 @@ return [
     'Automatic' => 'Automatic',
     'Manual Override' => 'Manual Override',
     'Search order' => 'Search order',
-
     'Server Error' => 'Server Error',
     'Unable to submit partial payment. Try again later.' => 'Unable to submit partial payment. Try again later.',
     'No promises available.' => 'No promises available.',
+
+    'Add New Department' => 'Add New Department',
+    'Add New Employee' => 'Add New Employee',
+    'Update Permissions' => 'Update Permissions',
+    'Manage payment installments and schedules' => 'Manage payment installments and schedules',
+    'Dear user, please pay your installment on time.' => 'Dear user, please pay your installment on time.',
+    'Send via' => 'Send via',
+    'Sending Reminder...' => 'Sending Reminder...',
+    'Please wait while we send the reminder.' => 'Please wait while we send the reminder.',
+    'An unexpected error occurred.' => 'An unexpected error occurred.',
 ];

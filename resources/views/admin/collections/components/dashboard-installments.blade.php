@@ -16,7 +16,8 @@
                     <h3 class="card-title font-semibold text-base text-gray-900">
                         {{ translate('Installments') }}
                     </h3>
-                    <p class="text-sm text-gray-500 mt-1">Manage payment installments and schedules</p>
+                    <p class="text-sm text-gray-500 mt-1">{{ translate('Manage payment installments and schedules') }}
+                    </p>
                 </div>
                 <div class="flex flex-wrap gap-2 lg:gap-4">
                     <!-- Status Filter -->
@@ -135,14 +136,18 @@
                                             @php
                                                 $statusColors = [
                                                     'paid' => 'success',
-                                                    'upcoming' => 'warning',
-                                                    'overdue' => 'danger',
+                                                    'pending' => 'info',
+                                                    'due' => 'danger',
+                                                    'late' => 'danger',
+                                                    'failed' => 'danger',
                                                     'promise' => 'info',
                                                 ];
                                                 $statusIcons = [
                                                     'paid' => 'ki-check-circle',
-                                                    'upcoming' => 'ki-clock',
-                                                    'overdue' => 'ki-cross-circle',
+                                                    'pending' => 'ki-watch',
+                                                    'due' => 'ki-cross-circle',
+                                                    'late' => 'ki-cross-circle',
+                                                    'failed' => 'ki-cross-circle',
                                                     'promise' => 'ki-calendar-8',
                                                 ];
                                                 $status = $installment['status'] ?? 'unknown';
@@ -158,7 +163,7 @@
 
                                         <td class="py-3">
                                             <span
-                                                class="text-sm font-medium {{ $installment['dpd'] > 0 ? 'text-danger' : 'text-success' }}">
+                                                class="text-sm font-medium {{ $installment['dpd'] != 0 ? 'text-danger' : 'text-success' }}">
                                                 {{ $installment['dpd'] }} days
                                             </span>
                                         </td>

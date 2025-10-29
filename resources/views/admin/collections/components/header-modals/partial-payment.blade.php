@@ -69,7 +69,7 @@
                     <span class="text-danger text-sm" id="error-details"></span>
                 </div>
 
-                <button type="submit" class="btn btn-primary">{{ translate('Create Partial Payment') }}</button>
+                <button type="submit" class="btn btn-success">{{ translate('Create Partial Payment') }}</button>
             </form>
         </div>
     </div>

@@ -40,6 +40,7 @@ use App\Http\Controllers\{
     PromiseController,
     RealTimeAlertController,
     RefundRequestController,
+    ReminderController,
     ReportController,
     RiskAnalyticsController,
     RiskController,
@@ -292,6 +293,7 @@ Route::group([
                 Route::get('alerts', 'viewAlerts')->name('alerts');
                 Route::get('flags', 'viewFlags')->name('flags');
             });
+            Route::post('/reminders/send', [ReminderController::class, 'send'])->name('reminders.send');
 
             Route::get('promisetopay/unpaid-installments/{user}', [CollectionController::class, 'getUnpaidInstallments']);
 

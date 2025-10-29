@@ -43,11 +43,15 @@
             height: 320px !important;
             min-height: 320px !important;
         }
+
+        .apexcharts-legend {
+            flex-direction: row !important;
+        }
     </style>
 @endpush
 
 <div class="container-fixed mb-7.5">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-5">
+    <div class="grid grid-cols-1 lg:grid-cols-1 gap-5">
         <!-- Collection Performance - Bar Chart -->
         <div class="card shadow-sm hover:shadow-lg transition-shadow duration-300 flex flex-col">
             <div class="card-header border-b border-gray-200 pb-4 flex items-center justify-between">
