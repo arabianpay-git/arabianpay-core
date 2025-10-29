@@ -1374,6 +1374,14 @@ return [
     'Server Error' => 'خطأ في الخادم',
     'Unable to submit partial payment. Try again later.' => 'غير قادر على إرسال الدفع الجزئي. حاول مرة أخرى لاحقًا.',
     'No promises available.' => 'لا توجد وعود متاحة.',
-
+    'Add New Department' => 'إضافة قسم جديد',
+    'Add New Employee' => 'إضافة موظف جديد',
+    'Update Permissions' => 'تحديث الصلاحيات',
+    'Manage payment installments and schedules' => 'إدارة أقساط الدفع والجداول الزمنية',
+    'Dear user, please pay your installment on time.' => 'عزيزي المستخدم، يرجى دفع قسطك في الوقت المحدد.',
+    'Send via' => 'إرسال عبر',
+    'Sending Reminder...' => 'جارٍ إرسال التذكير...',
+    'Please wait while we send the reminder.' => 'يرجى الانتظار أثناء إرسال التذكير.',
+    'An unexpected error occurred.' => 'حدث خطأ غير متوقع.',
 
 ];
