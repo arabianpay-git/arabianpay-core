@@ -66,7 +66,6 @@ class SchedulePaymentController extends Controller
             'schedule_id'    => 'required|exists:schedule_payments,id',
             'payment_method' => 'required|string',
             'receipt'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
-            'amount'         => 'required|numeric|min:0'
         ]);
 
         if ($validator->fails()) {
@@ -80,21 +79,24 @@ class SchedulePaymentController extends Controller
 
         $payment = SchedulePayment::findOrFail($request->schedule_id);
 
+        // Calculate remaining amount
+        $remainingAmount = $payment->installment_amount - $payment->deducted_amount;
+
         // Prevent double payment
-        if ($payment->payment_status === 'paid') {
+        if ($remainingAmount <= 0) {
             return response()->json([
                 'success' => false,
-                'message' => 'This schedule payment is already marked as paid.',
+                'message' => 'This schedule payment is already fully paid.',
             ], 400);
         }
 
         try {
             $payment->payment_method = $request->payment_method;
-            $payment->deducted_amount = $request->amount;
+            $payment->deducted_amount += $remainingAmount;
             $payment->payment_status = 'paid';
             $payment->paid_at = now();
 
-            $receiptPath = null;
+            // Handle receipt upload
             if ($request->hasFile('receipt')) {
                 $disk = 'public';
                 $folder = 'receipts';
@@ -110,14 +112,14 @@ class SchedulePaymentController extends Controller
 
             $payment->save();
 
-            // Update related partial payments
-            $this->markPartialPaymentsAsPaid($request->schedule_id, $request->payment_method, $receiptPath);
+            // Update related partial payments if needed
+            $this->markPartialPaymentsAsPaid($request->schedule_id, $request->payment_method, $payment->receipt ?? null);
 
             DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Payment submitted successfully',
+                'message' => 'Payment submitted successfully. Amount: ' . $remainingAmount,
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();

@@ -11,7 +11,7 @@
                 @csrf
                 <div class="mb-3">
                     <label class="form-label">{{ translate('Reason') }}</label>
-                    <textarea name="reason" class="form-control" rows="4" required></textarea>
+                    <textarea name="reason" class="textarea" rows="4" required></textarea>
                 </div>
                 <button type="submit" class="btn btn-danger">{{ translate('Transfer') }}</button>
             </form>

@@ -1383,5 +1383,5 @@ return [
     'Sending Reminder...' => 'جارٍ إرسال التذكير...',
     'Please wait while we send the reminder.' => 'يرجى الانتظار أثناء إرسال التذكير.',
     'An unexpected error occurred.' => 'حدث خطأ غير متوقع.',
-
+    'FAILED' => 'فشل',
 ];

@@ -1490,4 +1490,5 @@ return [
     'Sending Reminder...' => 'Sending Reminder...',
     'Please wait while we send the reminder.' => 'Please wait while we send the reminder.',
     'An unexpected error occurred.' => 'An unexpected error occurred.',
+    'FAILED' => 'FAILED',
 ];
