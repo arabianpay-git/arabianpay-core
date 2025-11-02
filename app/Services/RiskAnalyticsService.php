@@ -174,7 +174,7 @@ class RiskAnalyticsService
 
         $crIdRaw = $idMatchScore + $idExpiryScore + $crExpiryScore + $industryData['industry_score'] + $activityScore;
         $crIdScore = min($crIdRaw / 100, 1) * $this->weightCrIdScore;
-        $posScore = min($userData['monthlyPos'] / 50000, 1) * $this->weightPosScore;
+        $posScore = min((float) $userData['monthlyPos'] / 50000, 1) * $this->weightPosScore;
 
         $repaymentData = $this->calculateRepaymentScore($user);
         $locationData = $this->calculateLocationScore($crData);
