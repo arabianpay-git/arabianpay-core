@@ -58,21 +58,21 @@ class CustomerCreditLimit extends Model
             $orders = $customer->user->orders ?? [];
 
             foreach ($orders as $order) {
-                $items         = map_product_details($order->product_details);
-                $subTotal      = $items->sum('total');
-                $shipping      = $order->shipping_cost ?? 0;
-                $discount      = $order->coupon_discount ?? 0;
-                $tax           = calculate_order_tax($order);
+                $items    = map_product_details($order->product_details);
+                $subTotal = (float) $items->sum('total');          // cast to float
+                $shipping = (float) ($order->shipping_cost ?? 0);  // cast to float
+                $discount = (float) ($order->coupon_discount ?? 0); // cast to float
+                $tax      = (float) calculate_order_tax($order);   // cast to float
 
-                $base          = $subTotal + $tax + $shipping - $discount;
+                $base = $subTotal + $tax + $shipping - $discount;
 
-                $commissionPct     = get_system_commission();
-                $commissionAmount  = $base * ($commissionPct / 100);
+                $commissionPct    = (float) get_system_commission();
+                $commissionAmount = $base * ($commissionPct / 100);
 
-                $commissionTaxPct  = get_commission_tax();
-                $commissionTaxAmt  = $commissionAmount * ($commissionTaxPct / 100);
+                $commissionTaxPct = (float) get_commission_tax();
+                $commissionTaxAmt = $commissionAmount * ($commissionTaxPct / 100);
 
-                $totalAmount       = $base + $commissionAmount + $commissionTaxAmt;
+                $totalAmount = $base + $commissionAmount + $commissionTaxAmt;
 
                 $used += $totalAmount;
             }

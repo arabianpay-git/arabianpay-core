@@ -1628,4 +1628,7 @@ return [
     'Error' => 'Error',
     'Validation failed or server error' => 'Validation failed or server error',
     'Server error' => 'Server error',
+
+    'Internal Server Error' => 'Internal Server Error',
+    'Sorry, something went wrong on our end. Please try again later.' => 'Sorry, something went wrong on our end. Please try again later.',
 ];
