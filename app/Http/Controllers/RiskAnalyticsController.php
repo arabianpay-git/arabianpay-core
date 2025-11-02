@@ -7,6 +7,7 @@ use App\Models\Customer;
 use App\Models\Merchant;
 use App\Models\RiskScore;
 use App\Models\User;
+use App\Services\RiskDashboardService;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -16,6 +17,33 @@ use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class RiskAnalyticsController extends Controller
 {
+
+    protected $riskDashboardService;
+
+    public function __construct(RiskDashboardService $riskDashboardService)
+    {
+        $this->riskDashboardService = $riskDashboardService;
+    }
+
+    public function dashboard(Request $request)
+    {
+        $filters = [
+            'date_from' => $request->get('date_from'),
+            'date_to' => $request->get('date_to')
+        ];
+
+        $dashboardData = $this->riskDashboardService->getDashboardData($filters);
+
+        return view('admin.risk-management.dashboard', [
+            'portfolioData' => $dashboardData['portfolio'],
+            'pipelineData' => $dashboardData['pipeline'],
+            'ewsData' => $dashboardData['ews'],
+            'riskScores' => $dashboardData['risk_scores'],
+            'activeAlerts' => $dashboardData['alerts'],
+            'filters' => $filters
+        ]);
+    }
+
     public function score(Request $request)
     {
         $search = $request->input('search');

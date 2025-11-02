@@ -140,7 +140,10 @@
                                                         <br>
                                                         <small class="text-gray-500">
                                                             —
-                                                            {{ $product->user?->business_name ?? translate('N/A') }}
+                                                            <a href="{{ route('supplierProfile', ['id' => $product->user?->id]) }}"
+                                                                class="underline">
+                                                                {{ $product->user?->business_name ?? translate('N/A') }}
+                                                            </a>
                                                         </small>
                                                     </div>
                                                 </td>

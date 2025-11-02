@@ -69,10 +69,11 @@
                                                 <td class="text-center">{{ $request->id }}</td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        {{ $request->user?->first_name }} {{ $request->user?->last_name }}
+                                                        <a href="{{ route('customerProfile', ['id' => $request->user?->id]) }}"
+                                                            class="underline">{{ $request->user?->business_name ?? $request->user?->first_name }}</a>
                                                         <br>
                                                         <small class="text-gray-500">
-                                                            — {{ $request->user?->business_name ?? '—' }}
+                                                            {{ $request->user?->email ?? '—' }}
                                                         </small>
                                                     </div>
                                                 </td>
@@ -80,8 +81,9 @@
                                                     <div class="whitespace-nowrap text-sm">
                                                         <div>
                                                             <span>{{ translate('Amount') }}:</span>
-                                                            <span
-                                                                class="icon-saudi_riyal"></span>{{ number_format($request->order->grand_total, 2) }}
+                                                            <span class="icon-saudi_riyal"></span>
+                                                            {{ isset($request->order) && isset($request->order->grand_total) ? number_format($request->order->grand_total, 2) : 'N/A' }}
+
                                                         </div>
                                                         <div>
                                                             <span>{{ translate('City') }}:</span>
@@ -133,11 +135,11 @@
                                                             </option>
                                                             <option value="approved"
                                                                 {{ $request->refund_status == 'approved' ? 'selected' : '' }}>
-                                                                {{ translate('Approved') }}
+                                                                {{ translate('Approve') }}
                                                             </option>
                                                             <option value="rejected"
                                                                 {{ $request->refund_status == 'rejected' ? 'selected' : '' }}>
-                                                                {{ translate('Rejected') }}
+                                                                {{ translate('Reject') }}
                                                             </option>
                                                         </select>
                                                     </form>

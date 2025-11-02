@@ -24,7 +24,9 @@
                     <td class="text-center">{{ $item->id }}</td>
                     <td>
                         <div class="whitespace-nowrap">
-                            {{ $item->user->first_name }} {{ $item->user->last_name }}
+                            <a href="{{ route('supplierProfile', ['id' => $item->user_id]) }}" class="underline">
+                                {{ $item->user->first_name }} {{ $item->user->last_name }}
+                            </a>
                             <br>
                             <small class="text-gray-500">— {{ $item->user?->business_name ?? '—' }}</small>
                         </div>

@@ -158,6 +158,11 @@ class User extends Authenticatable implements HasPasskeys
         return $this->hasMany(SupportTicket::class, 'user_id');
     }
 
+    public function SchedulePayments()
+    {
+        return $this->hasMany(SchedulePayment::class, 'user_id');
+    }
+
     public function userSchedulePayment()
     {
         return $this->hasMany(SchedulePayment::class, 'user_id');
