@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Order;
+use App\Models\PartialPayment;
 use App\Models\Product;
 use App\Models\Promise;
 use App\Models\RefundRequest;
@@ -10,6 +11,7 @@ use App\Models\SchedulePayment;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
@@ -1350,5 +1352,122 @@ class CollectionController extends Controller
             'attributes' => $item['attributes'] ?? [],
             'total' => $price * $item['quantity'],
         ];
+    }
+
+    public function partialPayments(Request $request)
+    {
+        $status = $request->query('status');
+        $search = $request->query('search');
+
+        // Base query (prioritize pending)
+        $query = PartialPayment::with(['user', 'employee', 'schedulePayment.order'])
+            ->orderByRaw("CASE WHEN approval_status = 'pending' THEN 0 ELSE 1 END")
+            ->latest();
+
+        // Apply status filter if present
+        if ($status && in_array($status, ['pending', 'approved', 'rejected'])) {
+            $query->where('approval_status', $status);
+        }
+
+        // Get collection (we will apply the custom search filter on collection level)
+        $paymentsCollection = $query->get();
+
+        // If search provided, filter using the custom function
+        if (!empty($search)) {
+            $paymentsCollection = $this->filterMerchants($paymentsCollection, $search);
+        }
+
+        // Manual pagination (preserve query string)
+        $perPage = 10;
+        $page = LengthAwarePaginator::resolveCurrentPage();
+        $total = $paymentsCollection->count();
+
+        // Slice items for current page
+        $results = $paymentsCollection->slice(($page - 1) * $perPage, $perPage)->values();
+
+        $paginated = new LengthAwarePaginator($results, $total, $perPage, $page, [
+            'path' => LengthAwarePaginator::resolveCurrentPath(),
+            'pageName' => 'page',
+        ]);
+
+        // Preserve query params for pagination links
+        $paginated->appends($request->only(['search', 'status']));
+
+        return view('admin.collections.partial-payments', [
+            'partialPayments' => $paginated,
+            'search' => $search,
+            'status' => $status,
+        ]);
+    }
+
+    /**
+     * Use your provided filtering logic (adapted to PartialPayment collection).
+     * Keeps the same name you gave: filterMerchants
+     *
+     * @param \Illuminate\Support\Collection $payments
+     * @param string $search
+     * @return \Illuminate\Support\Collection
+     */
+    private function filterMerchants($payments, $search)
+    {
+        $search = strtolower(trim($search));
+        $searchTerms = explode(' ', $search);
+
+        return $payments->filter(function ($payment) use ($search, $searchTerms) {
+            $user = $payment->user;
+
+            if (! $user) {
+                return false;
+            }
+
+            // Check full email and business_name
+            if (
+                str_contains(strtolower($user->email ?? ''), $search) ||
+                str_contains(strtolower($user->business_name ?? ''), $search)
+            ) {
+                return true;
+            }
+
+            // Check first_name and last_name for each search term
+            foreach ($searchTerms as $term) {
+                if (
+                    str_contains(strtolower($user->first_name ?? ''), $term) ||
+                    str_contains(strtolower($user->last_name ?? ''), $term)
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
+        })->values();
+    }
+
+    public function updatePartialPaymentStatus(Request $request)
+    {
+        $request->validate([
+            'id' => 'required|exists:partial_payments,id',
+            'action' => 'required|in:approve,reject',
+        ]);
+
+        try {
+            $payment = PartialPayment::findOrFail($request->id);
+
+            if ($payment->approval_status !== 'pending') {
+                return response()->json(['status' => 'error', 'message' => 'This payment is already processed.']);
+            }
+
+            $payment->approval_status = $request->action === 'approve' ? 'approved' : 'rejected';
+            $payment->save();
+
+            return response()->json([
+                'status' => 'success',
+                'message' => 'Partial payment ' . $payment->approval_status . ' successfully.',
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Error: ' . $e->getMessage(),
+            ]);
+        }
     }
 }

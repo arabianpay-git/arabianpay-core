@@ -292,6 +292,8 @@ Route::group([
                 Route::get('/penalties', 'penalties')->name('penalties');
                 Route::get('alerts', 'viewAlerts')->name('alerts');
                 Route::get('flags', 'viewFlags')->name('flags');
+                Route::get('partial-payments', 'partialPayments')->name('partialPayments');
+                Route::post('partial-payments/update-status', 'updatePartialPaymentStatus')->name('partialPayments.updateStatus');
             });
             Route::post('/reminders/send', [ReminderController::class, 'send'])->name('reminders.send');
 

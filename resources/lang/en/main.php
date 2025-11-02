@@ -1480,7 +1480,6 @@ return [
     'Server Error' => 'Server Error',
     'Unable to submit partial payment. Try again later.' => 'Unable to submit partial payment. Try again later.',
     'No promises available.' => 'No promises available.',
-
     'Add New Department' => 'Add New Department',
     'Add New Employee' => 'Add New Employee',
     'Update Permissions' => 'Update Permissions',
@@ -1491,4 +1490,20 @@ return [
     'Please wait while we send the reminder.' => 'Please wait while we send the reminder.',
     'An unexpected error occurred.' => 'An unexpected error occurred.',
     'FAILED' => 'FAILED',
+
+    'Partial Payments' => 'Partial Payments',
+    'Approval Status' => 'Approval Status',
+    'Paid At' => 'Paid At',
+    'View Installment Details' => 'View Installment Details',
+    'Approve Partial Payment' => 'Approve Partial Payment',
+    'Reject Partial Payment' => 'Reject Partial Payment',
+    'Approve this partial payment?' => 'Approve this partial payment?',
+    'This action will approve the customer’s partial payment request.' => 'This action will approve the customer’s partial payment request.',
+    'Yes, Approve' => 'Yes, Approve',
+    'Reject this partial payment?' => 'Reject this partial payment?',
+    'This action cannot be undone.' => 'This action cannot be undone.',
+    'Yes, Reject' => 'Yes, Reject',
+    'Error!' => 'Error!',
+    'Something went wrong.' => 'Something went wrong.',
+    'No partial payments found' => 'No partial payments found',
 ];
