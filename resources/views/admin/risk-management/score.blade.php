@@ -124,7 +124,7 @@
                                                 <td>
                                                     <div class="whitespace-nowrap">
                                                         {{ translate('Revenue') }}:
-                                                        {{ number_format($item->pos_revenue ?? 0) }}<br>
+                                                        {{ number_format((float) ($item->pos_revenue ?? 0)) }}<br>
                                                         <small class="text-gray-500">— {{ translate('Risk Score') }}:
                                                             {{ $item->pos_score ?? 0 }}</small>
                                                     </div>
