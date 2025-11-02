@@ -166,7 +166,6 @@
             content: attr(title);
             position: absolute;
             bottom: 130%;
-            left: 50%;
             transform: translateX(-50%);
             background: #111827;
             color: #fff;
