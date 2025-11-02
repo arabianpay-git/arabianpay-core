@@ -44,6 +44,7 @@ use App\Http\Controllers\{
     ReportController,
     RiskAnalyticsController,
     RiskController,
+    RiskWeightController,
     RoleController,
     RolePermissionController,
     SchedulePaymentController,
@@ -279,6 +280,10 @@ Route::group([
                 Route::get('export/pdf', 'exportPdf')->name('risk.exportPdf');
                 Route::get('export/csv', 'exportCsv')->withoutMiddleware([PreventBackHistory::class])->name('risk.exportCsv');
             });
+
+            Route::post('risk-weights/store', [RiskWeightController::class, 'store'])->name('riskWeights.store');
+            Route::put('risk-weights/{riskWeight}', [RiskWeightController::class, 'update'])->name('riskWeights.update');
+            Route::get('risk-weights/last', [RiskWeightController::class, 'getLast'])->name('riskWeights.last');
 
             //
             // Collection Department

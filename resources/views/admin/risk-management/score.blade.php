@@ -4,10 +4,15 @@
     <main class="grow content pt-5" id="content" role="content">
         <div class="container-fixed">
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
-                <div class="flex flex-col justify-center gap-2">
+                <div class="flex justify-between gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
                         {{ translate('Risk Score Engine') }}
                     </h1>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <a class="btn btn-sm btn-secondary w-auto" data-modal-toggle="#weight_modal">
+                        {{ translate('Set Risk Weights') }}
+                    </a>
                 </div>
             </div>
         </div>
@@ -35,7 +40,7 @@
                             </div>
 
                             <div class="flex gap-2 lg:gap-3">
-                                <a href="{{ route('risk.exportCsv', request()->only('search')) }}"
+                                {{-- <a href="{{ route('risk.exportCsv', request()->only('search')) }}"
                                     class="btn btn-sm btn-outline btn-success flex items-center"
                                     title="{{ translate('Export CSV') }}">
                                     <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none"
@@ -54,7 +59,7 @@
                                         <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
                                     </svg>
                                     {{ translate('Export PDF') }}
-                                </a>
+                                </a> --}}
                             </div>
                         </div>
 
@@ -156,7 +161,7 @@
                                                 </td>
                                                 <td>
                                                     {{ translate('Overall') }}
-                                                    {{ $item->google_rating['result']['rating'] ?? 0 }}/5
+                                                    {{ $item->google_rating ?? 0 }}/5
                                                 </td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
@@ -217,8 +222,7 @@
         <div class="modal-content max-w-[600px] top-[5%]">
             <div class="modal-header py-4 px-5">
                 <h5 class="modal-title">{{ translate('User Risk Management') }}</h5>
-                <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0"
-                    data-modal-dismiss="true">
+                <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0" data-modal-dismiss="true">
                     <i class="ki-filled ki-cross"></i>
                 </button>
             </div>
@@ -245,6 +249,7 @@
             </div>
         </div>
     </div>
+    @include('admin.risk-management.components.weight-modal')
 @endsection
 @push('scripts')
     <script>
