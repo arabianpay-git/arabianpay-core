@@ -1501,7 +1501,7 @@ return [
     'This action will approve the customer’s partial payment request.' => 'This action will approve the customer’s partial payment request.',
     'Yes, Approve' => 'Yes, Approve',
     'Reject this partial payment?' => 'Reject this partial payment?',
-    'This action cannot be undone.' => 'This action cannot be undone.',
+    'Rejecting will decline the customer’s partial payment request.' => 'Rejecting will decline the customer’s partial payment request.',
     'Yes, Reject' => 'Yes, Reject',
     'Error!' => 'Error!',
     'Something went wrong.' => 'Something went wrong.',

@@ -312,7 +312,7 @@
                     '{{ translate('Reject this partial payment?') }}';
 
                 const confirmText = action === 'approve' ?
-                    '{{ translate('Approving will confirm the customer’s partial payment request.') }}' :
+                    '{{ translate('This action will approve the customer’s partial payment request.') }}' :
                     '{{ translate('Rejecting will decline the customer’s partial payment request.') }}';
 
                 const confirmResult = await Swal.fire({
