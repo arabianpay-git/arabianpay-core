@@ -1631,4 +1631,6 @@ return [
 
     'Internal Server Error' => 'Internal Server Error',
     'Sorry, something went wrong on our end. Please try again later.' => 'Sorry, something went wrong on our end. Please try again later.',
+    'Type your reply...' => 'Type your reply...',
+    'Submit Reply' => 'Submit Reply',
 ];

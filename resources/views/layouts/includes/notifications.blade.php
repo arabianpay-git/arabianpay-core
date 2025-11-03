@@ -30,6 +30,25 @@
     .notification-item:hover .mark-read-btn {
         display: inline-block;
     }
+
+    #notificationCountBadge {
+        position: absolute;
+        top: -4px;
+        right: -4px;
+        background-color: #ffffff;
+        color: #16a34a;
+        font-size: 10px;
+        font-weight: 600;
+        border: 2px solid #16a34a;
+        border-radius: 9999px;
+        width: 16px;
+        height: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        line-height: 1;
+        box-shadow: 0 0 4px rgba(0, 0, 0, 0.1);
+    }
 </style>
 <div class="dropdown" data-dropdown="true" data-dropdown-offset="70px, 10px" data-dropdown-offset-rtl="-70px, 10px"
     data-dropdown-placement="bottom-end" data-dropdown-placement-rtl="bottom-start" data-dropdown-trigger="click|lg:click">
@@ -37,7 +56,11 @@
         class="dropdown-toggle btn btn-icon btn-icon-lg relative cursor-pointer size-9 rounded-full hover:bg-primary-light hover:text-primary dropdown-open:bg-primary-light dropdown-open:text-primary text-gray-500"
         id="notificationDropdown">
         <i class="ki-filled ki-notification-status"></i>
+        <span id="notificationCountBadge"
+            class="absolute -top-1 -right-1 bg-red-500 text-white text-[10px] font-semibold rounded-full w-4 h-4 flex items-center justify-center hidden">
+        </span>
     </button>
+
 
     <div class="dropdown-content light:border-gray-300 w-full max-w-[460px]" id="notificationsContent">
         <div
@@ -108,6 +131,21 @@
 
                     const dot = document.getElementById('notificationUnreadDot');
                     if (dot) dot.classList.toggle('hidden', data.unread_count === 0);
+
+                    const badge = document.getElementById('notificationCountBadge');
+
+                    if (badge) {
+                        if (data.unread_count > 0) {
+                            // Set text content (limit to 9+)
+                            badge.textContent = data.unread_count > 9 ? '9+' : data.unread_count;
+
+                            // Show badge
+                            badge.style.display = 'flex';
+                        } else {
+                            // Hide badge when count = 0
+                            badge.style.display = 'none';
+                        }
+                    }
                 })
                 .catch(() => {
                     showError('#notificationListAll');

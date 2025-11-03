@@ -8,6 +8,15 @@
     $hasNewInternelTicket = App\Models\SupportTicket::where('status', 'active')
         ->where('assigned_to', Auth::id())
         ->exists();
+    $user = Auth::user();
+
+    $supportTicketCount = App\Models\SupportTicket::where('status', 'active')
+        ->when(!(($user->user_type == 'employee' && $user->is_manager) || $user->user_type == 'admin'), function (
+            $query,
+        ) use ($user) {
+            $query->where('assigned_to', $user->id);
+        })
+        ->count();
 @endphp
 
 <div class="sidebar dark:bg-coal-600 bg-light border-e border-e-gray-200 dark:border-e-coal-100 fixed top-0 bottom-0 z-20 hidden lg:flex flex-col items-stretch shrink-0"
@@ -1368,7 +1377,7 @@
                                 @if ($hasNewTicket)
                                     <span class="menu-badge me-[-10px]">
                                         <span class="badge badge-success badge-xs">
-                                            {{ translate('New') }}
+                                            {{ $supportTicketCount }} {{ translate('New') }}
                                         </span>
                                     </span>
                                 @endif
