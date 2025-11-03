@@ -13,6 +13,7 @@
                 <th>{{ translate('Assigned To') }}</th>
                 <th>{{ translate('Status') }}</th>
                 <th>{{ translate('Commission') }}</th>
+                <th>{{ translate('Member Since') }}</th>
                 <th>{{ translate('Action') }}</th>
             </tr>
         </thead>
@@ -69,7 +70,6 @@
                     </td>
 
                     <td class="text-center">
-                        <!-- Commission inline -->
                         <div class="ml-2 flex items-center gap-1">
                             <span class="text-sm text-gray-600">{{ $item->approval?->commission ?? '—' }}</span>
                             {{-- <button class="btn btn-xs btn-primary update-commission-btn"
@@ -79,35 +79,33 @@
                             </button> --}}
                         </div>
                     </td>
+                    <td class="text-center">
+                        {{ $item->created_at->format('d M Y') }}
+                    </td>
 
                     <td>
                         <div class="flex gap-1">
-                            <div class="flex gap-1">
-                                <!-- Supplier Profile Button -->
-                                <a class="btn btn-sm btn-icon btn-clear btn-primary"
-                                    title="{{ translate('View Supplier Profile') }}"
-                                    href="{{ route('supplierProfile', ['id' => $item->user_id]) }}">
-                                    <i class="ki-filled ki-notepad-edit"></i>
+                            <a class="btn btn-sm btn-icon btn-clear btn-primary"
+                                title="{{ translate('View Supplier Profile') }}"
+                                href="{{ route('supplierProfile', ['id' => $item->user_id]) }}">
+                                <i class="ki-filled ki-notepad-edit"></i>
+                            </a>
+
+                            <button class="btn btn-sm btn-icon btn-clear btn-info transfer-requests-btn"
+                                title="{{ translate('View Transfer Requests') }}" data-modal-toggle="#transfer_detail"
+                                data-model-id="{{ $item->id }}" data-model-type="App\Models\Merchant">
+                                <i class="ki-filled ki-disconnect"></i>
+                            </button>
+
+                            @if (Auth::user()->user_type == 'admin')
+                                <a target="__blank" class="btn btn-sm btn-icon btn-clear btn-warning"
+                                    title="{{ translate('Login as Partner') }}"
+                                    href="{{ route('impersonate.redirect', ['id' => $item->user_id]) }}"
+                                    onclick="return confirm('Login to this partner account?')">
+                                    <i class="ki-filled ki-wrench"></i>
                                 </a>
-
-                                <!-- Transfer Requests Button -->
-                                <button class="btn btn-sm btn-icon btn-clear btn-info transfer-requests-btn"
-                                    title="{{ translate('View Transfer Requests') }}"
-                                    data-modal-toggle="#transfer_detail" data-model-id="{{ $item->id }}"
-                                    data-model-type="App\Models\Merchant">
-                                    <i class="ki-filled ki-disconnect"></i>
-                                </button>
-
-                                <!-- Impersonate Button (Admin Only) -->
-                                @if (Auth::user()->user_type == 'admin')
-                                    <a target="__blank" class="btn btn-sm btn-icon btn-clear btn-warning"
-                                        title="{{ translate('Login as Partner') }}"
-                                        href="{{ route('impersonate.redirect', ['id' => $item->user_id]) }}"
-                                        onclick="return confirm('Login to this partner account?')">
-                                        <i class="ki-filled ki-wrench"></i>
-                                    </a>
-                                @endif
-                            </div>
+                            @endif
+                        </div>
                     </td>
                 </tr>
             @empty
