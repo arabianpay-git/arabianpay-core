@@ -105,39 +105,40 @@ class SupportTicketController extends Controller
             'status' => 'required|in:active,solved,draft,canceled',
         ]);
 
-        $tickets = SupportTicket::where('ticket_number', $ticket_number)->get();
+        $ticket = SupportTicket::whereEncrypted('ticket_number', $ticket_number)->first();
 
-        $ticket = $tickets->first();
+        if (!$ticket) {
+            return redirect()->back()->with('error', 'Ticket not found.');
+        }
+
         $user = Auth::user();
 
         if (
-            !$ticket ||
-            !(
-                $ticket->user_id === $user->id ||
-                $user->user_type === 'admin' ||
-                ($user->user_type === 'employee' && $user->is_manager)
-            )
+            $ticket->user_id !== $user->id &&
+            strtolower($user->user_type) !== 'admin' &&
+            !(strtolower($user->user_type) === 'employee' && $user->is_manager)
         ) {
             return redirect()->back()->with('error', 'You are not authorized to update this ticket status.');
         }
 
         $batchUuid = (string) Str::uuid();
 
-        foreach ($tickets as $ticket) {
-            $ticket->status = $request->status;
-            $ticket->save();
+        $tickets = SupportTicket::whereEncrypted('ticket_number', $ticket_number)->get();
 
-            $ticket->logModelAction(
+        foreach ($tickets as $t) {
+            $t->update(['status' => $request->status]);
+
+            $t->logModelAction(
                 event: 'status_update',
-                description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated ticket status: {$ticket->ticket_number} [{$ticket->id}] to {$request->status}",
+                description: $user->first_name . ' ' . $user->last_name . " updated ticket status: {$t->ticket_number} [{$t->id}] to {$request->status}",
                 properties: [
-                    'ip' => request()->ip(),
+                    'ip' => $request->ip(),
                     'batch_uuid' => $batchUuid,
                 ]
             );
         }
 
-        return redirect()->back()->with('success', 'Ticket status updated everywhere successfully.');
+        return redirect()->back()->with('success', 'Ticket status updated successfully.');
     }
 
     public function internelTickets()
