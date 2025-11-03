@@ -1659,4 +1659,7 @@ return [
     'Validation failed' => 'Validation failed',
     'User ID:' => 'User ID:',
     'Manual Score Adjustment' => 'Manual Score Adjustment',
+    'View Transfer Requests' => 'View Transfer Requests',
+    'View Supplier Profile' => 'View Supplier Profile',
+    'Login as Partner' => 'Login as Partner',
 ];

@@ -82,23 +82,32 @@
 
                     <td>
                         <div class="flex gap-1">
-                            <a class="btn btn-sm btn-icon btn-clear btn-primary"
-                                href="{{ route('supplierProfile', ['id' => $item->user_id]) }}">
-                                <i class="ki-filled ki-notepad-edit"></i>
-                            </a>
-                            <button class="btn btn-sm btn-icon btn-clear btn-info transfer-requests-btn"
-                                data-modal-toggle="#transfer_detail" data-model-id="{{ $item->id }}"
-                                data-model-type="App\Models\Merchant">
-                                <i class="ki-filled ki-disconnect"></i>
-                            </button>
-                            @if (Auth::user()->user_type == 'admin')
-                                <a target="__blank" class="btn btn-sm btn-icon btn-clear btn-warning"
-                                    href="{{ route('impersonate.redirect', ['id' => $item->user_id]) }}"
-                                    onclick="return confirm('Login to this partner account?')">
-                                    <i class="ki-filled ki-wrench"></i>
+                            <div class="flex gap-1">
+                                <!-- Supplier Profile Button -->
+                                <a class="btn btn-sm btn-icon btn-clear btn-primary"
+                                    title="{{ translate('View Supplier Profile') }}"
+                                    href="{{ route('supplierProfile', ['id' => $item->user_id]) }}">
+                                    <i class="ki-filled ki-notepad-edit"></i>
                                 </a>
-                            @endif
-                        </div>
+
+                                <!-- Transfer Requests Button -->
+                                <button class="btn btn-sm btn-icon btn-clear btn-info transfer-requests-btn"
+                                    title="{{ translate('View Transfer Requests') }}"
+                                    data-modal-toggle="#transfer_detail" data-model-id="{{ $item->id }}"
+                                    data-model-type="App\Models\Merchant">
+                                    <i class="ki-filled ki-disconnect"></i>
+                                </button>
+
+                                <!-- Impersonate Button (Admin Only) -->
+                                @if (Auth::user()->user_type == 'admin')
+                                    <a target="__blank" class="btn btn-sm btn-icon btn-clear btn-warning"
+                                        title="{{ translate('Login as Partner') }}"
+                                        href="{{ route('impersonate.redirect', ['id' => $item->user_id]) }}"
+                                        onclick="return confirm('Login to this partner account?')">
+                                        <i class="ki-filled ki-wrench"></i>
+                                    </a>
+                                @endif
+                            </div>
                     </td>
                 </tr>
             @empty
