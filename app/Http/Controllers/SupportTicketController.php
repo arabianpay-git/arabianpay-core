@@ -62,7 +62,7 @@ class SupportTicketController extends Controller
             'files' => 'nullable|array',
         ]);
 
-        $ticket = SupportTicket::create([
+        SupportTicket::create([
             'assigned_to' => $request->assigned_to,
             'user_id' => Auth::id(),
             'ticket_number' => 'TKT-' . now()->format('Ymd') . '-' . rand(1000, 9999),
@@ -108,8 +108,16 @@ class SupportTicketController extends Controller
         $tickets = SupportTicket::where('ticket_number', $ticket_number)->get();
 
         $ticket = $tickets->first();
+        $user = Auth::user();
 
-        if (!$ticket || ($ticket->user_id !== Auth::id() && Auth::user()->user_type !== 'admin')) {
+        if (
+            !$ticket ||
+            !(
+                $ticket->user_id === $user->id ||
+                $user->user_type === 'admin' ||
+                ($user->user_type === 'employee' && $user->is_manager)
+            )
+        ) {
             return redirect()->back()->with('error', 'You are not authorized to update this ticket status.');
         }
 

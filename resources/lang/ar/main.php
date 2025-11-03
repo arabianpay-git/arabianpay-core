@@ -1545,4 +1545,6 @@ return [
     'View Transfer Requests' => 'عرض طلبات التحويل',
     'View Supplier Profile' => 'عرض ملف المورد',
     'Login as Partner' => 'تسجيل الدخول باسم الشريك',
+    'Your Reply' => 'ردك',
+    'Edit Reply' => 'تعديل الرد',
 ];

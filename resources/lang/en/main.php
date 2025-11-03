@@ -1636,7 +1636,6 @@ return [
     'Set Risk Weights' => 'Set Risk Weights',
     'Save Weights' => 'Save Weights',
     'Main Weights (Sum must be 95)' => 'Main Weights (Sum must be 95)',
-
     'CR/ID Sub-Weights (Total 100)' => 'CR/ID Sub-Weights (Total 100)',
     'ID Match' => 'ID Match',
     'ID Expiry' => 'ID Expiry',
@@ -1662,4 +1661,7 @@ return [
     'View Transfer Requests' => 'View Transfer Requests',
     'View Supplier Profile' => 'View Supplier Profile',
     'Login as Partner' => 'Login as Partner',
+
+    'Your Reply' => 'Your Reply',
+    'Edit Reply' => 'Edit Reply',
 ];
