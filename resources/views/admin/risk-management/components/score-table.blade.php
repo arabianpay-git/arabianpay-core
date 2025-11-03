@@ -24,12 +24,21 @@
                                 <i class="ki-filled ki-flag text-lg text-danger"></i>
                             </span>
                         @endif
+
                         <div class="whitespace-nowrap">
-                            {{ $item->name ?? '-' }}
+                            @php
+                                $type = request('type');
+                                $profileRoute =
+                                    $type === 'merchant'
+                                        ? route('supplierProfile', ['id' => $item->id])
+                                        : route('customerProfile', ['id' => $item->id]);
+                            @endphp
+
+                            <a href="{{ $profileRoute }}" class="underline">{{ $item->name ?? '-' }}</a>
                             <br>
-                            <small class="text-gray-500">—
-                                {{ $item->business_name ?? '-' }}</small>
+                            <small class="text-gray-500">— {{ $item->business_name ?? '-' }}</small>
                         </div>
+
                     </td>
                     <td>
                         <div class="whitespace-nowrap">

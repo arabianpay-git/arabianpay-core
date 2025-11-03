@@ -47,104 +47,74 @@ class RiskAnalyticsController extends Controller
         $order = $request->input('order', 'desc');
         $perPage = 10;
 
-        $baseQuery = User::whereIn('user_type', ['merchant', 'user'])
-            ->with(['merchant.businessType', 'customer.businessType', 'transactions'])
-            ->orderBy('created_at', 'desc');
+        $typeParam = strtolower($request->input('type', ''));
+        $allowedTypes = ['merchant', 'user'];
+        $userTypes = in_array($typeParam, $allowedTypes) ? [$typeParam] : $allowedTypes;
 
-        $weights = [
+        $weights = array_filter([
             'cr_id' => $request->input('weight_cr_id'),
             'pos' => $request->input('weight_pos'),
             'repayment' => $request->input('weight_repayment'),
             'industry' => $request->input('weight_industry'),
             'location' => $request->input('weight_location'),
-        ];
+        ], fn($weight) => !is_null($weight));
 
-        $weights = array_filter($weights, fn($weight) => !is_null($weight));
+        $baseQuery = User::query()
+            ->whereIn('user_type', $userTypes)
+            ->where(function ($query) {
+                $query->whereHas('merchant')
+                    ->orWhereHas('customer');
+            })
+            ->with(['merchant.businessType', 'customer.businessType', 'transactions'])
+            ->orderBy('created_at', $order);
 
-        if (!$search) {
-            $usersPaginator = $baseQuery->paginate($perPage);
-
-            $businessNames = $this->riskAnalyticsService->extractBusinessNamesFromUsers(
-                $usersPaginator->getCollection()
-            );
-
-            if (!empty($businessNames)) {
-                $this->riskAnalyticsService->prefetchGoogleRatings($businessNames);
-            }
-
-            $risksCollection = $this->riskAnalyticsService->calculateForUsers(
-                $usersPaginator->getCollection(),
-                $weights
-            );
-
-            $ordered = $risksCollection->values();
-
-            $paginatedRisks = new LengthAwarePaginator(
-                $ordered,
-                $usersPaginator->total(),
-                $usersPaginator->perPage(),
-                $usersPaginator->currentPage(),
-                ['path' => request()->url(), 'query' => request()->query()]
-            );
-
-            return view('admin.risk-management.score', ['risks' => $paginatedRisks]);
-        }
-
-        $candidateLimit = 2000;
-        $candidates = $baseQuery->limit($candidateLimit)->get();
-
-        $filtered = $candidates->filter(function ($user) use ($search) {
+        if ($search) {
             $searchLower = strtolower($search);
 
-            if (
-                str_contains(strtolower($user->first_name ?? ''), $searchLower) ||
-                str_contains(strtolower($user->last_name ?? ''), $searchLower) ||
-                str_contains(strtolower($user->email ?? ''), $searchLower) ||
-                str_contains(strtolower($user->phone_number ?? ''), $searchLower) ||
-                str_contains(strtolower($user->iqama ?? ''), $searchLower)
-            ) {
-                return true;
-            }
+            $baseQuery->where(function ($query) use ($searchLower) {
+                $query->where('first_name', 'like', "%{$searchLower}%")
+                    ->orWhere('last_name', 'like', "%{$searchLower}%")
+                    ->orWhere('email', 'like', "%{$searchLower}%")
+                    ->orWhere('phone_number', 'like', "%{$searchLower}%")
+                    ->orWhere('iqama', 'like', "%{$searchLower}%");
 
-            if ($user->merchant && str_contains(strtolower($user->merchant->business_name ?? ''), $searchLower)) {
-                return true;
-            }
+                $query->orWhereHas('merchant', function ($q) use ($searchLower) {
+                    $q->where('business_name', 'like', "%{$searchLower}%");
+                });
 
-            if ($user->customer && str_contains(strtolower($user->customer->business_name ?? ''), $searchLower)) {
-                return true;
-            }
-
-            return false;
-        });
-
-        if ($filtered->isEmpty()) {
-            $paginatedRisks = new LengthAwarePaginator(collect(), 0, $perPage, 1, [
-                'path' => request()->url(),
-                'query' => request()->query()
-            ]);
-
-            return view('admin.risk-management.score', ['risks' => $paginatedRisks]);
+                $query->orWhereHas('customer', function ($q) use ($searchLower) {
+                    $q->where('business_name', 'like', "%{$searchLower}%");
+                });
+            });
         }
 
-        $businessNames = $this->riskAnalyticsService->extractBusinessNamesFromUsers($filtered);
+        $usersPaginator = $baseQuery->paginate($perPage);
+        $usersCollection = $usersPaginator->getCollection();
 
+        if ($usersCollection->isEmpty()) {
+            return view('admin.risk-management.score', [
+                'risks' => new LengthAwarePaginator(collect(), 0, $perPage, 1, [
+                    'path' => request()->url(),
+                    'query' => request()->query(),
+                ])
+            ]);
+        }
+
+        $businessNames = $this->riskAnalyticsService->extractBusinessNamesFromUsers($usersCollection);
         if (!empty($businessNames)) {
             $this->riskAnalyticsService->prefetchGoogleRatings($businessNames);
         }
 
-        $risksAll = $this->riskAnalyticsService->calculateForUsers($filtered, $weights);
-
-        $orderedAll = $risksAll->values();
-
-        $page = LengthAwarePaginator::resolveCurrentPage();
-        $total = $orderedAll->count();
-        $itemsForCurrentPage = $orderedAll->forPage($page, $perPage)->values();
+        $risksCollection = $this->riskAnalyticsService->calculateForUsers(
+            $usersCollection,
+            $weights
+        );
 
         $paginatedRisks = new LengthAwarePaginator(
-            $itemsForCurrentPage,
-            $total,
-            $perPage,
-            $page,
+            $risksCollection->values(),
+            $usersPaginator->total(),
+            $usersPaginator->perPage(),
+            $usersPaginator->currentPage(),
             ['path' => request()->url(), 'query' => request()->query()]
         );
 
@@ -159,7 +129,7 @@ class RiskAnalyticsController extends Controller
             'reason' => 'required|string',
         ]);
 
-        $riskScore = RiskScore::updateOrCreate(
+        RiskScore::updateOrCreate(
             ['user_id' => $request->user_id],
             [
                 'risk_score' => $request->risk_score,
