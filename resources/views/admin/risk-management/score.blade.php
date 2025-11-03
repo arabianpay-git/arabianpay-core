@@ -10,7 +10,7 @@
                     </h1>
                 </div>
                 <div class="flex items-center gap-2.5">
-                    <a class="btn btn-sm btn-secondary w-auto" data-modal-toggle="#weight_modal">
+                    <a class="btn btn-sm btn-light" data-modal-toggle="#weight_modal">
                         {{ translate('Set Risk Weights') }}
                     </a>
                 </div>
