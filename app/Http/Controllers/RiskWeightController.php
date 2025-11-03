@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\RiskWeight;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 class RiskWeightController extends Controller
 {
@@ -48,14 +49,33 @@ class RiskWeightController extends Controller
             'location_sub_total_max' => 'nullable|numeric|min:0',
         ]);
 
-        // ---- Validate total of main weights ----
+        // ---- Validate sum of main weights ----
         $mainWeights = collect($validated)->only(['cr_id', 'pos', 'repayment', 'industry', 'location']);
-        $sum = $mainWeights->sum();
+        $mainSum = $mainWeights->sum();
 
-        if ($sum != 95) {
+        if ($mainSum != 95) {
             return response()->json([
                 'success' => false,
-                'message' => "The sum of all main weights must equal 95. Current sum: {$sum}",
+                'message' => "The sum of all main weights must equal 95. Current sum: {$mainSum}",
+            ], 422);
+        }
+
+        // ---- Validate sum of CR/ID sub-weights ----
+        $subWeights = collect($validated)->only([
+            'cr_id_sub_id_match',
+            'cr_id_sub_id_expiry',
+            'cr_id_sub_cr_expiry',
+            'cr_id_sub_industry',
+            'cr_id_sub_activity',
+            'cr_id_sub_total'
+        ])->map(fn($v) => $v ?? 0);
+
+        $subSum = $subWeights->sum();
+
+        if ($subSum != 100) {
+            return response()->json([
+                'success' => false,
+                'message' => "The sum of all CR/ID sub-weights must equal 100. Current sum: {$subSum}",
             ], 422);
         }
 
@@ -67,7 +87,7 @@ class RiskWeightController extends Controller
         $data = array_merge(
             $validated,
             [
-                'employee_id' => Auth::id(), // logged-in user making the change
+                'employee_id' => Auth::id(),
                 'last_weight' => $last ? $last->new_weight : null,
                 'new_weight' => $mainWeights,
             ]
@@ -130,13 +150,33 @@ class RiskWeightController extends Controller
             'location_sub_total_max' => 'nullable|numeric|min:0',
         ]);
 
+        // ---- Validate sum of main weights ----
         $mainWeights = collect($validated)->only(['cr_id', 'pos', 'repayment', 'industry', 'location']);
-        $sum = $mainWeights->sum();
+        $mainSum = $mainWeights->sum();
 
-        if ($sum != 95) {
+        if ($mainSum != 95) {
             return response()->json([
                 'success' => false,
-                'message' => "The sum of all main weights must equal 95. Current sum: {$sum}",
+                'message' => "The sum of all main weights must equal 95. Current sum: {$mainSum}",
+            ], 422);
+        }
+
+        // ---- Validate sum of CR/ID sub-weights ----
+        $subWeights = collect($validated)->only([
+            'cr_id_sub_id_match',
+            'cr_id_sub_id_expiry',
+            'cr_id_sub_cr_expiry',
+            'cr_id_sub_industry',
+            'cr_id_sub_activity',
+            'cr_id_sub_total'
+        ])->map(fn($v) => $v ?? 0);
+
+        $subSum = $subWeights->sum();
+
+        if ($subSum != 100) {
+            return response()->json([
+                'success' => false,
+                'message' => "The sum of all CR/ID sub-weights must equal 100. Current sum: {$subSum}",
             ], 422);
         }
 
