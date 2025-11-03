@@ -1,8 +1,14 @@
 {{-- resources/views/admin/risk-management/partials/weight-modal.blade.php --}}
 <div class="modal" data-modal="true" id="weight_modal">
     <div class="modal-content max-w-[700px] top-[5%]">
-        <div class="modal-header py-4 px-5 border-b">
-            <h5 class="modal-title">{{ translate('Set Risk Weights') }}</h5>
+        <div class="modal-header py-4 px-5 border-b flex justify-between items-center">
+            <div>
+                <h5 class="modal-title">{{ translate('Set Risk Weights') }}</h5>
+                <p class="text-sm text-gray-500 mt-1">
+                    {{ translate('User ID:') }}
+                    <span id="weight_user_id_display" class="font-semibold text-gray-800">—</span>
+                </p>
+            </div>
             <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0" data-modal-dismiss="true">
                 <i class="ki-filled ki-cross"></i>
             </button>
@@ -12,10 +18,11 @@
             <form id="weight_form" action="{{ route('riskWeights.store') }}" method="POST" class="px-5 pt-3 space-y-5">
                 @csrf
                 <input type="hidden" name="weight_id" id="weight_id" value="">
+                <input type="hidden" name="user_id" id="weight_user_id" value=""> {{-- ✅ added user_id --}}
 
                 {{-- ================= MAIN WEIGHTS ================= --}}
                 <div class="border-b pb-3 mb-2">
-                    <h6 class="font-semibold mb-3">{{ translate('Main Weights (Sum must be 100)') }}</h6>
+                    <h6 class="font-semibold mb-3">{{ translate('Main Weights (Sum must be 95)') }}</h6>
 
                     <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                         <div>
@@ -54,32 +61,32 @@
                         <div>
                             <label class="form-label">{{ translate('ID Match') }}</label>
                             <input type="number" step="0.01" name="cr_id_sub_id_match" id="cr_id_sub_id_match"
-                                class="input" value="30">
+                                class="input cr-sub" value="30">
                         </div>
                         <div>
                             <label class="form-label">{{ translate('ID Expiry') }}</label>
                             <input type="number" step="0.01" name="cr_id_sub_id_expiry" id="cr_id_sub_id_expiry"
-                                class="input" value="20">
+                                class="input cr-sub" value="20">
                         </div>
                         <div>
                             <label class="form-label">{{ translate('CR Expiry') }}</label>
                             <input type="number" step="0.01" name="cr_id_sub_cr_expiry" id="cr_id_sub_cr_expiry"
-                                class="input" value="20">
+                                class="input cr-sub" value="20">
                         </div>
                         <div>
                             <label class="form-label">{{ translate('Industry (Within CR)') }}</label>
                             <input type="number" step="0.01" name="cr_id_sub_industry" id="cr_id_sub_industry"
-                                class="input" value="15">
+                                class="input cr-sub" value="15">
                         </div>
                         <div>
                             <label class="form-label">{{ translate('Activity Presence') }}</label>
                             <input type="number" step="0.01" name="cr_id_sub_activity" id="cr_id_sub_activity"
-                                class="input" value="15">
+                                class="input cr-sub" value="15">
                         </div>
                         <div>
                             <label class="form-label">{{ translate('Total') }}</label>
                             <input type="number" step="0.01" name="cr_id_sub_total" id="cr_id_sub_total"
-                                class="input" value="100" readonly>
+                                class="input bg-gray-100" value="100" readonly>
                         </div>
                     </div>
                 </div>
@@ -157,47 +164,38 @@
         </div>
     </div>
 </div>
+
 @push('scripts')
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const weightForm = document.getElementById('weight_form');
-            const weightModal = document.getElementById('weight_modal');
-            const openWeightBtn = document.querySelector('[data-modal-toggle="#weight_modal"]');
             const submitBtn = document.getElementById('weight_submit_btn');
-
             const storeUrl = "{{ route('riskWeights.store') }}";
             const updateBaseUrl = "{{ route('riskWeights.update', ':id') }}";
             const lastUrl = "{{ route('riskWeights.last') }}";
 
-            function openModal() {
-                weightModal.dataset.modal = true;
+            // 🧮 Auto Calculate Total for CR/ID Sub-Weights
+            function calculateCrTotal() {
+                const fields = document.querySelectorAll('.cr-sub');
+                let total = 0;
+                fields.forEach(el => total += parseFloat(el.value || 0));
+                document.getElementById('cr_id_sub_total').value = total.toFixed(2);
             }
 
-            function closeModal() {
-                weightModal.dataset.modal = false;
-            }
+            document.querySelectorAll('.cr-sub').forEach(input => {
+                input.addEventListener('input', calculateCrTotal);
+            });
 
-            function disableEl(el) {
-                if (el) {
-                    el.setAttribute('disabled', 'disabled');
-                    el.classList.add('opacity-60', 'cursor-not-allowed');
-                }
-            }
+            document.querySelectorAll('[data-modal-toggle="#weight_modal"]').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const userId = this.getAttribute('data-user-id');
 
-            function enableEl(el) {
-                if (el) {
-                    el.removeAttribute('disabled');
-                    el.classList.remove('opacity-60', 'cursor-not-allowed');
-                }
-            }
+                    // 🟢 Set both hidden field and header display
+                    document.getElementById('weight_user_id').value = userId;
+                    document.getElementById('weight_user_id_display').textContent = userId;
 
-            // Open modal and fetch last weights
-            if (openWeightBtn) {
-                openWeightBtn.addEventListener('click', function() {
-                    disableEl(openWeightBtn);
-                    fetch(lastUrl, {
+                    fetch(`${lastUrl}?user_id=${userId}`, {
                             method: 'GET',
                             headers: {
                                 'Accept': 'application/json'
@@ -208,50 +206,43 @@
                         })
                         .then(data => {
                             const w = data.success && data.weights ? data.weights : {};
-                            const setVal = (id, val) => document.getElementById(id).value = w[id] ??
-                                val;
+                            const setVal = (id, val) => document.getElementById(id).value = w[
+                                id] ?? val;
 
-                            // Main
+                            // Fill with existing or default values
                             setVal('cr_id', 25);
                             setVal('pos', 25);
                             setVal('repayment', 20);
                             setVal('industry', 15);
                             setVal('location', 10);
 
-                            // CR/ID
                             setVal('cr_id_sub_id_match', 30);
                             setVal('cr_id_sub_id_expiry', 20);
                             setVal('cr_id_sub_cr_expiry', 20);
                             setVal('cr_id_sub_industry', 15);
                             setVal('cr_id_sub_activity', 15);
-                            setVal('cr_id_sub_total', 100);
+                            calculateCrTotal();
 
-                            // POS
                             setVal('pos_threshold', 50000);
-
-                            // Repayment
                             setVal('repayment_few_threshold', 2);
                             setVal('repayment_score_no_delays', 20);
                             setVal('repayment_score_few_delays', 15);
                             setVal('repayment_score_many_delays', 5);
 
-                            // Location
                             setVal('location_activity_max', 4.5);
                             setVal('location_default_rate_max', 4.5);
                             setVal('location_sub_total_max', 15);
 
                             document.getElementById('weight_id').value = w.id ?? '';
-                            openModal();
-                        })
-                        .finally(() => enableEl(openWeightBtn));
+                        });
                 });
-            }
+            });
 
-            // Submit form
+
+            // 🟢 Submit form
             weightForm.addEventListener('submit', function(e) {
                 e.preventDefault();
-                disableEl(submitBtn);
-
+                submitBtn.setAttribute('disabled', true);
                 const formData = new FormData(weightForm);
                 const id = formData.get('weight_id');
                 let url = storeUrl;
@@ -273,23 +264,18 @@
                         const json = await res.json().catch(() => ({}));
                         if (res.ok && json.success) {
                             Swal.fire({
-                                icon: 'success',
-                                title: '{{ translate('Success') }}',
-                                text: json.message ??
-                                    '{{ translate('Weights saved successfully') }}'
-                            }).then(() => {
-                                // ✅ Reload the page after user clicks "OK"
-                                window.location.reload();
-                            });
-
-                            if (json.data?.id) document.getElementById('weight_id').value = json
-                                .data.id;
+                                    icon: 'success',
+                                    title: '{{ translate('Success') }}',
+                                    text: json.message ??
+                                        '{{ translate('Weights saved successfully') }}'
+                                })
+                                .then(() => window.location.reload());
                         } else {
-                            const msg = json.message ?? '{{ translate('Validation failed') }}';
                             Swal.fire({
                                 icon: 'error',
                                 title: '{{ translate('Error') }}',
-                                text: msg
+                                text: json.message ??
+                                    '{{ translate('Validation failed') }}'
                             });
                         }
                     })
@@ -300,7 +286,7 @@
                             text: '{{ translate('Server error') }}'
                         });
                     })
-                    .finally(() => enableEl(submitBtn));
+                    .finally(() => submitBtn.removeAttribute('disabled'));
             });
         });
     </script>

@@ -24,24 +24,23 @@ class RiskAnalyticsService
     private const DEFAULT_WEIGHT_LOCATION = 10.0;
 
     // ---- CR / ID sub-weights (raw points) ----
-    // These sum to CR_ID_SUB_TOTAL (100)
-    private const DEFAULT_CR_ID_SUB_ID_MATCH = 30;     // id match max raw points
-    private const DEFAULT_CR_ID_SUB_ID_EXPIRY = 20;    // id expiry max raw points
-    private const DEFAULT_CR_ID_SUB_CR_EXPIRY = 20;    // cr expiry max raw points
-    private const DEFAULT_CR_ID_SUB_INDUSTRY = 15;     // industry (as part of CR/ID) max raw points
-    private const DEFAULT_CR_ID_SUB_ACTIVITY = 15;     // activity presence max raw points
-    private const DEFAULT_CR_ID_SUB_TOTAL = 100;       // sum of the above
+    private const DEFAULT_CR_ID_SUB_ID_MATCH = 30;
+    private const DEFAULT_CR_ID_SUB_ID_EXPIRY = 20;
+    private const DEFAULT_CR_ID_SUB_CR_EXPIRY = 20;
+    private const DEFAULT_CR_ID_SUB_INDUSTRY = 15;
+    private const DEFAULT_CR_ID_SUB_ACTIVITY = 15;
+    private const DEFAULT_CR_ID_SUB_TOTAL = 100;
 
     // ---- POS thresholds ----
-    private const DEFAULT_POS_THRESHOLD = 50000.0;     // monthly POS revenue threshold used to get full POS weight
+    private const DEFAULT_POS_THRESHOLD = 50000.0;
 
     // ---- Repayment sub-scores / thresholds ----
-    private const DEFAULT_REPAYMENT_FEW_THRESHOLD = 2;                 // <= this many late payments considered "few"
+    private const DEFAULT_REPAYMENT_FEW_THRESHOLD = 2;
     private const DEFAULT_REPAYMENT_SCORE_NO_DELAYS = 20.0;
     private const DEFAULT_REPAYMENT_SCORE_FEW_DELAYS = 15.0;
     private const DEFAULT_REPAYMENT_SCORE_MANY_DELAYS = 5.0;
 
-    // ---- Industry risk map (maps risk level -> numeric score) ----
+    // ---- Industry risk map ----
     private const INDUSTRY_RISK_MAP = [
         'low' => 15,
         'medium-low' => 12,
@@ -51,7 +50,6 @@ class RiskAnalyticsService
     ];
 
     // ---- Location sub-weights / maps ----
-    // City tier map (raw - hardcoded as it is not a weight)
     private const LOCATION_CITY_TIER_MAP = [
         'riyadh' => 6,
         'jeddah' => 6,
@@ -60,135 +58,201 @@ class RiskAnalyticsService
         'madinah' => 4,
         'khobar' => 4,
     ];
-    private const DEFAULT_LOCATION_ACTIVITY_MAX = 4.5;     // business density component max
-    private const DEFAULT_LOCATION_DEFAULT_RATE_MAX = 4.5;  // default rate component max
-    private const DEFAULT_LOCATION_SUB_TOTAL_MAX = 15.0;    // CITY_TIER(<=6) + ACTIVITY(<=4.5) + DEFAULT_RATE(<=4.5)
+    private const DEFAULT_LOCATION_ACTIVITY_MAX = 4.5;
+    private const DEFAULT_LOCATION_DEFAULT_RATE_MAX = 4.5;
+    private const DEFAULT_LOCATION_SUB_TOTAL_MAX = 15.0;
 
-    // Google API settings (Hardcoded as they are infrastructure/external service constants)
-    private const GOOGLE_CACHE_DURATION = 604800; // 7 days
-    private const GOOGLE_CACHE_FAILURE_DURATION = 86400; // 1 day
-    private const GOOGLE_REQUEST_TIMEOUT = 8; // seconds
+    // Google API settings
+    private const GOOGLE_CACHE_DURATION = 604800;
+    private const GOOGLE_CACHE_FAILURE_DURATION = 86400;
+    private const GOOGLE_REQUEST_TIMEOUT = 8;
     private const GOOGLE_RETRY_ATTEMPTS = 2;
-    private const GOOGLE_RETRY_SLEEP_MS = 150; // milliseconds
+    private const GOOGLE_RETRY_SLEEP_MS = 150;
 
-    // --------------------------------------------------------------------------------
-    // ---- CONFIGURABLE PROPERTIES (Loaded from RiskWeight or defaults) ----
-    // --------------------------------------------------------------------------------
+    // Cache settings for risk weights
+    private const RISK_WEIGHTS_CACHE_DURATION = 3600; // 1 hour
+    private const RISK_WEIGHTS_CACHE_KEY = 'risk_weights_cache';
 
-    // Main weights
-    private float $weightCrIdScore;
-    private float $weightPosScore;
-    private float $weightRepaymentScore;
-    private float $weightIndustryScore;
-    private float $weightLocationScore;
-
-    // CR / ID sub-weights
-    private int $crIdSubIdMatch;
-    private int $crIdSubIdExpiry;
-    private int $crIdSubCrExpiry;
-    private int $crIdSubIndustry;
-    private int $crIdSubActivity;
-    private int $crIdSubTotal;
-
-    // POS
-    private float $posThreshold;
-
-    // Repayment
-    private int $repaymentFewThreshold;
-    private float $repaymentScoreNoDelays;
-    private float $repaymentScoreFewDelays;
-    private float $repaymentScoreManyDelays;
-
-    // Location
-    private float $locationActivityMax;
-    private float $locationDefaultRateMax;
-    private float $locationSubTotalMax;
-
-    // --------------------------------------------------------------------------------
-    // ---- CONSTRUCTOR / INITIALIZATION ----
-    // --------------------------------------------------------------------------------
+    // Weight properties (will be set per user)
+    private array $userWeights = [];
 
     public function __construct()
     {
-        // Initialize with all defaults first
-        $this->initializeDefaults();
+        // No initialization here - weights will be loaded per user
+    }
 
-        // Fetch latest weights from RiskWeight model and override defaults when available
-        $latestWeights = RiskWeight::latest()->first();
+    /**
+     * Load risk weights for a specific user (with caching)
+     */
+    private function loadUserWeights(int $userId): void
+    {
+        // Use cached weights if available
+        $cacheKey = self::RISK_WEIGHTS_CACHE_KEY . '_' . $userId;
+        $cachedWeights = Cache::get($cacheKey);
 
-        if ($latestWeights) {
-            $this->applyModelWeights($latestWeights);
+        if ($cachedWeights) {
+            $this->userWeights = $cachedWeights;
+            return;
+        }
+
+        // Try to get user-specific weights first, then fall back to global weights
+        $userWeights = RiskWeight::where('user_id', $userId)
+            ->latest()
+            ->first();
+
+        if (!$userWeights) {
+            // Fall back to global weights (user_id is null)
+            $userWeights = RiskWeight::whereNull('user_id')
+                ->latest()
+                ->first();
+        }
+
+        $this->initializeWeights($userWeights);
+
+        // Cache the weights for this user
+        Cache::put($cacheKey, $this->userWeights, self::RISK_WEIGHTS_CACHE_DURATION);
+    }
+
+    /**
+     * Initialize weights from model or defaults
+     */
+    private function initializeWeights(?RiskWeight $weights): void
+    {
+        // Main weights
+        $this->userWeights['weightCrIdScore'] = $weights->cr_id ?? self::DEFAULT_WEIGHT_CR_ID;
+        $this->userWeights['weightPosScore'] = $weights->pos ?? self::DEFAULT_WEIGHT_POS;
+        $this->userWeights['weightRepaymentScore'] = $weights->repayment ?? self::DEFAULT_WEIGHT_REPAYMENT;
+        $this->userWeights['weightIndustryScore'] = $weights->industry ?? self::DEFAULT_WEIGHT_INDUSTRY;
+        $this->userWeights['weightLocationScore'] = $weights->location ?? self::DEFAULT_WEIGHT_LOCATION;
+
+        // CR / ID sub-weights
+        $this->userWeights['crIdSubIdMatch'] = $weights->cr_id_sub_id_match ?? self::DEFAULT_CR_ID_SUB_ID_MATCH;
+        $this->userWeights['crIdSubIdExpiry'] = $weights->cr_id_sub_id_expiry ?? self::DEFAULT_CR_ID_SUB_ID_EXPIRY;
+        $this->userWeights['crIdSubCrExpiry'] = $weights->cr_id_sub_cr_expiry ?? self::DEFAULT_CR_ID_SUB_CR_EXPIRY;
+        $this->userWeights['crIdSubIndustry'] = $weights->cr_id_sub_industry ?? self::DEFAULT_CR_ID_SUB_INDUSTRY;
+        $this->userWeights['crIdSubActivity'] = $weights->cr_id_sub_activity ?? self::DEFAULT_CR_ID_SUB_ACTIVITY;
+        $this->userWeights['crIdSubTotal'] = $weights->cr_id_sub_total ?? self::DEFAULT_CR_ID_SUB_TOTAL;
+
+        // POS
+        $this->userWeights['posThreshold'] = $weights->pos_threshold ?? self::DEFAULT_POS_THRESHOLD;
+
+        // Repayment
+        $this->userWeights['repaymentFewThreshold'] = $weights->repayment_few_threshold ?? self::DEFAULT_REPAYMENT_FEW_THRESHOLD;
+        $this->userWeights['repaymentScoreNoDelays'] = $weights->repayment_score_no_delays ?? self::DEFAULT_REPAYMENT_SCORE_NO_DELAYS;
+        $this->userWeights['repaymentScoreFewDelays'] = $weights->repayment_score_few_delays ?? self::DEFAULT_REPAYMENT_SCORE_FEW_DELAYS;
+        $this->userWeights['repaymentScoreManyDelays'] = $weights->repayment_score_many_delays ?? self::DEFAULT_REPAYMENT_SCORE_MANY_DELAYS;
+
+        // Location
+        $this->userWeights['locationActivityMax'] = $weights->location_activity_max ?? self::DEFAULT_LOCATION_ACTIVITY_MAX;
+        $this->userWeights['locationDefaultRateMax'] = $weights->location_default_rate_max ?? self::DEFAULT_LOCATION_DEFAULT_RATE_MAX;
+        $this->userWeights['locationSubTotalMax'] = $weights->location_sub_total_max ?? self::DEFAULT_LOCATION_SUB_TOTAL_MAX;
+    }
+
+    /**
+     * Preload weights for multiple users (optimized for batch processing)
+     */
+    private function preloadUsersWeights(array $userIds): void
+    {
+        $userIds = array_unique($userIds);
+        $uncachedUserIds = [];
+
+        // Check cache for each user
+        foreach ($userIds as $userId) {
+            $cacheKey = self::RISK_WEIGHTS_CACHE_KEY . '_' . $userId;
+            if (!Cache::has($cacheKey)) {
+                $uncachedUserIds[] = $userId;
+            }
+        }
+
+        // If all are cached, we're done
+        if (empty($uncachedUserIds)) {
+            return;
+        }
+
+        // Fetch all uncached user weights in one query
+        $userSpecificWeights = RiskWeight::whereIn('user_id', $uncachedUserIds)
+            ->orderBy('user_id')
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy('user_id')
+            ->map(function ($weights) {
+                return $weights->first(); // Get latest for each user
+            });
+
+        // Fetch global weights as fallback
+        $globalWeights = RiskWeight::whereNull('user_id')
+            ->latest()
+            ->first();
+
+        // Cache results for each user
+        foreach ($uncachedUserIds as $userId) {
+            $userWeight = $userSpecificWeights->get($userId) ?? $globalWeights;
+            $tempWeights = [];
+
+            // Initialize temporary weights array
+            $this->initializeWeightsForCaching($userWeight, $tempWeights);
+
+            Cache::put(
+                self::RISK_WEIGHTS_CACHE_KEY . '_' . $userId,
+                $tempWeights,
+                self::RISK_WEIGHTS_CACHE_DURATION
+            );
         }
     }
 
     /**
-     * Initialize all properties with their default constant values.
+     * Helper method for initializing weights for caching
      */
-    private function initializeDefaults(): void
+    private function initializeWeightsForCaching(?RiskWeight $weights, array &$targetArray): void
     {
         // Main weights
-        $this->weightCrIdScore = self::DEFAULT_WEIGHT_CR_ID;
-        $this->weightPosScore = self::DEFAULT_WEIGHT_POS;
-        $this->weightRepaymentScore = self::DEFAULT_WEIGHT_REPAYMENT;
-        $this->weightIndustryScore = self::DEFAULT_WEIGHT_INDUSTRY;
-        $this->weightLocationScore = self::DEFAULT_WEIGHT_LOCATION;
+        $targetArray['weightCrIdScore'] = $weights->cr_id ?? self::DEFAULT_WEIGHT_CR_ID;
+        $targetArray['weightPosScore'] = $weights->pos ?? self::DEFAULT_WEIGHT_POS;
+        $targetArray['weightRepaymentScore'] = $weights->repayment ?? self::DEFAULT_WEIGHT_REPAYMENT;
+        $targetArray['weightIndustryScore'] = $weights->industry ?? self::DEFAULT_WEIGHT_INDUSTRY;
+        $targetArray['weightLocationScore'] = $weights->location ?? self::DEFAULT_WEIGHT_LOCATION;
 
         // CR / ID sub-weights
-        $this->crIdSubIdMatch = self::DEFAULT_CR_ID_SUB_ID_MATCH;
-        $this->crIdSubIdExpiry = self::DEFAULT_CR_ID_SUB_ID_EXPIRY;
-        $this->crIdSubCrExpiry = self::DEFAULT_CR_ID_SUB_CR_EXPIRY;
-        $this->crIdSubIndustry = self::DEFAULT_CR_ID_SUB_INDUSTRY;
-        $this->crIdSubActivity = self::DEFAULT_CR_ID_SUB_ACTIVITY;
-        $this->crIdSubTotal = self::DEFAULT_CR_ID_SUB_TOTAL;
+        $targetArray['crIdSubIdMatch'] = $weights->cr_id_sub_id_match ?? self::DEFAULT_CR_ID_SUB_ID_MATCH;
+        $targetArray['crIdSubIdExpiry'] = $weights->cr_id_sub_id_expiry ?? self::DEFAULT_CR_ID_SUB_ID_EXPIRY;
+        $targetArray['crIdSubCrExpiry'] = $weights->cr_id_sub_cr_expiry ?? self::DEFAULT_CR_ID_SUB_CR_EXPIRY;
+        $targetArray['crIdSubIndustry'] = $weights->cr_id_sub_industry ?? self::DEFAULT_CR_ID_SUB_INDUSTRY;
+        $targetArray['crIdSubActivity'] = $weights->cr_id_sub_activity ?? self::DEFAULT_CR_ID_SUB_ACTIVITY;
+        $targetArray['crIdSubTotal'] = $weights->cr_id_sub_total ?? self::DEFAULT_CR_ID_SUB_TOTAL;
 
         // POS
-        $this->posThreshold = self::DEFAULT_POS_THRESHOLD;
+        $targetArray['posThreshold'] = $weights->pos_threshold ?? self::DEFAULT_POS_THRESHOLD;
 
         // Repayment
-        $this->repaymentFewThreshold = self::DEFAULT_REPAYMENT_FEW_THRESHOLD;
-        $this->repaymentScoreNoDelays = self::DEFAULT_REPAYMENT_SCORE_NO_DELAYS;
-        $this->repaymentScoreFewDelays = self::DEFAULT_REPAYMENT_SCORE_FEW_DELAYS;
-        $this->repaymentScoreManyDelays = self::DEFAULT_REPAYMENT_SCORE_MANY_DELAYS;
+        $targetArray['repaymentFewThreshold'] = $weights->repayment_few_threshold ?? self::DEFAULT_REPAYMENT_FEW_THRESHOLD;
+        $targetArray['repaymentScoreNoDelays'] = $weights->repayment_score_no_delays ?? self::DEFAULT_REPAYMENT_SCORE_NO_DELAYS;
+        $targetArray['repaymentScoreFewDelays'] = $weights->repayment_score_few_delays ?? self::DEFAULT_REPAYMENT_SCORE_FEW_DELAYS;
+        $targetArray['repaymentScoreManyDelays'] = $weights->repayment_score_many_delays ?? self::DEFAULT_REPAYMENT_SCORE_MANY_DELAYS;
 
         // Location
-        $this->locationActivityMax = self::DEFAULT_LOCATION_ACTIVITY_MAX;
-        $this->locationDefaultRateMax = self::DEFAULT_LOCATION_DEFAULT_RATE_MAX;
-        $this->locationSubTotalMax = self::DEFAULT_LOCATION_SUB_TOTAL_MAX;
+        $targetArray['locationActivityMax'] = $weights->location_activity_max ?? self::DEFAULT_LOCATION_ACTIVITY_MAX;
+        $targetArray['locationDefaultRateMax'] = $weights->location_default_rate_max ?? self::DEFAULT_LOCATION_DEFAULT_RATE_MAX;
+        $targetArray['locationSubTotalMax'] = $weights->location_sub_total_max ?? self::DEFAULT_LOCATION_SUB_TOTAL_MAX;
     }
 
     /**
-     * Override properties with values from the RiskWeight model.
+     * Apply weight overrides for a specific calculation
      */
-    private function applyModelWeights(RiskWeight $weights): void
+    private function applyWeightOverrides(array $overrides): void
     {
-        // Main weights
-        $this->weightCrIdScore = $weights->cr_id ?? $this->weightCrIdScore;
-        $this->weightPosScore = $weights->pos ?? $this->weightPosScore;
-        $this->weightRepaymentScore = $weights->repayment ?? $this->weightRepaymentScore;
-        $this->weightIndustryScore = $weights->industry ?? $this->weightIndustryScore;
-        $this->weightLocationScore = $weights->location ?? $this->weightLocationScore;
+        $mainWeightMap = [
+            'cr_id' => 'weightCrIdScore',
+            'pos' => 'weightPosScore',
+            'repayment' => 'weightRepaymentScore',
+            'industry' => 'weightIndustryScore',
+            'location' => 'weightLocationScore',
+        ];
 
-        // CR / ID sub-weights
-        $this->crIdSubIdMatch = $weights->cr_id_sub_id_match ?? $this->crIdSubIdMatch;
-        $this->crIdSubIdExpiry = $weights->cr_id_sub_id_expiry ?? $this->crIdSubIdExpiry;
-        $this->crIdSubCrExpiry = $weights->cr_id_sub_cr_expiry ?? $this->crIdSubCrExpiry;
-        $this->crIdSubIndustry = $weights->cr_id_sub_industry ?? $this->crIdSubIndustry;
-        $this->crIdSubActivity = $weights->cr_id_sub_activity ?? $this->crIdSubActivity;
-        $this->crIdSubTotal = $weights->cr_id_sub_total ?? $this->crIdSubTotal;
-
-        // POS
-        $this->posThreshold = $weights->pos_threshold ?? $this->posThreshold;
-
-        // Repayment
-        $this->repaymentFewThreshold = $weights->repayment_few_threshold ?? $this->repaymentFewThreshold;
-        $this->repaymentScoreNoDelays = $weights->repayment_score_no_delays ?? $this->repaymentScoreNoDelays;
-        $this->repaymentScoreFewDelays = $weights->repayment_score_few_delays ?? $this->repaymentScoreFewDelays;
-        $this->repaymentScoreManyDelays = $weights->repayment_score_many_delays ?? $this->repaymentScoreManyDelays;
-
-        // Location
-        $this->locationActivityMax = $weights->location_activity_max ?? $this->locationActivityMax;
-        $this->locationDefaultRateMax = $weights->location_default_rate_max ?? $this->locationDefaultRateMax;
-        $this->locationSubTotalMax = $weights->location_sub_total_max ?? $this->locationSubTotalMax;
+        foreach ($overrides as $key => $value) {
+            if (isset($mainWeightMap[$key])) {
+                $this->userWeights[$mainWeightMap[$key]] = (float) $value;
+            }
+        }
     }
 
     // --------------------------------------------------------------------------------
@@ -198,10 +262,15 @@ class RiskAnalyticsService
     /**
      * Calculate risk object for a single user
      */
-    public function calculateForUser(User $user, array $weights = []): object
+    public function calculateForUser(User $user, array $weightOverrides = []): object
     {
-        // Override weights if provided (only main weights can be overridden here)
-        $this->applyWeights($weights);
+        // Load user-specific weights
+        $this->loadUserWeights($user->id);
+
+        // Apply any weight overrides for this calculation
+        if (!empty($weightOverrides)) {
+            $this->applyWeightOverrides($weightOverrides);
+        }
 
         // Normalize user data
         $userData = $this->getUserData($user);
@@ -244,28 +313,88 @@ class RiskAnalyticsService
     }
 
     /**
-     * Calculate risks for multiple users (prefetches Google ratings into cache first).
+     * Calculate risks for multiple users (optimized with preloading)
      */
-    public function calculateForUsers($users, array $weights = []): EloquentCollection
+    public function calculateForUsers($users, array $weightOverrides = []): EloquentCollection
     {
         $userCollection = collect($users);
 
-        // Extract business names (CR name fallback to stored business name)
+        // Preload weights for all users (optimized single query)
+        $userIds = $userCollection->pluck('id')->toArray();
+        $this->preloadUsersWeights($userIds);
+
+        // Extract business names for Google prefetching
         $businessNames = $userCollection->map(function ($user) {
             $userData = $this->getUserData($user);
             $decodedCrData = $this->parseCrData($userData['crData']);
             return $decodedCrData['name'] ?? $userData['businessName'];
         })->filter()->unique()->values()->all();
 
-        // Prefetch ratings synchronously (will populate cache)
+        // Prefetch Google ratings
         if (!empty($businessNames)) {
             $this->prefetchGoogleRatings($businessNames);
         }
 
-        // Compute objects (calculateForUser will read cached google rating)
-        $mapped = $userCollection->map(fn($user) => $this->calculateForUser($user, $weights));
+        // Calculate for each user (will use cached weights)
+        $mapped = $userCollection->map(function ($user) use ($weightOverrides) {
+            // Load the pre-cached weights for this user
+            $cacheKey = self::RISK_WEIGHTS_CACHE_KEY . '_' . $user->id;
+            $this->userWeights = Cache::get($cacheKey);
+
+            // Apply any weight overrides for this calculation
+            if (!empty($weightOverrides)) {
+                $this->applyWeightOverrides($weightOverrides);
+            }
+
+            return $this->calculateForUserInternal($user);
+        });
 
         return new EloquentCollection($mapped->values()->all());
+    }
+
+    /**
+     * Internal calculation method (assumes weights are already loaded)
+     */
+    private function calculateForUserInternal(User $user): object
+    {
+        // Normalize user data
+        $userData = $this->getUserData($user);
+        $decodedCrData = $this->parseCrData($userData['crData']);
+
+        // Calculate all internal scores
+        $scores = $this->calculateAllScores($user, $decodedCrData, $userData);
+
+        // Choose business name for display and for Google lookup
+        $businessNameForGoogle = $decodedCrData['name'] ?? $userData['businessName'];
+
+        return (object)[
+            'id' => $user->id,
+            'name' => trim($user->first_name . ' ' . $user->last_name),
+            'business_name' => $userData['businessName'],
+            'business_name_for_google' => $businessNameForGoogle,
+            'cr_number' => $userData['crNumber'],
+            'id_number' => $userData['idNumber'],
+            'cr_id_match_score' => $scores['idMatchScore'],
+            'id_expiry_score' => $scores['idExpiryScore'],
+            'cr_expiry_score' => $scores['crExpiryScore'],
+            'business_type_score' => $scores['industryScore'],
+            'activity_score' => $scores['activityScore'],
+            'cr_id_total' => $scores['crIdRaw'],
+            'cr_id_score' => round($scores['crIdScore'], 2),
+            'pos_revenue' => $userData['monthlyPos'],
+            'pos_score' => round($scores['posScore'], 2),
+            'late_payments' => $scores['repaymentDelays'],
+            'repayment_score' => $scores['repaymentScore'],
+            'industry' => $scores['industryName'],
+            'industry_score' => $scores['industryScore'],
+            'location' => $scores['locationDetails'],
+            'location_score' => $scores['locationScore'],
+            'flagged' => $scores['manualRisk']['flagged'],
+            'risk_score' => $scores['manualRisk']['score'],
+            'reason' => $scores['manualRisk']['reason'],
+            'google_rating' => $scores['googleRating'],
+            'total_score' => round($scores['totalScore'], 2),
+        ];
     }
 
     /**
@@ -379,21 +508,17 @@ class RiskAnalyticsService
         return Cache::forget($cacheKey);
     }
 
+    /**
+     * Clear cached weights for a specific user
+     */
+    public function clearCachedWeights(int $userId): bool
+    {
+        return Cache::forget(self::RISK_WEIGHTS_CACHE_KEY . '_' . $userId);
+    }
+
     // --------------------------------------------------------------------------------
     // ---- PRIVATE HELPERS: DATA FETCH/PREP ----
     // --------------------------------------------------------------------------------
-
-    /**
-     * Apply only main weights overrides (used in calculateForUser)
-     */
-    private function applyWeights(array $weights): void
-    {
-        $this->weightCrIdScore = $weights['cr_id'] ?? $this->weightCrIdScore;
-        $this->weightPosScore = $weights['pos'] ?? $this->weightPosScore;
-        $this->weightRepaymentScore = $weights['repayment'] ?? $this->weightRepaymentScore;
-        $this->weightIndustryScore = $weights['industry'] ?? $this->weightIndustryScore;
-        $this->weightLocationScore = $weights['location'] ?? $this->weightLocationScore;
-    }
 
     /**
      * Normalize user-related data for merchants vs customers
@@ -468,10 +593,10 @@ class RiskAnalyticsService
 
         // Use the dynamic sub-total for the division
         $crIdRaw = $idMatchScore + $idExpiryScore + $crExpiryScore + $industryData['industry_score'] + $activityScore;
-        $crIdScore = min($crIdRaw / $this->crIdSubTotal, 1) * $this->weightCrIdScore;
+        $crIdScore = min($crIdRaw / $this->userWeights['crIdSubTotal'], 1) * $this->userWeights['weightCrIdScore'];
 
         // Use the dynamic posThreshold
-        $posScore = min((float) $userData['monthlyPos'] / $this->posThreshold, 1) * $this->weightPosScore;
+        $posScore = min((float) $userData['monthlyPos'] / $this->userWeights['posThreshold'], 1) * $this->userWeights['weightPosScore'];
 
         $repaymentData = $this->calculateRepaymentScore($user);
         $locationData = $this->calculateLocationScore($crData);
@@ -484,7 +609,7 @@ class RiskAnalyticsService
 
         $totalScore = $crIdScore + $posScore +
             $repaymentData['score'] +
-            $industryData['industry_score'] + // Note: industry score is currently a raw score, not weighted by $this->weightIndustryScore
+            $industryData['industry_score'] +
             $locationData['score'] +
             $manualRisk['score'] +
             ($googleRating ?? 0);
@@ -514,8 +639,8 @@ class RiskAnalyticsService
         $ownerId = $crData['parties'][0]['identity']['id'] ?? null;
 
         if (!$idNumber || !$ownerId) return 0;
-        if ($idNumber === $ownerId) return $this->crIdSubIdMatch;
-        if (str_contains($ownerId, $idNumber) || str_contains($idNumber, $ownerId)) return (int) ($this->crIdSubIdMatch / 2);
+        if ($idNumber === $ownerId) return $this->userWeights['crIdSubIdMatch'];
+        if (str_contains($ownerId, $idNumber) || str_contains($idNumber, $ownerId)) return (int) ($this->userWeights['crIdSubIdMatch'] / 2);
         return 0;
     }
 
@@ -524,8 +649,8 @@ class RiskAnalyticsService
         if (!$user->iqama_expiry) return 0;
         $diff = now()->diffInMonths($user->iqama_expiry, false);
         return match (true) {
-            $diff >= 0 => $this->crIdSubIdExpiry,
-            $diff >= -3 => (int) ($this->crIdSubIdExpiry / 2),
+            $diff >= 0 => $this->userWeights['crIdSubIdExpiry'],
+            $diff >= -3 => (int) ($this->userWeights['crIdSubIdExpiry'] / 2),
             default => 0
         };
     }
@@ -539,8 +664,8 @@ class RiskAnalyticsService
             $expiry = \Carbon\Carbon::parse($expiryDate);
             $diff = now()->diffInMonths($expiry, false);
             return match (true) {
-                $diff >= 0 => $this->crIdSubCrExpiry,
-                $diff >= -3 => (int) ($this->crIdSubCrExpiry / 2),
+                $diff >= 0 => $this->userWeights['crIdSubCrExpiry'],
+                $diff >= -3 => (int) ($this->userWeights['crIdSubCrExpiry'] / 2),
                 default => 0
             };
         } catch (\Exception $e) {
@@ -552,7 +677,7 @@ class RiskAnalyticsService
     private function calculateActivityScore(array $crData): int
     {
         $crActivities = collect($crData['activities'] ?? [])->pluck('name')->toArray();
-        return count($crActivities) > 0 ? $this->crIdSubActivity : 0;
+        return count($crActivities) > 0 ? $this->userWeights['crIdSubActivity'] : 0;
     }
 
     private function calculateRepaymentScore(User $user): array
@@ -564,9 +689,9 @@ class RiskAnalyticsService
             ->count();
 
         $score = match (true) {
-            $delays === 0 => $this->repaymentScoreNoDelays,
-            $delays <= $this->repaymentFewThreshold => $this->repaymentScoreFewDelays,
-            default => $this->repaymentScoreManyDelays,
+            $delays === 0 => $this->userWeights['repaymentScoreNoDelays'],
+            $delays <= $this->userWeights['repaymentFewThreshold'] => $this->userWeights['repaymentScoreFewDelays'],
+            default => $this->userWeights['repaymentScoreManyDelays'],
         };
 
         return ['delays' => $delays, 'score' => $score];
@@ -583,11 +708,6 @@ class RiskAnalyticsService
         $industryScore = self::INDUSTRY_RISK_MAP[$industryRisk] ?? self::INDUSTRY_RISK_MAP['medium'];
         $industry = $businessType->name ?? 'Unknown Industry';
 
-        // NOTE: The original code used the CR/ID sub-weight for industry.
-        // I will keep the raw score here and then in calculateAllScores,
-        // it is added to crIdRaw (which is weird) and the final score, but it's part of CR/ID raw
-        // in the original logic which implies it's a fixed value, not a percentage of the total weight.
-        // For consistency with the original code structure:
         return ['industry' => $industry, 'industry_score' => $industryScore];
     }
 
@@ -600,20 +720,20 @@ class RiskAnalyticsService
 
         $businessCount = Cache::get("business_density_{$city}", 0);
         $activityScore = match (true) {
-            $businessCount >= 500 => $this->locationActivityMax,
+            $businessCount >= 500 => $this->userWeights['locationActivityMax'],
             $businessCount >= 100 => 3,
             default => 1
         };
 
         $defaultRate = Cache::get("default_rate_{$city}", 0);
         $defaultScore = match (true) {
-            $defaultRate <= 5 => $this->locationDefaultRateMax,
+            $defaultRate <= 5 => $this->userWeights['locationDefaultRateMax'],
             $defaultRate <= 10 => 2,
             default => 0
         };
 
         // scale using the current location main weight and dynamic sub-total max
-        $scale = $this->weightLocationScore / $this->locationSubTotalMax;
+        $scale = $this->userWeights['weightLocationScore'] / $this->userWeights['locationSubTotalMax'];
         $totalScore = round(($tierScore + $activityScore + $defaultScore) * $scale, 2);
 
         return [

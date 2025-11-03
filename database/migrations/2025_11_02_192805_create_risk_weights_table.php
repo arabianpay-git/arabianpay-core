@@ -11,6 +11,10 @@ return new class extends Migration
         Schema::create('risk_weights', function (Blueprint $table) {
             $table->id();
 
+            // Who created or owns these weights
+            $table->foreignId('user_id')->constrained('users')->onDelete('cascade');
+
+            // Employee who last updated weights
             $table->foreignId('employee_id')->constrained('users')->onDelete('cascade');
 
             // Keep track of last and new weights (for audit/versioning)

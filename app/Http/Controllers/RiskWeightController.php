@@ -9,12 +9,15 @@ use Illuminate\Support\Facades\Auth;
 class RiskWeightController extends Controller
 {
     /**
-     * Store new weights — if a record already exists, update it instead.
+     * Store new weights — if a record already exists for this user_id, update it instead.
      * Keeps last_weight / new_weight history.
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
+            // Required user reference
+            'user_id' => 'required|integer|exists:users,id',
+
             // Main weights
             'cr_id' => 'required|numeric|min:0',
             'pos' => 'required|numeric|min:0',
@@ -45,7 +48,7 @@ class RiskWeightController extends Controller
             'location_sub_total_max' => 'nullable|numeric|min:0',
         ]);
 
-        // ---- Check total of main weights ----
+        // ---- Validate total of main weights ----
         $mainWeights = collect($validated)->only(['cr_id', 'pos', 'repayment', 'industry', 'location']);
         $sum = $mainWeights->sum();
 
@@ -56,12 +59,15 @@ class RiskWeightController extends Controller
             ], 422);
         }
 
-        // ---- Prepare the data for saving ----
-        $last = RiskWeight::latest()->first();
+        $userId = $validated['user_id'];
+
+        // ---- Find latest record for this user ----
+        $last = RiskWeight::where('user_id', $userId)->latest()->first();
+
         $data = array_merge(
             $validated,
             [
-                'employee_id' => Auth::id(),
+                'employee_id' => Auth::id(), // logged-in user making the change
                 'last_weight' => $last ? $last->new_weight : null,
                 'new_weight' => $mainWeights,
             ]
@@ -92,6 +98,8 @@ class RiskWeightController extends Controller
     public function update(Request $request, RiskWeight $riskWeight)
     {
         $validated = $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+
             // Main weights
             'cr_id' => 'required|numeric|min:0',
             'pos' => 'required|numeric|min:0',
@@ -151,11 +159,15 @@ class RiskWeightController extends Controller
     }
 
     /**
-     * Return the single/latest weights row if exists
+     * Return the single/latest weights row if exists for provided user_id
      */
-    public function getLast()
+    public function getLast(Request $request)
     {
-        $last = RiskWeight::latest()->first();
+        $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+        ]);
+
+        $last = RiskWeight::where('user_id', $request->user_id)->latest()->first();
 
         if (!$last) {
             return response()->json(['success' => false, 'weights' => null]);

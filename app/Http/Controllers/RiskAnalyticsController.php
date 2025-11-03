@@ -53,9 +53,10 @@ class RiskAnalyticsController extends Controller
         $order = $request->input('order', 'desc');
         $perPage = 10;
 
-        // Base query with relations
+        // Base query with relations, ORDER LATEST USER FIRST
         $baseQuery = User::whereIn('user_type', ['merchant', 'user'])
-            ->with(['merchant.businessType', 'customer.businessType', 'transactions']);
+            ->with(['merchant.businessType', 'customer.businessType', 'transactions'])
+            ->orderBy('created_at', 'desc'); // <- changed: latest users first
 
         // Optional weights from request
         $weights = [
@@ -71,6 +72,7 @@ class RiskAnalyticsController extends Controller
 
         // --- NO SEARCH: Use DB pagination directly ---
         if (!$search) {
+            // usersPaginator already ordered by created_at desc
             $usersPaginator = $baseQuery->paginate($perPage);
 
             // Extract business names from the current page users for Google prefetching
@@ -83,18 +85,17 @@ class RiskAnalyticsController extends Controller
             }
 
             // Calculate risks (will use cached ratings where available)
+            // calculateForUsers will load per-user weights for each user
             $risksCollection = $this->riskAnalyticsService->calculateForUsers(
                 $usersPaginator->getCollection(),
                 $weights
             );
 
-            // Sort by total_score
-            $sorted = $order === 'asc'
-                ? $risksCollection->sortBy('total_score')->values()
-                : $risksCollection->sortByDesc('total_score')->values();
+            // DO NOT re-sort by score — keep the latest-user-first order coming from the DB
+            $ordered = $risksCollection->values();
 
             $paginatedRisks = new LengthAwarePaginator(
-                $sorted,
+                $ordered,
                 $usersPaginator->total(),
                 $usersPaginator->perPage(),
                 $usersPaginator->currentPage(),
@@ -106,30 +107,31 @@ class RiskAnalyticsController extends Controller
 
         // --- SEARCH CASE: filter limited candidates ---
         $candidateLimit = 2000;
+        // Ensure search candidates are fetched in latest-first order
         $candidates = $baseQuery->limit($candidateLimit)->get();
 
-        // Apply search filter
+        // Apply search filter (filter preserves order)
         $filtered = $candidates->filter(function ($user) use ($search) {
             $searchLower = strtolower($search);
 
             // Check user fields
             if (
-                str_contains(strtolower($user->first_name), $searchLower) ||
-                str_contains(strtolower($user->last_name), $searchLower) ||
-                str_contains(strtolower($user->email), $searchLower) ||
-                str_contains(strtolower($user->phone_number), $searchLower) ||
-                str_contains(strtolower($user->iqama), $searchLower)
+                str_contains(strtolower($user->first_name ?? ''), $searchLower) ||
+                str_contains(strtolower($user->last_name ?? ''), $searchLower) ||
+                str_contains(strtolower($user->email ?? ''), $searchLower) ||
+                str_contains(strtolower($user->phone_number ?? ''), $searchLower) ||
+                str_contains(strtolower($user->iqama ?? ''), $searchLower)
             ) {
                 return true;
             }
 
             // Check merchant business name
-            if ($user->merchant && str_contains(strtolower($user->merchant->business_name), $searchLower)) {
+            if ($user->merchant && str_contains(strtolower($user->merchant->business_name ?? ''), $searchLower)) {
                 return true;
             }
 
             // Check customer business name
-            if ($user->customer && str_contains(strtolower($user->customer->business_name), $searchLower)) {
+            if ($user->customer && str_contains(strtolower($user->customer->business_name ?? ''), $searchLower)) {
                 return true;
             }
 
@@ -153,17 +155,16 @@ class RiskAnalyticsController extends Controller
         }
 
         // Calculate risks for all filtered results
+        // calculateForUsers loads per-user weights for each user and returns results in the same order as $filtered
         $risksAll = $this->riskAnalyticsService->calculateForUsers($filtered, $weights);
 
-        // Sort risks
-        $sortedAll = $order === 'asc'
-            ? $risksAll->sortBy('total_score')->values()
-            : $risksAll->sortByDesc('total_score')->values();
+        // DO NOT re-sort by score — keep latest-user-first order
+        $orderedAll = $risksAll->values();
 
-        // Manual pagination
+        // Manual pagination (order preserved)
         $page = LengthAwarePaginator::resolveCurrentPage();
-        $total = $sortedAll->count();
-        $itemsForCurrentPage = $sortedAll->forPage($page, $perPage)->values();
+        $total = $orderedAll->count();
+        $itemsForCurrentPage = $orderedAll->forPage($page, $perPage)->values();
 
         $paginatedRisks = new LengthAwarePaginator(
             $itemsForCurrentPage,
@@ -175,6 +176,8 @@ class RiskAnalyticsController extends Controller
 
         return view('admin.risk-management.score', ['risks' => $paginatedRisks]);
     }
+
+
 
     /**
      * Export CSV - uses service to compute scores for all filtered users

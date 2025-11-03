@@ -10,6 +10,7 @@ class RiskWeight extends Model
     use HasFactory;
 
     protected $fillable = [
+        'user_id',
         'employee_id',
         'last_weight',
         'new_weight',
@@ -49,7 +50,13 @@ class RiskWeight extends Model
         'new_weight' => 'array',
     ];
 
-    // Relation to employee (user)
+    // Relation to creator user
+    public function user()
+    {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
+    // Relation to employee who last updated the weights
     public function employee()
     {
         return $this->belongsTo(User::class, 'employee_id');

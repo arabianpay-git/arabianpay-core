@@ -1635,7 +1635,7 @@ return [
     'Submit Reply' => 'Submit Reply',
     'Set Risk Weights' => 'Set Risk Weights',
     'Save Weights' => 'Save Weights',
-    'Main Weights (Sum must be 100)' => 'Main Weights (Sum must be 100)',
+    'Main Weights (Sum must be 95)' => 'Main Weights (Sum must be 95)',
 
     'CR/ID Sub-Weights (Total 100)' => 'CR/ID Sub-Weights (Total 100)',
     'ID Match' => 'ID Match',
@@ -1657,4 +1657,6 @@ return [
     'Sub Total Max' => 'Sub Total Max',
     'Weights saved successfully' => 'Weights saved successfully',
     'Validation failed' => 'Validation failed',
+    'User ID:' => 'User ID:',
+    'Manual Score Adjustment' => 'Manual Score Adjustment',
 ];
