@@ -89,7 +89,6 @@
                         </div>
                     </div>
 
-                    <!-- Table -->
                     <div class="card-body">
                         <div data-datatable="true" data-datatable-state-save="false" id="refund_requests_table">
                             @include('admin.risk-management.components.score-table')
