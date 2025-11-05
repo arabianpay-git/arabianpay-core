@@ -47,6 +47,7 @@ use App\Http\Controllers\{
     RiskWeightController,
     RoleController,
     RolePermissionController,
+    SanadController,
     SchedulePaymentController,
     SingleViewController,
     StateController,
@@ -387,6 +388,9 @@ Route::group([
                 Route::post('/orders/accept', 'acceptOrder')->name('orders.accept');
                 Route::post('/orders/reject', 'rejectOrder')->name('orders.reject');
             });
+
+            Route::get('/sanad/order/{order}/detail', [SanadController::class, 'detail'])->name('sanad.detail');
+            Route::get('/sanad/order/{order}/download', [SanadController::class, 'download'])->name('sanad.download');
 
             //
             // Supplier and Sales

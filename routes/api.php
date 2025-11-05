@@ -432,4 +432,51 @@ Route::prefix('nafith')->group(function () {
             ], 500);
         }
     });
+
+    Route::get('/get-sanad-by-number', function (Request $request) {
+        try {
+            $nafithService = app(NafithService::class);
+
+            // Dummy SANAD number for testing — replace later
+            $sanadNumber = $request->input('sanad_number', '10211025262474'); // number
+
+            $result = $nafithService->getSanadByNumber($sanadNumber);
+
+            return response()->json([
+                'success' => true,
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
+
+    Route::get('/download-sanad-group', function (Request $request) {
+        try {
+            $nafithService = app(NafithService::class);
+
+            // Dummy group ID for testing
+            $sanadGroupId = $request->input('sanad_group', '83266b77-73cb-4c5d-a395-285a5cf7f293'); // id
+
+            $result = $nafithService->downloadSanadGroup($sanadGroupId);
+
+            // If the service returned a response() object (PDF/ZIP), return it directly
+            if ($result instanceof \Illuminate\Http\Response) {
+                return $result;
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $result
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    });
 });

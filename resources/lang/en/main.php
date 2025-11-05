@@ -758,9 +758,6 @@ return [
     'records' => 'records',
     'rejected' => 'rejected',
     'to' => 'to',
-
-
-
     'Customers Credit Limit' => 'Customers Credit Limit',
     'Credit Limits' => 'Credit Limits',
     'Customers Credit Profile' => 'Customers Credit Profile',
@@ -794,7 +791,6 @@ return [
     'Utilized Amount' => 'Utilized Amount',
     'Repayment Timeliness' => 'Repayment Timeliness',
     'Score Changes' => 'Score Changes',
-
     'Supplier ID'       => 'Supplier ID',
     'Supplier Name'     => 'Supplier Name',
     'Order Volume'      => 'Order Volume',
@@ -940,7 +936,6 @@ return [
     'IBAN Certificates' => 'IBAN Certificates',
     'Search categories' => 'Search categories',
     'Search brands' => 'Search brands',
-
     'Repaid' => 'Repaid',
     'Disbursed' => 'Disbursed',
     'pending' => 'pending',
@@ -955,11 +950,9 @@ return [
     'Revenue' => 'Revenue',
     'Shipping' => 'Shipping',
     'Discounts' => 'Discounts',
-
     'Avg Days' => 'Avg Days',
     'Sales' => 'Sales',
     'Stock' => 'Stock',
-
     'pending' => 'pending',
     'processing' => 'processing',
     'completed' => 'completed',
@@ -968,17 +961,14 @@ return [
     'settlement pending' => 'settlement pending',
     'settled' => 'settled',
     'failed' => 'failed',
-
     'Welcome Back!' => 'Welcome Back!',
     'Glad to see you again! Here is your employee dashboard.' => 'Glad to see you again! Here is your employee dashboard.',
     'Pick Color' => 'Pick Color',
     'Go Back' => 'Go Back',
     'Edit Attribute Value' => 'Edit Attribute Value',
-
     "You haven't registered a passkey. Would you like to register one now for easier login?" => "You haven't registered a passkey. Would you like to register one now for easier login?",
     'Yes, register' => 'Yes, register',
     'No, thanks' => 'No, thanks',
-
     'Accounts Information' => 'Accounts Information',
     'Account' => 'Account',
     'Account ID' => 'Account ID',
@@ -992,7 +982,6 @@ return [
     'No account data available.' => 'No account data available.',
     'Click "Get Data" to fetch accounts information.' => 'Click "Get Data" to fetch accounts information.',
     'Get Data' => 'Get Data',
-
     'Accounts Balance' => 'Accounts Balance',
     'Get Balance' => 'Get Balance',
     'Click "Get Balance" to fetch accounts balance.' => 'Click "Get Balance" to fetch accounts balance.',
@@ -1107,21 +1096,17 @@ return [
     'Third Parties' => 'Third Parties',
     'Select All' => 'Select All',
     'Selected Role' => 'Selected Role',
-
     'Installment' => 'Installment',
     'Reference ID' => 'Reference ID',
     'Total Amount' => 'Total Amount',
     'Payment Method' => 'Payment Method',
     'Due Date' => 'Due Date',
-
     'Paid' => 'Paid',
     'Pending' => 'Pending',
     'Upcoming' => 'Upcoming',
     'Pay Now' => 'Pay Now',
-
     'Bank Transfer' => 'Bank Transfer',
     'Credit Card' => 'Credit Card',
-
     'Auto reminder sent' => 'Auto reminder sent',
     'Auto payment enabled' => 'Auto payment enabled',
     'Paid on' => 'Paid on',
@@ -1142,7 +1127,6 @@ return [
     'Upload Invoice (PDF only)' => 'Upload Invoice (PDF only)',
     'Click to select file' => 'Click to select file',
     'Accepted' => 'Accepted',
-
     'Order accepted successfully!' => 'Order accepted successfully!',
     'Order has been rejected successfully.' => 'Order has been rejected successfully.',
     'Rejection Reason' => 'Rejection Reason',
@@ -1154,11 +1138,9 @@ return [
     'You have already rejected this order.' => 'You have already rejected this order.',
     'Warning!' => 'Warning!',
     'Once you reject this order, you will not be able to perform any further actions on it.' => 'Once you reject this order, you will not be able to perform any further actions on it.',
-
     'Validation Error' => 'Validation Error',
     'Processing...' => 'Processing...',
     'OK' => 'OK',
-
     'Cannot Transfer Accepted Order' => 'Cannot Transfer Accepted Order',
     'Cannot Transfer Rejected Order' => 'Cannot Transfer Rejected Order',
     'Cannot Reject Accepted Order' => 'Cannot Reject Accepted Order',
@@ -1166,10 +1148,8 @@ return [
     'Download Supplier Invoice' => 'Download Supplier Invoice',
     'Success!' => 'Success!',
     'This order has been successfully completed. No further action is required.' => 'This order has been successfully completed. No further action is required.',
-
     'Error' => 'Error',
     'You do not have permission to perform this action.' => 'You do not have permission to perform this action.',
-
     'Order Activity Logs' => 'Order Activity Logs',
     'No logs available for this order.' => 'No logs available for this order.',
     'System' => 'System',
@@ -1184,7 +1164,6 @@ return [
     'Schedule Payments Created' => 'Schedule Payments Created',
     'This order has been completed.' => 'This order has been completed.',
     'Search product' => 'Search product',
-
     'PAID'     => 'PAID',
     'OVERDUE'  => 'OVERDUE',
     'DUE' => 'DUE',
@@ -1196,8 +1175,6 @@ return [
     'No bank details found' => 'No bank details found',
     'COMPLIANT' => 'COMPLIANT',
     'MISSING' => 'MISSING',
-
-
     'Create New Permission' => 'Create New Permission',
     'Guard' => 'Guard',
     'Create Permission' => 'Create Permission',
@@ -1381,7 +1358,6 @@ return [
     'Partial Payment' => 'Partial Payment',
     'Failed' => 'Failed',
     'Create Promise' => 'Create Promise',
-
     'Due' => 'Due',
     'Reset' => 'Reset',
     'Note' => 'Note',
@@ -1490,7 +1466,6 @@ return [
     'Please wait while we send the reminder.' => 'Please wait while we send the reminder.',
     'An unexpected error occurred.' => 'An unexpected error occurred.',
     'FAILED' => 'FAILED',
-
     'Partial Payments' => 'Partial Payments',
     'Approval Status' => 'Approval Status',
     'Paid At' => 'Paid At',
@@ -1587,7 +1562,6 @@ return [
     'Days Past Due (DPD) Buckets' => 'Days Past Due (DPD) Buckets',
     'Vintage Curves - Delinquency Roll Rates' => 'Vintage Curves - Delinquency Roll Rates',
     'Delinquency Rate (%)' => 'Delinquency Rate (%)',
-
     'underwriting SLA' => 'Underwriting SLA',
     'approval SLA' => 'Approval SLA',
     'disbursement SLA' => 'Disbursement SLA',
@@ -1628,7 +1602,6 @@ return [
     'Error' => 'Error',
     'Validation failed or server error' => 'Validation failed or server error',
     'Server error' => 'Server error',
-
     'Internal Server Error' => 'Internal Server Error',
     'Sorry, something went wrong on our end. Please try again later.' => 'Sorry, something went wrong on our end. Please try again later.',
     'Type your reply...' => 'Type your reply...',
@@ -1661,7 +1634,31 @@ return [
     'View Transfer Requests' => 'View Transfer Requests',
     'View Supplier Profile' => 'View Supplier Profile',
     'Login as Partner' => 'Login as Partner',
-
     'Your Reply' => 'Your Reply',
     'Edit Reply' => 'Edit Reply',
+
+    'delivered' => 'delivered',
+    'Get SANAD Detail' => 'Get SANAD Detail',
+    'SANAD Details' => 'SANAD Details',
+    'Loading SANAD details...' => 'Loading SANAD details...',
+    'Download SANAD PDF' => 'Download SANAD PDF',
+    'Unable to load SANAD details.' => 'Unable to load SANAD details.',
+    'Invalid JSON response' => 'Invalid JSON response',
+    'Failed to fetch SANAD details.' => 'Failed to fetch SANAD details.',
+    'Error loading SANAD details.' => 'Error loading SANAD details.',
+    'Error Loading SANAD' => 'Error Loading SANAD',
+    'Something went wrong while fetching SANAD details.' => 'Something went wrong while fetching SANAD details.',
+
+    'SANAD ID' => 'SANAD ID',
+    'SANAD Number' => 'SANAD Number',
+    'Reference ID' => 'Reference ID',
+    'Due Type' => 'Due Type',
+    'Due Date' => 'Due Date',
+    'Total Value' => 'Total Value',
+    'Status' => 'Status',
+    'Code' => 'Code',
+    'Created At' => 'Created At',
+    'Updated At' => 'Updated At',
+    'Refund Request' => 'Refund Request',
+    'Delivery Otp Sent' => 'Delivery Otp Sent',
 ];

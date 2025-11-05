@@ -1,5 +1,7 @@
 @php
     $isDisabled = in_array($order->general_status, ['completed', 'accepted', 'rejected']);
+    // try to find local Sanad model for this order
+    $orderSanad = \App\Models\Sanad::where('order_id', $order->id)->first();
 @endphp
 
 <div class="flex justify-end flex-wrap gap-2">
@@ -10,6 +12,14 @@
             class="btn btn-sm btn-light bg-gray-100 text-gray-800 hover:bg-gray-200">
             <i class="ki-filled ki-download"></i> {{ translate('Download Supplier Invoice') }}
         </a>
+    @endif
+
+    {{-- show Get SANAD Detail if local Sanad exists --}}
+    @if ($orderSanad && !empty($orderSanad->order_id) && !empty($orderSanad->user_id))
+        <button type="button" class="btn btn-sm btn-primary" data-modal-toggle="#sanad_detail_modal"
+            onclick="openSanadModal('{{ $order->id }}')">
+            <i class="ki-filled ki-eye"></i> {{ translate('Get SANAD Detail') }}
+        </button>
     @endif
 
     {{-- Reject Order Button --}}
@@ -83,3 +93,6 @@
         ]
     )
 </div>
+
+{{-- Include SANAD detail modal partial (it will be invoked by JS openSanadModal(id)) --}}
+@includeWhen(true, 'admin.orders.partials.sanad-detail-modal', ['sanad' => $orderSanad])

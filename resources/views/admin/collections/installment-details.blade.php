@@ -10,7 +10,9 @@
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
                         {{-- {{ translate('Order Information') }} #{{ \Illuminate\Support\Str::upper($order->tracking ?? '-') }} --}}
-                        {{ translate('Installmet Information') }} # JBH786GVHB
+                        {{ translate('Installmet Information') }} #
+                        <a href="{{ route('orders.details', ['id' => $order->id]) }}"
+                            class="underline">{{ $order->tracking ?? '-' }}</a>
                     </h1>
                 </div>
                 <div class="flex justify-end" style="gap: 0.5rem;">
