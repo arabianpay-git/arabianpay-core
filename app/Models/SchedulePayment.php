@@ -1,0 +1,150 @@
+<?php
+
+namespace App\Models;
+
+use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Str;
+
+class SchedulePayment extends Model
+{
+    use HasFactory;
+
+    protected $fillable = [
+        'uuid',
+        'assigned_to',
+        'user_id',
+        'order_id',
+        'seller_id',
+        'checkout_id',
+        'instalment_number',
+        'due_date',
+        'instalment_amount',
+        'principle_amount',
+        'late_fee',
+        'subscription_fee',
+        'shipping_amount',
+        'additional_amount',
+        'difference_amount',
+        'deducted_amount',
+        'is_late',
+        'late_days',
+        'payment_status',
+        'receipt',
+        'payment_method',
+    ];
+
+    protected $casts = [
+        'due_date' => 'date',
+        'is_late' => 'boolean',
+    ];
+
+    protected static function boot()
+    {
+        parent::boot();
+        static::creating(function ($model) {
+            $model->uuid = (string) Str::uuid();
+        });
+    }
+
+    // Relations
+    public function assigned()
+    {
+        return $this->belongsTo(User::class, 'assigned_to');
+    }
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    public function customer()
+    {
+        return $this->hasOne(Customer::class, 'user_id', 'user_id');
+    }
+    public function merchant()
+    {
+        return $this->hasOne(Merchant::class, 'user_id', 'seller_id');
+    }
+    public function checkout()
+    {
+        return $this->belongsTo(Checkout::class, 'checkout_id');
+    }
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'schedule_payment_id');
+    }
+    public function order()
+    {
+        return $this->belongsTo(Order::class, 'order_id');
+    }
+
+    public function claims()
+    {
+        return $this->hasMany(Claim::class);
+    }
+
+    public function latestClaim()
+    {
+        return $this->hasOne(Claim::class)->latest();
+    }
+
+    public function partialPayments()
+    {
+        return $this->hasMany(PartialPayment::class, 'schedule_payment_id');
+    }
+
+    public function promise()
+    {
+        return $this->hasOne(Promise::class, 'schedule_payment_id');
+    }
+
+    /**
+     * Payment status distribution.
+     */
+    public static function getPaymentStatusDistribution()
+    {
+        return DB::table('schedule_payments')
+            ->select('payment_status as status', DB::raw('COUNT(*) as count'))
+            ->groupBy('payment_status')
+            ->get();
+    }
+
+    /**
+     * Overdue instalment trend + current delinquency rate.
+     */
+    /**
+     * Overdue instalment trend + current delinquency rate.
+     */
+    public static function getOverdueTrend($range)
+    {
+        $months = (int)$range;
+        $end    = Carbon::now();
+        $start  = $end->copy()->subMonths($months - 1)->startOfMonth();
+
+        $labels = [];
+        $series = [];
+        for ($i = 0; $i < $months; $i++) {
+            $labels[] = $start->copy()->addMonths($i)->format('M Y');
+        }
+
+        $raw = DB::table('schedule_payments')
+            ->select(DB::raw("DATE_FORMAT(due_date, '%b %Y') as month"), DB::raw('COUNT(*) as total'))
+            ->whereIn('payment_status', ['due', 'late'])
+            ->whereBetween('due_date', [$start, $end])
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->toArray();
+
+        foreach ($labels as $m) {
+            $series[] = $raw[$m] ?? 0;
+        }
+
+        $total   = DB::table('schedule_payments')->count();
+        $overdue = DB::table('schedule_payments')->whereIn('payment_status', ['due', 'late'])->where('due_date', '<', $end)->count();
+        $rate    = $total ? round($overdue / $total * 100, 1) : 0;
+
+        return ['months' => $labels, 'series' => $series, 'rate' => $rate];
+    }
+}

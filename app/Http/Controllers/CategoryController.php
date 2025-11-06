@@ -1,0 +1,230 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Category;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
+use Illuminate\Support\Str;
+
+class CategoryController extends Controller
+{
+    public function index(Request $request)
+    {
+        $categories = Category::with('parent')->select('categories.*')->orderBy('id', 'desc')->paginate(10);
+
+        return view('admin.categories.index', compact('categories'));
+    }
+
+    public function search(Request $request)
+    {
+        $query = $request->input('query', '');
+
+        // Get all categories
+        $categories = Category::with('parent')->get();
+
+        // Filter for encrypted fields or any other field
+        $categories = $categories->filter(function ($category) use ($query) {
+            $q = strtolower($query);
+            return str_contains(strtolower($category->name), $q)
+                || str_contains(strtolower($category->parent?->name ?? ''), $q);
+        });
+
+        // Paginate filtered results
+        $page = $request->input('page', 1);
+        $perPage = 10;
+        $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
+            $categories->forPage($page, $perPage),
+            $categories->count(),
+            $perPage,
+            $page,
+            ['path' => url()->current(), 'query' => $request->query()]
+        );
+
+        if ($request->ajax()) {
+            return view('admin.categories.partials.table', ['categories' => $paginated])->render();
+        }
+
+        return view('admin.categories.index', ['categories' => $paginated]);
+    }
+
+    public function create()
+    {
+        $categories = Category::all();
+        return view('admin.categories.create', compact('categories'));
+    }
+
+    public function store(Request $request)
+    {
+        $request->validate([
+            'name' => ['required', 'string', 'max:255', 'unique:categories,name'], // remove 'regex:/^[a-zA-Z\s]*$/'
+            'order_level' => ['required', 'numeric'],
+            'meta_title' => ['nullable', 'string', 'min:5', 'max:100',], // remove 'regex:/^[a-zA-Z\s]*$/'
+            'meta_description' => ['nullable', 'string', 'min:10', 'max:255',], // remove 'regex:/^[a-zA-Z\s]*$/'
+            'unit' => ['nullable', 'array'],
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $category = Category::create([
+                'parent_id' => $request->parent_id,
+                'name' => $request->name,
+                'order_level' => $request->order_level ?? 1,
+                'banner' => $request->banner,
+                'icon' => $request->icon,
+                'featured' => $request->boolean('featured'),
+                'meta_title' => $request->meta_title,
+                'meta_description' => $request->meta_description,
+                'unit' => collect($request->unit)->flatMap(fn($item) => explode(',', $item))->map('trim')->filter()->values(),
+            ]);
+
+            $this->storeOrUpdateTranslation($category, $request);
+
+            DB::commit();
+
+            //Log the creation of the category
+            $batchUuid = (string) Str::uuid();
+            $category->logModelAction(
+                event: 'create',
+                description: Auth::user()->first_name . " " . Auth::user()->last_name . " created category: {$category->name} [$category->id]",
+                properties: [
+                    'reason' => $request->input('reason', null), // reson can be optional
+                    'ip' => request()->ip(),
+                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
+                ],
+            );
+
+            return redirect()->route('categories.index')->with('success', 'Category created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
+    }
+
+    public function edit(Category $category)
+    {
+
+        $categories = Category::where('id', '!=', $category->id)->get();
+        return view('admin.categories.edit', compact('category', 'categories'));
+    }
+
+    public function update(Request $request, Category $category)
+    {
+        $request->validate([
+            'name.en' => ['required', 'string', 'max:255'],
+            'meta_title.en' => ['nullable', 'string', 'max:255'],
+            'meta_description.en' => ['nullable', 'string', 'max:1000'],
+            'unit' => ['nullable', 'array'],
+            'order_level' => ['required', 'numeric'],
+        ]);
+
+        DB::beginTransaction();
+
+        try {
+            $category->update([
+                'parent_id' => $request->parent_id,
+                'name' => $request->name['en'],
+                'order_level' => $request->order_level,
+                'banner' => $request->banner,
+                'icon' => $request->icon,
+                'featured' => $request->boolean('featured'),
+                'meta_title' => $request->meta_title['en'],
+                'meta_description' => $request->meta_description['en'],
+                'unit' => collect($request->unit)->flatMap(fn($item) => explode(',', $item))->map('trim')->filter()->values(),
+            ]);
+
+            $this->storeOrUpdateTranslation($category, $request);
+
+            DB::commit();
+
+            return redirect()->route('categories.index')->with('success', 'Category updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
+    }
+
+
+    public function destroy(Category $category)
+    {
+        // Generate unique batch UUID
+        $batchUuid = (string) Str::uuid();
+
+        // Sanitize dynamic values
+        $userFirst = e(Auth::user()->first_name);
+        $userLast = e(Auth::user()->last_name);
+        $categoryName = e($category->name);
+        $categoryId = (int) $category->id;
+
+        // Safe, formatted log description
+        $description = sprintf(
+            '%s %s deleted category: %s [%d]',
+            $userFirst,
+            $userLast,
+            $categoryName,
+            $categoryId
+        );
+
+        // Log the deletion safely
+        $category->logModelAction(
+            event: 'delete',
+            description: $description,
+            properties: [
+                'ip' => request()->ip(),
+                'batch_uuid' => $batchUuid,
+            ],
+        );
+
+        $category->delete();
+        return redirect()->route('categories.index')->with('success', 'Category deleted successfully.');
+    }
+
+    private function storeOrUpdateTranslation(Category $category, Request $request)
+    {
+        if (isset($request->name['ar'])) {
+            $category->translations()->updateOrCreate(
+                ['locale' => 'ar'],
+                [
+                    'name' => $request->name['ar'],
+                    'meta_title' => $request->meta_title['ar'] ?? null,
+                    'meta_description' => $request->meta_description['ar'] ?? null,
+                ]
+            );
+        }
+    }
+
+    public function getUnits($id)
+    {
+        $category = Category::find($id);
+
+        if (!$category) {
+            return response()->json(['units' => []]);
+        }
+
+        // Use parent's units if parent exists
+        if ($category->parent_id) {
+            $parentCategory = Category::find($category->parent_id);
+            $units = $parentCategory ? $parentCategory->unit : null;
+        } else {
+            $units = $category->unit;
+        }
+
+        // Convert units string or array to array of trimmed strings
+        if (is_string($units)) {
+            $units = explode(',', $units);
+        } elseif (is_array($units)) {
+            if (count($units) === 1 && str_contains($units[0], ',')) {
+                $units = explode(',', $units[0]);
+            }
+        } else {
+            $units = [];
+        }
+
+        return response()->json([
+            'units' => array_map('trim', $units),
+        ]);
+    }
+}

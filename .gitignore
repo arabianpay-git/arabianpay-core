@@ -1,0 +1,48 @@
+# Node
+/node_modules/
+dist/
+
+# Laravel
+/vendor/
+/storage/*.key
+/storage/pail/
+/public/storage
+/public/hot
+/public/build
+
+# Environment
+.env
+.env.backup
+.env.production
+
+# Cache & testing
+.phpunit.result.cache
+.phpunit.cache
+.phpactor.json
+
+# IDE & system files
+/.idea/
+/.vscode/
+/.fleet/
+/.nova/
+/.zed
+.DS_Store
+Thumbs.db
+
+# Other
+Homestead.json
+Homestead.yaml
+npm-debug.log
+yarn-error.log
+auth.json
+
+# -----------------------------
+# Fix for bootstrap tracking
+# -----------------------------
+
+# Ignore everything under bootstrap
+/bootstrap/*
+
+# But allow cache and everything inside it
+!bootstrap/cache/
+!bootstrap/cache/**
