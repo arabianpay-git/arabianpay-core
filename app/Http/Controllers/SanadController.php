@@ -18,19 +18,9 @@ class SanadController extends Controller
         $this->nafith = $nafith;
     }
 
-    /**
-     * Return SANAD detail by local ORDER id.
-     * - Finds the local Sanad record by order_id
-     * - Extracts the SANAD number from raw_response (sanad[0].number)
-     * - Calls NafithService->getSanadByNumber(number)
-     * - Returns JSON to the frontend
-     *
-     * Route: admin.sanad.detail (expects {order})
-     */
     public function detail(Request $request, $orderId)
     {
         try {
-            // find the first Sanad for this order
             $sanad = Sanad::where('order_id', $orderId)->first();
 
             if (!$sanad) {
@@ -43,7 +33,6 @@ class SanadController extends Controller
 
             $raw = $sanad->raw_response ?? [];
 
-            // try to locate number in raw_response (first sanad item)
             $sanadNumber = Arr::get($raw, 'sanad.0.number') ?? Arr::get($raw, 'number');
 
             if (empty($sanadNumber)) {
@@ -52,7 +41,6 @@ class SanadController extends Controller
 
             $result = $this->nafith->getSanadByNumber((string) $sanadNumber);
 
-            // If nafith returned an error array
             if (is_array($result) && isset($result['success']) && $result['success'] === false) {
                 return response()->json(['success' => false, 'message' => $result['error'] ?? 'Nafith error', 'payload' => $result], 500);
             }
@@ -64,15 +52,6 @@ class SanadController extends Controller
         }
     }
 
-    /**
-     * Download SANAD group PDF (or other binary) using local ORDER id.
-     * - Finds Sanad by order_id
-     * - Extract group id from raw_response['id']
-     * - Calls NafithService->downloadSanadGroup(groupId)
-     * - Returns binary response or JSON error
-     *
-     * Route: admin.sanad.download (expects {order})
-     */
     public function download(Request $request, $orderId)
     {
         try {

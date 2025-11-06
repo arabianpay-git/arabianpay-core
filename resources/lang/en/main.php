@@ -1648,7 +1648,6 @@ return [
     'Error loading SANAD details.' => 'Error loading SANAD details.',
     'Error Loading SANAD' => 'Error Loading SANAD',
     'Something went wrong while fetching SANAD details.' => 'Something went wrong while fetching SANAD details.',
-
     'SANAD ID' => 'SANAD ID',
     'SANAD Number' => 'SANAD Number',
     'Reference ID' => 'Reference ID',
