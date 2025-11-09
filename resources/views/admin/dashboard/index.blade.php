@@ -324,7 +324,13 @@
                         horizontalAlign: 'center'
                     },
                     series: @json($loanData['payment_status']->pluck('count')),
-                    colors: ['#F59E0B', '#10B981', '#3B82F6', '#EF4444'],
+                    colors: [
+                        '#10B981', // paid - green
+                        '#F59E0B', // due - amber
+                        '#3B82F6', // pending - blue
+                        '#EF4444', // late - red
+                        '#6B7280' // failed - gray
+                    ],
                     labels: @json($loanData['payment_status']->pluck('status')->map(fn($status) => translate($status))),
                     plotOptions: {
                         pie: {
