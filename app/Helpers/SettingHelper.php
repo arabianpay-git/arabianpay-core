@@ -229,7 +229,7 @@ use Illuminate\Support\Facades\Log;
  * @return \Carbon\Carbon|null       Gregorian Carbon date or null on failure
  */
 if (! function_exists('hijriToGregorian')) {
-    function hijriToGregorian(int|string $hYearOrDate, ?int $hMonth = null, ?int $hDay = null, int $adjustment = 0): ?Carbon
+    function hijriToGregorian($hYearOrDate, int $hMonth = null, int $hDay = null, int $adjustment = 0): ?Carbon
     {
         // parse "YYYY/MM/DD" string if given
         if (is_string($hYearOrDate)) {

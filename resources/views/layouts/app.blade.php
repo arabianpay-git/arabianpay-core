@@ -20,7 +20,7 @@
     {{-- Updated Vite inputs: replaced resources/js/app.js with resources/js/bootstrap.js --}}
     @vite(['resources/css/app.css', 'resources/js/bootstrap.js'])
 
-  
+    @livewireStyles
 </head>
 
 <body class="font-sans antialiased">
@@ -46,7 +46,7 @@
 
     @stack('modals')
 
-   
+    @livewireScripts
 </body>
 
 </html>

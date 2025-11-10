@@ -595,7 +595,7 @@ class AccountController extends Controller
         $stats = [
             'totalProducts' => Product::where('user_id', $merchant->user_id)->count(),
             'totalOrders'   => Order::where('seller_id', $merchant->user_id)->count(),
-            'revenue'       =>  SupplierPayout::where('supplier_id', $merchant->user_id)->sum('amount'),
+            'revenue'       => Payment::where('seller_id', $merchant->user_id)->sum('amount'),
             'walletBalance' => Wallet::where('seller_id', $merchant->user_id)->sum('balance_after'),
         ];
 

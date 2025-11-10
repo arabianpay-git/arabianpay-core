@@ -104,6 +104,7 @@ class SchedulePaymentController extends Controller
         ];
 
         return response()->json(['success' => true, 'data' => $data]);
+    }
     public function update(Request $request, $id)
     {
         $payment = SchedulePayment::findOrFail($id);

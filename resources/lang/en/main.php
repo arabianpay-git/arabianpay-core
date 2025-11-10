@@ -809,15 +809,16 @@ return [
     'Campaign Effectiveness' => 'Campaign Effectiveness',
     'customer Credit History' => 'Customer Credit History',
     'customer Credit Report' => 'Customer Credit Report',
-
+    'Search customers' => 'Search customers',
+    'User ID' => 'User ID',
+    'Customer' => 'Customer',
+    'Credit Limit' => 'Credit Limit',
     'Utilized Amount' => 'Utilized Amount',
     'Repayment Timeliness' => 'Repayment Timeliness',
     'Score Changes' => 'Score Changes',
-
     'Supplier ID'       => 'Supplier ID',
     'Supplier Name'     => 'Supplier Name',
     'Order Volume'      => 'Order Volume',
-    'order_placement'      => 'Order Placed',
     'Fulfilled %'       => 'Fulfilled %',
     'Total Payouts'     => 'Total Payouts',
     'Disputes'          => 'Disputes',
@@ -962,7 +963,6 @@ return [
     'IBAN Certificates' => 'IBAN Certificates',
     'Search categories' => 'Search categories',
     'Search brands' => 'Search brands',
-
     'Repaid' => 'Repaid',
     'Disbursed' => 'Disbursed',
     'pending' => 'pending',
@@ -990,7 +990,6 @@ return [
     'settlement pending' => 'settlement pending',
     'settled' => 'settled',
     'failed' => 'failed',
-
     'Welcome Back!' => 'Welcome Back!',
     'Glad to see you again! Here is your employee dashboard.' => 'Glad to see you again! Here is your employee dashboard.',
     'Pick Color' => 'Pick Color',
@@ -1014,7 +1013,6 @@ return [
     'No account data available.' => 'No account data available.',
     'Click "Get Data" to fetch accounts information.' => 'Click "Get Data" to fetch accounts information.',
     'Get Data' => 'Get Data',
-
     'Accounts Balance' => 'Accounts Balance',
     'Get Balance' => 'Get Balance',
     'Click "Get Balance" to fetch accounts balance.' => 'Click "Get Balance" to fetch accounts balance.',
@@ -1197,7 +1195,6 @@ return [
     'Total Amount' => 'Total Amount',
     'Payment Method' => 'Payment Method',
     'Due Date' => 'Due Date',
-
     'Paid' => 'Paid',
     'Pending' => 'Pending',
     'Upcoming' => 'Upcoming',
@@ -1226,7 +1223,6 @@ return [
     'Upload Invoice (PDF only)' => 'Upload Invoice (PDF only)',
     'Click to select file' => 'Click to select file',
     'Accepted' => 'Accepted',
-
     'Order accepted successfully!' => 'Order accepted successfully!',
     'Order has been rejected successfully.' => 'Order has been rejected successfully.',
     'Rejection Reason' => 'Rejection Reason',
@@ -1268,7 +1264,6 @@ return [
     'Schedule Payments Created' => 'Schedule Payments Created',
     'This order has been completed.' => 'This order has been completed.',
     'Search product' => 'Search product',
-
     'PAID'     => 'PAID',
     'OVERDUE'  => 'OVERDUE',
     'DUE' => 'DUE',
@@ -1465,7 +1460,6 @@ return [
     'Partial Payment' => 'Partial Payment',
     'Failed' => 'Failed',
     'Create Promise' => 'Create Promise',
-
     'Due' => 'Due',
     'Reset' => 'Reset',
     'Note' => 'Note',
@@ -1574,7 +1568,6 @@ return [
     'Please wait while we send the reminder.' => 'Please wait while we send the reminder.',
     'An unexpected error occurred.' => 'An unexpected error occurred.',
     'FAILED' => 'FAILED',
-
     'Partial Payments' => 'Partial Payments',
     'Approval Status' => 'Approval Status',
     'Paid At' => 'Paid At',
@@ -1671,7 +1664,6 @@ return [
     'Days Past Due (DPD) Buckets' => 'Days Past Due (DPD) Buckets',
     'Vintage Curves - Delinquency Roll Rates' => 'Vintage Curves - Delinquency Roll Rates',
     'Delinquency Rate (%)' => 'Delinquency Rate (%)',
-
     'underwriting SLA' => 'Underwriting SLA',
     'approval SLA' => 'Approval SLA',
     'disbursement SLA' => 'Disbursement SLA',
@@ -1712,7 +1704,6 @@ return [
     'Error' => 'Error',
     'Validation failed or server error' => 'Validation failed or server error',
     'Server error' => 'Server error',
-
     'Internal Server Error' => 'Internal Server Error',
     'Sorry, something went wrong on our end. Please try again later.' => 'Sorry, something went wrong on our end. Please try again later.',
     'Type your reply...' => 'Type your reply...',
@@ -1745,7 +1736,30 @@ return [
     'View Transfer Requests' => 'View Transfer Requests',
     'View Supplier Profile' => 'View Supplier Profile',
     'Login as Partner' => 'Login as Partner',
-
     'Your Reply' => 'Your Reply',
     'Edit Reply' => 'Edit Reply',
+
+    'delivered' => 'delivered',
+    'Get SANAD Detail' => 'Get SANAD Detail',
+    'SANAD Details' => 'SANAD Details',
+    'Loading SANAD details...' => 'Loading SANAD details...',
+    'Download SANAD PDF' => 'Download SANAD PDF',
+    'Unable to load SANAD details.' => 'Unable to load SANAD details.',
+    'Invalid JSON response' => 'Invalid JSON response',
+    'Failed to fetch SANAD details.' => 'Failed to fetch SANAD details.',
+    'Error loading SANAD details.' => 'Error loading SANAD details.',
+    'Error Loading SANAD' => 'Error Loading SANAD',
+    'Something went wrong while fetching SANAD details.' => 'Something went wrong while fetching SANAD details.',
+    'SANAD ID' => 'SANAD ID',
+    'SANAD Number' => 'SANAD Number',
+    'Reference ID' => 'Reference ID',
+    'Due Type' => 'Due Type',
+    'Due Date' => 'Due Date',
+    'Total Value' => 'Total Value',
+    'Status' => 'Status',
+    'Code' => 'Code',
+    'Created At' => 'Created At',
+    'Updated At' => 'Updated At',
+    'Refund Request' => 'Refund Request',
+    'Delivery Otp Sent' => 'Delivery Otp Sent',
 ];

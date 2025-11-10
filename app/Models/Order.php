@@ -110,6 +110,10 @@ class Order extends Model
         return $this->hasMany(SupplierPayout::class, 'order_id');
         // return $this->hasMany(Payment::class, 'order_id');
     }
+    public function payments()
+    {
+        return $this->hasMany(Payment::class, 'order_id');
+    }
 
     public function schedulePayments()
     {

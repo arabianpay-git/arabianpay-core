@@ -1,19 +1,17 @@
 <!DOCTYPE html>
-<html class="h-full" data-theme="true" data-theme-mode="light"
-    dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}"
+<html class="h-full" data-theme="true" data-theme-mode="light" dir="{{ app()->getLocale() === 'ar' ? 'rtl' : 'ltr' }}"
     lang="{{ app()->getLocale() }}">
 
 <head>
-    <title>ArabianPay | Admin Dashboard</title>
+    <title>
+        ArabianPay | Admin Dashboard
+    </title>
     @include('layouts.includes.meta')
     @include('layouts.includes.styles')
-    
-    
 </head>
 
 <body
     class="antialiased flex h-full text-base text-gray-700 [--tw-page-bg:#fefefe] [--tw-page-bg-dark:var(--tw-coal-500)] demo1 sidebar-fixed header-fixed bg-[--tw-page-bg] dark:bg-[--tw-page-bg-dark]">
-    
     <!-- Theme Mode -->
     <script>
         const defaultThemeMode = "light";
@@ -36,11 +34,9 @@
         }
     </script>
     <!-- End of Theme Mode -->
-
     <!-- Page -->
     <div class="flex grow">
         @include('layouts.sidebar')
-
         <!-- Wrapper -->
         <div class="wrapper flex grow flex-col">
             @include('layouts.header')
@@ -53,9 +49,7 @@
     <!-- End of Wrapper -->
 
     @include('layouts.includes.passkey-modal')
-
     <!-- Scripts -->
-
     @include('layouts.includes.scripts')
 </body>
 

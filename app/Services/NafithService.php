@@ -428,7 +428,7 @@ class NafithService
     public function closeSingleSanadGroup(string $sanadGroupId)
     {
         return $this->updateSanadStatus($sanadGroupId, [
-            'status' => 'closed',
+            'status' => 'closed'
         ]);
     }
 
@@ -446,5 +446,133 @@ class NafithService
                 ]
             ]
         ]);
+    }
+
+    /**
+     * Fetch a SANAD record by its SANAD number.
+     */
+    public function getSanadByNumber(string $sanadNumber)
+    {
+        try {
+            $token = $this->getAuthToken();
+            if (!$token) {
+                throw new \Exception('Unable to get authentication token');
+            }
+
+            $timestamp = $this->getTimestamp();
+
+            // API endpoint
+            $endpointPath = '/api/sanad/by-number/' . $sanadNumber . '/';
+            $endpointUrl = $this->baseUrl . $endpointPath;
+
+            // For signature generation, use the same base path
+            $signatureBaseUrl = $this->baseUrl . '/api/sanad/by-number/';
+            $signature = $this->generateSignature('GET', $signatureBaseUrl, $timestamp, [], $sanadNumber);
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json',
+                'X-Nafith-Timestamp' => $timestamp,
+                'X-Nafith-Tracking-Id' => $this->generateTrackingId(),
+                'X-Nafith-Signature' => $signature,
+            ])->get($endpointUrl);
+
+            if ($response->successful()) {
+                return $response->json();
+            }
+
+            Log::error('Nafith Get SANAD by Number Failed', [
+                'status' => $response->status(),
+                'response' => $response->body(),
+                'sanad_number' => $sanadNumber,
+                'signature' => $signature,
+                'timestamp' => $timestamp,
+                'endpoint' => $endpointUrl
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $response->body(),
+                'status_code' => $response->status()
+            ];
+        } catch (\Exception $e) {
+            Log::error('Nafith Get SANAD by Number Exception', [
+                'error' => $e->getMessage(),
+                'sanad_number' => $sanadNumber
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
+    }
+
+    /**
+     * Download SANAD Group by Group ID.
+     */
+    public function downloadSanadGroup(string $sanadGroupId)
+    {
+        try {
+            $token = $this->getAuthToken();
+            if (!$token) {
+                throw new \Exception('Unable to get authentication token');
+            }
+
+            $timestamp = $this->getTimestamp();
+
+            // Actual endpoint for the API call
+            $endpointPath = '/api/sanad-group/download/' . $sanadGroupId . '/';
+            $endpointUrl = $this->baseUrl . $endpointPath;
+
+            // For signature generation, use the same base path without the group ID
+            $signatureBaseUrl = $this->baseUrl . '/api/sanad-group/download/';
+            $signature = $this->generateSignature('GET', $signatureBaseUrl, $timestamp, [], $sanadGroupId);
+
+            $response = Http::withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+                'Content-Type' => 'application/json',
+                'X-Nafith-Timestamp' => $timestamp,
+                'X-Nafith-Tracking-Id' => $this->generateTrackingId(),
+                'X-Nafith-Signature' => $signature,
+            ])->get($endpointUrl);
+
+            if ($response->successful()) {
+                // Nafith might return binary or base64 data (PDF, ZIP, etc.)
+                // Return the raw response or JSON depending on response type
+                $contentType = $response->header('Content-Type');
+
+                if (Str::contains($contentType, ['application/pdf', 'application/zip'])) {
+                    return response($response->body(), 200)->header('Content-Type', $contentType);
+                }
+
+                return $response->json();
+            }
+
+            Log::error('Nafith Download SANAD Group Failed', [
+                'status' => $response->status(),
+                'response' => $response->body(),
+                'group_id' => $sanadGroupId,
+                'signature' => $signature,
+                'timestamp' => $timestamp,
+                'endpoint' => $endpointUrl
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $response->body(),
+                'status_code' => $response->status()
+            ];
+        } catch (\Exception $e) {
+            Log::error('Nafith Download SANAD Group Exception', [
+                'error' => $e->getMessage(),
+                'group_id' => $sanadGroupId
+            ]);
+
+            return [
+                'success' => false,
+                'error' => $e->getMessage()
+            ];
+        }
     }
 }

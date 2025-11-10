@@ -59,35 +59,15 @@ class SchedulePayment extends Model
     {
         return $this->belongsTo(User::class);
     }
-    public function customer()
+
+    public function seller()
     {
-        return $this->hasOne(Customer::class, 'user_id', 'user_id');
+        return $this->belongsTo(User::class, 'seller_id');
     }
-    public function merchant()
-    {
-        return $this->hasOne(Merchant::class, 'user_id', 'seller_id');
-    }
-    public function checkout()
-    {
-        return $this->belongsTo(Checkout::class, 'checkout_id');
-    }
-    public function payment()
-    {
-        return $this->hasOne(Payment::class, 'schedule_payment_id');
-    }
+
     public function order()
     {
-        return $this->belongsTo(Order::class, 'order_id');
-    }
-
-    public function claims()
-    {
-        return $this->hasMany(Claim::class);
-    }
-
-    public function latestClaim()
-    {
-        return $this->hasOne(Claim::class)->latest();
+        return $this->belongsTo(Order::class);
     }
 
     public function partialPayments()

@@ -15,6 +15,8 @@ class Payment extends Model
         'user_id',
         'schedule_payment_id',
         'checkout_id',
+        'seller_id',
+        'order_id',
         'amount',
         'payment_details',
         'invoice_number',
@@ -52,5 +54,14 @@ class Payment extends Model
     public function checkout()
     {
         return $this->belongsTo(Checkout::class, 'checkout_id');
+    }
+    public function seller()
+    {
+        return $this->belongsTo(User::class, 'seller_id');
+    }
+
+    public function order()
+    {
+        return $this->belongsTo(Order::class);
     }
 }

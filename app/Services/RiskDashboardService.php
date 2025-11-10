@@ -1417,8 +1417,7 @@ class RiskDashboardService
                 if ($recentOrders->count() === 0) return false;
 
                 $threshold = $user->avg_order_value + (2.5 * $user->std_order_value);
-                $recentAvg = $recentOrders->map(fn($v) => (float)$v)->avg();
-
+                $recentAvg = $recentOrders->avg();
                 $maxRecent = $recentOrders->max();
 
                 // Multiple anomaly detection criteria

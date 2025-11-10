@@ -298,13 +298,11 @@
                     height: 350
                 },
                 series: [{
-                        name: '{{ translate('
-                        Disbursed ') }}',
+                        name: '{{ translate('Disbursed') }}',
                         data: @json($loanData['disbursement_vs_repayment']['disbursed'])
                     },
                     {
-                        name: '{{ translate('
-                        Repaid ') }}',
+                        name: '{{ translate('Repaid') }}',
                         data: @json($loanData['disbursement_vs_repayment']['repaid'])
                     }
                 ],
@@ -331,7 +329,13 @@
                     horizontalAlign: 'center'
                 },
                 series: @json($loanData['payment_status'] -> pluck('count')),
-                colors: ['#F59E0B', '#10B981', '#3B82F6', '#EF4444'],
+                colors: [
+                    '#10B981', // paid - green
+                    '#F59E0B', // due - amber
+                    '#3B82F6', // pending - blue
+                    '#EF4444', // late - red
+                    '#6B7280' // failed - gray
+                ],
                 labels: @json($loanData['payment_status'] -> pluck('status') -> map(fn($status) => translate($status))),
                 plotOptions: {
                     pie: {
@@ -382,9 +386,7 @@
                         }
                     }
                 },
-                labels: ['{{ translate('
-                    Credit Used ') }}'
-                ]
+                labels: ['{{ translate('Credit Used') }}']
             }).render();
 
             // Revenue Streams
@@ -395,18 +397,15 @@
                     stacked: true
                 },
                 series: [{
-                        name: '{{ translate('
-                        Revenue ') }}',
+                        name: '{{ translate('Revenue') }}',
                         data: @json($financialData['revenue_breakdown']['revenue'])
                     },
                     {
-                        name: '{{ translate('
-                        Shipping ') }}',
+                        name: '{{ translate('Shipping') }}',
                         data: @json($financialData['revenue_breakdown']['shipping'])
                     },
                     {
-                        name: '{{ translate('
-                        Discounts ') }}',
+                        name: '{{ translate('Discounts') }}',
                         data: @json($financialData['revenue_breakdown']['discounts'])
                     }
                 ]
@@ -419,23 +418,19 @@
                     height: 350
                 },
                 series: [{
-                        name: '{{ translate('
-                        Overall Balance ') }}',
+                        name: '{{ translate('Overall Balance') }}',
                         data: @json($financialData['wallet_balances'] -> pluck('balance'))
                     },
                     {
-                        name: '{{ translate('
-                        User Payment ') }}',
+                        name: '{{ translate('User Payment') }}',
                         data: @json($financialData['wallet_balances'] -> pluck('user_payment'))
                     },
                     {
-                        name: '{{ translate('
-                        Loan Disbursment ') }}',
+                        name: '{{ translate('Loan Disbursment') }}',
                         data: @json($financialData['wallet_balances'] -> pluck('loan_disbursment'))
                     },
                     {
-                        name: '{{ translate('
-                        Seller Payment ') }}',
+                        name: '{{ translate('Seller Payment') }}',
                         data: @json($financialData['wallet_balances'] -> pluck('seller_payment'))
                     }
                 ],
@@ -477,8 +472,7 @@
                     height: 350
                 },
                 series: [{
-                    name: '{{ translate('
-                    Avg Days ') }}',
+                    name: '{{ translate('Avg Days') }}',
                     data: @json($operationalData['fulfillment_times']['series'])
                 }],
                 xaxis: {
@@ -511,8 +505,7 @@
                     categories: @json($categorySales -> pluck('name') -> map(fn($name) => $name))
                 },
                 series: [{
-                    name: '{{ translate('
-                    Sales ') }}',
+                    name: '{{ translate('Sales') }}',
                     data: @json($categorySales -> pluck('sales'))
                 }],
                 colors: ['#3B82F6']
@@ -528,8 +521,7 @@
                     categories: @json($categoryStock -> pluck('name') -> map(fn($name) => $name))
                 },
                 series: [{
-                    name: '{{ translate('
-                    Stock ') }}',
+                    name: '{{ translate('Stock') }}',
                     data: @json($categoryStock -> pluck('stock'))
                 }],
                 colors: ['#10B981']
