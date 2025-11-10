@@ -82,7 +82,10 @@ class Customer extends Model
     {
         return $this->hasMany(Order::class, 'user_id', 'user_id');
     }
-
+    public function checkouts()
+    {
+        return $this->hasMany(Checkout::class, 'user_id', 'user_id');
+    }
     public function getTotalOrderAmountAttribute()
     {
         $total = 0;
