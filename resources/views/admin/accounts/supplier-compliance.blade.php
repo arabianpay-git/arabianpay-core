@@ -95,7 +95,7 @@
 
                                 $compliance = array_merge($compliance, $fixedDocuments);
 
-                                if ($merchant->is_manager) {
+                                if ($merchant->user->is_manager) {
                                     $compliance[] = [
                                         'title' => translate('Company Approval Letter for Manager'),
                                         'file' => supplierMedia($merchant->manager_approval),
