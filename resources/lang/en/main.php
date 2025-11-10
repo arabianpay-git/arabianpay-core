@@ -1636,7 +1636,6 @@ return [
     'Login as Partner' => 'Login as Partner',
     'Your Reply' => 'Your Reply',
     'Edit Reply' => 'Edit Reply',
-
     'delivered' => 'delivered',
     'Get SANAD Detail' => 'Get SANAD Detail',
     'SANAD Details' => 'SANAD Details',
@@ -1660,4 +1659,7 @@ return [
     'Updated At' => 'Updated At',
     'Refund Request' => 'Refund Request',
     'Delivery Otp Sent' => 'Delivery Otp Sent',
+
+    'shipped' => 'shipped',
+    'returned' => 'returned',
 ];

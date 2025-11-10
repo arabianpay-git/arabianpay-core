@@ -445,20 +445,14 @@
                         horizontalAlign: 'center'
                     },
                     series: @json($operationalData['order_statuses']->pluck('count')),
-                    colors: ['#F59E0B', '#10B981', '#EF4444', '#3B82F6'],
+                    colors: [
+                        '#10B981', // delivered - green
+                        '#3B82F6', // shipped - blue
+                        '#EF4444', // returned - red
+                        '#F59E0B' // pending - amber
+                    ],
                     labels: @json($operationalData['order_statuses']->pluck('status')->map(fn($status) => translate($status)))
                 }).render();
-
-                // // Risk: Default Rates
-                // new ApexCharts(document.querySelector('#defaultRatesChart'), {
-                // chart: { type: 'bar', height: 350 },
-                // legend: { position: 'bottom', horizontalAlign: 'center'},
-                // series: @json($riskData['default_rates']),
-                // xaxis: {
-                // categories: @json(array_column($riskData['default_rates'], 'name'))
-                // }
-                // }).render();
-
 
                 // Operational: Fulfillment Times
                 new ApexCharts(document.querySelector('#fulfillmentChart'), {
