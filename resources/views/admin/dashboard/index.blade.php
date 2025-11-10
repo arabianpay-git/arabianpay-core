@@ -1,6 +1,7 @@
 @extends('layouts.base')
 
 @section('content')
+
 @push('styles')
 <style>
     /* Make the legend items flow horizontally and center them */
