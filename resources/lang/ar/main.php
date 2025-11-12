@@ -1577,4 +1577,5 @@ return [
     'Confirmed' => 'تم التأكيد',
     'Default Store' => 'المتجر الافتراضي',
     'No Payments' => 'لا توجد مدفوعات',
+    'No transaction information available.' => 'لا تتوفر معلومات المعاملة.',
 ];
