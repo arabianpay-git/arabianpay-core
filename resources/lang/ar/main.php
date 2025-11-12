@@ -1570,4 +1570,11 @@ return [
     'Updated At' => 'تاريخ التحديث',
     'Refund Request' => 'طلب استرداد',
     'Delivery Otp Sent' => 'تم إرسال رمز التحقق للتسليم',
+    'shipped' => 'تم الشحن',
+    'returned' => 'تم الإرجاع',
+    'Orders' => 'الطلبات',
+    'All' => 'الكل',
+    'Confirmed' => 'تم التأكيد',
+    'Default Store' => 'المتجر الافتراضي',
+    'No Payments' => 'لا توجد مدفوعات',
 ];
