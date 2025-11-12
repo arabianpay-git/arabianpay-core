@@ -27,7 +27,7 @@ class NotifyLowStockProducts extends Command
             foreach ($products as $product) {
                 $user = $product->user;
 
-                if (!$user || !$user->email) continue;
+                if (!$user || !$user->email) continue; // false mean user and email exist
 
                 // Check if an alert was already sent
                 $notification = LowStockNotification::firstOrCreate([
