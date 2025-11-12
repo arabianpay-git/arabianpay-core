@@ -24,7 +24,7 @@
                     @endphp
                     <tr>
                         <td class="px-4 py-2 border-b">
-                            <img src="{{ getMediaUrl($item['product']->thumbnail) }}"
+                            <img src="{{ supplierMedia($item['product']->thumbnail) }}"
                                 alt="{{ translate('Product Image') }}" class="w-16 h-16 object-cover">
                         </td>
                         <td class="px-4 py-2 border-b">

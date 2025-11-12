@@ -1661,5 +1661,12 @@ return [
     'Expense Setting Information' => 'معلومات إعداد المصروفات',
     'Update Expense Setting' => 'تحديث إعداد المصروفات',
     'Expense setting updated successfully' => 'تم تحديث إعداد المصروفات بنجاح',
-    'Failed to update expense setting: ' => 'فشل في تحديث إعداد المصروفات: '
+    'Failed to update expense setting: ' => 'فشل في تحديث إعداد المصروفات: ',
+    'shipped' => 'تم الشحن',
+    'returned' => 'تم الإرجاع',
+    'Orders' => 'الطلبات',
+    'All' => 'الكل',
+    'Confirmed' => 'تم التأكيد',
+    'Default Store' => 'المتجر الافتراضي',
+    'No Payments' => 'لا توجد مدفوعات',
 ];

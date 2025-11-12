@@ -10,7 +10,7 @@
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">
-                        {{ $type }} Orders
+                        {{ translate($type) }} {{ translate('Orders') }}
                     </h1>
                 </div>
             </div>
@@ -22,14 +22,14 @@
                 <div class="card card-grid min-w-full">
                     <div class="card-header flex-wrap gap-2">
                         <h3 class="card-title font-medium text-sm">
-                            {{ $type }} Orders
+                            {{ translate($type) }} {{ translate('Orders') }}
                         </h3>
                         <div class="flex flex-wrap gap-2 lg:gap-5">
                             <div class="flex">
                                 <label class="input input-sm">
-                                    <i class="ki-filled ki-magnifier"> </i>
-                                    <input data-datatable-search="#team_crew_table" placeholder="Search users"
-                                        type="text" value="" />
+                                    <i class="ki-filled ki-magnifier"></i>
+                                    <input data-datatable-search="#team_crew_table"
+                                        placeholder="{{ translate('Search users') }}" type="text" value="" />
                                 </label>
                             </div>
                             <div class="flex justify-end">
@@ -54,77 +54,16 @@
                                                 <input class="checkbox checkbox-sm" data-datatable-check="true"
                                                     type="checkbox" id="select-all-checkbox">
                                             </th>
-                                            <th class="w-[60px] text-center">ID</th>
-                                            <th class="text-left">
-                                                <span class="sort asc">
-                                                    <span class="sort-label font-normal text-gray-700">Customer</span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-                                            <th class="text-left">
-                                                <span class="sort asc">
-                                                    <span class="sort-label font-normal text-gray-700">Seller</span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-                                            <th class="text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">Payment Type</span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-                                            <th class="text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">Payment Status</span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-                                            <th class="text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">Grand Total</span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-                                            <th class="text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">Coupon
-                                                        Discount</span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-                                            <th class="text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">Delivery
-                                                        Status</span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-                                            <th class="text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">General Status</span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-                                            <th class="text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">Created At</span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-                                            <th class="">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">
-                                                        Assigned To
-                                                    </span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-                                            <th class="text-center">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">Action</span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
+                                            <th class="text-center">{{ translate('ID') }}</th>
+                                            <th class="text-left">{{ translate('Customer') }}</th>
+                                            <th class="text-left">{{ translate('Seller') }}</th>
+                                            <th class="text-center">{{ translate('Payment Status') }}</th>
+                                            <th class="text-center">{{ translate('Grand Total') }}</th>
+                                            <th class="text-center">{{ translate('Delivery Status') }}</th>
+                                            <th class="text-center">{{ translate('General Status') }}</th>
+                                            <th class="text-center">{{ translate('Created At') }}</th>
+                                            <th>{{ translate('Assigned To') }}</th>
+                                            <th class="text-center">{{ translate('Action') }}</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -137,7 +76,10 @@
                                                 <td class="text-center">{{ $item->id }}</td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        {{ $item->user?->first_name }} {{ $item->user?->last_name }}
+                                                        <a href="{{ route('customerProfile', ['id' => $item->user?->id]) }}"
+                                                            class="underline">
+                                                            {{ $item->user?->first_name }} {{ $item->user?->last_name }}
+                                                        </a>
                                                         <br>
                                                         <small class="text-gray-500">
                                                             — {{ $item->user?->business_name ?? '—' }}
@@ -147,15 +89,17 @@
 
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        {{ $item->seller?->first_name }} {{ $item->seller?->last_name }}
+                                                        <a href="{{ route('supplierProfile', ['id' => $item->seller?->id]) }}"
+                                                            class="underline">
+                                                            {{ $item->seller?->first_name }}
+                                                            {{ $item->seller?->last_name }}
+                                                        </a>
                                                         <br>
                                                         <small class="text-gray-500">
                                                             — {{ $item->seller?->business_name ?? '—' }}
                                                         </small>
                                                     </div>
                                                 </td>
-
-                                                <td class="text-center">{{ $item->payment_type }}</td>
 
                                                 <td class="text-center">
                                                     <div class="flex justify-center align-items-center flex-wrap"
@@ -171,60 +115,63 @@
                                                                     default => 'badge-info',
                                                                 };
                                                             @endphp
-                                                            <span class="badge badge-sm badge-outline {{ $statusClass }}">
-                                                                {{ ucfirst($payment->payment_status) }}
+                                                            <span class="badge badge-sm badge-outline {{ $statusClass }}"
+                                                                style="width: 70px">
+                                                                {{ translate(ucfirst($payment->payment_status)) }}
                                                             </span>
                                                         @empty
-                                                            <span class="badge badge-sm badge-outline badge-secondary">No
-                                                                Payments</span>
+                                                            <span
+                                                                class="badge badge-sm badge-outline badge-secondary">{{ translate('No Payments') }}</span>
                                                         @endforelse
                                                     </div>
                                                 </td>
 
-                                                <td class="text-center">{{ number_format((float) $item->grand_total, 2) }}
-                                                </td>
                                                 <td class="text-center">
-                                                    {{ number_format((float) $item->coupon_discount, 2) }}</td>
+                                                    <span
+                                                        class="icon-saudi_riyal"></span>{{ number_format((float) $item->grand_total, 2) }}
+                                                </td>
+
                                                 <td class="text-center">
                                                     @if ($item->delivery_status == 'delivered')
                                                         <span
-                                                            class="badge badge-sm badge-outline badge-success">{{ ucfirst($item->delivery_status) }}</span>
+                                                            class="badge badge-sm badge-outline badge-success">{{ translate('Delivered') }}</span>
                                                     @elseif($item->delivery_status == 'shipped')
                                                         <span
-                                                            class="badge badge-sm badge-outline badge-warning">{{ ucfirst($item->delivery_status) }}</span>
+                                                            class="badge badge-sm badge-outline badge-warning">{{ translate('Shipped') }}</span>
                                                     @elseif($item->delivery_status == 'pending')
                                                         <span
-                                                            class="badge badge-sm badge-outline badge-primary">{{ ucfirst($item->delivery_status) }}</span>
+                                                            class="badge badge-sm badge-outline badge-primary">{{ translate('Pending') }}</span>
                                                     @else
                                                         <span
-                                                            class="badge badge-sm badge-outline badge-info">{{ ucfirst($item->delivery_status) }}</span>
+                                                            class="badge badge-sm badge-outline badge-info">{{ translate(ucfirst($item->delivery_status)) }}</span>
                                                     @endif
                                                 </td>
+
                                                 <td class="text-center">
                                                     @if ($item->general_status == 'completed')
                                                         <span
-                                                            class="badge badge-sm badge-outline badge-success">{{ ucfirst($item->general_status) }}</span>
+                                                            class="badge badge-sm badge-outline badge-success">{{ translate('Completed') }}</span>
                                                     @elseif($item->general_status == 'Processing')
                                                         <span
-                                                            class="badge badge-sm badge-outline badge-warning">{{ ucfirst($item->general_status) }}</span>
+                                                            class="badge badge-sm badge-outline badge-warning">{{ translate('Processing') }}</span>
                                                     @elseif($item->general_status == 'cancelled')
                                                         <span
-                                                            class="badge badge-sm badge-outline badge-danger">{{ ucfirst($item->general_status) }}</span>
+                                                            class="badge badge-sm badge-outline badge-danger">{{ translate('Cancelled') }}</span>
                                                     @else
                                                         <span
-                                                            class="badge badge-sm badge-outline badge-info">{{ ucfirst($item->general_status) }}</span>
+                                                            class="badge badge-sm badge-outline badge-info">{{ translate(ucfirst($item->general_status)) }}</span>
                                                     @endif
                                                 </td>
+
                                                 <td class="text-center">{{ $item->created_at->format('d M Y') }}</td>
-                                                <td>
-                                                    {{ $item->assigned ? $item->assigned->first_name . ' ' . $item->assigned->last_name : __('--Not Assigned--') }}
+                                                <td>{{ $item->assigned ? $item->assigned->first_name . ' ' . $item->assigned->last_name : translate('--Not Assigned--') }}
                                                 </td>
-                                                <!-- Action buttons -->
+
                                                 <td class="text-center">
                                                     <div class="flex gap-1 justify-center">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"
                                                             href="{{ route('orders.details', ['id' => $item->id]) }}">
-                                                            <i class="ki-filled ki-notepad-edit"> </i>
+                                                            <i class="ki-filled ki-notepad-edit"></i>
                                                         </a>
                                                         <button
                                                             class="btn btn-sm btn-icon btn-clear btn-info transfer-requests-btn"
@@ -239,15 +186,15 @@
                                         @endforeach
                                     </tbody>
                                 </table>
-
                             </div>
-                            <!-- Pagination Footer -->
+
                             @include('layouts.includes.table-pagination', ['paginator' => $orders])
                         </div>
                     </div>
                 </div>
             </div>
         </div>
+
         <!-- End of Container -->
     </main>
     @include('admin.components.transfer-detail')

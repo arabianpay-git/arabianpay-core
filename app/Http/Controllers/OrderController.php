@@ -24,7 +24,6 @@ class OrderController extends Controller
 {
     use OtpSenderTrait;
 
-    /** Show all orders */
     public function orders()
     {
         $orders = $this->getOrdersByStatus();
@@ -32,7 +31,6 @@ class OrderController extends Controller
         return view('admin.orders.index', compact('orders', 'type'));
     }
 
-    /** Show orders by shipping status */
     public function shippingOrder($status)
     {
         $orders = $this->getOrdersByStatus(null, $status);
@@ -40,7 +38,6 @@ class OrderController extends Controller
         return view('admin.orders.index', compact('orders', 'type'));
     }
 
-    /** Status-specific views */
     public function processing()
     {
         return $this->statusView('processing', 'Pending');
@@ -65,12 +62,11 @@ class OrderController extends Controller
         return view('admin.orders.index', compact('orders', 'type'));
     }
 
-    /** Helper: get orders by status */
     private function getOrdersByStatus(?string $status = null, $shippingStatus = null)
     {
         $user = Auth::user();
 
-        $query = Order::with(['user', 'pickupPoint', 'assigned', 'schedulePayments']) // eager load schedulePayments
+        $query = Order::with(['user', 'pickupPoint', 'assigned', 'schedulePayments'])
             ->when($user->user_type !== 'admin', fn($q) => $q->where('assigned_to', $user->id));
 
         if ($status) $query->where('general_status', $status);
@@ -80,7 +76,6 @@ class OrderController extends Controller
         return $query->orderByRaw('assigned_to IS NULL DESC')->paginate(10);
     }
 
-    /** Show single order details */
     public function orderDetails(int $id)
     {
         $user = Auth::user();

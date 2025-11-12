@@ -1761,7 +1761,6 @@ return [
     'Updated At' => 'Updated At',
     'Refund Request' => 'Refund Request',
     'Delivery Otp Sent' => 'Delivery Otp Sent',
-
     'shipped' => 'shipped',
     'returned' => 'returned',
     'Expense Settings' => 'Expense Settings',
@@ -1783,6 +1782,11 @@ return [
     'Expense Setting Information' => 'Expense Setting Information',
     'Update Expense Setting' => 'Update Expense Setting',
      'Expense setting updated successfully' => 'Expense setting updated successfully',
-    'Failed to update expense setting: ' => 'Failed to update expense setting: '
+    'Failed to update expense setting: ' => 'Failed to update expense setting: ',
 
+    'Orders' => 'Orders',
+    'All' => 'All',
+    'Confirmed' => 'Confirmed',
+    'Default Store' => 'Default Store',
+    'No Payments' => 'No Payments',
 ];
