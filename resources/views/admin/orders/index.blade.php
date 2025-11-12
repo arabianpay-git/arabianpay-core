@@ -54,13 +54,11 @@
                                                 <input class="checkbox checkbox-sm" data-datatable-check="true"
                                                     type="checkbox" id="select-all-checkbox">
                                             </th>
-                                            <th class="w-[60px] text-center">{{ translate('ID') }}</th>
+                                            <th class="text-center">{{ translate('ID') }}</th>
                                             <th class="text-left">{{ translate('Customer') }}</th>
                                             <th class="text-left">{{ translate('Seller') }}</th>
-                                            <th class="text-center">{{ translate('Payment Type') }}</th>
                                             <th class="text-center">{{ translate('Payment Status') }}</th>
                                             <th class="text-center">{{ translate('Grand Total') }}</th>
-                                            <th class="text-center">{{ translate('Coupon Discount') }}</th>
                                             <th class="text-center">{{ translate('Delivery Status') }}</th>
                                             <th class="text-center">{{ translate('General Status') }}</th>
                                             <th class="text-center">{{ translate('Created At') }}</th>
@@ -78,7 +76,10 @@
                                                 <td class="text-center">{{ $item->id }}</td>
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        {{ $item->user?->first_name }} {{ $item->user?->last_name }}
+                                                        <a href="{{ route('customerProfile', ['id' => $item->user?->id]) }}"
+                                                            class="underline">
+                                                            {{ $item->user?->first_name }} {{ $item->user?->last_name }}
+                                                        </a>
                                                         <br>
                                                         <small class="text-gray-500">
                                                             — {{ $item->user?->business_name ?? '—' }}
@@ -88,15 +89,17 @@
 
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        {{ $item->seller?->first_name }} {{ $item->seller?->last_name }}
+                                                        <a href="{{ route('supplierProfile', ['id' => $item->seller?->id]) }}"
+                                                            class="underline">
+                                                            {{ $item->seller?->first_name }}
+                                                            {{ $item->seller?->last_name }}
+                                                        </a>
                                                         <br>
                                                         <small class="text-gray-500">
                                                             — {{ $item->seller?->business_name ?? '—' }}
                                                         </small>
                                                     </div>
                                                 </td>
-
-                                                <td class="text-center">{{ $item->payment_type }}</td>
 
                                                 <td class="text-center">
                                                     <div class="flex justify-center align-items-center flex-wrap"
@@ -112,7 +115,8 @@
                                                                     default => 'badge-info',
                                                                 };
                                                             @endphp
-                                                            <span class="badge badge-sm badge-outline {{ $statusClass }}">
+                                                            <span class="badge badge-sm badge-outline {{ $statusClass }}"
+                                                                style="width: 70px">
                                                                 {{ translate(ucfirst($payment->payment_status)) }}
                                                             </span>
                                                         @empty
@@ -122,10 +126,10 @@
                                                     </div>
                                                 </td>
 
-                                                <td class="text-center">{{ number_format((float) $item->grand_total, 2) }}
-                                                </td>
                                                 <td class="text-center">
-                                                    {{ number_format((float) $item->coupon_discount, 2) }}</td>
+                                                    <span
+                                                        class="icon-saudi_riyal"></span>{{ number_format((float) $item->grand_total, 2) }}
+                                                </td>
 
                                                 <td class="text-center">
                                                     @if ($item->delivery_status == 'delivered')
