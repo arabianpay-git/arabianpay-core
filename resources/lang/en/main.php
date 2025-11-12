@@ -1764,4 +1764,25 @@ return [
 
     'shipped' => 'shipped',
     'returned' => 'returned',
+    'Expense Settings' => 'Expense Settings',
+    'Amount Type' => 'Amount Type',
+    'Credit Account' => 'Credit Account',
+    'Unique identifier for this expense setting' => 'Unique identifier for this expense setting',
+    'Create Expense Setting' => 'Create Expense Setting',
+    'Edit Expense Setting' => 'Edit Expense Setting',
+    'Expense Settings List' => 'Expense Settings List',
+    'Enter the amount' => 'Enter the amount',
+    'Enter reference ID' => 'Enter reference ID', 
+    'Select type' => 'Select type',
+    'Select credit account' => 'Select credit account',
+    'Enter description' => 'Enter description',
+    'Manage your expense configurations'=>'Manage your expense configurations',
+    '3rd Party Services Cost'=>'3rd Party Services Cost',
+    'Fixed Amount' => 'Fixed Amount',
+    'Back to List' => 'Back to List',
+    'Expense Setting Information' => 'Expense Setting Information',
+    'Update Expense Setting' => 'Update Expense Setting',
+     'Expense setting updated successfully' => 'Expense setting updated successfully',
+    'Failed to update expense setting: ' => 'Failed to update expense setting: '
+
 ];

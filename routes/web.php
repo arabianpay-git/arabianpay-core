@@ -27,6 +27,7 @@ use App\Http\Controllers\{
     Financial\FinancialAccounts,
     Financial\FinancialTransactions,
     Financial\FinancialDashboardController,
+    Financial\ExpenseSettingController,
     Admin\InvestmentPoolsController,
     InstalmentPlanController,
     MediaController,
@@ -197,6 +198,7 @@ Route::group([
                 Route::get('accounts/{account}/ledger', [FinancialAccounts::class, 'ledger'])->name('accounts.ledger');
                 Route::resource('transactions', FinancialTransactions::class);
                 Route::get('transactions/{id}/modal-data', [FinancialTransactions::class, 'getModalData'])->name('transactions.modal-data');
+                Route::resource('expense-settings', ExpenseSettingController::class);
             });
 
             //
