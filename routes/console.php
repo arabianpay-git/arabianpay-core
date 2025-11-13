@@ -11,6 +11,7 @@ Artisan::command('inspire', function () {
 // Schedule::command('products:notify-low-stock')->dailyAt('09:00')->withoutOverlapping();
 Schedule::command('products:notify-low-stock')->everyMinute()->withoutOverlapping();
 
-Schedule::command('process:scheduled-payments')->everyFiveMinutes()->withoutOverlapping();
+// Schedule::command('process:scheduled-payments')->everyFiveMinutes()->withoutOverlapping();
+Schedule::command('process:scheduled-payments')->everyMinute()->withoutOverlapping();
 
 Schedule::command('send:scheduled-payment-reminders')->dailyAt('08:00')->withoutOverlapping();

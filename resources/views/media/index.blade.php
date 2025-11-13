@@ -66,7 +66,7 @@
                             </div>
 
                             <div class="user-info">
-                                User: **{{ $userName }}**
+                                User: {{ $userName }}
                             </div>
 
                             {{-- New: Open in New Tab Button --}}
@@ -343,7 +343,7 @@
                         <div class="size">${(media.size/1024).toFixed(1)} KB</div>
                     </div>
                     <div class="user-info">
-                        User: **${userName}**
+                        User: ${userName}
                     </div>
                     
                     <a href="${mediaUrl}" target="_blank" class="open-media-btn" title="Open in New Tab">
