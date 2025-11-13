@@ -24,7 +24,7 @@
     </table>
 
     <p>
-        <a href="{{ route('products.edit', ['product' => $product->id ?? null]) }}"
+        <a href="{{ partnerRoute('products.edit', ['product' => $product->id ?? null]) }}"
             style="display:inline-block; padding:10px 20px; background-color:#0d6efd; color:#fff;
                    text-decoration:none; border-radius:5px; font-weight:600;">
             View Product

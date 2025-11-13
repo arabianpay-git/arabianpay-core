@@ -421,3 +421,19 @@ if (!function_exists('getMediaUrl')) {
         return asset($defaultImage);
     }
 }
+
+if (!function_exists('partnerRoute')) {
+    function partnerRoute(string $name, array $parameters = []): string
+    {
+        // Local environment URLs
+        if (app()->environment('local')) {
+            $base = 'https://adminpanel.test';
+        } else {
+            $base = 'https://partners.arabianpay.net';
+        }
+
+        // Generate the route path
+        $path = route($name, $parameters, false); // false => relative URL
+        return rtrim($base, '/') . '/' . ltrim($path, '/');
+    }
+}
