@@ -16,6 +16,8 @@ class Order extends Model
         'assigned_to',
         'user_id',
         'seller_id',
+        'uuid',
+        'checkout_id',
         'pickup_point_id',
         'product_details',
         'shipping_first_name',
@@ -33,6 +35,8 @@ class Order extends Model
         'payment_status',
         'payment_details',
         'grand_total',
+         'commission_amount',
+        'commission_percent',
         'coupon_discount',
         'code',
         'tracking',
@@ -87,7 +91,10 @@ class Order extends Model
     {
         return $this->belongsTo(User::class, 'seller_id');
     }
-
+    public function checkout()
+    {
+        return $this->belongsTo(Checkout::class, 'checkout_id');
+    }
     public function pickupPoint()
     {
         return $this->belongsTo(PickupPoint::class);
@@ -98,6 +105,11 @@ class Order extends Model
         return $this->hasMany(Transaction::class, 'order_id');
     }
 
+    public function payouts()
+    {
+        return $this->hasMany(SupplierPayout::class, 'order_id');
+        // return $this->hasMany(Payment::class, 'order_id');
+    }
     public function payments()
     {
         return $this->hasMany(Payment::class, 'order_id');

@@ -24,6 +24,11 @@ use App\Http\Controllers\{
     EmployeeController,
     FahmanController,
     FirebaseController,
+    Financial\FinancialAccounts,
+    Financial\FinancialTransactions,
+    Financial\FinancialDashboardController,
+    Financial\ExpenseSettingController,
+    Admin\InvestmentPoolsController,
     InstalmentPlanController,
     MediaController,
     MerchantUpdateController,
@@ -60,6 +65,7 @@ use App\Http\Controllers\{
     TransferRequestController,
     UserRoleController,
 };
+use App\Http\Controllers\Admin\PayoutPortalController;
 use App\Http\Middleware\{
     CheckAdmin,
     EnsureOtpVerified,
@@ -179,6 +185,63 @@ Route::group([
                 'supplier_roles'    => SupplierRoleController::class,
 
             ]);
+
+            //
+            // Financial Management Routes
+            //
+            Route::prefix('financial')->name('financial.')->group(function () {
+                Route::get('/', [FinancialDashboardController::class, 'index'])->name('dashboard');
+                Route::get('/dashboard/chart-data', [FinancialDashboardController::class, 'getChartDataJson'])->name('dashboard.chart-data');
+                Route::get('/trial-balance', [FinancialDashboardController::class, 'trialBalance'])->name('trial-balance');
+                Route::get('/trial-balance/export', [FinancialDashboardController::class, 'exportTrialBalance'])->name('trial-balance.export');
+                Route::resource('accounts', FinancialAccounts::class);
+                Route::get('accounts/{account}/ledger', [FinancialAccounts::class, 'ledger'])->name('accounts.ledger');
+                Route::resource('transactions', FinancialTransactions::class);
+                Route::get('transactions/{id}/modal-data', [FinancialTransactions::class, 'getModalData'])->name('transactions.modal-data');
+                Route::resource('expense-settings', ExpenseSettingController::class);
+            });
+
+            //
+            // Investment Pools Routes
+            //
+            Route::prefix('investment-pools')->name('investment-pools.')->group(function () {
+                Route::get('/calendar', [InvestmentPoolsController::class, 'calendar'])->name('calendar');
+                Route::get('/calendar-events', [InvestmentPoolsController::class, 'calendarEvents'])->name('calendar-events');
+                Route::post('/', [InvestmentPoolsController::class, 'store'])->name('store');
+                Route::get('/{pool}', [InvestmentPoolsController::class, 'show'])->name('show');
+                Route::put('/{pool}', [InvestmentPoolsController::class, 'update'])->name('update');
+                Route::delete('/{pool}', [InvestmentPoolsController::class, 'destroy'])->name('destroy');
+            });
+
+            //
+            // Claims Routes
+            //
+            Route::prefix('claims')->name('claims.')->controller(\App\Http\Controllers\Admin\ClaimsController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{claim}', 'show')->name('show');
+                Route::post('/{claim}/attempt', 'updateAttempt')->name('attempt');
+                Route::post('/{claim}/resolve', 'resolve')->name('resolve');
+                Route::post('/{claim}/escalate', 'escalate')->name('escalate');
+                Route::get('/schedule-payment/{schedulePayment}', 'forSchedulePayment')->name('schedule-payment');
+                Route::get('/schedule-payment/{schedulePayment}/details', 'showSchedulePayment')->name('schedule-payment.details');
+            });
+
+            //
+            // Checkout Routes  
+            //
+            Route::prefix('checkouts')->name('checkouts.')->controller(\App\Http\Controllers\Admin\CheckoutController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/create', 'create')->name('create');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{checkout}', 'show')->name('show');
+                Route::get('/{checkout}/edit', 'edit')->name('edit');
+                Route::put('/{checkout}', 'update')->name('update');
+                Route::delete('/{checkout}', 'destroy')->name('destroy');
+                Route::get('/{checkout}/summary', 'summary')->name('summary');
+                Route::get('/{checkout}/timeline', 'timeline')->name('timeline');
+            });
 
             // Branch Routes
             Route::prefix('branches')->name('branches.')->controller(BranchController::class)->group(function () {
@@ -378,6 +441,9 @@ Route::group([
                 Route::get('shipping-orders',           'shippingOrders')->name('shippingOrders');
                 Route::get('shipping-order/{status}',   'shippingOrder')->name('shippingOrder');
 
+                // Modal data endpoint for AJAX
+                Route::get('{id}/modal-data', 'getModalData')->name('orders.modal-data');
+
                 Route::get('/details/{id}',         'orderDetails')->name('orders.details');
                 Route::put('/orders/{id}/status', 'updateStatus')->name('order.updateStatus');
                 Route::get('/orders/{order}/shipping-label', 'downloadShippingLabel')->name('order.downloadShippingLabel');
@@ -450,6 +516,20 @@ Route::group([
             Route::controller(SchedulePaymentController::class)->prefix('schedule-payments')->group(function () {
                 Route::get('/',               'index')->name('schedulePayments');
                 Route::get('{status}',        'filterByPaymentStatus')->name('schedulePayment');
+                Route::get('{schedulePayment}/details', 'show')->name('schedulePayments.details');
+                Route::get('{schedulePayment}/payment-json', 'paymentJson')->name('schedulePayments.payment.json');
+            });
+
+            //
+            // Supplier Payouts Portal
+            //
+            Route::prefix('payouts')->name('payouts.')->controller(PayoutPortalController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::post('/', 'store')->name('store');
+                Route::post('/{payout}/complete', 'markCompleted')->name('complete');
+                Route::post('/{payout}/fail', 'markFailed')->name('fail');
+                Route::get('/status-by-order/{order}', 'statusByOrder')->name('status-by-order');
+                Route::get('/{payout}/details-modal-data', 'detailsModalData')->name('details-modal-data');
             });
 
             //

@@ -40,6 +40,71 @@ class SchedulePaymentController extends Controller
         return view('admin.schedule-payment.index', compact('schedulePayments', 'type'));
     }
 
+    public function show(SchedulePayment $schedulePayment)
+    {
+        $schedulePayment->load([
+            'assigned',
+            'user',
+            'customer',
+            'checkout.orders',
+            'payment',
+            'claims',
+        ]);
+
+        return view('admin.schedule-payment.show', compact('schedulePayment'));
+    }
+
+    public function paymentJson(SchedulePayment $schedulePayment)
+    {
+        $schedulePayment->load(['payment', 'user', 'checkout', 'claims']);
+
+        $payment = $schedulePayment->payment;
+
+        $data = [
+            'schedule' => [
+                'id' => $schedulePayment->id,
+                'uuid' => $schedulePayment->uuid,
+                'instalment_number' => $schedulePayment->instalment_number,
+                'due_date' => optional($schedulePayment->due_date)->toDateString(),
+                'instalment_amount' => $schedulePayment->instalment_amount,
+                'late_fee' => $schedulePayment->late_fee,
+                'status' => $schedulePayment->payment_status,
+                'is_late' => (bool)$schedulePayment->is_late,
+                'late_days' => $schedulePayment->late_days,
+            ],
+            'checkout' => $schedulePayment->checkout ? [
+                'id' => $schedulePayment->checkout->id,
+                'total_amount' => $schedulePayment->checkout->total_amount,
+            ] : null,
+            'user' => $schedulePayment->user ? [
+                'id' => $schedulePayment->user->id,
+                'name' => $schedulePayment->user->name,
+                'email' => $schedulePayment->user->email,
+            ] : null,
+            'payment' => $payment ? [
+                'id' => $payment->id,
+                'amount' => $payment->amount,
+                'status' => $payment->status ?? 'paid',
+                'method' => $payment->method ?? null,
+                'reference' => $payment->reference ?? null,
+                'created_at' => optional($payment->created_at)->toDateTimeString(),
+            ] : null,
+            'claims' => $schedulePayment->claims->map(function ($claim) {
+                return [
+                    'id' => $claim->id,
+                    'claim_type' => $claim->claim_type,
+                    'claim_status' => $claim->claim_status,
+                    'priority' => $claim->priority,
+                    'attempt_count' => $claim->attempt_count,
+                    'next_follow_up' => optional($claim->next_follow_up)->toDateTimeString(),
+                    'notes' => $claim->notes,
+                    'created_at' => optional($claim->created_at)->toDateTimeString(),
+                ];
+            })->values()->all(),
+        ];
+
+        return response()->json(['success' => true, 'data' => $data]);
+    }
     public function update(Request $request, $id)
     {
         $payment = SchedulePayment::findOrFail($id);

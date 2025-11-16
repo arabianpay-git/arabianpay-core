@@ -100,4 +100,13 @@ class Merchant extends Model
     {
         return $this->hasOne(\App\Models\Approval::class, 'user_id', 'user_id');
     }
+
+    public function schedulePayments()
+    {
+        return $this->hasMany(\App\Models\SchedulePayment::class, 'seller_id', 'user_id');
+    }
+    public function checkouts()
+    {
+        return $this->hasMany(\App\Models\Checkout::class, 'seller_id', 'id');
+    }
 }
