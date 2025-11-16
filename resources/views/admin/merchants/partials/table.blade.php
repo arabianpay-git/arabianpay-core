@@ -14,7 +14,7 @@
         <tbody id="merchant-body" class="divide-y divide-gray-200">
             @forelse ($users as $index => $user)
                 <tr class="hover:bg-gray-50 transition">
-                    <td class="px-4 py-3">{{ $users->id }}</td>
+                    <td class="px-4 py-3">{{ $user->id }}</td>
                     <td class="px-4 py-3">{{ $user->first_name }}</td>
                     <td class="px-4 py-3">{{ $user->last_name }}</td>
                     <td class="px-4 py-3">{{ $user->business_name }}</td>
