@@ -38,4 +38,12 @@ return [
     'google_translate' => [
         'key' => env('GOOGLE_TRANSLATE_API_KEY'),
     ],
+
+    'clickpay' => [
+        'profile_id' => env('CLICKPAY_PROFILE_ID'),
+        'server_key' => env('CLICKPAY_SERVER_KEY'),
+        'base_url'   => env('CLICKPAY_BASE_URL', 'https://secure.clickpay.com.sa'),
+        'currency'   => env('CLICKPAY_CURRENCY', 'SAR'),
+    ],
+
 ];

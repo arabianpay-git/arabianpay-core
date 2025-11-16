@@ -68,7 +68,7 @@
     }
 
     .media-info {
-        padding: 8px 10px;
+        padding: 8px 6px 0px 6px;
         font-size: 14px;
     }
 
