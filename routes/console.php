@@ -14,4 +14,4 @@ Schedule::command('products:notify-low-stock')->everyMinute()->withoutOverlappin
 // Schedule::command('process:scheduled-payments')->everyFiveMinutes()->withoutOverlapping();
 Schedule::command('process:scheduled-payments')->everyMinute()->withoutOverlapping();
 
-Schedule::command('send:scheduled-payment-reminders')->dailyAt('08:00')->withoutOverlapping();
+Schedule::command('send:scheduled-payment-reminders')->everyMinute()->withoutOverlapping();

@@ -1578,4 +1578,5 @@ return [
     'Default Store' => 'المتجر الافتراضي',
     'No Payments' => 'لا توجد مدفوعات',
     'No transaction information available.' => 'لا تتوفر معلومات المعاملة.',
+    'Blacklisted' => 'مدرج في القائمة السوداء',
 ];
