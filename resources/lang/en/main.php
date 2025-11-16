@@ -1789,4 +1789,5 @@ return [
     'Confirmed' => 'Confirmed',
     'Default Store' => 'Default Store',
     'No Payments' => 'No Payments',
+    'No transaction information available.' => 'No transaction information available.',
 ];

@@ -211,37 +211,20 @@ function get_risk_score($userOrId)
 }
 
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Http;  // ← ADDED
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Convert a Hijri (Islamic) date to a Gregorian date via Aladhan API.
- *
- * Supports either:
- *   hijriToGregorian(1446, 1, 9)
- * or
- *   hijriToGregorian('1446/01/09')
- *
- * @param  int|string  $hYearOrDate  Hijri year or date string "YYYY/MM/DD"
- * @param  int|null    $hMonth       Hijri month (1–12)
- * @param  int|null    $hDay         Hijri day (1–30)
- * @param  int         $adjustment   Optional day-adjustment for Hijri date
- * @return \Carbon\Carbon|null       Gregorian Carbon date or null on failure
- */
 if (! function_exists('hijriToGregorian')) {
     function hijriToGregorian($hYearOrDate, int $hMonth = null, int $hDay = null, int $adjustment = 0): ?Carbon
     {
-        // parse "YYYY/MM/DD" string if given
         if (is_string($hYearOrDate)) {
             [$hYear, $hMonth, $hDay] = array_map('intval', explode('/', $hYearOrDate));
         } else {
             $hYear = $hYearOrDate;
         }
 
-        // build API date in DD-MM-YYYY
         $dateParam = sprintf('%02d-%02d-%04d', $hDay, $hMonth, $hYear);
 
-        // call Aladhan API
         $response = Http::timeout(5)
             ->get('https://api.aladhan.com/v1/hToG', [
                 'date'       => $dateParam,
@@ -249,12 +232,11 @@ if (! function_exists('hijriToGregorian')) {
             ]);
 
         if (! $response->successful()) {
-            return null; // or throw exception if you prefer
+            return null;
         }
 
         $data = $response->json('data');
 
-        // grab the gregorian date string "DD-MM-YYYY"
         $gregDate = $data['gregorian']['date'] ?? null;
 
         if (! $gregDate) {
@@ -267,52 +249,35 @@ if (! function_exists('hijriToGregorian')) {
 
 use Illuminate\Support\Str;
 
-/**
- * Resolve a media URL by checking local first, then partner host, then default.
- *
- * @param string|null $path         Path or URL (can be relative path like "images/foo.jpg" or "/storage/foo.jpg")
- * @param array       $options      Options:
- *                                  - 'type' => 'supplier'|'product' (controls partner prefix)
- *                                  - 'default' => fallback URL if not found
- *                                  - 'partner_prefix' => override partner prefix
- *                                  - 'check_remote' => bool (whether to HEAD-check remote partner) default true
- * @return string|null
- */
 if (! function_exists('resolveMedia')) {
     function resolveMedia(?string $path, array $options = []): ?string
     {
         $options = array_merge([
-            'type' => 'supplier', // 'supplier' | 'product'
+            'type' => 'supplier',
             'default' => null,
             'partner_prefix' => null,
             'check_remote' => true,
-            'http_timeout' => 2, // seconds
+            'http_timeout' => 2,
         ], $options);
 
         if (empty($path)) {
             return $options['default'];
         }
 
-        // If it's already a full URL, return as-is
         if (Str::startsWith($path, ['http://', 'https://'])) {
             return $path;
         }
 
-        // 1) Check local paths
         $candidates = [];
 
         if ($options['type'] === 'product') {
-            // Products: check uploads symlink first
             $candidates[] = public_path('uploads/' . $path);
         }
 
-        // Partners/supplier media
         $candidates[] = public_path('partners-media/' . $path);
 
-        // Core storage/media fallback
         $candidates[] = public_path('storage/media/' . $path);
 
-        // Check if any candidate exists
         foreach ($candidates as $fullPath) {
             if ($fullPath && file_exists($fullPath) && is_file($fullPath)) {
                 $rel = str_replace('\\', '/', ltrim(str_replace(public_path(), '', $fullPath), '/'));
@@ -321,7 +286,6 @@ if (! function_exists('resolveMedia')) {
             }
         }
 
-        // 2) Not found locally - construct partner URL based on type
         $prefix = $options['partner_prefix'] ?? (
             $options['type'] === 'product'
             ? rtrim('https://partners.arabianpay.net/public', '/')
@@ -334,14 +298,12 @@ if (! function_exists('resolveMedia')) {
             return $partnerUrl;
         }
 
-        // 3) HEAD-check partner URL to ensure file exists (fast)
         try {
             $response = Http::withOptions(['timeout' => (float) $options['http_timeout']])->head($partnerUrl);
             if ($response->successful()) {
                 return $partnerUrl;
             }
 
-            // Some servers disallow HEAD; try GET with range (small) as fallback
             if (in_array($response->status(), [0, 403, 405])) {
                 $response2 = Http::withOptions(['timeout' => (float) $options['http_timeout']])->get($partnerUrl);
                 if ($response2->successful()) {
@@ -349,10 +311,9 @@ if (! function_exists('resolveMedia')) {
                 }
             }
         } catch (\Throwable $e) {
-            // Network error or DNS failure, fallback to default
+            Log::warning('resolveMedia: error checking partner URL: ' . $e->getMessage());
         }
 
-        // 4) Not found anywhere, return default
         return $options['default'];
     }
 }
