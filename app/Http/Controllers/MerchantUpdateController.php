@@ -31,7 +31,8 @@ class MerchantUpdateController extends Controller
             return str_contains(strtolower($user->first_name ?? ''), $q)
                 || str_contains(strtolower($user->last_name ?? ''), $q)
                 || str_contains(strtolower($user->business_name ?? ''), $q)
-                || str_contains(strtolower($user->email ?? ''), $q);
+                || str_contains(strtolower($user->email ?? ''), $q)
+                || str_contains(strtolower($user->phone_number ?? ''), $q);
         });
 
         // 💡 Change: Use pagination on the filtered collection.
