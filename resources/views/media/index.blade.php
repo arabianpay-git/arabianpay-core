@@ -43,11 +43,14 @@
                                 ? ($item->user->business_name ?:
                                 $item->user->first_name . ' ' . $item->user->last_name)
                                 : 'Unknown User';
+                            $sizeKB = number_format($item->size / 1024, 1) . ' KB';
                         @endphp
 
                         <div class="media-card" data-id="{{ $item->id }}" data-url="{{ $mediaUrl }}"
                             data-file-name="{{ $item->file_name }}" data-name="{{ $item->name }}"
-                            data-size="{{ $item->size }}" data-mime="{{ $item->mime_type }}">
+                            data-size="{{ $item->size }}" data-mime="{{ $item->mime_type }}"
+                            data-full-name="{{ $item->name }}" data-user-name="{{ $userName }}"
+                            data-formatted-size="{{ $sizeKB }}">
 
                             {{-- Media Thumbnail --}}
                             @if ($isVideo)
@@ -57,12 +60,13 @@
                                 <img src="{{ asset('assets/media/images/default-pdf.png') }}" class="media-thumb"
                                     alt="PDF file">
                             @else
-                                <img src="{{ $mediaUrl }}" class="media-thumb" loading="lazy" alt="{{ $item->name }}">
+                                <img src="{{ $mediaUrl }}" class="media-thumb" loading="lazy"
+                                    alt="{{ $item->name }}">
                             @endif
 
                             <div class="media-info">
                                 <div class="name">{{ $item->name }}</div>
-                                <div class="size">{{ number_format($item->size / 1024, 1) }} KB</div>
+                                <div class="size">{{ $sizeKB }}</div>
                             </div>
 
                             <div class="user-info">
@@ -91,6 +95,10 @@
 
             </div>
         </div>
+
+        {{-- Tooltip Container --}}
+        <div id="mediaTooltip" class="media-tooltip d-none"></div>
+
     </main>
 @endsection
 
@@ -107,7 +115,7 @@
             position: relative;
             border: 1px solid #e5e7eb;
             border-radius: 0.5rem;
-            padding: 0.75rem;
+            padding: 2px;
             background: white;
             transition: all 0.2s ease-in-out;
             cursor: pointer;
@@ -135,11 +143,9 @@
             object-fit: contain;
             border-radius: 0.375rem;
             background: #f9fafb;
-            margin-bottom: 0.75rem;
         }
 
         .media-info {
-            flex: 1;
             min-height: 3rem;
         }
 
@@ -164,7 +170,8 @@
             font-weight: 400;
             color: #4b5563;
             /* Darker for better visibility */
-            margin-top: 0.5rem;
+            /* margin-top: 0.5rem; */
+            padding-left: 6px;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
@@ -198,7 +205,7 @@
         /* New styles for the Open in New Tab button */
         .open-media-btn {
             position: absolute;
-            bottom: 0.5rem;
+            bottom: 0.95rem;
             right: 0.5rem;
             color: #4f46e5;
             /* Indigo color for the icon */
@@ -217,6 +224,62 @@
             color: #3730a3;
             transform: scale(1.1);
         }
+
+        /* --- Updated Tooltip Styles --- */
+        .media-tooltip {
+            position: absolute;
+            z-index: 999;
+            /* Dark, semi-transparent background */
+            background-color: rgba(30, 41, 59, 0.95);
+            color: #e5e7eb;
+            /* Light gray text */
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            font-size: 0.85rem;
+            max-width: 300px;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.2s ease-out, transform 0.2s ease-out;
+            transform: translateY(5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.2), 0 4px 6px -4px rgba(0, 0, 0, 0.15);
+            line-height: 1.4;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .media-tooltip.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .media-tooltip .tooltip-item {
+            display: flex;
+            margin-bottom: 0.4rem;
+        }
+
+        .media-tooltip .tooltip-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .media-tooltip .label {
+            font-weight: 400;
+            color: #9ca3af;
+            /* Muted label color */
+            margin-right: 0.5rem;
+            flex-shrink: 0;
+            /* Prevent label from shrinking */
+            min-width: 60px;
+        }
+
+        .media-tooltip .value {
+            font-weight: 500;
+            color: #ffffff;
+            word-break: break-word;
+            /* Allow long filenames to wrap */
+        }
+
+        /* --- End Tooltip Styles --- */
+
 
         /* ... Drag and drop styles remain the same ... */
         body.dragging::before {
@@ -294,7 +357,8 @@
                 $mediaGrid = $('#mediaGrid'),
                 $loadMoreBtn = $('#loadMoreBtn'),
                 $loadMoreSpinner = $('#loadMoreSpinner'),
-                $loadMoreEnd = $('#loadMoreEnd');
+                $loadMoreEnd = $('#loadMoreEnd'),
+                $mediaTooltip = $('#mediaTooltip'); // Tooltip element
 
             let selected = [],
                 offset = parseInt({{ count($media) ?? 0 }}, 10) || 0,
@@ -310,12 +374,20 @@
                 $loadMoreEnd.removeClass('d-none');
             }
 
+            // Function to format bytes to KB
+            function formatBytesToKB(bytes) {
+                return (bytes / 1024).toFixed(1) + ' KB';
+            }
+
             function renderCard(media) {
                 const mediaUrl = `/storage/media/${media.file_name}`; // Assuming this is correct
                 const isVideo = media.mime_type && media.mime_type.startsWith('video');
                 const isPdf = media.mime_type === 'application/pdf';
-                const userName = media.user ? (media.user.business_name || media.user.name) :
-                    'Unknown User'; // Use business_name or name
+                // Lazyload response for user object is simple
+                const userName = media.user ? (media.user.business_name || (media.user.first_name + ' ' + media.user
+                        .last_name)) :
+                    'Unknown User';
+                const formattedSize = formatBytesToKB(media.size);
                 let thumbHtml = '';
 
                 if (isVideo) {
@@ -336,11 +408,14 @@
                     data-url="${mediaUrl}"
                     data-name="${media.name}"
                     data-size="${media.size}"
-                    data-mime="${media.mime_type}">
+                    data-mime="${media.mime_type}"
+                    data-full-name="${media.name}"
+                    data-user-name="${userName}"
+                    data-formatted-size="${formattedSize}">
                     ${thumbHtml}
                     <div class="media-info">
                         <div class="name">${media.name}</div>
-                        <div class="size">${(media.size/1024).toFixed(1)} KB</div>
+                        <div class="size">${formattedSize}</div>
                     </div>
                     <div class="user-info">
                         User: ${userName}
@@ -596,6 +671,61 @@
             }
 
             setupDragAndDrop();
+
+            // --- Tooltip functionality ---
+
+            // Hide tooltip when mouse leaves the grid
+            $mediaGrid.on('mouseleave', function() {
+                $mediaTooltip.removeClass('show').addClass('d-none');
+            });
+
+            // Show tooltip when mouse hovers over a media card
+            $mediaGrid.on('mouseenter', '.media-card', function(e) {
+                const $card = $(this);
+                const name = $card.data('fullName');
+                const user = $card.data('userName');
+                const size = $card.data('formattedSize');
+
+                const content = `
+                    <div class="tooltip-item"><span class="label">File Name:</span> <span class="value">${name}</span></div>
+                    <div class="tooltip-item"><span class="label">User:</span> <span class="value">${user}</span></div>
+                    <div class="tooltip-item"><span class="label">Size:</span> <span class="value">${size}</span></div>
+                `;
+
+                $mediaTooltip.html(content);
+                $mediaTooltip.removeClass('d-none');
+
+                // Update position on mousemove
+                $mediaGrid.on('mousemove.tooltip', '.media-card', function(e) {
+                    let top = e.pageY + 10;
+                    let left = e.pageX + 10;
+
+                    // Check if tooltip goes off the right edge of the viewport
+                    if (left + $mediaTooltip.outerWidth() > $(window).width() - 10) {
+                        left = e.pageX - $mediaTooltip.outerWidth() - 10;
+                    }
+
+                    // Check if tooltip goes off the bottom edge of the viewport
+                    if (top + $mediaTooltip.outerHeight() > $(window).height() + $(window)
+                        .scrollTop() - 10) {
+                        top = e.pageY - $mediaTooltip.outerHeight() - 10;
+                    }
+
+                    $mediaTooltip.css({
+                        top: top,
+                        left: left
+                    });
+                    $mediaTooltip.addClass('show'); // Show with transition
+                });
+            });
+
+            // Hide tooltip when mouse leaves a media card
+            $mediaGrid.on('mouseleave', '.media-card', function() {
+                $mediaGrid.off('mousemove.tooltip');
+                $mediaTooltip.removeClass('show').addClass('d-none');
+            });
+
+            // --- End Tooltip functionality ---
         });
     </script>
 @endpush

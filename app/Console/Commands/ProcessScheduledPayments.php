@@ -67,7 +67,6 @@ class ProcessScheduledPayments extends Command
                         continue;
                     }
 
-                    // --- IDEMPOTENCY CHECK (no schedule_payment_id column required) ---
                     // Unique prefix to identify payments for this schedule
                     $cartIdentifierPrefix = "schedule_{$fresh->id}_";
 
@@ -153,7 +152,6 @@ class ProcessScheduledPayments extends Command
                     if (isset($result['success']) && $result['success'] === true) {
                         $resp = $result['response'];
 
-                        // store Payment WITHOUT schedule_payment_id column
                         $payment = Payment::create([
                             'user_id' => $fresh->user_id,
                             'seller_id' => $fresh->seller_id,
