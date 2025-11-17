@@ -1367,33 +1367,33 @@ class RiskDashboardService
         $thirtyDaysAgo = $today->copy()->subDays(30);
         $sevenDaysAgo = $today->copy()->subDays(7);
 
-        // 1. Geo Velocity Alerts - Sophisticated location analysis
+        // 1. Geo Velocity Alerts
         $geoVelocityAlerts = DB::table('orders')
             ->join('users', 'orders.user_id', '=', 'users.id')
             ->whereBetween('orders.created_at', [$sevenDaysAgo, $today])
             ->select(
                 'users.id',
-                'users.business_name', // <-- use business_name instead of name
+                'users.business_name',
                 DB::raw('COUNT(DISTINCT orders.shipping_city) as distinct_cities'),
                 DB::raw('COUNT(*) as order_count'),
                 DB::raw('MAX(orders.created_at) as latest_order'),
                 DB::raw('MIN(orders.created_at) as earliest_order')
             )
             ->whereNotNull('orders.shipping_city')
-            ->groupBy('users.id', 'users.business_name') // <-- group by business_name
+            ->groupBy('users.id', 'users.business_name')
             ->having('distinct_cities', '>', 1)
             ->having('order_count', '>=', 2)
             ->get()
             ->filter(function ($user) {
                 $timeSpan = Carbon::parse($user->earliest_order)
                     ->diffInHours(Carbon::parse($user->latest_order));
-                $citiesPerDay = $user->distinct_cities / max(1, $timeSpan / 24);
 
-                return $citiesPerDay > 0.5; // More than 1 city every 2 days
+                $citiesPerDay = $user->distinct_cities / max(1, $timeSpan / 24);
+                return $citiesPerDay > 0.5;
             })
             ->count();
 
-        // 2. Transaction Pattern Alerts - Advanced anomaly detection
+        // 2. Transaction Pattern Alerts
         $transactionPatternAlerts = DB::table('orders')
             ->join('users', 'orders.user_id', '=', 'users.id')
             ->whereBetween('orders.created_at', [$thirtyDaysAgo, $today])
@@ -1408,29 +1408,35 @@ class RiskDashboardService
             ->having('total_orders', '>=', 3)
             ->get()
             ->filter(function ($user) use ($sevenDaysAgo) {
-                if ($user->std_order_value === null) return false;
+
+                // ensure numeric types
+                $avg = (float) ($user->avg_order_value ?? 0);
+                $std = (float) ($user->std_order_value ?? 0);
+
+                if ($std === 0) return false; // no variation → no anomaly check
 
                 $recentOrders = Order::where('user_id', $user->id)
                     ->where('created_at', '>=', $sevenDaysAgo)
-                    ->pluck('grand_total');
+                    ->pluck('grand_total')
+                    ->map(fn($v) => (float) $v);
 
                 if ($recentOrders->count() === 0) return false;
 
-                $threshold = $user->avg_order_value + (2.5 * $user->std_order_value);
                 $recentAvg = (float) $recentOrders->avg();
                 $maxRecent = (float) $recentOrders->max();
 
-                // Multiple anomaly detection criteria
+                $threshold = $avg + (2.5 * $std);
+
                 $anomalies = 0;
                 if ($maxRecent > $threshold) $anomalies++;
-                if ($recentAvg > ($user->avg_order_value * 1.5)) $anomalies++;
-                if ($recentOrders->count() > ($user->total_orders / 4)) $anomalies++; // Unusual frequency
+                if ($recentAvg > ($avg * 1.5)) $anomalies++;
+                if ($recentOrders->count() > ($user->total_orders / 4)) $anomalies++;
 
                 return $anomalies >= 2;
             })
             ->count();
 
-        // 3. Behavioral Alerts - Payment behavior degradation
+        // 3. Behavioral Alerts
         $behavioralAlerts = DB::table('schedule_payments')
             ->join('users', 'schedule_payments.user_id', '=', 'users.id')
             ->whereBetween('schedule_payments.due_date', [$thirtyDaysAgo, $today])
@@ -1446,10 +1452,11 @@ class RiskDashboardService
             ->having('total_payments', '>=', 3)
             ->get()
             ->filter(function ($user) {
-                $currentOnTimeRate = $user->total_payments > 0 ?
-                    ($user->on_time_payments / $user->total_payments) * 100 : 100;
 
-                // Get historical performance for comparison
+                $currentOnTimeRate = $user->total_payments > 0
+                    ? ($user->on_time_payments / $user->total_payments) * 100
+                    : 100;
+
                 $historicalPayments = SchedulePayment::where('user_id', $user->id)
                     ->where('due_date', '<', Carbon::now()->subDays(30))
                     ->select(
@@ -1458,17 +1465,17 @@ class RiskDashboardService
                     )
                     ->first();
 
-                $historicalOnTimeRate = $historicalPayments->historical_total > 0 ?
-                    ($historicalPayments->historical_on_time / $historicalPayments->historical_total) * 100 : 100;
+                $historicalOnTimeRate = $historicalPayments->historical_total > 0
+                    ? ($historicalPayments->historical_on_time / $historicalPayments->historical_total) * 100
+                    : 100;
 
-                // Alert if significant degradation in payment behavior
                 return $historicalOnTimeRate - $currentOnTimeRate > 20 ||
                     $currentOnTimeRate < 60 ||
                     $user->avg_days_late > 15;
             })
             ->count();
 
-        // 4. High Risk Alerts - Comprehensive risk scoring
+        // 4. High Risk Alerts
         $highRiskAlerts = Merchant::where('status', 'active')
             ->join('users', 'merchants.id', '=', 'users.id')
             ->with(['businessType', 'schedulePayments' => function ($q) use ($thirtyDaysAgo) {
@@ -1477,11 +1484,12 @@ class RiskDashboardService
             ->select('merchants.*', 'users.business_name', 'users.email')
             ->get()
             ->filter(function ($merchant) {
+
                 $riskFactors = [];
                 $totalScore = 0;
 
-                // 1. Credit Utilization (max 30 points)
-                $utilization = $merchant->credit_limit_utilization ?? 0;
+                // 1. Utilization
+                $utilization = (float) ($merchant->credit_limit_utilization ?? 0);
                 if ($utilization > 90) {
                     $riskFactors[] = 'Very High Utilization';
                     $totalScore += 30;
@@ -1492,22 +1500,22 @@ class RiskDashboardService
                     $totalScore += 10;
                 }
 
-                // 2. Payment History (max 25 points)
+                // 2. Payment History
                 $latePayments = $merchant->schedulePayments->where('late_days', '>', 0)->count();
                 $totalPayments = $merchant->schedulePayments->count();
 
                 if ($totalPayments > 0) {
-                    $latePaymentRate = ($latePayments / $totalPayments) * 100;
-                    if ($latePaymentRate > 50) {
+                    $lateRate = ($latePayments / $totalPayments) * 100;
+                    if ($lateRate > 50) {
                         $riskFactors[] = 'Poor Payment History';
                         $totalScore += 25;
-                    } elseif ($latePaymentRate > 25) {
+                    } elseif ($lateRate > 25) {
                         $riskFactors[] = 'Concerning Payment Pattern';
                         $totalScore += 15;
                     }
                 }
 
-                // 3. Business Activity (max 20 points)
+                // 3. Business Activity
                 $recentOrders = Order::where('user_id', $merchant->id)
                     ->where('created_at', '>=', Carbon::now()->subDays(30))
                     ->count();
@@ -1520,15 +1528,12 @@ class RiskDashboardService
                     $totalScore += 15;
                 }
 
-                // 4. Business Type Risk (max 15 points)
+                // 4. Business Type
                 $businessRisk = strtolower($merchant->businessType->risk_level ?? 'medium');
-                if ($businessRisk === 'very high') {
-                    $totalScore += 15;
-                } elseif ($businessRisk === 'high') {
-                    $totalScore += 10;
-                }
+                if ($businessRisk === 'very high') $totalScore += 15;
+                elseif ($businessRisk === 'high') $totalScore += 10;
 
-                // 5. Order Value Concentration (max 10 points)
+                // 5. Order Value Concentration
                 $orderStats = Order::where('user_id', $merchant->id)
                     ->where('created_at', '>=', Carbon::now()->subDays(30))
                     ->select(
@@ -1537,7 +1542,10 @@ class RiskDashboardService
                     )
                     ->first();
 
-                if ($orderStats->std_value && $orderStats->std_value < ($orderStats->avg_value * 0.1)) {
+                $avgValue = (float) ($orderStats->avg_value ?? 0);
+                $stdValue = (float) ($orderStats->std_value ?? 0);
+
+                if ($stdValue > 0 && $stdValue < ($avgValue * 0.1)) {
                     $riskFactors[] = 'Concentrated Order Values';
                     $totalScore += 10;
                 }
@@ -1547,10 +1555,10 @@ class RiskDashboardService
             ->count();
 
         return [
-            'geo_velocity' => $geoVelocityAlerts,
+            'geo_velocity'       => $geoVelocityAlerts,
             'transaction_pattern' => $transactionPatternAlerts,
-            'behavioral' => $behavioralAlerts,
-            'high_risk' => $highRiskAlerts
+            'behavioral'         => $behavioralAlerts,
+            'high_risk'          => $highRiskAlerts
         ];
     }
 
