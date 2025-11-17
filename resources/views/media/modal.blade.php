@@ -80,7 +80,7 @@
                         </div>
 
                         <div class="overlay-check absolute top-2 right-2 bg-primary text-white rounded-full p-1 hidden">
-                            <i class="fas fa-check text-sm"></i>
+                            <i class="ki-filled ki-check-circle text-sm"></i>
                         </div>
                     </div>
                 @endforeach

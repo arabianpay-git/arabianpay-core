@@ -364,4 +364,10 @@
     .btn[title]:hover::before {
         opacity: 1;
     }
+
+    .overlay-check i {
+        display: flex;
+        justify-content: center;
+        line-height: 1.2;
+    }
 </style>

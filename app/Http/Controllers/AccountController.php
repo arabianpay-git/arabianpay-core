@@ -130,9 +130,11 @@ class AccountController extends Controller
         dd('Remaning');
     }
 
-    public function customerSimah()
+    public function customerSimah($id)
     {
-        dd('Remaning');
+        $customer = Customer::with('user')->where('user_id', $id)->firstOrFail();
+
+        return view('admin.accounts.customer-simah', compact('customer'));
     }
 
     public function customerProfile($id, CreditAssessmentService $creditService, RiskAnalyticsService $riskService)

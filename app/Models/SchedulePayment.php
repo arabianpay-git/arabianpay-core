@@ -32,6 +32,7 @@ class SchedulePayment extends Model
         'is_late',
         'late_days',
         'payment_status',
+        'failure_reason',
         'receipt',
         'payment_method',
     ];

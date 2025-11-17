@@ -274,7 +274,7 @@
                             <div class="name">${media.name}</div>
                             <div class="size">${(media.size / 1024).toFixed(1)} KB</div>
                         </div>
-                        <div class="overlay-check"><i class="fas fa-check"></i></div>
+                        <div class="overlay-check"><i class="ki-filled ki-check-circle"></i></div>
                     </div>
                 `);
                         });
