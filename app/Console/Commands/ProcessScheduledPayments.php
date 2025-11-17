@@ -84,29 +84,21 @@ class ProcessScheduledPayments extends Command
                         continue;
                     }
 
-                    // Get last successful token
+                    // Fetch first successful payment for same user_id + order_id
                     $savedPayment = Payment::where('user_id', $fresh->user_id)
+                        ->where('order_id', $fresh->order_id)
                         ->where('payment_status', 'paid')
-                        ->orderBy('created_at', 'desc')
-                        ->get()
-                        ->first(function ($p) {
-                            try {
-                                $details = is_array($p->payment_details) ? $p->payment_details : json_decode($p->payment_details, true);
-                                return (!empty($details['raw']['token']) || !empty($details['token']));
-                            } catch (\Throwable $e) {
-                                return false;
-                            }
-                        });
+                        ->orderBy('created_at', 'asc')
+                        ->first();
 
                     if (! $savedPayment) {
-                        $reason = 'No stored payment token found for this user.';
+                        $reason = 'No stored payment token found for this order.';
                         $fresh->payment_status = 'failed';
                         $fresh->failure_reason = $reason;
                         $fresh->save();
                         DB::commit();
 
                         $this->sendEmailSafe($fresh, 'failed', $reason);
-
                         $this->warn("Schedule #{$fresh->id} failed (no token).");
                         continue;
                     }
@@ -122,7 +114,6 @@ class ProcessScheduledPayments extends Command
                         DB::commit();
 
                         $this->sendEmailSafe($fresh, 'failed', $reason);
-
                         $this->warn("Schedule #{$fresh->id} failed (token missing).");
                         continue;
                     }
@@ -179,9 +170,7 @@ class ProcessScheduledPayments extends Command
                         }
 
                         DB::commit();
-
                         $this->sendEmailSafe($fresh, 'success', $payment);
-
                         $this->info("Schedule #{$fresh->id} paid, txn: {$payment->txn_code}");
                         continue;
                     } else {
@@ -215,7 +204,6 @@ class ProcessScheduledPayments extends Command
                         }
 
                         $this->sendEmailSafe($fresh, 'failed', $fresh->failure_reason);
-
                         $this->warn("Schedule #{$fresh->id} charge failed: " . substr($fresh->failure_reason, 0, 200));
                         continue;
                     }
@@ -236,9 +224,6 @@ class ProcessScheduledPayments extends Command
         return 0;
     }
 
-    /**
-     * Safe email sender (won't fail payment if email fails)
-     */
     protected function sendEmailSafe(SchedulePayment $schedule, string $type, $payload = null)
     {
         try {
