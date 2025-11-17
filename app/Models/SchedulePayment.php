@@ -69,7 +69,10 @@ class SchedulePayment extends Model
     {
         return $this->belongsTo(Order::class);
     }
-
+    public function payment()
+    {
+        return $this->hasOne(Payment::class, 'schedule_payment_id');
+    }
     public function partialPayments()
     {
         return $this->hasMany(PartialPayment::class, 'schedule_payment_id');
