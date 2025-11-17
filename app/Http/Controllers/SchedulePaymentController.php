@@ -148,7 +148,7 @@ class SchedulePaymentController extends Controller
         $deductedAmount = $payment->deducted_amount ?? 0;
 
         // Prevent double payment if already fully paid
-        if ($deductedAmount >= $payment->installment_amount) {
+        if ($deductedAmount >= $payment->instalment_amount) {
             return response()->json([
                 'success' => false,
                 'message' => 'This schedule payment is already fully paid.',
@@ -156,7 +156,7 @@ class SchedulePaymentController extends Controller
         }
 
         // Calculate remaining amount
-        $remainingAmount = $payment->installment_amount - $deductedAmount;
+        $remainingAmount = $payment->instalment_amount - $deductedAmount;
 
         try {
             $payment->payment_method = $request->payment_method;
