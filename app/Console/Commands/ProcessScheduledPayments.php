@@ -145,6 +145,7 @@ class ProcessScheduledPayments extends Command
                             'user_id' => $fresh->user_id,
                             'seller_id' => $fresh->seller_id,
                             'order_id' => $fresh->order_id,
+                            'schedule_payment_id' => $fresh->id,
                             'amount' => $fresh->instalment_amount,
                             'payment_details' => is_array($resp) ? json_encode($resp) : (is_string($resp) ? $resp : json_encode($resp)),
                             'invoice_number' => 'INV-' . strtoupper(Str::random(6)) . '-' . $cartId,
