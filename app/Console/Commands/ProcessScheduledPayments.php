@@ -33,7 +33,7 @@ class ProcessScheduledPayments extends Command
         $lockKey = 'process_scheduled_payments_lock';
         $lock = Cache::lock($lockKey, 600);
 
-        if (! $lock->get()) {
+        if (!$lock->get()) {
             $this->info('Another process is running. Exiting.');
             return 0;
         }
@@ -59,7 +59,7 @@ class ProcessScheduledPayments extends Command
                 try {
                     $fresh = SchedulePayment::where('id', $schedule->id)->lockForUpdate()->first();
 
-                    if (! in_array($fresh->payment_status, ['pending', 'due', 'late'])) {
+                    if (!in_array($fresh->payment_status, ['pending', 'due', 'late'])) {
                         DB::commit();
                         $this->line("Skipping #{$fresh->id} status {$fresh->payment_status}");
                         continue;
@@ -67,7 +67,7 @@ class ProcessScheduledPayments extends Command
 
                     $cartIdentifierPrefix = "schedule_{$fresh->id}_";
 
-                    // Prevent duplicate payment for same schedule today
+                    // Prevent duplicate payment for SAME schedule today
                     $existingPayment = Payment::where('order_id', $fresh->order_id)
                         ->where('amount', $fresh->instalment_amount)
                         ->where(function ($q) use ($cartIdentifierPrefix) {
@@ -79,45 +79,54 @@ class ProcessScheduledPayments extends Command
 
                     if ($existingPayment) {
                         DB::commit();
-                        $this->line("Skipping #{$fresh->id} - payment already recorded for today (idempotency).");
+                        $this->line("Skipping #{$fresh->id} - payment already recorded for today.");
                         continue;
                     }
 
-                    // Fetch first successful payment for same user_id + order_id
+                    // Fetch first successful payment for same order + user
                     $savedPayment = Payment::where('user_id', $fresh->user_id)
                         ->where('order_id', $fresh->order_id)
                         ->where('payment_status', 'paid')
                         ->orderBy('created_at', 'asc')
                         ->first();
 
-                    if (! $savedPayment) {
+                    if (!$savedPayment) {
                         $reason = 'No stored payment token found for this order.';
+
+                        // 🔥 UPDATED — Mark schedule as failed
                         $fresh->payment_status = 'failed';
                         $fresh->failure_reason = $reason;
                         $fresh->save();
-                        DB::commit();
 
+                        DB::commit();
                         $this->sendEmailSafe($fresh, 'failed', $reason);
+
                         $this->warn("Schedule #{$fresh->id} failed (no token).");
                         continue;
                     }
 
-                    $pd = is_array($savedPayment->payment_details) ? $savedPayment->payment_details : json_decode($savedPayment->payment_details, true);
+                    $pd = is_array($savedPayment->payment_details)
+                        ? $savedPayment->payment_details
+                        : json_decode($savedPayment->payment_details, true);
+
                     $token = $pd['raw']['token'] ?? $pd['token'] ?? null;
 
-                    if (! $token) {
+                    if (!$token) {
                         $reason = 'Token missing in saved payment details.';
+
+                        // 🔥 UPDATED — Mark schedule as failed
                         $fresh->payment_status = 'failed';
                         $fresh->failure_reason = $reason;
                         $fresh->save();
-                        DB::commit();
 
+                        DB::commit();
                         $this->sendEmailSafe($fresh, 'failed', $reason);
+
                         $this->warn("Schedule #{$fresh->id} failed (token missing).");
                         continue;
                     }
 
-                    // Prepare payload
+                    // Prepare charge payload
                     $cartId = $cartIdentifierPrefix . time();
                     $customer = [
                         'name' => trim(optional($fresh->user)->first_name . ' ' . optional($fresh->user)->last_name),
@@ -128,38 +137,38 @@ class ProcessScheduledPayments extends Command
                     $payload = [
                         'token' => $token,
                         'cart_id' => $cartId,
-                        'cart_amount' => (float) $fresh->instalment_amount,
+                        'cart_amount' => (float)$fresh->instalment_amount,
                         'cart_description' => "Scheduled instalment #{$fresh->instalment_number} for order {$fresh->order_id}",
                         'customer_details' => $customer,
                     ];
 
-                    $this->info("Attempting charge for schedule #{$fresh->id} amount {$payload['cart_amount']}");
+                    $this->info("Attempting charge for schedule #{$fresh->id}");
 
                     $result = $this->clickpay->chargeWithToken($payload);
                     $resp = $result['response'] ?? [];
                     $success = $result['success'] ?? false;
 
-                    // Determine payment status
                     $paymentStatus = $success ? 'paid' : 'failed';
+
                     $txnCode = $success
                         ? (data_get($resp, 'raw.transactionReference') ?? data_get($resp, 'tran_ref'))
-                        : (data_get($resp, 'tran_ref') ?? null);
+                        : (data_get($resp, 'tran_ref'));
 
-                    // Create payment record regardless of success or decline
+                    // 🔥 UPDATED — Always create Payment (success OR failed)
                     $payment = Payment::create([
                         'user_id' => $fresh->user_id,
                         'seller_id' => $fresh->seller_id,
                         'order_id' => $fresh->order_id,
                         'schedule_payment_id' => $fresh->id,
                         'amount' => $fresh->instalment_amount,
-                        'payment_details' => is_array($resp) ? json_encode($resp) : (is_string($resp) ? $resp : json_encode($resp)),
+                        'payment_details' => json_encode($resp), // store full declined/approved response
                         'invoice_number' => 'INV-' . strtoupper(Str::random(6)) . '-' . $cartId,
                         'txn_code' => $txnCode,
                         'payment_status' => $paymentStatus,
                     ]);
 
                     if ($success) {
-                        // Update schedule
+                        // SUCCESS
                         $fresh->payment_status = 'paid';
                         $fresh->receipt = $payment->txn_code;
                         $fresh->deducted_amount = $fresh->instalment_amount;
@@ -168,7 +177,6 @@ class ProcessScheduledPayments extends Command
                         $fresh->failure_reason = null;
                         $fresh->save();
 
-                        // Update transaction
                         $transaction = Transaction::where('order_id', $fresh->order_id)->first();
                         if ($transaction) {
                             $transaction->collected = ($transaction->collected ?? 0) + $fresh->instalment_amount;
@@ -178,17 +186,23 @@ class ProcessScheduledPayments extends Command
 
                         DB::commit();
                         $this->sendEmailSafe($fresh, 'success', $payment);
-                        $this->info("Schedule #{$fresh->id} paid, txn: {$payment->txn_code}");
+
+                        $this->info("Schedule #{$fresh->id} paid successfully");
                     } else {
-                        // Payment declined
+                        // 🔥 DECLINED PAYMENT
+                        $declineMessage = $resp['payment_result']['response_message'] ?? 'Unknown decline reason';
+
+                        // 🔥 UPDATED — mark schedule as FAILED
                         $fresh->payment_status = 'failed';
-                        $fresh->failure_reason = "Declined by ClickPay: " . ($resp['payment_result']['response_message'] ?? 'Unknown error');
+                        $fresh->failure_reason = "Declined by ClickPay: " . $declineMessage;
                         $fresh->save();
 
+                        // 🔥 UPDATED — mark future payments as due
                         SchedulePayment::where('order_id', $fresh->order_id)
                             ->where('due_date', '>', $fresh->due_date)
                             ->update(['payment_status' => 'due']);
 
+                        // UPDATE transaction
                         $transaction = Transaction::where('order_id', $fresh->order_id)->first();
                         if ($transaction) {
                             $transaction->payment_status = 'late';
@@ -197,16 +211,20 @@ class ProcessScheduledPayments extends Command
 
                         DB::commit();
                         $this->sendEmailSafe($fresh, 'failed', $fresh->failure_reason);
-                        $this->warn("Schedule #{$fresh->id} charge declined: " . substr($fresh->failure_reason, 0, 200));
+
+                        $this->warn("Schedule #{$fresh->id} declined");
                     }
                 } catch (\Throwable $e) {
                     DB::rollBack();
+
                     $reason = "Unexpected error: " . $e->getMessage();
-                    Log::error("Error processing schedule #{$schedule->id}: " . $e->getMessage(), ['schedule_id' => $schedule->id]);
+                    Log::error("Error schedule #{$schedule->id}: " . $e->getMessage());
+
                     $fresh->payment_status = 'failed';
                     $fresh->failure_reason = $reason;
                     $fresh->save();
-                    $this->error("Error processing schedule #{$schedule->id}: " . $reason);
+
+                    $this->error("Error schedule #{$schedule->id}: " . $reason);
                 }
             }
         } finally {
@@ -219,7 +237,7 @@ class ProcessScheduledPayments extends Command
     protected function sendEmailSafe(SchedulePayment $schedule, string $type, $payload = null)
     {
         try {
-            if (! $schedule->user || ! filter_var($schedule->user->email ?? null, FILTER_VALIDATE_EMAIL)) {
+            if (!$schedule->user || !filter_var($schedule->user->email ?? null, FILTER_VALIDATE_EMAIL)) {
                 return;
             }
 
@@ -229,8 +247,8 @@ class ProcessScheduledPayments extends Command
                 Mail::to($schedule->user->email)->send(new PaymentFailedMail($schedule->user, $schedule, $payload));
             }
         } catch (\Throwable $e) {
-            Log::error("Email not sent for schedule #{$schedule->id} ({$type}): " . $e->getMessage());
-            $schedule->failure_reason = ($schedule->failure_reason ?? '') . "\nEmail not sent ({$type}): " . $e->getMessage();
+            Log::error("Email not sent for schedule #{$schedule->id}: " . $e->getMessage());
+            $schedule->failure_reason = ($schedule->failure_reason ?? '') . "\nEmail not sent: " . $e->getMessage();
             $schedule->save();
         }
     }

@@ -1706,4 +1706,5 @@ return [
     'Fetch New Report' => 'جلب تقرير جديد',
     'View Saved Report' => 'عرض التقرير المحفوظ',
     'Source' => 'المصدر',
+    'Loading saved SIMAH data...' => 'جارٍ تحميل بيانات سيمه المحفوظة...',
 ];

@@ -1819,4 +1819,5 @@ return [
     'View Saved Report' => 'View Saved Report',
     'SAVED' => 'SAVED',
     'Source' => 'Source',
+    'Loading saved SIMAH data...' => 'Loading saved SIMAH data...',
 ];

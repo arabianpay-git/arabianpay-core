@@ -145,7 +145,7 @@ class SimahService
             'basicInfo' => [
                 'enquiryTypeId' => $data['enquiryTypeId'] ?? 15,
                 'idIssuerID' => $data['idIssuerID'] ?? 'MC',
-                'amount' => $data['amount'] ?? 10.99,
+                'amount' => $data['amount'] ?? 999999999999.99,
                 'cityId' => $data['cityId'] ?? 1,
                 'productId' => $data['productId'] ?? 139,
                 'creditInstrumentId' => $data['creditInstrumentId'] ?? 1,
