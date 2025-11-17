@@ -54,6 +54,7 @@ use App\Http\Controllers\{
     RolePermissionController,
     SanadController,
     SchedulePaymentController,
+    SimahController,
     SingleViewController,
     StateController,
     StaticsController,
@@ -313,6 +314,12 @@ Route::group([
 
                 Route::get('nafath', 'nafath')->name('nafath');
             });
+
+            //
+            // SIMAH routes
+            //
+            Route::post('admin/accounts/customer-simah/fetch', [SimahController::class, 'fetchCustomerSimah'])
+                ->name('customer.simah.fetch');
 
             //
             // Single View

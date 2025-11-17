@@ -42,7 +42,10 @@
                     <span class="text-red-500 text-sm mt-1 block" id="error_receipt"></span>
                 </div>
 
-                <button type="submit" class="btn btn-primary mt-4">{{ translate('Submit Payment') }}</button>
+                <button type="submit" class="btn btn-primary mt-4" id="pay-now-submit">
+                    <span class="pay-now-text">{{ translate('Submit Payment') }}</span>
+                    <span class="pay-now-spinner hidden loader ml-2"></span>
+                </button>
             </form>
         </div>
     </div>
@@ -53,6 +56,9 @@
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             const modal = document.getElementById('pay_now_modal');
+            const submitBtn = modal.querySelector('#pay-now-submit');
+            const submitText = submitBtn.querySelector('.pay-now-text');
+            const submitSpinner = submitBtn.querySelector('.pay-now-spinner');
 
             // Populate schedule_id and amount when opening
             document.querySelectorAll('[data-modal-toggle="#pay_now_modal"]').forEach(btn => {
@@ -102,6 +108,13 @@
             form.addEventListener('submit', function(e) {
                 e.preventDefault();
 
+                // Disable button and show spinner
+                submitBtn.disabled = true;
+                submitText.classList.add('opacity-50');
+                submitSpinner.classList.remove('hidden');
+                submitSpinner.innerHTML =
+                    `<svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"></path></svg>`;
+
                 const formData = new FormData(this);
                 const hiddenFile = modal._payNowFileInput;
                 if (hiddenFile && hiddenFile.files[0]) {
@@ -134,7 +147,6 @@
 
                         if (!res.ok) {
                             if (res.status === 422 && data.errors) {
-                                // Combine all validation errors into one message
                                 let errorMessage = Object.values(data.errors).flat().join('\n');
                                 throw new Error(errorMessage);
                             } else {
@@ -176,6 +188,13 @@
                             title: '{{ translate('Validation Error') }}',
                             text: err.message
                         });
+                    })
+                    .finally(() => {
+                        // Re-enable button and hide spinner
+                        submitBtn.disabled = false;
+                        submitText.classList.remove('opacity-50');
+                        submitSpinner.classList.add('hidden');
+                        submitSpinner.innerHTML = '';
                     });
             });
         });

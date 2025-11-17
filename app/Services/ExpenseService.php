@@ -1,6 +1,7 @@
-<?php 
+<?php
 // app/Services/ExpenseService.php
 namespace App\Services;
+
 use App\Models\ExpenseSetting;
 use App\Models\FAccounts;
 use App\Models\FEntry;
@@ -10,9 +11,9 @@ use Illuminate\Support\Facades\DB;
 
 
 class ExpenseService
-{ 
+{
     // Create financial double entry transaction for an expense
-    public function createExpenseTransaction($expenseReferenceId,User $user)
+    public function createExpenseTransaction($expenseReferenceId, User $user)
     {
         // Retrieve expense setting
         $expenseSetting = ExpenseSetting::where('refrence_id', $expenseReferenceId)->with('creditAccount')->first();
@@ -38,7 +39,7 @@ class ExpenseService
                 'transaction_id' => $transaction->id,
                 'user_id' => $user->id,
                 'account_id' => $expenseSetting->creditAccount->id,
-                'account_name' => $expenseSetting->creditAccount->name, 
+                'account_name' => $expenseSetting->creditAccount->name,
                 'debit' => 0,
                 'credit' => $amount,
                 'entry_date' => now(),
@@ -46,7 +47,7 @@ class ExpenseService
             ]);
 
             // Create debit entry (Expense Account)
-            $expensAccount = FAccounts::where('id',5000)->first();
+            $expensAccount = FAccounts::where('id', 5000)->first();
             FEntry::create([
                 'transaction_id' => $transaction->id,
                 'user_id' => $user->id,
@@ -65,7 +66,4 @@ class ExpenseService
             throw $e;
         }
     }
-    
 }
-
-?>

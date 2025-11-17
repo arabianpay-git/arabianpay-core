@@ -144,16 +144,19 @@ class SchedulePaymentController extends Controller
 
         $payment = SchedulePayment::findOrFail($request->schedule_id);
 
-        // Calculate remaining amount
-        $remainingAmount = $payment->installment_amount - $payment->deducted_amount;
+        // Safely handle null deducted_amount
+        $deductedAmount = $payment->deducted_amount ?? 0;
 
-        // Prevent double payment
-        if ($remainingAmount <= 0) {
+        // Prevent double payment if already fully paid
+        if ($deductedAmount >= $payment->instalment_amount) {
             return response()->json([
                 'success' => false,
                 'message' => 'This schedule payment is already fully paid.',
             ], 400);
         }
+
+        // Calculate remaining amount
+        $remainingAmount = $payment->instalment_amount - $deductedAmount;
 
         try {
             $payment->payment_method = $request->payment_method;

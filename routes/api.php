@@ -1,6 +1,7 @@
 <?php
 
 use App\Services\NafithService;
+use App\Services\SimahService;
 use App\Services\SingleViewService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -479,4 +480,37 @@ Route::prefix('nafith')->group(function () {
             ], 500);
         }
     });
+});
+
+Route::get('/test-silver-report', function () {
+    ini_set('max_execution_time', 300);
+    try {
+        $simahService = app(SimahService::class);
+
+        // Dummy data for testing
+        $data = [
+            'idNumber'    => '7035087050',
+            'nationality' => 196,
+            'familyName'  => 'ABC',
+            'firstName'   => 'ABB',
+            'secondName'  => 'BBC',
+            'thirdName'   => 'CCD',
+            'expiryDate'  => '30/10/2040',
+            'gender'      => 1,
+            'dateOfBirth' => '30/11/1970',
+            'memberRefNo' => 'rRQgsi47pLDnWi_JKElEGWAwBY887',
+        ];
+
+        $result = $simahService->getSilverReport($data);
+
+        return response()->json([
+            'success' => true,
+            'data' => $result
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error' => $e->getMessage()
+        ], 500);
+    }
 });

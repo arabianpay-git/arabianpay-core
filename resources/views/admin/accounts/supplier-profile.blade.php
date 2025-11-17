@@ -574,8 +574,7 @@
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->registration_number_form) }}"
-                                                        target="_blank"
-                                                        class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
+                                                        target="_blank" class="underline">
                                                         {{ translate('Registration Form') }}
                                                     </a>
                                                     <span class="text-xs text-gray-700">
@@ -600,8 +599,7 @@
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->vat_register_file) }}"
-                                                        target="_blank"
-                                                        class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
+                                                        target="_blank" class="underline">
                                                         {{ translate('VAT Register File') }}
                                                     </a>
                                                     <span class="text-xs text-gray-700">
@@ -626,8 +624,7 @@
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->return_policy_file) }}"
-                                                        target="_blank"
-                                                        class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
+                                                        target="_blank" class="underline">
                                                         {{ translate('Return Policy File') }}
                                                     </a>
                                                     <span class="text-xs text-gray-700">
@@ -654,8 +651,7 @@
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->exchange_policy_file) }}"
-                                                        target="_blank"
-                                                        class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
+                                                        target="_blank" class="underline">
                                                         {{ translate('Exchange Policy File') }}
                                                     </a>
                                                     <span class="text-xs text-gray-700">
@@ -679,8 +675,7 @@
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->cancel_policy_file) }}"
-                                                        target="_blank"
-                                                        class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
+                                                        target="_blank" class="underline">
                                                         {{ translate('Cancel Policy File') }}
                                                     </a>
                                                     <span class="text-xs text-gray-700">
@@ -704,8 +699,7 @@
 
                                                 <div class="flex flex-col">
                                                     <a href="{{ supplierMedia($merchant->owner_iqama_image) }}"
-                                                        target="_blank"
-                                                        class="text-sm font-medium text-gray-900 cursor-pointer hover:text-primary mb-px">
+                                                        target="_blank" class="underline">
                                                         {{ translate('Owner ID') }}
                                                     </a>
                                                     <span class="text-xs text-gray-700">
@@ -752,8 +746,7 @@
 
                                                                 <div class="flex flex-col">
                                                                     <a href="{{ supplierMedia($bank->iban_certificate) }}"
-                                                                        target="_blank"
-                                                                        class="text-sm font-medium text-gray-900 dark:text-white cursor-pointer hover:text-primary mb-px">
+                                                                        target="_blank" class="underline">
                                                                         {{ translate('IBAN Certificate') }}
                                                                     </a>
                                                                     <span class="text-xs text-gray-700 dark:text-gray-300">

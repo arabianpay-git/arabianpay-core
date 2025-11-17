@@ -78,7 +78,7 @@
                                 <i class="ki-filled ki-paper-plane"></i>
                             </a>
 
-                            <div class="overlay-check"><i class="fas fa-check"></i></div>
+                            <div class="overlay-check"><i class="ki-filled ki-check-circle"></i></div>
                         </div>
                     @endforeach
                 </div>
@@ -425,7 +425,7 @@
                         <i class="ki-filled ki-paper-plane"></i>
                     </a>
                     
-                    <div class="overlay-check"><i class="fas fa-check"></i></div>
+                    <div class="overlay-check"><i class="ki-filled ki-check-circle"></i></div>
                 </div>`;
             }
 

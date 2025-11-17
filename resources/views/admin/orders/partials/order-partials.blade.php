@@ -13,9 +13,11 @@
 
 @foreach ($partialPayments as $partial)
     @php
-        $installmentNumber = $scheduleNumbers[$partial->schedule_payment_id] + 1 ?? 1;
-        $detailsText = optional($partial->details)['text'] ?? null;
+        $installmentNumber = ($scheduleNumbers[$partial->schedule_payment_id] ?? -1) + 1;
+
+        $detailsText = data_get($partial, 'details.text');
     @endphp
+
 
     <div class="sp-card promise" id="partial-{{ $partial->id }}">
         <div class="sp-ribbon">
