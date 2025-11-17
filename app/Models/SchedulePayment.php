@@ -83,7 +83,10 @@ class SchedulePayment extends Model
     {
         return $this->hasOne(Promise::class, 'schedule_payment_id');
     }
-
+    public function claims()
+    {
+        return $this->hasMany(Claim::class, 'schedule_payment_id');
+    }
     /**
      * Payment status distribution.
      */
