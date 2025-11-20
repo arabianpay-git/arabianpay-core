@@ -9,6 +9,7 @@ use App\Models\SchedulePayment;
 use App\Models\ShopSetting;
 use App\Models\OrderActionLog;
 use App\Models\Sanad;
+use App\Services\FirebaseService;
 use App\Services\NafithService;
 use App\Traits\OtpSenderTrait;
 use Barryvdh\DomPDF\Facade\Pdf;
@@ -218,6 +219,31 @@ class OrderController extends Controller
                 compact('oldDeliveryStatus', 'newDeliveryStatus', 'oldGeneralStatus', 'newGeneralStatus')
             );
 
+            // ====== Send Firebase Notification ======
+            $firebaseService = app(FirebaseService::class);
+
+            $notificationTitle = "Order #{$order->id} Status Updated";
+            $notificationBody = "Your order status has been updated. ";
+            if ($oldDeliveryStatus !== $newDeliveryStatus) {
+                $notificationBody .= "Delivery status: {$newDeliveryStatus}. ";
+            }
+            if ($oldGeneralStatus !== $newGeneralStatus) {
+                $notificationBody .= "General status: {$newGeneralStatus}.";
+            }
+
+            // Send notification to the user
+            $firebaseService->sendCustomNotification(
+                $order->user_id, // Assuming order has user_id relation
+                $notificationTitle,
+                $notificationBody,
+                [
+                    'order_id' => $order->id,
+                    'delivery_status' => $newDeliveryStatus,
+                    'general_status' => $newGeneralStatus,
+                ]
+            );
+            // ============================================
+
             DB::commit();
             return back()->with('success', 'Order status updated successfully.');
         } catch (\Throwable $e) {
@@ -226,7 +252,6 @@ class OrderController extends Controller
             return back()->with('error', 'Failed to update order status. Please try again.');
         }
     }
-
 
     /** Accept order */
     public function acceptOrder(Request $request)
@@ -254,15 +279,11 @@ class OrderController extends Controller
                 $folder = 'media';
                 $file = $request->file('invoice_file');
 
-                $originalName = $file->getClientOriginalName();
                 $extension = strtolower($file->getClientOriginalExtension());
                 $filename = Str::random(40) . '.' . $extension;
                 $fullPath = "$folder/$filename";
 
-                // Store in storage/app/public/media
                 $file->storeAs($folder, $filename, $disk);
-
-                // Save file path relative to storage
                 $order->invoice_file = $fullPath;
             }
 
@@ -283,24 +304,41 @@ class OrderController extends Controller
                 ]
             );
 
-            // 1. Nafith SANAD creation logic
+            // Nafith SANAD creation
             $nafithError = $this->createNafithSanad($order);
 
             if ($nafithError) {
-                DB::rollBack(); // Rollback order acceptance if SANAD creation failed
+                DB::rollBack();
                 return response()->json([
                     'status' => 'error',
                     'message' => translate('Order updated, but SANAD creation failed: ') . $nafithError
                 ], 422);
             }
 
-            // 2. Schedule Payment creation logic (only if Nafith succeeded or wasn't needed)
             $this->createSchedulePayments($order);
 
-            DB::commit(); // Commit transaction
+            // ====== Send Firebase Notification ======
+            $firebaseService = app(FirebaseService::class);
+
+            $notificationTitle = "Good News! Your Order #{$order->id} has been Accepted!";
+            $notificationBody = "Invoice #{$order->invoice_number} uploaded. Estimated delivery: {$order->estimated_delivery_date}.";
+
+            $firebaseService->sendCustomNotification(
+                $order->user_id,
+                $notificationTitle,
+                $notificationBody,
+                [
+                    'order_id' => $order->id,
+                    'general_status' => 'accepted',
+                    'invoice_number' => $order->invoice_number,
+                ]
+            );
+            // ============================================
+
+            DB::commit();
             return response()->json(['status' => 'success', 'message' => translate('Order accepted successfully!')]);
         } catch (\Throwable $e) {
-            DB::rollBack(); // Rollback transaction on error
+            DB::rollBack();
             Log::error("Failed to accept order: {$e->getMessage()}", ['order_id' => $order->id]);
             return response()->json([
                 'status' => 'error',
@@ -322,7 +360,7 @@ class OrderController extends Controller
         $order = Order::findOrFail($request->order_id);
         $oldGeneralStatus = $order->general_status; // Capture old status
 
-        DB::beginTransaction(); // Start transaction
+        DB::beginTransaction();
         try {
             $order->general_status = 'rejected';
             $order->rejection_reason = $request->rejection_reason;
@@ -337,10 +375,28 @@ class OrderController extends Controller
                 ['rejection_reason' => $order->rejection_reason]
             );
 
-            DB::commit(); // Commit transaction
+            // ====== Send Firebase Notification ======
+            $firebaseService = app(FirebaseService::class);
+
+            $notificationTitle = "Your Order #{$order->id} has been Rejected";
+            $notificationBody = "Reason: {$order->rejection_reason}. Please contact support for more details.";
+
+            $firebaseService->sendCustomNotification(
+                $order->user_id,
+                $notificationTitle,
+                $notificationBody,
+                [
+                    'order_id' => $order->id,
+                    'general_status' => 'rejected',
+                    'rejection_reason' => $order->rejection_reason,
+                ]
+            );
+            // ============================================
+
+            DB::commit();
             return response()->json(['status' => 'success', 'message' => translate('Order has been rejected successfully.')]);
         } catch (\Throwable $e) {
-            DB::rollBack(); // Rollback transaction on error
+            DB::rollBack();
             Log::error("Failed to reject order: {$e->getMessage()}", ['order_id' => $order->id]);
             return response()->json([
                 'status' => 'error',
@@ -348,6 +404,7 @@ class OrderController extends Controller
             ], 500);
         }
     }
+
 
     /**
      * Create 3 installment payments for the accepted order.

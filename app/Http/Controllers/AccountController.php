@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Spatie\Activitylog\Models\Activity;
@@ -310,8 +311,8 @@ class AccountController extends Controller
         $lastName = e(Auth::user()->last_name);
         $customerFirst = e($customer->user->first_name);
         $customerLast = e($customer->user->last_name);
-        $oldStatus = e($oldStatus);
-        $newStatus = e($customer->status);
+        $oldStatusEscaped = e($oldStatus);
+        $newStatusEscaped = e($customer->status);
 
         $description = sprintf(
             '%s %s updated Customer: %s %s [%d] status from %s to %s',
@@ -320,24 +321,24 @@ class AccountController extends Controller
             $customerFirst,
             $customerLast,
             $customer->id,
-            $oldStatus,
-            $newStatus
+            $oldStatusEscaped,
+            $newStatusEscaped
         );
 
         $customer->logModelAction(
             event: 'update',
             description: $description,
             properties: [
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
+                'old_status' => $oldStatusEscaped,
+                'new_status' => $newStatusEscaped,
                 'reason' => $reason ?? null,
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,
             ],
         );
 
+        // Send email & SMS if approved
         if ($status === 'approved') {
-
             $this->sendEmail(
                 'emails.welcome_account_approved',
                 $customer->user->email,
@@ -347,16 +348,43 @@ class AccountController extends Controller
                 ]
             );
 
-
             $this->sendSms(
                 $customer->user->phone_number,
                 'Welcome to ArabianPay! Your account has been approved.'
             );
         }
 
+        // ===== Send Firebase Notification ======
+        try {
+            $firebaseService = app(FirebaseService::class);
+
+            $statusMessages = [
+                'approved' => "Congratulations! Your account has been approved.",
+                'pending' => "Your account status is now pending. We will notify you once approved.",
+                'suspended' => "Your account has been suspended. Please contact support for more info.",
+                'blacklisted' => "Your account has been blacklisted. Please contact support."
+            ];
+
+            $notificationTitle = "Account Status Updated";
+            $notificationBody = $statusMessages[$status] ?? "Your account status has been updated.";
+
+            $firebaseService->sendCustomNotification(
+                $customer->user_id,
+                $notificationTitle,
+                $notificationBody,
+                [
+                    'customer_id' => $customer->id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $status,
+                ]
+            );
+        } catch (\Throwable $e) {
+            Log::error("Failed to send customer status notification: " . $e->getMessage(), ['customer_id' => $customer->id]);
+        }
+        // ========================================
+
         return back()->with('success', 'Status updated successfully!');
     }
-
 
     protected $selectFields = [
         'id',

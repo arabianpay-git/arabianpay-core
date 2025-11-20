@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\RefundRequest;
+use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class RefundRequestController extends Controller
@@ -16,12 +18,14 @@ class RefundRequestController extends Controller
         ]);
 
         $refundRequest = RefundRequest::findOrFail($id);
+        $oldStatus = $refundRequest->refund_status;
+        $newStatus = $request->input('refund_status');
 
         $refundRequest->update([
-            'refund_status' => $request->input('refund_status'),
+            'refund_status' => $newStatus,
         ]);
 
-        // Log the refund status update
+        // ===== Log the refund status update =====
         $refundRequest->logModelAction(
             event: 'update',
             description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated refund request status to {$refundRequest->refund_status} for order ID {$refundRequest->order_id}",
@@ -30,6 +34,38 @@ class RefundRequestController extends Controller
                 'batch_uuid' => (string) Str::uuid(),
             ],
         );
+
+        // ===== Send Firebase Notification ======
+        try {
+            $firebaseService = app(FirebaseService::class);
+
+            // Professional notification title
+            $notificationTitle = "Refund Request #{$refundRequest->id} Status Updated";
+
+            // Body text based on new status
+            $statusMessages = [
+                'pending' => "Your refund request for Order #{$refundRequest->order_id} is now pending review.",
+                'approved' => "Good news! Your refund request for Order #{$refundRequest->order_id} has been approved.",
+                'rejected' => "Your refund request for Order #{$refundRequest->order_id} has been rejected. Please contact support for details.",
+            ];
+
+            $notificationBody = $statusMessages[$newStatus] ?? "Your refund request status has changed.";
+
+            $firebaseService->sendCustomNotification(
+                $refundRequest->user_id, // Assuming refundRequest has user_id
+                $notificationTitle,
+                $notificationBody,
+                [
+                    'refund_request_id' => $refundRequest->id,
+                    'order_id' => $refundRequest->order_id,
+                    'old_status' => $oldStatus,
+                    'new_status' => $newStatus,
+                ]
+            );
+        } catch (\Throwable $e) {
+            Log::error("Failed to send refund notification: " . $e->getMessage(), ['refund_request_id' => $refundRequest->id]);
+        }
+        // ========================================
 
         return redirect()->back()->with('success', 'Refund status updated successfully!');
     }
