@@ -106,7 +106,7 @@
                                 </div>
 
                                 <div class="method text-xs text-gray-600">
-                                    {{ $payment->payment_method ?? 'Bank Transfer' }}
+                                    {{ $payment->payment_method ?? 'N/A' }}
                                 </div>
                             </div>
 

@@ -435,6 +435,7 @@ class OrderController extends Controller
                 'due_date' => now()->addDays($i * 30)->toDateString(),
                 'instalment_amount' => $installmentAmount,
                 'principle_amount' => $installmentAmount, // Use installment amount as principle for simplicity
+                'payment_method' => 'Card Payment',
                 'payment_status' => 'pending',
                 'assigned_to' => null, // Explicitly set to null
             ]);
