@@ -8,7 +8,7 @@
 
     {{-- Download Supplier Invoice --}}
     @if (!empty($order->invoice_file))
-        <a href="{{ getMediaUrl($order->invoice_file) }}" target="_blank"
+        <a href="{{ getMediaUrl('storage/' . $order->invoice_file) }}" target="_blank"
             class="btn btn-sm btn-light bg-gray-100 text-gray-800 hover:bg-gray-200">
             <i class="ki-filled ki-download"></i> {{ translate('Download Supplier Invoice') }}
         </a>
