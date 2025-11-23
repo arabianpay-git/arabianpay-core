@@ -23,23 +23,23 @@
                 <div class="card">
                     <div class="p-4 ">
                         <div class="text-gray-600 text-2sm">Opening balance (before {{ $date_from }})</div>
-                        <div class="text-lg font-semibold"><span class="icon-saudi_riyal"></span>{{ $openingBalance }}</div>
+                        <div class="text-lg font-semibold"><span class="icon-saudi_riyal"></span>{{ round($openingBalance, 2) }}</div>
                     </div>
                     <div class="p-4 ">
                         <div class="text-gray-600 text-2sm">Period totals ({{ $date_from }} to {{ $date_to }})</div>
                         <div class="flex gap-6 mt-1">
                             @if($isDebitNormal)
-                            <div>Debit: <span class="font-semibold text-success"><span class="icon-saudi_riyal"></span>{{ $totals->sum_debit ?? 0}}</span></div>
-                            <div>Credit: <span class="font-semibold text-danger"><span class="icon-saudi_riyal"></span>{{ $totals->sum_credit ?? 0 }}</span></div>
+                            <div>Debit: <span class="font-semibold text-success"><span class="icon-saudi_riyal"></span>{{ round($totals->sum_debit ?? 0, 2) }}</span></div>
+                            <div>Credit: <span class="font-semibold text-danger"><span class="icon-saudi_riyal"></span>{{ round($totals->sum_credit ?? 0, 2) }}</span></div>
                             @else
-                            <div>Debit: <span class="font-semibold text-danger"><span class="icon-saudi_riyal"></span>{{ $totals->sum_debit ?? 0 }}</span></div>
-                            <div>Credit: <span class="font-semibold text-success"><span class="icon-saudi_riyal"></span>{{ $totals->sum_credit ?? 0 }}</span></div>
+                            <div>Debit: <span class="font-semibold text-danger"><span class="icon-saudi_riyal"></span>{{ round($totals->sum_debit ?? 0, 2) }}</span></div>
+                            <div>Credit: <span class="font-semibold text-success"><span class="icon-saudi_riyal"></span>{{ round($totals->sum_credit ?? 0, 2) }}</span></div>
                             @endif
                         </div>
                     </div>
                     <div class="p-4 ">
                         <div class="text-gray-600 text-2sm">Closing balance (page)</div>
-                        <div class="text-lg font-semibold"><span class="icon-saudi_riyal"></span>{{ $closingBalance }}</div>
+                        <div class="text-lg font-semibold"><span class="icon-saudi_riyal"></span>{{ round($closingBalance, 2)    }}</div>
                     </div>
                 </div>
                 <form method="get" action="{{ route('financial.accounts.ledger', $account->id) }}" class="grid grid-cols-1 md:grid-cols-3 gap-3 card p-4">
@@ -140,7 +140,7 @@
                             @else
                             <td class="text-right"> </td>
                             @endif
-                            <td class="text-right font-semibold"><span class="icon-saudi_riyal"></span>{{ ($row->running_balance) }}</td>
+                            <td class="text-right font-semibold"><span class="icon-saudi_riyal"></span>{{ round($row->running_balance, 2) }}</td>
                         </tr>
                         @empty
                         <tr>
