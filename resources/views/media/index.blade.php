@@ -380,7 +380,8 @@
             }
 
             function renderCard(media) {
-                const mediaUrl = `/storage/media/${media.file_name}`; // Assuming this is correct
+                const mediaUrl =
+                    "{{ getMediaUrl($item->file_name, asset('assets/media/images/default-image.png')) }}";
                 const isVideo = media.mime_type && media.mime_type.startsWith('video');
                 const isPdf = media.mime_type === 'application/pdf';
                 // Lazyload response for user object is simple
