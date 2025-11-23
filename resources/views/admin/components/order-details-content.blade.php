@@ -75,11 +75,13 @@
                                                     {{ $order->user->business_name ?? translate('Default Store') }}
                                                 </div>
                                             </td>
-                                            <td class="px-4 py-2 text-right border-b"><span class="icon-saudi_riyal"></span>
+                                            <td class="px-4 py-2 text-right border-b"><span
+                                                    class="icon-saudi_riyal"></span>
                                                 {{ number_format($item['price'], 2) }}
                                             </td>
                                             <td class="px-4 py-2 text-center border-b">{{ $item['quantity'] }}</td>
-                                            <td class="px-4 py-2 text-right border-b"><span class="icon-saudi_riyal"></span>
+                                            <td class="px-4 py-2 text-right border-b"><span
+                                                    class="icon-saudi_riyal"></span>
                                                 {{ number_format($item['total'], 2) }}
                                             </td>
                                         </tr>
@@ -118,7 +120,8 @@
                                             {{ translate('Email') }}
                                         </td>
                                         <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
-                                            <a href="mailto:{{ $order->user->email }}" class="text-primary hover:underline">
+                                            <a href="mailto:{{ $order->user->email }}"
+                                                class="text-primary hover:underline">
                                                 {{ $order->user->email }}
                                             </a>
                                         </td>
@@ -129,7 +132,8 @@
                                                 {{ translate('Phone Number') }}
                                             </td>
                                             <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
-                                                <a href="tel:{{ $order->user->phone_number }}" class="text-primary hover:underline">
+                                                <a href="tel:{{ $order->user->phone_number }}"
+                                                    class="text-primary hover:underline">
                                                     {{ $order->user->phone_number }}
                                                 </a>
                                             </td>
@@ -234,7 +238,8 @@
                         </h3>
                     </div>
                     <div class="card-body pt-4 pb-3">
-                        <form action="{{ route('refund-requests.update-status', $order->id) }}" method="POST" id="statusForm-{{ $order->id }}">
+                        <form action="{{ route('refund-requests.update-status', $order->id) }}" method="POST"
+                            id="statusForm-{{ $order->id }}">
                             @csrf
                             @method('PATCH')
                             <select name="refund_status" class="select"
@@ -259,7 +264,8 @@
                         {{ translate('Order Status') }}
                     </h3>
                     <!-- Download Invoice Button -->
-                    <a href="{{ route('order.downloadShippingLabel', $order->id) }}" class="btn btn-light btn-sm bg-gray-100 text-gray-800 hover:bg-gray-200">
+                    <a href="{{ route('order.downloadShippingLabel', $order->id) }}"
+                        class="btn btn-light btn-sm bg-gray-100 text-gray-800 hover:bg-gray-200">
                         <i class="ki-filled ki-exit-down"></i> {{ translate('Print Shipping Label') }}
                     </a>
                 </div>
@@ -270,7 +276,8 @@
 
                         <!-- Delivery Status -->
                         <div>
-                            <label for="delivery_status" class="block text-sm font-medium text-gray-700 mb-1">{{ translate('Delivery Status') }}</label>
+                            <label for="delivery_status"
+                                class="block text-sm font-medium text-gray-700 mb-1">{{ translate('Delivery Status') }}</label>
                             <select name="delivery_status" id="delivery_status" class="select">
                                 <option value="">{{ translate('-- Select Status --') }}</option>
                                 <option value="pending" {{ $order->delivery_status === 'pending' ? 'selected' : '' }}>
@@ -279,10 +286,12 @@
                                 <option value="shipped" {{ $order->delivery_status === 'shipped' ? 'selected' : '' }}>
                                     {{ translate('Shipped') }}
                                 </option>
-                                <option value="delivered" {{ $order->delivery_status === 'delivered' ? 'selected' : '' }}>
+                                <option value="delivered"
+                                    {{ $order->delivery_status === 'delivered' ? 'selected' : '' }}>
                                     {{ translate('Delivered') }}
                                 </option>
-                                <option value="returned" {{ $order->delivery_status === 'returned' ? 'selected' : '' }}>
+                                <option value="returned"
+                                    {{ $order->delivery_status === 'returned' ? 'selected' : '' }}>
                                     {{ translate('Returned') }}
                                 </option>
                             </select>
@@ -290,16 +299,20 @@
 
                         <!-- General Status -->
                         <div class="w-full mt-4">
-                            <label for="general_status" class="block text-sm font-medium text-gray-700 mb-1">{{ translate('General Status') }}</label>
+                            <label for="general_status"
+                                class="block text-sm font-medium text-gray-700 mb-1">{{ translate('General Status') }}</label>
                             <select name="general_status" id="general_status" class="select">
                                 <option value="">{{ translate('-- Select Status --') }}</option>
-                                <option value="processing" {{ $order->general_status === 'processing' ? 'selected' : '' }}>
+                                <option value="processing"
+                                    {{ $order->general_status === 'processing' ? 'selected' : '' }}>
                                     {{ translate('Processing') }}
                                 </option>
-                                <option value="completed" {{ $order->general_status === 'completed' ? 'selected' : '' }}>
+                                <option value="completed"
+                                    {{ $order->general_status === 'completed' ? 'selected' : '' }}>
                                     {{ translate('Completed') }}
                                 </option>
-                                <option value="cancelled" {{ $order->general_status === 'cancelled' ? 'selected' : '' }}>
+                                <option value="cancelled"
+                                    {{ $order->general_status === 'cancelled' ? 'selected' : '' }}>
                                     {{ translate('Cancelled') }}
                                 </option>
                                 <option value="failed" {{ $order->general_status === 'failed' ? 'selected' : '' }}>
@@ -335,18 +348,24 @@
                         <tbody>
                             <tr>
                                 <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Quantity') }}</td>
-                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">{{ number_format($totalQuantity) }}</td>
+                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                    {{ number_format($totalQuantity) }}</td>
                             </tr>
                             <tr>
-                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Sub Amount') }}</td>
-                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4"><span class="icon-saudi_riyal"></span> {{ number_format($subTotal, 2) }}</td>
+                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Sub Amount') }}
+                                </td>
+                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4"><span
+                                        class="icon-saudi_riyal"></span> {{ number_format($subTotal, 2) }}</td>
                             </tr>
                             <tr>
                                 <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Discount') }}</td>
-                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4"><span class="icon-saudi_riyal"></span> {{ number_format($order->coupon_discount, 2) }}</td>
+                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4"><span
+                                        class="icon-saudi_riyal"></span>
+                                    {{ number_format($order->coupon_discount, 2) }}</td>
                             </tr>
                             <tr>
-                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Shipping Fee') }}</td>
+                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Shipping Fee') }}
+                                </td>
                                 <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                     @if ($totalShippingFee)
                                         <span class="icon-saudi_riyal"></span>
@@ -357,23 +376,33 @@
                                 </td>
                             </tr>
                             <tr>
-                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Total Amount') }}</td>
-                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4"><span class="icon-saudi_riyal"></span> {{ number_format($subTotal + $order->shipping_fee - $order->coupon_discount, 2) }}</td>
+                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Total Amount') }}
+                                </td>
+                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4"><span
+                                        class="icon-saudi_riyal"></span>
+                                    {{ number_format($subTotal + $order->shipping_fee - $order->coupon_discount, 2) }}
+                                </td>
                             </tr>
                             <tr>
-                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Payment Status') }}</td>
+                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
+                                    {{ translate('Payment Status') }}</td>
                                 <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                     @php $status = strtolower($order->payment_status); @endphp
                                     @if ($status == 'pending')
-                                        <span class="badge badge-sm badge-warning badge-outline">{{ translate('Pending') }}</span>
+                                        <span
+                                            class="badge badge-sm badge-warning badge-outline">{{ translate('Pending') }}</span>
                                     @elseif($status == 'completed')
-                                        <span class="badge badge-sm badge-success badge-outline">{{ translate('Completed') }}</span>
+                                        <span
+                                            class="badge badge-sm badge-success badge-outline">{{ translate('Completed') }}</span>
                                     @elseif($status == 'failed')
-                                        <span class="badge badge-sm badge-error badge-outline">{{ translate('Failed') }}</span>
+                                        <span
+                                            class="badge badge-sm badge-error badge-outline">{{ translate('Failed') }}</span>
                                     @elseif($status == 'refunded')
-                                        <span class="badge badge-sm badge-info badge-outline">{{ translate('Refunded') }}</span>
+                                        <span
+                                            class="badge badge-sm badge-info badge-outline">{{ translate('Refunded') }}</span>
                                     @else
-                                        <span class="badge badge-sm badge-secondary badge-outline">{{ translate('Unknown') }}</span>
+                                        <span
+                                            class="badge badge-sm badge-secondary badge-outline">{{ translate('Unknown') }}</span>
                                     @endif
                                 </td>
                             </tr>
@@ -392,20 +421,28 @@
                     <table class="table-auto w-full text-sm text-gray-700">
                         <tbody>
                             <tr>
-                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Payment Method') }}</td>
-                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">{{ $order->payment_method ?? translate('N/A') }}</td>
+                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
+                                    {{ translate('Payment Method') }}</td>
+                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                    {{ $order->payment_method ?? translate('N/A') }}</td>
                             </tr>
                             <tr>
-                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Payment Gateway') }}</td>
-                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">{{ $order->payment_gateway ?? translate('N/A') }}</td>
+                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
+                                    {{ translate('Payment Gateway') }}</td>
+                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                    {{ $order->payment_gateway ?? translate('N/A') }}</td>
                             </tr>
                             <tr>
-                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Transaction ID') }}</td>
-                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">{{ $order->transaction_id ?? translate('N/A') }}</td>
+                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">
+                                    {{ translate('Transaction ID') }}</td>
+                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                    {{ $order->transaction_id ?? translate('N/A') }}</td>
                             </tr>
                             <tr>
-                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Order Date') }}</td>
-                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">{{ $order->created_at->format('d M, Y') }}</td>
+                                <td class="text-sm text-gray-600 min-w-36 pb-3 pe-6">{{ translate('Order Date') }}
+                                </td>
+                                <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
+                                    {{ $order->created_at->format('d M, Y') }}</td>
                             </tr>
                         </tbody>
                     </table>
