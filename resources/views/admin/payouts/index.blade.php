@@ -584,7 +584,7 @@
         document.getElementById('display-order-id').textContent = orderId;
         document.getElementById('display-customer-name').textContent = customerName || 'N/A';
         document.getElementById('display-seller-name').textContent = sellerName || 'N/A';
-        document.getElementById('display-order-amount').textContent = amount ? `$${parseFloat(amount).toFixed(2)}` : 'N/A';
+        document.getElementById('display-order-amount').textContent = amount ? `${parseFloat(amount).toFixed(2)}` : 'N/A';
         
         // Pre-fill the amount field with the order amount (user can modify)
         if (amount) {

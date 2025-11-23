@@ -426,7 +426,7 @@
                 $netIncomeClass = $netIncomeTrend > 0 ? 'trend-positive' : ($netIncomeTrend < 0 ? 'trend-negative' : 'trend-neutral');
                 $incomeTrendClass = $netIncomeTrend > 0 ? 'positive' : ($netIncomeTrend < 0 ? 'negative' : 'neutral');
             @endphp
-            <div class="card kpi-card {{ $netIncomeClass }}">
+            <div class="card kpi-card cursor-pointer {{ $netIncomeClass }}" onclick="window.location='{{ route('financial.accounts.ledger', 4000) }}'">
                 <div class="card-body">
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex-1">
@@ -457,7 +457,7 @@
                 $arClass = $arTrend > 0 ? 'trend-positive' : ($arTrend < 0 ? 'trend-negative' : 'trend-neutral');
                 $arTrendClass = $arTrend > 0 ? 'positive' : ($arTrend < 0 ? 'negative' : 'neutral');
             @endphp
-            <div class="card kpi-card {{ $arClass }}">
+            <div class="card kpi-card cursor-pointer {{ $arClass }}" onclick="window.location='{{ route('financial.accounts.ledger', 1203) }}'">
                 <div class="card-body">
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex-1">
@@ -482,11 +482,11 @@
             <!-- Accounts Payable -->
             @php
                 $apTrend = $kpis['accounts_payable_trend'] ?? 0;
-                // For payables, increase is negative (red), decrease is positive (green)
+                // For payables, increase is negative (red), decrease is positive (green)   
                 $apClass = $apTrend < 0 ? 'trend-positive' : ($apTrend > 0 ? 'trend-negative' : 'trend-neutral');
                 $apTrendClass = $apTrend < 0 ? 'positive' : ($apTrend > 0 ? 'negative' : 'neutral');
             @endphp
-            <div class="card kpi-card {{ $apClass }}">
+            <div class="card kpi-card cursor-pointer {{ $apClass }}" onclick="window.location='{{ route('financial.accounts.ledger', 2400) }}'">
                 <div class="card-body">
                     <div class="flex items-start justify-between mb-2">
                         <div class="flex-1">
