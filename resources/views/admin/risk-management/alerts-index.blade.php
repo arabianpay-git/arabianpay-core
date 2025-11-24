@@ -209,7 +209,7 @@
                                         <h4 class="text-sm font-semibold text-gray-900 mb-4">Detailed Information</h4>
 
                                         @if (!empty($alert['additional_info']))
-                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                            <div class="grid grid-cols-2 gap-6">
                                                 @foreach ($alert['additional_info'] as $key => $value)
                                                     <div class="flex flex-col">
                                                         <span
