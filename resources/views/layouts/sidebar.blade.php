@@ -25,13 +25,14 @@
     <div class="sidebar-header hidden lg:flex items-center relative justify-between px-3 lg:px-6 shrink-0"
         id="sidebar_header">
         <a class="dark:hidden" href="{{ route('dashboard') }}">
-            <img class="default-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/app/default-logo.svg') }}" />
-            <img class="small-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/app/default-logo.svg') }}" />
+            <img class="default-logo min-h-[22px] max-w-none"
+                src="{{ asset('assets/media/images/default-logo.svg') }}" />
+            <img class="small-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/images/default-logo.svg') }}" />
         </a>
         <a class="hidden dark:block" href="{{ route('dashboard') }}">
             <img class="default-logo min-h-[22px] max-w-none"
-                src="{{ asset('assets/media/app/default-logo-dark.svg') }}" />
-            <img class="small-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/app/default-logo.svg') }}" />
+                src="{{ asset('assets/media/images/default-logo-dark.svg') }}" />
+            <img class="small-logo min-h-[22px] max-w-none" src="{{ asset('assets/media/images/default-logo.svg') }}" />
         </a>
         <button
             class="btn btn-icon btn-icon-md size-[30px] rounded-lg border border-gray-200 dark:border-gray-300 bg-light text-gray-500 hover:text-gray-700 toggle absolute start-full top-2/4 -translate-x-2/4 -translate-y-2/4 rtl:translate-x-2/4"
@@ -651,96 +652,96 @@
 
                 @endcanany
                 {{-- Financial Management Section --}}
-               {{-- @can('financial-accounts.view') --}}
-                    <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
-                        <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
-                            tabindex="0">
-                            <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
-                                <i class="ki-filled ki-bank text-lg"> </i>
-                            </span>
-                            <span
-                                class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
-                                {{ translate('Financial Management') }}
-                            </span>
-                            <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
-                                <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
-                                <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex"> </i>
-                            </span>
-                        </div>
-                        
-                        <div
-                            class="menu-accordion gap-0.5 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
-                            
-                            <div class="menu-item">
-                                <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                    href="{{ route('financial.dashboard') }}" tabindex="0">
-                                    <span
-                                        class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
-                                    </span>
-                                    <span
-                                        class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        {{ translate('Dashboard') }}
-                                    </span>
-                                </a>
-                            </div>
-                            
-                            <div class="menu-item">
-                                <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                    href="{{ route('financial.accounts.index') }}" tabindex="0">
-                                    <span
-                                        class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
-                                    </span>
-                                    <span
-                                        class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        {{ translate('Financial Accounts') }}
-                                    </span>
-                                </a>
-                            </div>
-                            
-                            <div class="menu-item">
-                                <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                    href="{{ route('financial.transactions.index') }}" tabindex="0">
-                                    <span
-                                        class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
-                                    </span>
-                                    <span
-                                        class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        {{ translate('Financial Transactions') }}
-                                    </span>
-                                </a>
-                            </div>
-                            
-                            <div class="menu-item">
-                                <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                    href="{{ route('financial.expense-settings.index') }}" tabindex="0">
-                                    <span
-                                        class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
-                                    </span>
-                                    <span
-                                        class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        {{ translate('3rd Party Services Cost') }}
-                                    </span>
-                                </a>
-                            </div>
-                            
-                          
-                            <div class="menu-item">
-                                <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
-                                    href="{{ route('payouts.index') }}" tabindex="0">
-                                    <span
-                                        class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
-                                    </span>
-                                    <span
-                                        class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
-                                        {{ translate('Payouts Portal') }}
-                                    </span>
-                                </a>
-                            </div>
-                            
-                         
-                        </div>
+                {{-- @can('financial-accounts.view') --}}
+                <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
+                    <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
+                        tabindex="0">
+                        <span class="menu-icon items-start text-gray-500 dark:text-gray-400 w-[20px]">
+                            <i class="ki-filled ki-bank text-lg"> </i>
+                        </span>
+                        <span
+                            class="menu-title text-sm font-medium text-gray-800 menu-item-active:text-primary menu-link-hover:!text-primary">
+                            {{ translate('Financial Management') }}
+                        </span>
+                        <span class="menu-arrow text-gray-400 w-[20px] shrink-0 justify-end ms-1 me-[-10px]">
+                            <i class="ki-filled ki-plus text-2xs menu-item-show:hidden"> </i>
+                            <i class="ki-filled ki-minus text-2xs hidden menu-item-show:inline-flex"> </i>
+                        </span>
                     </div>
-               {{-- @endcan --}}
+
+                    <div
+                        class="menu-accordion gap-0.5 ps-[10px] relative before:absolute before:start-[20px] before:top-0 before:bottom-0 before:border-s before:border-gray-200">
+
+                        <div class="menu-item">
+                            <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                href="{{ route('financial.dashboard') }}" tabindex="0">
+                                <span
+                                    class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+                                </span>
+                                <span
+                                    class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                    {{ translate('Dashboard') }}
+                                </span>
+                            </a>
+                        </div>
+
+                        <div class="menu-item">
+                            <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                href="{{ route('financial.accounts.index') }}" tabindex="0">
+                                <span
+                                    class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+                                </span>
+                                <span
+                                    class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                    {{ translate('Financial Accounts') }}
+                                </span>
+                            </a>
+                        </div>
+
+                        <div class="menu-item">
+                            <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                href="{{ route('financial.transactions.index') }}" tabindex="0">
+                                <span
+                                    class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+                                </span>
+                                <span
+                                    class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                    {{ translate('Financial Transactions') }}
+                                </span>
+                            </a>
+                        </div>
+
+                        <div class="menu-item">
+                            <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                href="{{ route('financial.expense-settings.index') }}" tabindex="0">
+                                <span
+                                    class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+                                </span>
+                                <span
+                                    class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                    {{ translate('3rd Party Services Cost') }}
+                                </span>
+                            </a>
+                        </div>
+
+
+                        <div class="menu-item">
+                            <a class="menu-link border border-transparent items-center grow menu-item-active:bg-secondary-active dark:menu-item-active:bg-coal-300 dark:menu-item-active:border-gray-100 menu-item-active:rounded-lg hover:bg-secondary-active dark:hover:bg-coal-300 dark:hover:border-gray-100 hover:rounded-lg gap-[14px] ps-[10px] pe-[10px] py-[8px]"
+                                href="{{ route('payouts.index') }}" tabindex="0">
+                                <span
+                                    class="menu-bullet flex w-[6px] -start-[3px] rtl:start-0 relative before:absolute before:top-0 before:size-[6px] before:rounded-full rtl:before:translate-x-1/2 before:-translate-y-1/2 menu-item-active:before:bg-primary menu-item-hover:before:bg-primary">
+                                </span>
+                                <span
+                                    class="menu-title text-2sm font-normal text-gray-800 menu-item-active:text-primary menu-item-active:font-semibold menu-link-hover:!text-primary">
+                                    {{ translate('Payouts Portal') }}
+                                </span>
+                            </a>
+                        </div>
+
+
+                    </div>
+                </div>
+                {{-- @endcan --}}
                 @canany(['transaction.view', 'schedule_payment.view', 'supplier_and_sales.view',
                     'customer_and_sales.view'])
                     <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">

@@ -346,6 +346,7 @@ Route::group([
             //
             Route::controller(RiskAnalyticsController::class)->prefix('risk')->group(function () {
                 Route::get('dashboard', 'dashboard')->name('risk.dashboard');
+                Route::get('alerts', 'allAlerts')->name('risk.alerts');
                 Route::get('score-engine', 'score')->name('risk.score');
                 Route::post('score-update', 'scoreUpdate')->name('risk.scoreUpdate')->middleware(EnsureOtpVerified::class);
                 Route::get('export/pdf', 'exportPdf')->name('risk.exportPdf');

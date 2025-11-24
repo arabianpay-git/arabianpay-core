@@ -732,7 +732,7 @@ class RiskDashboardService
             'icon' => 'ki-filled ki-dollar',
             'additional_info' => [
                 'low_capital_count' => $lowCapitalMerchants->count(),
-                'capital_threshold' => '<span>  ' . number_format($this->thresholds['low_capital']),
+                'capital_threshold' => '<span class="icon-saudi_riyal">  ' . number_format($this->thresholds['low_capital']),
                 'top_low_capital_merchants' => $lowCapitalMerchants->take(3)->map(function ($merchant) {
                     $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
                     $capital = $crData['capital']['contributionCapital']['cashCapital'] ?? 0;
@@ -740,7 +740,7 @@ class RiskDashboardService
                     return [
                         'name' => $merchant->user->business_name ?? $merchant->user->name,
                         'link' => route('supplierProfile', $merchant->id),
-                        'capital' => '<span>  ' . number_format($capital),
+                        'capital' => '<span class="icon-saudi_riyal">  ' . number_format($capital),
                         'cr_number' => $crData['crNumber'] ?? 'N/A'
                     ];
                 })->toArray()
@@ -838,7 +838,7 @@ class RiskDashboardService
             'title' => "High Portfolio Utilization",
             'description' => "Utilization rate of {$utilization['rate']}% approaching capacity limits. Available: {$utilization['available']}",
             'time' => 'Recently',
-            'icon' => 'ki-filled ki-chart-pie',
+            'icon' => 'ki-filled ki-chart-pie-4',
             'additional_info' => [
                 'current_utilization' => $utilization['rate'] . '%',
                 'available_capacity' => $utilization['available'],
@@ -1089,7 +1089,7 @@ class RiskDashboardService
             'type' => 'concentration_risk',
             'title' => 'Industry Concentration Risk',
             'description' => "Top 3 industries represent {$industryConcentration['percentage']}% of portfolio. Industries: {$industryNames}",
-            'icon' => 'ki-filled ki-chart-pie',
+            'icon' => 'ki-filled ki-chart-pie-4',
             'tags' => ['Concentration', 'Diversification', $industryConcentration['percentage'] . '%'],
             'additional_info' => [
                 'total_merchants' => $industryConcentration['total_merchants'],
@@ -1767,5 +1767,98 @@ class RiskDashboardService
             ->count();
 
         return $totalProcessed > 0 ? round(($compliantDisbursement / $totalProcessed) * 100) : 100;
+    }
+
+
+
+
+    // ==================== ALERTS METHODS ====================
+    public function getAllAlerts($filters = [])
+    {
+        $this->dateRange = $this->getDateRange($filters);
+
+        $alerts = $this->buildRiskAlerts();
+        $flags = $this->buildRiskFlags();
+
+        // Combine and format all alerts with full details
+        $allAlerts = collect([]);
+
+        // Process regular alerts
+        foreach ($alerts as $alert) {
+            $allAlerts->push($this->formatAlertForDetailPage($alert, 'alert'));
+        }
+
+        // Process risk flags
+        foreach ($flags as $flag) {
+            $allAlerts->push($this->formatAlertForDetailPage($flag, 'flag'));
+        }
+
+        // Sort by severity and time
+        return $allAlerts->sortByDesc(function ($alert) {
+            $severityWeight = match ($alert['severity_level']) {
+                'critical' => 100,
+                'high' => 80,
+                'medium' => 60,
+                'low' => 40,
+                'info' => 20,
+                default => 0
+            };
+
+            return $severityWeight;
+        })->values()->all();
+    }
+
+    protected function formatAlertForDetailPage($alert, $type = 'alert')
+    {
+        $baseAlert = [
+            'id' => uniqid(),
+            'type' => $type,
+            'severity' => $alert['type'] ?? 'info',
+            'title' => $alert['title'] ?? '',
+            'description' => $alert['description'] ?? '',
+            'icon' => $alert['icon'] ?? 'ki-filled ki-information-2',
+            'created_at' => $alert['time'] ?? now()->format('M d, Y H:i'),
+            'additional_info' => $alert['additional_info'] ?? [],
+        ];
+
+        // Add severity-specific styling
+        $baseAlert['severity_level'] = $this->determineSeverityLevel($baseAlert['severity']);
+        $baseAlert['severity_color'] = $this->getSeverityColor($baseAlert['severity_level']);
+        $baseAlert['severity_badge'] = $this->getSeverityBadge($baseAlert['severity_level']);
+
+        return $baseAlert;
+    }
+
+    protected function determineSeverityLevel($severity)
+    {
+        return match ($severity) {
+            'critical', 'highest_risk' => 'critical',
+            'high', 'high_risk' => 'high',
+            'medium', 'concentration_risk' => 'medium',
+            'low' => 'low',
+            default => 'info'
+        };
+    }
+
+    protected function getSeverityColor($severityLevel)
+    {
+        return match ($severityLevel) {
+            'critical' => 'red',
+            'high' => 'orange',
+            'medium' => 'yellow',
+            'low' => 'blue',
+            default => 'gray'
+        };
+    }
+
+    protected function getSeverityBadge($severityLevel)
+    {
+        return match ($severityLevel) {
+            'critical' => 'Critical',
+            'high' => 'High Priority',
+            'medium' => 'Medium Priority',
+            'low' => 'Low Priority',
+            default => 'Information'
+        };
     }
 }

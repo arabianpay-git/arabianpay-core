@@ -41,6 +41,25 @@ class RiskAnalyticsController extends Controller
         ]);
     }
 
+    public function allAlerts(Request $request)
+    {
+        $filters = [
+            'date_from' => $request->get('date_from'),
+            'date_to' => $request->get('date_to')
+        ];
+
+        $allAlerts = $this->riskDashboardService->getAllAlerts($filters);
+
+        return view('admin.risk-management.alerts-index', [
+            'alerts' => $allAlerts,
+            'filters' => $filters,
+            'totalAlerts' => count($allAlerts),
+            'criticalCount' => collect($allAlerts)->where('severity_level', 'critical')->count(),
+            'highCount' => collect($allAlerts)->where('severity_level', 'high')->count(),
+            'mediumCount' => collect($allAlerts)->where('severity_level', 'medium')->count(),
+        ]);
+    }
+
     public function score(Request $request)
     {
         $search = trim($request->input('search', ''));

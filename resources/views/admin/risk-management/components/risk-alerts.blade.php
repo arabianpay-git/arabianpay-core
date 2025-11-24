@@ -105,7 +105,7 @@
         }
 
         .additional-badges span {
-            font-size: 0.65rem;
+            font-size: 0.65rem !important;
             font-weight: 600;
             padding: 2px 6px;
             border-radius: 0.25rem;
@@ -286,7 +286,7 @@
             </div>
 
             <div class="p-4 border-t border-gray-200 bg-gray-50">
-                <a href="#"
+                <a href="{{ route('risk.alerts') }}"
                     class="text-sm font-semibold text-primary hover:text-primary-dark flex items-center justify-center group">
                     {{ translate('View All Alerts') }}
                     <i class="ki-filled ki-arrow-right text-xs ml-1 group-hover:translate-x-1 transition-transform"></i>
