@@ -699,7 +699,7 @@ class RiskDashboardService
             'additional_info' => [
                 'affected_merchants_count' => $expiringCRs->count(),
                 'expiry_threshold' => '30 days',
-                'top_affected_merchants' => $expiringCRs->take(3)->map(function ($merchant) {
+                'top_affected_merchants' => $expiringCRs->map(function ($merchant) {
                     $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
                     $expiryDate = $crData ? Carbon::parse($crData['status']['confirmationDate']['gregorian']) : null;
 
@@ -733,7 +733,7 @@ class RiskDashboardService
             'additional_info' => [
                 'low_capital_count' => $lowCapitalMerchants->count(),
                 'capital_threshold' => '<span class="icon-saudi_riyal">  ' . number_format($this->thresholds['low_capital']),
-                'top_low_capital_merchants' => $lowCapitalMerchants->take(3)->map(function ($merchant) {
+                'top_low_capital_merchants' => $lowCapitalMerchants->map(function ($merchant) {
                     $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
                     $capital = $crData['capital']['contributionCapital']['cashCapital'] ?? 0;
 
@@ -767,7 +767,7 @@ class RiskDashboardService
             'additional_info' => [
                 'high_activity_count' => $highActivityMerchants->count(),
                 'activity_threshold' => $this->thresholds['multiple_activities'] . ' activities',
-                'top_high_activity_merchants' => $highActivityMerchants->take(3)->map(function ($merchant) {
+                'top_high_activity_merchants' => $highActivityMerchants->map(function ($merchant) {
                     $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
                     $activityCount = $crData ? count($crData['activities']) : 0;
 
@@ -801,7 +801,7 @@ class RiskDashboardService
             'additional_info' => [
                 'high_exposure_count' => $highExposureAccounts->count(),
                 'exposure_threshold' => '<span>  ' . number_format($this->thresholds['large_exposure']),
-                'top_high_exposure_accounts' => $highExposureAccounts->take(3)->map(function ($account) {
+                'top_high_exposure_accounts' => $highExposureAccounts->map(function ($account) {
                     return [
                         'name' => $account->user->business_name ?? $account->user->name,
                         'link' => route('customerProfile', $account->user_id),
@@ -870,7 +870,7 @@ class RiskDashboardService
             'additional_info' => [
                 'affected_accounts_count' => $criticalDPDAccounts->count(),
                 'dpd_threshold' => $this->thresholds['critical_dpd'] . ' days',
-                'top_affected_accounts' => $criticalDPDAccounts->take(3)->map(function ($payments, $userId) use ($today) {
+                'top_affected_accounts' => $criticalDPDAccounts->map(function ($payments, $userId) use ($today) {
                     $user = $payments->first()->user;
                     $maxDPD = $payments->max(function ($payment) use ($today) {
                         return abs($today->diffInDays($payment->due_date, false));
