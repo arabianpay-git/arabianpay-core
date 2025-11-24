@@ -298,12 +298,6 @@
                                                 onclick="toggleDetails('{{ $alert['id'] }}')">
                                                 Close Details
                                             </button>
-                                            @if ($alert['type'] == 'alert')
-                                                <button class="btn btn-primary btn-sm"
-                                                    onclick="investigateAlert('{{ $alert['id'] }}')">
-                                                    Investigate
-                                                </button>
-                                            @endif
                                         </div>
                                     </div>
 
