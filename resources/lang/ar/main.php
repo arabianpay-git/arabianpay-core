@@ -1707,4 +1707,6 @@ return [
     'View Saved Report' => 'عرض التقرير المحفوظ',
     'Source' => 'المصدر',
     'Loading saved SIMAH data...' => 'جارٍ تحميل بيانات سيمه المحفوظة...',
+
+    'Export Excel' => 'تصدير إلى إكسل',
 ];

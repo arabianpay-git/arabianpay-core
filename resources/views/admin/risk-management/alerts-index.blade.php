@@ -35,9 +35,10 @@
         </div>
 
         <!-- Summary Cards -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
             <!-- Total Alerts -->
-            <div class="card border border-gray-200 rounded-[4px] shadow-sm hover:shadow-md transition-shadow duration-300">
+            <div
+                class="card border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300 border-l-4 border-l-gray-600">
                 <div class="card-body p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
@@ -53,7 +54,8 @@
 
             <!-- Critical Alerts -->
             <div
-                class="card border border-gray-200 rounded-[4px] shadow-sm hover:shadow-md transition-shadow duration-300 border-l-4 border-l-red-600">
+                class="card !border-l-4 !border-l-red-600 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+
                 <div class="card-body p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
@@ -69,7 +71,7 @@
 
             <!-- High Priority -->
             <div
-                class="card border border-gray-200 rounded-[4px] shadow-sm hover:shadow-md transition-shadow duration-300 border-l-4 border-l-orange-500">
+                class="card !border-l-4 !border-l-orange-600 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
                 <div class="card-body p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
@@ -85,7 +87,7 @@
 
             <!-- Medium Priority -->
             <div
-                class="card border border-gray-200 rounded-[4px] shadow-sm hover:shadow-md transition-shadow duration-300 border-l-4 border-l-yellow-500">
+                class="card !border-l-4 !border-l-yellow-600 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
                 <div class="card-body p-4">
                     <div class="flex items-center">
                         <div class="flex-shrink-0">
@@ -98,17 +100,33 @@
                     </div>
                 </div>
             </div>
+
+            <!-- Information -->
+            <div
+                class="card !border-l-4 !border-l-gray-600 border border-gray-200 rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300">
+                <div class="card-body p-4">
+                    <div class="flex items-center">
+                        <div class="flex-shrink-0">
+                            <i class="ki-filled ki-geolocation text-2xl text-gray-500"></i>
+                        </div>
+                        <div class="ml-4">
+                            <h3 class="text-sm font-medium text-gray-500">Information</h3>
+                            <p class="text-2xl font-semibold text-gray-600">{{ $informationCount }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Alerts Table -->
-        <div class="card border border-gray-200 rounded-[4px] shadow-sm">
+        <div class="card border border-gray-200 rounded-lg shadow-sm">
             <div class="card-header border-b border-gray-200 px-6 py-4">
                 <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                     <h3 class="card-title font-semibold text-gray-900 text-lg">All Alerts</h3>
 
                     <!-- Filter Buttons -->
                     <div class="flex flex-wrap gap-2">
-                        <button class="btn btn-light btn-sm severity-filter active" data-severity="all">
+                        <button class="btn btn-primary btn-sm severity-filter active" data-severity="all">
                             All ({{ $totalAlerts }})
                         </button>
                         <button class="btn btn-light btn-sm severity-filter" data-severity="critical">
@@ -120,6 +138,9 @@
                         <button class="btn btn-light btn-sm severity-filter" data-severity="medium">
                             Medium ({{ $mediumCount }})
                         </button>
+                        <button class="btn btn-light btn-sm severity-filter" data-severity="info">
+                            Information ({{ $informationCount }})
+                        </button>
                     </div>
                 </div>
             </div>
@@ -128,7 +149,7 @@
                 @if (count($alerts) > 0)
                     <div class="divide-y divide-gray-100" id="alerts-container">
                         @foreach ($alerts as $alert)
-                            <div class="relative flex items-start gap-4 p-6 hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 last:border-b-0 alert-item"
+                            <div class="relative flex items-start gap-4 p-6 hover:bg-gray-50 transition-colors duration-200 border-b border-gray-100 last:border-b-0 alert-item mb-2"
                                 data-severity="{{ $alert['severity_level'] }}" data-type="{{ $alert['type'] }}">
 
                                 <!-- Severity Indicator -->
@@ -205,11 +226,11 @@
 
                                     <!-- Additional Information (Collapsible) -->
                                     <div id="details-{{ $alert['id'] }}"
-                                        class="hidden mt-4 p-6 bg-gray-50 rounded-[4px] border border-gray-200">
+                                        class="hidden mt-4 p-6 bg-gray-50 rounded-lg border border-gray-200">
                                         <h4 class="text-sm font-semibold text-gray-900 mb-4">Detailed Information</h4>
 
                                         @if (!empty($alert['additional_info']))
-                                            <div class="grid grid-cols-2 gap-6">
+                                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 @foreach ($alert['additional_info'] as $key => $value)
                                                     <div class="flex flex-col">
                                                         <span
@@ -227,7 +248,7 @@
                                                                     <div class="space-y-3">
                                                                         @foreach ($value as $merchant)
                                                                             <div
-                                                                                class="p-4 bg-white rounded-[4px] border border-gray-200 shadow-sm">
+                                                                                class="p-4 bg-white rounded-lg border border-gray-200 shadow-sm">
                                                                                 @if (isset($merchant['name']) && isset($merchant['link']))
                                                                                     <div
                                                                                         class="font-semibold text-gray-900 mb-3">
@@ -321,7 +342,7 @@
                                                             'dpd_threshold',
                                                         ]))
                                                     <span
-                                                        class="inline-flex items-center px-3 py-1 rounded-[4px] text-xs font-medium
+                                                        class="inline-flex items-center px-3 py-1 rounded-lg text-xs font-medium
                                                     @if ($alert['severity_level'] === 'critical') bg-red-100 text-red-800
                                                     @elseif($alert['severity_level'] === 'high') bg-orange-100 text-orange-800
                                                     @elseif($alert['severity_level'] === 'medium') bg-yellow-100 text-yellow-800

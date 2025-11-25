@@ -49,6 +49,7 @@ use App\Http\Controllers\{
     ReportController,
     RiskAnalyticsController,
     RiskController,
+    RiskExportController,
     RiskWeightController,
     RoleController,
     RolePermissionController,
@@ -351,6 +352,12 @@ Route::group([
                 Route::post('score-update', 'scoreUpdate')->name('risk.scoreUpdate')->middleware(EnsureOtpVerified::class);
                 Route::get('export/pdf', 'exportPdf')->name('risk.exportPdf');
                 Route::get('export/csv', 'exportCsv')->withoutMiddleware([PreventBackHistory::class])->name('risk.exportCsv');
+            });
+
+            Route::controller(RiskExportController::class)->prefix('risk')->group(function () {
+                Route::post('risk/export', 'startExport')->name('risk.export');
+                Route::get('risk/export/status/{id}', 'status')->name('risk.export.status');
+                Route::get('risk/export/download/{id}', 'download')->name('risk.export.download');
             });
 
             Route::post('risk-weights/store', [RiskWeightController::class, 'store'])->name('riskWeights.store');

@@ -57,6 +57,7 @@ class RiskAnalyticsController extends Controller
             'criticalCount' => collect($allAlerts)->where('severity_level', 'critical')->count(),
             'highCount' => collect($allAlerts)->where('severity_level', 'high')->count(),
             'mediumCount' => collect($allAlerts)->where('severity_level', 'medium')->count(),
+            'informationCount' => collect($allAlerts)->where('severity_level', 'info')->count(),
         ]);
     }
 

@@ -1820,4 +1820,6 @@ return [
     'SAVED' => 'SAVED',
     'Source' => 'Source',
     'Loading saved SIMAH data...' => 'Loading saved SIMAH data...',
+
+    'Export Excel' => 'Export Excel',
 ];
