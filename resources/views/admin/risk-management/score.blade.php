@@ -88,10 +88,10 @@
                                     </button>
 
                                     <!-- Export button -->
-                                    <button type="button" id="btn-export-risk" class="btn btn-sm btn-outline btn-primary"
+                                    {{-- <button type="button" id="btn-export-risk" class="btn btn-sm btn-outline btn-primary"
                                         style="margin-left: 8px;">
                                         {{ translate('Export Excel') }}
-                                    </button>
+                                    </button> --}}
                                 </form>
                             </div>
                         </div>
@@ -243,7 +243,7 @@
                             if (initialTotal !== null) {
                                 if (countEl) countEl.innerText = `0 / ${initialTotal} processed`;
                                 if (textEl) textEl.innerText =
-                                `Processing export... 0% (0/${initialTotal})`;
+                                    `Processing export... 0% (0/${initialTotal})`;
                             }
                         }
 
@@ -309,7 +309,7 @@
 
                         if (!downloadUrl) throw new Error(
                             'No download URL returned (timeout or server did not provide URL). Check server logs.'
-                            );
+                        );
 
                         // close Swal + success
                         if (typeof Swal !== 'undefined') {
