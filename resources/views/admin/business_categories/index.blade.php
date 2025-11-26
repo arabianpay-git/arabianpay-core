@@ -67,6 +67,14 @@
                                             <th>
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
+                                                        {{ translate('Risk') }}
+                                                    </span>
+                                                    <span class="sort-icon"> </span>
+                                                </span>
+                                            </th>
+                                            <th>
+                                                <span class="sort asc">
+                                                    <span class="sort-label font-normal text-gray-700">
                                                         {{ translate('Order Level') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
@@ -101,7 +109,7 @@
                                     <tbody>
                                         @foreach ($businessCategories as $item)
                                             <tr>
-                                                <td class="text-center">{{ $loop->iteration }}</td>
+                                                <td class="text-center">{{ $item->id }}</td>
                                                 <td>
                                                     @if ($item->icon)
                                                         <img src="{{ asset($item->icon) }}" alt="{{ $item->name }}"
@@ -111,6 +119,7 @@
                                                     @endif
                                                 </td>
                                                 <td>{{ $item->name }}</td>
+                                                <td>{{ $item->risk }}</td>
                                                 <td>{{ $item->order_level ?? 0 }}</td>
                                                 <td>
                                                     @if ($item->featured)

@@ -6,6 +6,7 @@ use App\Models\RiskScore;
 use App\Models\User;
 use App\Services\RiskAnalyticsService;
 use App\Services\RiskDashboardService;
+use App\Services\RiskService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -13,13 +14,16 @@ class RiskAnalyticsController extends Controller
 {
     protected $riskDashboardService;
     protected $riskAnalyticsService;
+    protected $riskService;
 
     public function __construct(
         RiskDashboardService $riskDashboardService,
-        RiskAnalyticsService $riskAnalyticsService
+        RiskAnalyticsService $riskAnalyticsService,
+        RiskService $riskService
     ) {
         $this->riskDashboardService = $riskDashboardService;
         $this->riskAnalyticsService = $riskAnalyticsService;
+        $this->riskService = $riskService;
     }
 
     public function dashboard(Request $request)
@@ -160,5 +164,149 @@ class RiskAnalyticsController extends Controller
         session()->forget('otp_verified');
 
         return redirect()->back()->with('success', 'Risk score updated successfully.');
+    }
+
+    public function merchantScore(Request $request)
+    {
+        $search = trim($request->input('search', ''));
+        $order = $request->input('order', 'desc');
+        $perPage = (int) $request->input('per_page', 10);
+
+        $typeParam = strtolower($request->input('type', ''));
+        $allowedTypes = ['merchant', 'user'];
+        $userTypes = in_array($typeParam, $allowedTypes) ? [$typeParam] : $allowedTypes;
+
+        // Build base query - only users that have either merchant OR customer records
+        $baseQuery = User::query()
+            ->whereIn('user_type', $userTypes)
+            ->where(function ($q) use ($userTypes) {
+                if (in_array('merchant', $userTypes)) {
+                    $q->orWhereHas('merchant');
+                }
+                if (in_array('user', $userTypes)) {
+                    $q->orWhereHas('customer');
+                }
+            })
+            ->with(['merchant.businessType', 'customer.businessType', 'transactions'])
+            ->orderBy('created_at', $order);
+
+        // paginate users first
+        $usersPaginator = $baseQuery->paginate($perPage)->appends($request->query());
+        $usersCollection = $usersPaginator->getCollection();
+
+        // Apply PHP filtering for encrypted fields
+        if ($search) {
+            $usersCollection = $usersCollection->filter(function ($user) use ($search) {
+                $searchLower = strtolower(trim($search));
+                $searchTerms = explode(' ', $searchLower);
+
+                // Check full fields
+                if (
+                    str_contains(strtolower($user->first_name), $searchLower) ||
+                    str_contains(strtolower($user->last_name), $searchLower) ||
+                    str_contains(strtolower($user->email), $searchLower) ||
+                    str_contains(strtolower($user->phone_number), $searchLower) ||
+                    str_contains(strtolower($user->business_name), $searchLower)
+                ) {
+                    return true;
+                }
+
+                // Check first_name / last_name term by term
+                foreach ($searchTerms as $term) {
+                    if (
+                        str_contains(strtolower($user->first_name), $term) ||
+                        str_contains(strtolower($user->last_name), $term)
+                    ) {
+                        return true;
+                    }
+                }
+
+                return false;
+            })->values(); // reindex collection
+        }
+
+        // If nothing, return empty paginator
+        if ($usersCollection->isEmpty()) {
+            $empty = new LengthAwarePaginator(collect(), 0, $perPage, 1, [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]);
+            return view('admin.risk-management.merchant-score', ['risks' => $empty]);
+        }
+
+        // map users -> compute risk
+        $risksCollection = $usersCollection->map(function (User $user) {
+            if ($user->user_type === 'merchant') {
+                $entity = $user->merchant;
+                $entityType = 'merchant';
+
+                if (!$entity) {
+                    return [
+                        'user' => $user,
+                        'risk' => [
+                            'error' => 'merchant_record_not_found',
+                            'message' => 'User is marked as merchant but no merchant record found',
+                        ],
+                        'type' => $entityType,
+                        'skipped' => true,
+                    ];
+                }
+
+                $profileRoute = 'supplierProfile';
+                $profileId = $entity->id;
+            } else {
+                $entity = $user->customer;
+                $entityType = 'customer';
+
+                if (!$entity) {
+                    return [
+                        'user' => $user,
+                        'risk' => [
+                            'error' => 'customer_record_not_found',
+                            'message' => 'User is marked as customer but no customer record found',
+                        ],
+                        'type' => $entityType,
+                        'skipped' => true,
+                    ];
+                }
+
+                $profileRoute = 'customerProfile';
+                $profileId = $entity->id;
+            }
+
+            try {
+                $risk = $this->riskService->analyzeCustomer($entity, $entityType);
+            } catch (\Throwable $e) {
+                $risk = [
+                    'error' => 'risk_service_error',
+                    'message' => $e->getMessage(),
+                ];
+            }
+
+            return [
+                'user' => $user,
+                'risk' => $risk,
+                'type' => $entityType,
+                'profile_route' => $profileRoute,
+                'profile_id' => $profileId,
+                'skipped' => false,
+            ];
+        });
+
+        // Filter out skipped users
+        $processedRisksCollection = $risksCollection->filter(function ($item) {
+            return !isset($item['skipped']) || $item['skipped'] === false;
+        });
+
+        // Create paginated result
+        $paginatedRisks = new LengthAwarePaginator(
+            $processedRisksCollection->values(),
+            $usersPaginator->total(),
+            $usersPaginator->perPage(),
+            $usersPaginator->currentPage(),
+            ['path' => request()->url(), 'query' => request()->query()]
+        );
+
+        return view('admin.risk-management.merchant-score', ['risks' => $paginatedRisks]);
     }
 }

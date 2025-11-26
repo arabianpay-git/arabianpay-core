@@ -30,6 +30,20 @@
                                     @enderror
                                 </div>
 
+                                <div class="w-full">
+                                    <div class="flex items-baseline flex-wrap gap-2.5">
+                                        <label class="form-label flex items-center gap-1 max-w-56">
+                                            {{ translate('Risk') }}
+                                        </label>
+                                        <input class="input @error('risk') border-red-500 @enderror" name="risk"
+                                            type="text" value="{{ old('risk') }}" required />
+                                    </div>
+                                    @error('risk')
+                                        <span class="text-danger text-sm">{{ $message }}</span>
+                                    @enderror
+                                    <small class="text-gray">Hint: 1–3; 1 = low, 3 = high</small>
+                                </div>
+
                                 <!-- State Select Field -->
                                 <div class="w-full">
                                     <div class="flex items-baseline flex-wrap gap-2.5">

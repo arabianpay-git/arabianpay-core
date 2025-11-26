@@ -15,6 +15,7 @@ return new class extends Migration
             $table->id();
             $table->foreignId('business_type_id')->constrained('business_types')->onDelete('cascade');
             $table->string('name')->unique();
+            $table->string('risk')->nullable();
             $table->string('slug');
             $table->string('order_level');
             $table->string('banner')->nullable();

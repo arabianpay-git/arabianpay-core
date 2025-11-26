@@ -60,6 +60,15 @@
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
+                                                        {{ translate('Risk') }}
+                                                    </span>
+                                                    <span class="sort-icon"> </span>
+                                                </span>
+                                            </th>
+
+                                            <th class="">
+                                                <span class="sort asc">
+                                                    <span class="sort-label font-normal text-gray-700">
                                                         {{ translate('State') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
@@ -86,10 +95,11 @@
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        @foreach ($cities as $index => $city)
+                                        @foreach ($cities as $city)
                                             <tr>
-                                                <td class="text-center">{{ $index + 1 }}</td>
+                                                <td class="text-center">{{ $city->id }}</td>
                                                 <td>{{ $city->name }}</td>
+                                                <td>{{ $city->risk }}</td>
                                                 <td>{{ $city->state->name }}</td>
                                                 <td>{{ $city->created_at->format('d M Y') }}</td>
                                                 <td>

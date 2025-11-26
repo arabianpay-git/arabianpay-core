@@ -19,6 +19,7 @@ class BusinessCategory extends Model
     protected $fillable = [
         'business_type_id',
         'name',
+        'risk',
         'slug',
         'order_level',
         'banner',

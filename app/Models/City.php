@@ -12,6 +12,7 @@ class City extends Model
 
     protected $fillable = [
         'name',
+        'risk',
         'state_id',
     ];
     protected $encryptableAttributes = ['name'];

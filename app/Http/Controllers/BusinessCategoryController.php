@@ -28,6 +28,7 @@ class BusinessCategoryController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'unique:business_categories,name'],
+            'risk' => ['nullable', 'integer', 'between:1,5'],
             'order_level' => ['nullable', 'numeric'],
         ]);
 
@@ -37,6 +38,7 @@ class BusinessCategoryController extends Controller
             $category = BusinessCategory::create([
                 'business_type_id' => $request->business_type_id,
                 'name' => $request->name,
+                'risk' => $request->risk,
                 'order_level' => $request->order_level,
                 'banner' => $request->banner,
                 'icon' => $request->icon,
@@ -79,6 +81,7 @@ class BusinessCategoryController extends Controller
                 'max:255',
                 Rule::unique('business_categories', 'name')->ignore($businessCategory->id),
             ],
+            'risk' => ['nullable', 'integer', 'between:1,5'],
             'order_level' => ['nullable', 'numeric'],
         ]);
 
@@ -87,6 +90,7 @@ class BusinessCategoryController extends Controller
         try {
             $businessCategory->update([
                 'name' => $request->name['en'],
+                'risk' => $request->risk,
                 'order_level' => $request->order_level,
                 'banner' => $request->banner,
                 'icon' => $request->icon,

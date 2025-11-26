@@ -36,6 +36,17 @@
                                                 <span class="text-danger text-sm">{{ $message }}</span>
                                             @enderror
                                         </div>
+
+                                        <div class="w-full">
+                                            <label class="form-label">{{ translate('Risk') }}</label>
+                                            <input class="input @error('risk') border-red-500 @enderror" name="risk"
+                                                type="text" value="{{ old('risk', $city->risk ?? '') }}" />
+                                            @error('risk')
+                                                <span class="text-danger text-sm">{{ $message }}</span>
+                                            @enderror
+
+                                            <small class="text-gray">Hint: 1–3; 1 = low, 3 = high</small>
+                                        </div>
                                     </div>
                                 </div>
 

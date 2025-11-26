@@ -14,7 +14,7 @@ class CityController extends Controller
 {
     public function index(Request $request)
     {
-        $cities = City::with('translations', 'state')->select('cities.*')->paginate(10);
+        $cities = City::with('translations', 'state')->select('cities.*')->orderBy('id', 'desc')->paginate(10);
 
         return view('admin.locations.cities.index', compact('cities'));
     }
@@ -38,13 +38,14 @@ class CityController extends Controller
                     return $query->where('state_id', $request->state_id);
                 }),
             ],
-
+            'risk' => ['nullable', 'integer', 'between:1,3'],
             'state_id' => 'required|exists:states,id',
         ]);
 
         $city = City::create([
             'state_id' => $request->state_id,
             'name' => $request->name,
+            'risk' => $request->risk,
         ]);
 
         // log the creation of the city
@@ -78,12 +79,14 @@ class CityController extends Controller
                 'regex:/^[a-zA-Z\s]*$/',
                 Rule::unique('cities', 'name')->ignore($city->id),
             ],
+            'risk' => ['nullable', 'integer', 'between:1,3'],
             'state_id' => 'required|exists:states,id',
         ]);
 
         $city->update([
             'state_id' => $request->state_id,
             'name' => $request->name['en'],
+            'risk' => $request->risk,
         ]);
 
         // log the update of the city
