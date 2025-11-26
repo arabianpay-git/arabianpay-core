@@ -48,21 +48,15 @@
 
                         // Determine risk level and badge color
                         $score = $risk['omrs'] ?? 0;
-                        if ($score >= 85) {
-                            $riskLevel = translate('Band A (Low)');
+                        if ($score >= 80) {
+                            $riskLevel = translate('Low Risk');
                             $badgeColor = 'badge badge-sm badge-outline badge-success';
-                        } elseif ($score >= 70) {
-                            $riskLevel = translate('Band B (Moderate-Low)');
-                            $badgeColor = 'badge badge-sm badge-outline badge-primary';
-                        } elseif ($score >= 55) {
-                            $riskLevel = translate('Band C (Moderate)');
+                        } elseif ($score >= 60) {
+                            $riskLevel = translate('Medium Risk');
                             $badgeColor = 'badge badge-sm badge-outline badge-warning';
-                        } elseif ($score >= 40) {
-                            $riskLevel = translate('Band D (High)');
-                            $badgeColor = 'badge badge-sm badge-outline badge-danger';
                         } else {
-                            $riskLevel = translate('Band E (Very High)');
-                            $badgeColor = 'badge badge-sm badge-outline badge-dark';
+                            $riskLevel = translate('High Risk');
+                            $badgeColor = 'badge badge-sm badge-outline badge-danger';
                         }
                     }
                 @endphp
@@ -551,100 +545,87 @@
                     <li><strong>Document Score (30%)</strong> - Completeness of CR and Nafath verification</li>
                 </ul>
                 <div class="formula">LPS = 0.4 × Age + 0.3 × CR + 0.3 × Document</div>
-                <p class="muted">
-                    Scoring: 
-                    0-39 (Band E - Very High), 
-                    40-54 (Band D - High), 
-                    55-69 (Band C - Moderate), 
-                    70-84 (Band B - Moderate-Low), 
-                    85-100 (Band A - Low)
-                </p>`,
-                'chs-score': ` < h4 > CHS - Credit History Score(25 % Weight) < /h4> <
-                    p > Assesses creditworthiness through bureau data: < /p> <
-                    ul >
-                    <
-                    li > < strong > Bureau Rating Score < /strong> - Credit rating from SIMAH bureau</li >
-                    <
-                    li > < strong > DPD Score < /strong> - Days Past Due performance</li >
-                    <
-                    li > < strong > Max DPD 12 M < /strong> - Worst delinquency in last 12 months</li >
-                    <
-                    /ul> <
-                    p class = "muted" > Note: Currently using
-                default scores pending bureau integration.Flagged when no bureau data available. < /p>`,
+                <p class="muted">Scoring: 0-39 (High Risk), 40-69 (Medium Risk), 70-100 (Low Risk)</p>`,
+
+                'chs-score': `<h4>CHS - Credit History Score (25% Weight)</h4>
+                <p>Assesses creditworthiness through bureau data:</p>
+                <ul>
+                    <li><strong>Bureau Rating Score</strong> - Credit rating from SIMAH bureau</li>
+                    <li><strong>DPD Score</strong> - Days Past Due performance</li>
+                    <li><strong>Max DPD 12M</strong> - Worst delinquency in last 12 months</li>
+                </ul>
+                <p class="muted">Note: Currently using default scores pending bureau integration. Flagged when no bureau data available.</p>`,
 
                 'bcs-score': `<h4>BCS - Banking & Cashflow Score (20% Weight)</h4>
-                    <p>Analyzes financial health and transaction patterns:</p>
-                    <ul>
-                        <li><strong>Turnover Score (35%)</strong> - Average monthly revenue</li>
-                        <li><strong>Volatility Score (25%)</strong> - Revenue stability (std deviation/mean)</li>
-                        <li><strong>Returned Score (25%)</strong> - Refund/order ratio</li>
-                        <li><strong>Min Balance Score (15%)</strong> - Account balance adequacy</li>
-                    </ul>
-                    <div class="formula">BCS = 0.35 × Turnover + 0.25 × Volatility + 0.25 × Returned + 0.15 × Min Balance</div>
-                    <p class="muted">Thresholds: Low (&lt;5K), Medium (5K-50K), High (50K-200K), Premium (&gt;200K)</p>`,
+                <p>Analyzes financial health and transaction patterns:</p>
+                <ul>
+                    <li><strong>Turnover Score (35%)</strong> - Average monthly revenue</li>
+                    <li><strong>Volatility Score (25%)</strong> - Revenue stability (std deviation/mean)</li>
+                    <li><strong>Returned Score (25%)</strong> - Refund/order ratio</li>
+                    <li><strong>Min Balance Score (15%)</strong> - Account balance adequacy</li>
+                </ul>
+                <div class="formula">BCS = 0.35 × Turnover + 0.25 × Volatility + 0.25 × Returned + 0.15 × Min Balance</div>
+                <p class="muted">Thresholds: Low (&lt;5K), Medium (5K-50K), High (50K-200K), Premium (&gt;200K)</p>`,
 
                 'bps-score': `<h4>BPS - Business Profile Score (10% Weight)</h4>
-                    <p>Evaluates business sector and geographic risks:</p>
-                    <ul>
-                        <li><strong>Sector Score (70%)</strong> - Industry risk classification (1-5 scale)</li>
-                        <li><strong>Region Score (30%)</strong> - Geographic risk based on city tier</li>
-                    </ul>
-                    <div class="formula">BPS = 0.7 × Sector + 0.3 × Region</div>
-                    <p class="muted">Sector Risk: 1=Low, 2=Medium-Low, 3=Medium, 4=High, 5=Very High</p>`,
+                <p>Evaluates business sector and geographic risks:</p>
+                <ul>
+                    <li><strong>Sector Score (70%)</strong> - Industry risk classification (1-5 scale)</li>
+                    <li><strong>Region Score (30%)</strong> - Geographic risk based on city tier</li>
+                </ul>
+                <div class="formula">BPS = 0.7 × Sector + 0.3 × Region</div>
+                <p class="muted">Sector Risk: 1=Low, 2=Medium-Low, 3=Medium, 4=High, 5=Very High</p>`,
 
                 'bes-score': `<h4>BES - Behavioral & Experience Score (30% Weight)</h4>
-                    <p>Measures payment behavior and platform experience:</p>
-                    <ul>
-                        <li><strong>AP DPD Score (40%)</strong> - Maximum late days in payments</li>
-                        <li><strong>Utilization Score (25%)</strong> - Credit limit usage ratio</li>
-                        <li><strong>Dispute Score (25%)</strong> - Refund request frequency</li>
-                        <li><strong>Trend Score (10%)</strong> - Revenue growth trend</li>
-                    </ul>
-                    <div class="formula">BES = 0.4 × DPD + 0.25 × Utilization + 0.25 × Dispute + 0.10 × Trend</div>`,
+                <p>Measures payment behavior and platform experience:</p>
+                <ul>
+                    <li><strong>AP DPD Score (40%)</strong> - Maximum late days in payments</li>
+                    <li><strong>Utilization Score (25%)</strong> - Credit limit usage ratio</li>
+                    <li><strong>Dispute Score (25%)</strong> - Refund request frequency</li>
+                    <li><strong>Trend Score (10%)</strong> - Revenue growth trend</li>
+                </ul>
+                <div class="formula">BES = 0.4 × DPD + 0.25 × Utilization + 0.25 × Dispute + 0.10 × Trend</div>`,
 
                 'caf-factor': `<h4>CAF - Compliance Adjustment Factor</h4>
-                    <p>Multiplicative factor for compliance and regulatory considerations:</p>
-                    <ul>
-                        <li><strong>Default</strong>: 1.0 (neutral impact)</li>
-                        <li><strong>Penalties</strong>: &lt;1.0 for compliance issues</li>
-                        <li><strong>Bonuses</strong>: &gt;1.0 for exceptional compliance</li>
-                    </ul>
-                    <p class="muted">Currently set to default 1.0 pending compliance module integration.</p>`,
+                <p>Multiplicative factor for compliance and regulatory considerations:</p>
+                <ul>
+                    <li><strong>Default</strong>: 1.0 (neutral impact)</li>
+                    <li><strong>Penalties</strong>: &lt;1.0 for compliance issues</li>
+                    <li><strong>Bonuses</strong>: &gt;1.0 for exceptional compliance</li>
+                </ul>
+                <p class="muted">Currently set to default 1.0 pending compliance module integration.</p>`,
 
                 'omrs-score': `<h4>OMRS - Overall Merchant Risk Score</h4>
-                    <p>Composite risk score combining all components:</p>
-                    <div class="formula">
-                        Base = 0.15×LPS + 0.25×CHS + 0.20×BCS + 0.10×BPS + 0.30×BES<br>
-                        OMRS = Base × CAF × 100
-                    </div>
-                    <p><strong>Risk Bands:</strong></p>
-                   <ul>
-                        <li>85-100: Band A (Low) – Green</li>
-                        <li>70-84: Band B (Moderate-Low) – Blue</li>
-                        <li>55-69: Band C (Moderate) – Yellow</li>
-                        <li>40-54: Band D (High) – Red</li>
-                        <li>0-39: Band E (Very High) – Dark Red</li>
-                    </ul>`,
+                <p>Composite risk score combining all components:</p>
+                <div class="formula">
+                    Base = 0.15×LPS + 0.25×CHS + 0.20×BCS + 0.10×BPS + 0.30×BES<br>
+                    OMRS = Base × CAF × 100
+                </div>
+                <p><strong>Risk Bands:</strong></p>
+                <ul>
+                    <li>80-100: Low Risk (Green)</li>
+                    <li>60-79: Medium Risk (Yellow)</li>
+                    <li>0-59: High Risk (Red)</li>
+                </ul>`,
 
                 'risk-flags': `<h4>Risk Flags & Warnings</h4>
-                    <p>Indicates data quality issues or risk concerns:</p>
-                    <ul>
-                        <li><strong>no_bureau_data</strong> - Missing credit bureau information</li>
-                        <li><strong>no_banking_data</strong> - Insufficient transaction history</li>
-                        <li><strong>no_cr_issue_date</strong> - Missing business registration date</li>
-                        <li><strong>no_credit_limit_info</strong> - Credit limit data unavailable</li>
-                        <li><strong>no_behavior_history</strong> - No payment history available</li>
-                    </ul>
-                    <p class="muted">Flags help identify areas needing manual review or additional data collection.</p>`,
+                <p>Indicates data quality issues or risk concerns:</p>
+                <ul>
+                    <li><strong>no_bureau_data</strong> - Missing credit bureau information</li>
+                    <li><strong>no_banking_data</strong> - Insufficient transaction history</li>
+                    <li><strong>no_cr_issue_date</strong> - Missing business registration date</li>
+                    <li><strong>no_credit_limit_info</strong> - Credit limit data unavailable</li>
+                    <li><strong>no_behavior_history</strong> - No payment history available</li>
+                </ul>
+                <p class="muted">Flags help identify areas needing manual review or additional data collection.</p>`,
 
                 'action': `<h4>Action Buttons</h4>
-                    <p>Admin-only risk management actions:</p>
-                    <ul>
-                        <li><strong>View Details</strong> - Comprehensive risk breakdown and components</li>
-                        <li><strong>Manual Adjustment</strong> - Override automated scores with expert judgment</li>
-                        <li><strong>Set Weights</strong> - Customize scoring weights for specific risk models</li>
-                    </ul>`
+                <p>Admin-only risk management actions:</p>
+                <ul>
+                    <li><strong>View Details</strong> - Comprehensive risk breakdown and components</li>
+                    <li><strong>Manual Adjustment</strong> - Override automated scores with expert judgment</li>
+                    <li><strong>Set Weights</strong> - Customize scoring weights for specific risk models</li>
+                </ul>`
             };
 
             // Create and manage tooltip element
@@ -701,165 +682,159 @@
                 switch (scoreType) {
                     case 'lps':
                         content = `
-                                <h4>LPS - Legal & Profile Score</h4>
-                                <p><strong>Overall Score:</strong> ${scoreValue}</p>
-                                <div class="component-grid">
-                                    <div class="component-item">
-                                        <strong>Age Score:</strong> ${components.age_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>CR Score:</strong> ${components.cr_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Document Score:</strong> ${components.doc_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Business Months:</strong> ${components.t_business_months || 'N/A'}
-                                    </div>
+                            <h4>LPS - Legal & Profile Score</h4>
+                            <p><strong>Overall Score:</strong> ${scoreValue}</p>
+                            <div class="component-grid">
+                                <div class="component-item">
+                                    <strong>Age Score:</strong> ${components.age_score || 0}
                                 </div>
-                                <p class="muted">${notes}</p>
-                            `;
+                                <div class="component-item">
+                                    <strong>CR Score:</strong> ${components.cr_score || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Document Score:</strong> ${components.doc_score || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Business Months:</strong> ${components.t_business_months || 'N/A'}
+                                </div>
+                            </div>
+                            <p class="muted">${notes}</p>
+                        `;
                         break;
 
                     case 'chs':
                         content = `
-                                <h4>CHS - Credit History Score</h4>
-                                <p><strong>Overall Score:</strong> ${scoreValue}</p>
-                                <div class="component-grid">
-                                    <div class="component-item">
-                                        <strong>Bureau Rating:</strong> ${components.bureau_rating_score || 'N/A'}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>DPD Score:</strong> ${components.dpd_score || 'N/A'}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Max DPD 12M:</strong> ${components.max_dpd_12m || 'N/A'}
-                                    </div>
+                            <h4>CHS - Credit History Score</h4>
+                            <p><strong>Overall Score:</strong> ${scoreValue}</p>
+                            <div class="component-grid">
+                                <div class="component-item">
+                                    <strong>Bureau Rating:</strong> ${components.bureau_rating_score || 'N/A'}
                                 </div>
-                                <p class="muted">${notes}</p>
-                                ${flags.includes('no_bureau_data') ? '<span class="risk-badge high">No Bureau Data</span>' : ''}
-                            `;
+                                <div class="component-item">
+                                    <strong>DPD Score:</strong> ${components.dpd_score || 'N/A'}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Max DPD 12M:</strong> ${components.max_dpd_12m || 'N/A'}
+                                </div>
+                            </div>
+                            <p class="muted">${notes}</p>
+                            ${flags.includes('no_bureau_data') ? '<span class="risk-badge high">No Bureau Data</span>' : ''}
+                        `;
                         break;
 
                     case 'bcs':
                         content = `
-                                <h4>BCS - Banking & Cashflow Score</h4>
-                                <p><strong>Overall Score:</strong> ${scoreValue}</p>
-                                <div class="component-grid">
-                                    <div class="component-item">
-                                        <strong>Turnover Score:</strong> ${components.turnover_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Volatility Score:</strong> ${components.volatility_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Returned Score:</strong> ${components.returned_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Min Balance Score:</strong> ${components.min_balance_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Avg Monthly Turnover:</strong> ${components.avg_monthly_turnover || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Volatility:</strong> ${components.volatility || 0}
-                                    </div>
+                            <h4>BCS - Banking & Cashflow Score</h4>
+                            <p><strong>Overall Score:</strong> ${scoreValue}</p>
+                            <div class="component-grid">
+                                <div class="component-item">
+                                    <strong>Turnover Score:</strong> ${components.turnover_score || 0}
                                 </div>
-                                <p class="muted">${notes}</p>
-                            `;
+                                <div class="component-item">
+                                    <strong>Volatility Score:</strong> ${components.volatility_score || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Returned Score:</strong> ${components.returned_score || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Min Balance Score:</strong> ${components.min_balance_score || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Avg Monthly Turnover:</strong> ${components.avg_monthly_turnover || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Volatility:</strong> ${components.volatility || 0}
+                                </div>
+                            </div>
+                            <p class="muted">${notes}</p>
+                        `;
                         break;
 
                     case 'bps':
                         content = `
-                                <h4>BPS - Business Profile Score</h4>
-                                <p><strong>Overall Score:</strong> ${scoreValue}</p>
-                                <div class="component-grid">
-                                    <div class="component-item">
-                                        <strong>Sector Score:</strong> ${components.sector_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Region Score:</strong> ${components.region_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Sector Risk Class:</strong> ${components.sector_risk_class || 'N/A'}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Region Risk Class:</strong> ${components.region_risk_class || 'N/A'}
-                                    </div>
+                            <h4>BPS - Business Profile Score</h4>
+                            <p><strong>Overall Score:</strong> ${scoreValue}</p>
+                            <div class="component-grid">
+                                <div class="component-item">
+                                    <strong>Sector Score:</strong> ${components.sector_score || 0}
                                 </div>
-                                <p class="muted">${notes}</p>
-                            `;
+                                <div class="component-item">
+                                    <strong>Region Score:</strong> ${components.region_score || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Sector Risk Class:</strong> ${components.sector_risk_class || 'N/A'}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Region Risk Class:</strong> ${components.region_risk_class || 'N/A'}
+                                </div>
+                            </div>
+                            <p class="muted">${notes}</p>
+                        `;
                         break;
 
                     case 'bes':
                         content = `
-                                <h4>BES - Behavioral & Experience Score</h4>
-                                <p><strong>Overall Score:</strong> ${scoreValue}</p>
-                                <div class="component-grid">
-                                    <div class="component-item">
-                                        <strong>AP DPD Score:</strong> ${components.ap_dpd_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Utilization Score:</strong> ${components.utilization_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Dispute Score:</strong> ${components.dispute_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Trend Score:</strong> ${components.trend_score || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>DPD AP Max:</strong> ${components.dpd_ap_max || 0}
-                                    </div>
-                                    <div class="component-item">
-                                        <strong>Utilization Ratio:</strong> ${components.utilization_ratio || 0}
-                                    </div>
+                            <h4>BES - Behavioral & Experience Score</h4>
+                            <p><strong>Overall Score:</strong> ${scoreValue}</p>
+                            <div class="component-grid">
+                                <div class="component-item">
+                                    <strong>AP DPD Score:</strong> ${components.ap_dpd_score || 0}
                                 </div>
-                                <p class="muted">${notes}</p>
-                            `;
+                                <div class="component-item">
+                                    <strong>Utilization Score:</strong> ${components.utilization_score || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Dispute Score:</strong> ${components.dispute_score || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Trend Score:</strong> ${components.trend_score || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>DPD AP Max:</strong> ${components.dpd_ap_max || 0}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Utilization Ratio:</strong> ${components.utilization_ratio || 0}
+                                </div>
+                            </div>
+                            <p class="muted">${notes}</p>
+                        `;
                         break;
 
                     case 'caf':
                         content = `
-                                <h4>CAF - Compliance Adjustment Factor</h4>
-                                <p><strong>Factor:</strong> ${scoreValue}</p>
-                                <p class="muted">${notes}</p>
-                            `;
+                            <h4>CAF - Compliance Adjustment Factor</h4>
+                            <p><strong>Factor:</strong> ${scoreValue}</p>
+                            <p class="muted">${notes}</p>
+                        `;
                         break;
 
                     case 'omrs':
                         content = `
-                                <h4>OMRS - Overall Merchant Risk Score</h4>
-                                <p><strong>Overall Score:</strong> ${scoreValue}</p>
-                                <p><strong>Risk Level:</strong> ${
-                                    scoreValue >= 85 ? 'Band A (Low risk)' :
-                                    scoreValue >= 70 ? 'Band B (Moderate-Low)' :
-                                    scoreValue >= 55 ? 'Band C (Moderate)' :
-                                    scoreValue >= 40 ? 'Band D (High)' :
-                                    'Band E (Very High)'
-                                }</p>
-                                <div class="formula">
-                                    Base = 0.15×LPS + 0.25×CHS + 0.20×BCS + 0.10×BPS + 0.30×BES<br>
-                                    OMRS = Base × CAF × 100
-                                </div>
-                            `;
+                            <h4>OMRS - Overall Merchant Risk Score</h4>
+                            <p><strong>Overall Score:</strong> ${scoreValue}</p>
+                            <p><strong>Risk Level:</strong> ${scoreValue >= 80 ? 'Low Risk' : scoreValue >= 60 ? 'Medium Risk' : 'High Risk'}</p>
+                            <div class="formula">
+                                Base = 0.15×LPS + 0.25×CHS + 0.20×BCS + 0.10×BPS + 0.30×BES<br>
+                                OMRS = Base × CAF × 100
+                            </div>
+                        `;
                         break;
 
                     case 'flags':
                         const flagCount = parseInt(cell.dataset.count) || 0;
                         content = `
-                                <h4>Risk Flags</h4>
-                                <p><strong>Total Flags:</strong> ${flagCount}</p>
-                                ${flagCount > 0 ? `
-                                                                                                                                        <div class="component-grid">
-                                                                                                                                            ${flags.map(flag => `
-                                            <div class="component-item">
-                                                <span class="risk-badge high">${flag}</span>
-                                            </div>
-                                        `).join('')}
-                                                                                                                                        </div>
-                                                                                                                                    ` : '<p>No risk flags detected</p>'}
-                            `;
+                            <h4>Risk Flags</h4>
+                            <p><strong>Total Flags:</strong> ${flagCount}</p>
+                            ${flagCount > 0 ? `
+                                                                                                        <div class="component-grid">
+                                                                                                            ${flags.map(flag => `
+                                        <div class="component-item">
+                                            <span class="risk-badge high">${flag}</span>
+                                        </div>
+                                    `).join('')}
+                                                                                                        </div>
+                                                                                                    ` : '<p>No risk flags detected</p>'}
+                        `;
                         break;
                 }
 
@@ -928,75 +903,75 @@
                     const userId = this.getAttribute('data-user-id');
 
                     let detailsHtml = `
-                        <div class="risk-details">
-                            <h4 class="font-semibold mb-4">Risk Breakdown for User #${userId}</h4>
-                            <div class="risk-component-grid">
-                    `;
+                    <div class="risk-details">
+                        <h4 class="font-semibold mb-4">Risk Breakdown for User #${userId}</h4>
+                        <div class="risk-component-grid">
+                `;
 
                     // LPS Details
                     if (riskData.components && riskData.components.lps) {
                         detailsHtml += `
-                            <div class="risk-component-card">
-                                <h5>LPS Components</h5>
-                                <p>Age Score: ${riskData.components.lps.age_score}</p>
-                                <p>CR Score: ${riskData.components.lps.cr_score}</p>
-                                <p>Document Score: ${riskData.components.lps.doc_score}</p>
-                                <p>Business Months: ${riskData.components.lps.t_business_months || 'N/A'}</p>
-                            </div>
-                        `;
+                        <div class="risk-component-card">
+                            <h5>LPS Components</h5>
+                            <p>Age Score: ${riskData.components.lps.age_score}</p>
+                            <p>CR Score: ${riskData.components.lps.cr_score}</p>
+                            <p>Document Score: ${riskData.components.lps.doc_score}</p>
+                            <p>Business Months: ${riskData.components.lps.t_business_months || 'N/A'}</p>
+                        </div>
+                    `;
                     }
 
                     // BCS Details
                     if (riskData.components && riskData.components.bcs) {
                         detailsHtml += `
-                            <div class="risk-component-card">
-                                <h5>BCS Components</h5>
-                                <p>Avg Monthly Turnover: ${riskData.components.bcs.avg_monthly_turnover}</p>
-                                <p>Turnover Score: ${riskData.components.bcs.turnover_score}</p>
-                                <p>Volatility Score: ${riskData.components.bcs.volatility_score}</p>
-                                <p>Returned Score: ${riskData.components.bcs.returned_score}</p>
-                            </div>
-                        `;
+                        <div class="risk-component-card">
+                            <h5>BCS Components</h5>
+                            <p>Avg Monthly Turnover: ${riskData.components.bcs.avg_monthly_turnover}</p>
+                            <p>Turnover Score: ${riskData.components.bcs.turnover_score}</p>
+                            <p>Volatility Score: ${riskData.components.bcs.volatility_score}</p>
+                            <p>Returned Score: ${riskData.components.bcs.returned_score}</p>
+                        </div>
+                    `;
                     }
 
                     // BPS Details
                     if (riskData.components && riskData.components.bps) {
                         detailsHtml += `
-                            <div class="risk-component-card">
-                                <h5>BPS Components</h5>
-                                <p>Sector Risk Class: ${riskData.components.bps.sector_risk_class}</p>
-                                <p>Sector Score: ${riskData.components.bps.sector_score}</p>
-                                <p>Region Risk Class: ${riskData.components.bps.region_risk_class}</p>
-                                <p>Region Score: ${riskData.components.bps.region_score}</p>
-                            </div>
-                        `;
+                        <div class="risk-component-card">
+                            <h5>BPS Components</h5>
+                            <p>Sector Risk Class: ${riskData.components.bps.sector_risk_class}</p>
+                            <p>Sector Score: ${riskData.components.bps.sector_score}</p>
+                            <p>Region Risk Class: ${riskData.components.bps.region_risk_class}</p>
+                            <p>Region Score: ${riskData.components.bps.region_score}</p>
+                        </div>
+                    `;
                     }
 
                     // BES Details
                     if (riskData.components && riskData.components.bes) {
                         detailsHtml += `
-                            <div class="risk-component-card">
-                                <h5>BES Components</h5>
-                                <p>DPD AP Max: ${riskData.components.bes.dpd_ap_max}</p>
-                                <p>AP DPD Score: ${riskData.components.bes.ap_dpd_score}</p>
-                                <p>Utilization Ratio: ${riskData.components.bes.utilization_ratio}</p>
-                                <p>Dispute Rate: ${riskData.components.bes.dispute_rate}</p>
-                            </div>
-                        `;
+                        <div class="risk-component-card">
+                            <h5>BES Components</h5>
+                            <p>DPD AP Max: ${riskData.components.bes.dpd_ap_max}</p>
+                            <p>AP DPD Score: ${riskData.components.bes.ap_dpd_score}</p>
+                            <p>Utilization Ratio: ${riskData.components.bes.utilization_ratio}</p>
+                            <p>Dispute Rate: ${riskData.components.bes.dispute_rate}</p>
+                        </div>
+                    `;
                     }
 
                     detailsHtml += `
-                            </div>
-                            <div class="mt-4">
-                                <h5 class="font-semibold">Risk Flags</h5>
-                                <p>${riskData.flags ? riskData.flags.join(', ') : 'No flags'}</p>
-                            </div>
-                            <div class="mt-4">
-                                <h5 class="font-semibold">Calculation Notes</h5>
-                                <pre class="text-sm bg-gray-100 p-2 rounded">${JSON.stringify(riskData.notes, null, 2)}</pre>
-                            </div>
                         </div>
-                    `;
+                        <div class="mt-4">
+                            <h5 class="font-semibold">Risk Flags</h5>
+                            <p>${riskData.flags ? riskData.flags.join(', ') : 'No flags'}</p>
+                        </div>
+                        <div class="mt-4">
+                            <h5 class="font-semibold">Calculation Notes</h5>
+                            <pre class="text-sm bg-gray-100 p-2 rounded">${JSON.stringify(riskData.notes, null, 2)}</pre>
+                        </div>
+                    </div>
+                `;
 
                     document.getElementById('riskDetailsContent').innerHTML = detailsHtml;
                     document.getElementById('riskDetailsModal').style.display = 'block';
