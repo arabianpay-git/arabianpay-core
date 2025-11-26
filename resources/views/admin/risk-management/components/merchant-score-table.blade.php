@@ -681,6 +681,8 @@
 
                 switch (scoreType) {
                     case 'lps':
+                        const businessYears = components.t_business_months ? (components.t_business_months / 12)
+                            .toFixed(1) : 'N/A';
                         content = `
                             <h4>LPS - Legal & Profile Score</h4>
                             <p><strong>Overall Score:</strong> ${scoreValue}</p>
@@ -695,7 +697,10 @@
                                     <strong>Document Score:</strong> ${components.doc_score || 0}
                                 </div>
                                 <div class="component-item">
-                                    <strong>Business Months:</strong> ${components.t_business_months || 'N/A'}
+                                    <strong>Business Months:</strong> ${components.t_business_months ? components.t_business_months.toFixed(2) : 'N/A'}
+                                </div>
+                                <div class="component-item">
+                                    <strong>Business Duration:</strong> ${businessYears !== 'N/A' ? businessYears + ' years' : 'N/A'}
                                 </div>
                             </div>
                             <p class="muted">${notes}</p>
@@ -826,14 +831,14 @@
                             <h4>Risk Flags</h4>
                             <p><strong>Total Flags:</strong> ${flagCount}</p>
                             ${flagCount > 0 ? `
-                                                                                                        <div class="component-grid">
-                                                                                                            ${flags.map(flag => `
+                                                                                                                                                            <div class="component-grid">
+                                                                                                                                                                ${flags.map(flag => `
                                         <div class="component-item">
                                             <span class="risk-badge high">${flag}</span>
                                         </div>
                                     `).join('')}
-                                                                                                        </div>
-                                                                                                    ` : '<p>No risk flags detected</p>'}
+                                                                                                                                                            </div>
+                                                                                                                                                        ` : '<p>No risk flags detected</p>'}
                         `;
                         break;
                 }
