@@ -12,25 +12,31 @@
                 <th data-tooltip-key="caf-factor" class="w-[100px] text-center">{{ translate('CAF Factor') }}</th>
                 <th data-tooltip-key="omrs-score" class="w-[120px] text-center">{{ translate('OMRS') }}</th>
                 <th data-tooltip-key="risk-flags" class="w-[150px] text-center">{{ translate('Risk Flags') }}</th>
-                {{-- <th data-tooltip-key="action" class="w-[100px] text-center">{{ translate('Action') }}</th> --}}
+                <th data-tooltip-key="action" class="w-[100px] text-center">{{ translate('Action') }}</th>
             </tr>
         </thead>
         <tbody>
+            @php
+                $userIds = $risks->pluck('user.id')->toArray();
+                $riskWeights = App\Models\RiskWeight::whereIn('user_id', $userIds)->get()->keyBy('user_id');
+            @endphp
+
             @foreach ($risks as $item)
                 @php
                     $user = $item['user'];
                     $risk = $item['risk'];
                     $hasError = isset($risk['error']);
 
-                    // Define weights for each score type
+                    // Get weights for this user from database or use defaults
+                    $userWeights = $riskWeights[$user->id] ?? null;
                     $weights = [
-                        'lps' => 15,
-                        'chs' => 25,
-                        'bcs' => 20,
-                        'bps' => 10,
-                        'bes' => 30,
-                        'caf' => 0, // CAF is multiplicative, not additive
-                        'omrs' => 100, // OMRS is the final score
+                        'lps' => $userWeights->lps_weight ?? 15,
+                        'chs' => $userWeights->chs_weight ?? 25,
+                        'bcs' => $userWeights->bcs_weight ?? 20,
+                        'bps' => $userWeights->bps_weight ?? 10,
+                        'bes' => $userWeights->bes_weight ?? 30,
+                        'caf' => $userWeights->caf_weight ?? 0,
+                        'omrs' => 100,
                     ];
 
                     if (!$hasError) {
@@ -38,7 +44,7 @@
                         $notes = $risk['notes'] ?? [];
                         $flags = $risk['flags'] ?? [];
 
-                        // Calculate weighted contributions
+                        // Calculate weighted contributions using dynamic weights
                         $weightedContributions = [];
                         foreach ($weights as $scoreType => $weight) {
                             if (isset($risk[$scoreType]) && $weight > 0) {
@@ -326,52 +332,57 @@
                     @endif
 
                     <!-- Action -->
-                    {{-- <td class="text-center">
-                            @if (Auth::user()->user_type == 'admin')
-                                <div class="flex gap-1 justify-center">
-                                    @if ($hasError)
-                                        <!-- Disabled buttons for error state -->
-                                        <button class="btn btn-sm btn-icon btn-clear btn-secondary" disabled
-                                            title="{{ translate('No risk data available') }}">
-                                            <i class="ki-filled ki-eye"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-icon btn-clear btn-secondary" disabled
-                                            title="{{ translate('No risk data available') }}">
-                                            <i class="ki-filled ki-notepad-edit"></i>
-                                        </button>
-                                        <button class="btn btn-sm btn-icon btn-clear btn-secondary" disabled
-                                            title="{{ translate('No risk data available') }}">
-                                            <i class="ki-filled ki-setting-4"></i>
-                                        </button>
-                                    @else
-                                        <!-- Risk Details Button -->
-                                        <button class="btn btn-sm btn-icon btn-clear btn-primary risk-details-btn"
-                                            data-user-id="{{ $user->id }}"
-                                            data-risk-data="{{ json_encode($risk) }}"
-                                            title="{{ translate('View Risk Details') }}">
-                                            <i class="ki-filled ki-eye"></i>
-                                        </button>
+                    <td class="text-center">
+                        @if (Auth::user()->user_type == 'admin')
+                            <div class="flex gap-1 justify-center">
+                                @if ($hasError)
+                                    <!-- Disabled buttons for error state -->
+                                    <button class="btn btn-sm btn-icon btn-clear btn-secondary" disabled
+                                        title="{{ translate('No risk data available') }}">
+                                        <i class="ki-filled ki-eye"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-icon btn-clear btn-secondary" disabled
+                                        title="{{ translate('No risk data available') }}">
+                                        <i class="ki-filled ki-notepad-edit"></i>
+                                    </button>
+                                    <button class="btn btn-sm btn-icon btn-clear btn-secondary" disabled
+                                        title="{{ translate('No risk data available') }}">
+                                        <i class="ki-filled ki-setting-4"></i>
+                                    </button>
+                                @else
+                                    <!-- Risk Details Button -->
+                                    <a href="{{ route('risk.analysis.details', ['user' => $user->id, 'type' => $type]) }}"
+                                        class="btn btn-sm btn-icon btn-clear btn-primary"
+                                        title="{{ translate('View Detailed Analysis') }}">
+                                        <i class="ki-filled ki-eye"></i>
+                                    </a>
 
-                                        <!-- Manual Adjustment Button -->
-                                        <button class="btn btn-sm btn-icon btn-clear btn-warning manual-adjust-btn"
-                                            data-user-id="{{ $user->id }}"
-                                            data-current-score="{{ $risk['omrs'] }}"
-                                            title="{{ translate('Manual Score Adjustment') }}">
-                                            <i class="ki-filled ki-notepad-edit"></i>
-                                        </button>
+                                    <!-- Manual Score Adjustment Button -->
+                                    @php
+                                        $score = App\Models\RiskScore::where('user_id', $user->id)->first();
+                                    @endphp
 
-                                        <!-- Risk Weights Button -->
-                                        <button class="btn btn-sm btn-icon btn-clear btn-info risk-weights-btn"
-                                            data-user-id="{{ $user->id }}"
-                                            title="{{ translate('Set Risk Weights') }}">
-                                            <i class="ki-filled ki-setting-4"></i>
-                                        </button>
-                                    @endif
-                                </div>
-                            @else
-                                <span class="text-muted">{{ translate('Unauthorized') }}</span>
-                            @endif
-                        </td> --}}
+                                    <a class="btn btn-sm btn-icon btn-clear btn-primary"
+                                        data-modal-toggle="#score_modal" data-id="{{ $user->id }}"
+                                        data-action="{{ route('risk.scoreUpdate') }}"
+                                        data-score="{{ optional($score)->risk_score }}"
+                                        data-reason="{{ optional($score)->reason }}"
+                                        title="{{ translate('Manual Score Adjustment') }}">
+
+                                        <i class="ki-filled ki-notepad-edit"></i>
+                                    </a>
+
+                                    <a class="btn btn-sm btn-icon btn-clear btn-info"
+                                        title="{{ translate('Set Risk Weights') }}"
+                                        data-modal-toggle="#risk_weight_modal" data-user-id="{{ $user->id }}">
+                                        <i class="ki-filled ki-setting-4"></i>
+                                    </a>
+                                @endif
+                            </div>
+                        @else
+                            <span class="text-muted">{{ translate('Unauthorized') }}</span>
+                        @endif
+                    </td>
                 </tr>
             @endforeach
         </tbody>
@@ -379,21 +390,8 @@
 </div>
 
 @include('layouts.includes.table-pagination', ['paginator' => $risks])
+@include('admin.risk-management.components.risk-weight-modal')
 
-<!-- Risk Details Modal -->
-<div class="modal" id="riskDetailsModal">
-    <div class="modal-dialog modal-lg">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="modal-title">{{ translate('Risk Score Details') }}</h2>
-                <button class="close" data-modal-dismiss="true">&times;</button>
-            </div>
-            <div class="modal-body" id="riskDetailsContent">
-                <!-- Dynamic content will be loaded here -->
-            </div>
-        </div>
-    </div>
-</div>
 
 @push('styles')
     <style>
@@ -831,14 +829,14 @@
                             <h4>Risk Flags</h4>
                             <p><strong>Total Flags:</strong> ${flagCount}</p>
                             ${flagCount > 0 ? `
-                                                                                                                                                            <div class="component-grid">
-                                                                                                                                                                ${flags.map(flag => `
+                                                                                                                                                                                                                                                                <div class="component-grid">
+                                                                                                                                                                                                                                                                    ${flags.map(flag => `
                                         <div class="component-item">
                                             <span class="risk-badge high">${flag}</span>
                                         </div>
                                     `).join('')}
-                                                                                                                                                            </div>
-                                                                                                                                                        ` : '<p>No risk flags detected</p>'}
+                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                            ` : '<p>No risk flags detected</p>'}
                         `;
                         break;
                 }
@@ -984,25 +982,15 @@
             });
 
             // Manual Adjustment Handler
-            document.querySelectorAll('.manual-adjust-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const userId = this.getAttribute('data-user-id');
-                    const currentScore = this.getAttribute('data-current-score');
-
-                    // Implementation for manual adjustment modal
-                    alert(`Manual adjustment for user ${userId}. Current score: ${currentScore}`);
-                    // You would typically open a modal here for manual score input
-                });
-            });
-
-            // Risk Weights Handler
-            document.querySelectorAll('.risk-weights-btn').forEach(btn => {
-                btn.addEventListener('click', function() {
-                    const userId = this.getAttribute('data-user-id');
-
-                    // Implementation for risk weights modal
-                    alert(`Set risk weights for user ${userId}`);
-                    // You would typically open a modal here for weight configuration
+            const scoreButtons = document.querySelectorAll('[data-modal-toggle="#score_modal"]');
+            scoreButtons.forEach(button => {
+                button.addEventListener('click', function() {
+                    const modal = document.getElementById('score_modal');
+                    const form = modal.querySelector('form');
+                    form.setAttribute('action', this.getAttribute('data-action'));
+                    form.querySelector('#user_id').value = this.getAttribute('data-id');
+                    form.querySelector('#risk_score').value = this.getAttribute('data-score') || '';
+                    form.querySelector('#reason').value = this.getAttribute('data-reason') || '';
                 });
             });
 

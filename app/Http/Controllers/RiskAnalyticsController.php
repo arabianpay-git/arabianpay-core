@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Customer;
+use App\Models\Merchant;
 use App\Models\RiskScore;
+use App\Models\RiskWeight;
 use App\Models\User;
 use App\Services\RiskAnalyticsService;
 use App\Services\RiskDashboardService;
@@ -308,5 +311,65 @@ class RiskAnalyticsController extends Controller
         );
 
         return view('admin.risk-management.merchant-score', ['risks' => $paginatedRisks]);
+    }
+
+    /**
+     * Show detailed risk analysis for a user
+     */
+    public function show($userId, $type = 'customer')
+    {
+        try {
+            $user = User::findOrFail($userId);
+
+            // Get the entity based on type
+            if ($type === 'merchant') {
+                $entity = Merchant::where('user_id', $userId)->first();
+                if (!$entity) {
+                    $entity = Merchant::where('user_id', $userId)->first();
+                }
+            } else {
+                $entity = Customer::where('user_id', $userId)->first();
+            }
+
+            if (!$entity) {
+                return back()->with('error', ucfirst($type) . ' record not found');
+            }
+
+            // Get complete risk analysis
+            $riskAnalysis = $this->riskService->analyzeCustomer($entity, $type);
+
+            return view('admin.risk-management.details', compact('user', 'riskAnalysis', 'type'));
+        } catch (\Exception $e) {
+            return back()->with('error', 'Error loading risk analysis: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Get risk components data for AJAX updates
+     */
+    public function components($userId, $type)
+    {
+        try {
+            $user = User::findOrFail($userId);
+
+            if ($type === 'merchant') {
+                $entity = Merchant::where('seller_id', $userId)->first();
+                if (!$entity) {
+                    $entity = Merchant::where('user_id', $userId)->first();
+                }
+            } else {
+                $entity = Customer::where('user_id', $userId)->first();
+            }
+
+            if (!$entity) {
+                return response()->json(['error' => 'Entity not found'], 404);
+            }
+
+            $riskAnalysis = $this->riskService->analyzeCustomer($entity, $type);
+
+            return response()->json($riskAnalysis);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 500);
+        }
     }
 }

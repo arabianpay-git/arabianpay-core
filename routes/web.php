@@ -354,6 +354,10 @@ Route::group([
                 Route::get('export/csv', 'exportCsv')->withoutMiddleware([PreventBackHistory::class])->name('risk.exportCsv');
 
                 Route::get('/merchant-score', 'merchantScore')->name('risk.merchantScore');
+
+                // Risk Analysis Routes
+                Route::get('/risk-analysis/{user}/{type}', 'show')->name('risk.analysis.details');
+                Route::get('/risk-analysis/{user}/{type}/components', 'components')->name('risk.analysis.components');
             });
 
             Route::controller(RiskExportController::class)->prefix('risk')->group(function () {
@@ -362,9 +366,13 @@ Route::group([
                 Route::get('risk/export/download/{id}', 'download')->name('risk.export.download');
             });
 
-            Route::post('risk-weights/store', [RiskWeightController::class, 'store'])->name('riskWeights.store');
-            Route::put('risk-weights/{riskWeight}', [RiskWeightController::class, 'update'])->name('riskWeights.update');
-            Route::get('risk-weights/last', [RiskWeightController::class, 'getLast'])->name('riskWeights.last');
+            Route::prefix('risk-weights')->group(function () {
+                Route::post('/', [RiskWeightController::class, 'store'])->name('risk-weights.store');
+                Route::get('/get', [RiskWeightController::class, 'getWeights'])->name('risk-weights.get');
+                Route::post('/reset', [RiskWeightController::class, 'resetToDefault'])->name('risk-weights.reset');
+                Route::get('/history', [RiskWeightController::class, 'getWeightHistory'])->name('risk-weights.history');
+            });
+
 
             //
             // Collection Department

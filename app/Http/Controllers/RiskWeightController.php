@@ -3,219 +3,230 @@
 namespace App\Http\Controllers;
 
 use App\Models\RiskWeight;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 class RiskWeightController extends Controller
 {
     /**
-     * Store new weights — if a record already exists for this user_id, update it instead.
-     * Keeps last_weight / new_weight history.
+     * Store or update risk weights for a user
      */
     public function store(Request $request)
     {
         $validated = $request->validate([
-            // Required user reference
             'user_id' => 'required|integer|exists:users,id',
 
             // Main weights
-            'cr_id' => 'required|numeric|min:0',
-            'pos' => 'required|numeric|min:0',
-            'repayment' => 'required|numeric|min:0',
-            'industry' => 'required|numeric|min:0',
-            'location' => 'required|numeric|min:0',
+            'lps_weight' => 'required|numeric|min:0|max:100',
+            'chs_weight' => 'required|numeric|min:0|max:100',
+            'bcs_weight' => 'required|numeric|min:0|max:100',
+            'bps_weight' => 'required|numeric|min:0|max:100',
+            'bes_weight' => 'required|numeric|min:0|max:100',
+            'caf_weight' => 'required|numeric|min:0|max:100',
 
-            // CR / ID sub-weights
-            'cr_id_sub_id_match' => 'nullable|numeric|min:0',
-            'cr_id_sub_id_expiry' => 'nullable|numeric|min:0',
-            'cr_id_sub_cr_expiry' => 'nullable|numeric|min:0',
-            'cr_id_sub_industry' => 'nullable|numeric|min:0',
-            'cr_id_sub_activity' => 'nullable|numeric|min:0',
-            'cr_id_sub_total' => 'nullable|numeric|min:0',
+            // LPS sub-weights
+            'lps_age_weight' => 'required|numeric|min:0|max:100',
+            'lps_cr_weight' => 'required|numeric|min:0|max:100',
+            'lps_doc_weight' => 'required|numeric|min:0|max:100',
 
-            // POS
-            'pos_threshold' => 'nullable|numeric|min:0',
+            // BCS sub-weights
+            'bcs_turnover_weight' => 'required|numeric|min:0|max:100',
+            'bcs_volatility_weight' => 'required|numeric|min:0|max:100',
+            'bcs_returned_weight' => 'required|numeric|min:0|max:100',
+            'bcs_balance_weight' => 'required|numeric|min:0|max:100',
 
-            // Repayment
-            'repayment_few_threshold' => 'nullable|integer|min:0',
-            'repayment_score_no_delays' => 'nullable|numeric|min:0',
-            'repayment_score_few_delays' => 'nullable|numeric|min:0',
-            'repayment_score_many_delays' => 'nullable|numeric|min:0',
+            // BPS sub-weights
+            'bps_sector_weight' => 'required|numeric|min:0|max:100',
+            'bps_region_weight' => 'required|numeric|min:0|max:100',
 
-            // Location
-            'location_activity_max' => 'nullable|numeric|min:0',
-            'location_default_rate_max' => 'nullable|numeric|min:0',
-            'location_sub_total_max' => 'nullable|numeric|min:0',
+            // BES sub-weights
+            'bes_dpd_weight' => 'required|numeric|min:0|max:100',
+            'bes_utilization_weight' => 'required|numeric|min:0|max:100',
+            'bes_dispute_weight' => 'required|numeric|min:0|max:100',
+            'bes_trend_weight' => 'required|numeric|min:0|max:100',
         ]);
 
-        // ---- Validate sum of main weights ----
-        $mainWeights = collect($validated)->only(['cr_id', 'pos', 'repayment', 'industry', 'location']);
-        $mainSum = $mainWeights->sum();
-
-        if ($mainSum != 95) {
+        // Validate main weights sum to 100
+        $mainWeights = collect($validated)->only([
+            'lps_weight',
+            'chs_weight',
+            'bcs_weight',
+            'bps_weight',
+            'bes_weight',
+            'caf_weight'
+        ]);
+        if (abs($mainWeights->sum() - 100) > 0.01) {
             return response()->json([
                 'success' => false,
-                'message' => "The sum of all main weights must equal 95. Current sum: {$mainSum}",
+                'message' => "The sum of all main weights must equal 100%. Current sum: {$mainWeights->sum()}%",
             ], 422);
         }
 
-        // ---- Validate sum of CR/ID sub-weights ----
-        $subWeights = collect($validated)->only([
-            'cr_id_sub_id_match',
-            'cr_id_sub_id_expiry',
-            'cr_id_sub_cr_expiry',
-            'cr_id_sub_industry',
-            'cr_id_sub_activity',
-            'cr_id_sub_total'
-        ])->map(fn($v) => $v ?? 0);
+        // Validate sub-weights
+        $subWeightsGroups = [
+            'LPS' => ['lps_age_weight', 'lps_cr_weight', 'lps_doc_weight'],
+            'BCS' => ['bcs_turnover_weight', 'bcs_volatility_weight', 'bcs_returned_weight', 'bcs_balance_weight'],
+            'BPS' => ['bps_sector_weight', 'bps_region_weight'],
+            'BES' => ['bes_dpd_weight', 'bes_utilization_weight', 'bes_dispute_weight', 'bes_trend_weight'],
+        ];
 
-        $subSum = $subWeights->sum();
-
-        if ($subSum != 100) {
-            return response()->json([
-                'success' => false,
-                'message' => "The sum of all CR/ID sub-weights must equal 100. Current sum: {$subSum}",
-            ], 422);
+        foreach ($subWeightsGroups as $groupName => $fields) {
+            $sum = collect($validated)->only($fields)->sum();
+            if (abs($sum - 100) > 0.01) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "The sum of {$groupName} sub-weights must equal 100%. Current sum: {$sum}%",
+                ], 422);
+            }
         }
 
-        $userId = $validated['user_id'];
+        DB::beginTransaction();
+        try {
+            $userId = $validated['user_id'];
+            $existingWeight = RiskWeight::where('user_id', $userId)->first();
 
-        // ---- Find latest record for this user ----
-        $last = RiskWeight::where('user_id', $userId)->latest()->first();
+            // Prepare snapshot of current weights
+            $snapshot = [
+                'saved_at' => now()->toDateTimeString(),
+                'saved_by' => Auth::id(),
+                'weights' => [
+                    'lps_weight' => $validated['lps_weight'],
+                    'chs_weight' => $validated['chs_weight'],
+                    'bcs_weight' => $validated['bcs_weight'],
+                    'bps_weight' => $validated['bps_weight'],
+                    'bes_weight' => $validated['bes_weight'],
+                    'caf_weight' => $validated['caf_weight'],
+                ],
+                'sub_weights' => [
+                    'lps_age_weight' => $validated['lps_age_weight'],
+                    'lps_cr_weight' => $validated['lps_cr_weight'],
+                    'lps_doc_weight' => $validated['lps_doc_weight'],
+                    'bcs_turnover_weight' => $validated['bcs_turnover_weight'],
+                    'bcs_volatility_weight' => $validated['bcs_volatility_weight'],
+                    'bcs_returned_weight' => $validated['bcs_returned_weight'],
+                    'bcs_balance_weight' => $validated['bcs_balance_weight'],
+                    'bps_sector_weight' => $validated['bps_sector_weight'],
+                    'bps_region_weight' => $validated['bps_region_weight'],
+                    'bes_dpd_weight' => $validated['bes_dpd_weight'],
+                    'bes_utilization_weight' => $validated['bes_utilization_weight'],
+                    'bes_dispute_weight' => $validated['bes_dispute_weight'],
+                    'bes_trend_weight' => $validated['bes_trend_weight'],
+                ],
+            ];
 
-        $data = array_merge(
-            $validated,
-            [
+            // Initialize or append history
+            $history = $existingWeight && is_array($existingWeight->last_weight)
+                ? $existingWeight->last_weight
+                : [];
+            array_unshift($history, $snapshot);
+
+            // Optional cap on history length
+            $maxHistory = 50;
+            if (count($history) > $maxHistory) {
+                $history = array_slice($history, 0, $maxHistory);
+            }
+
+            $data = array_merge($validated, [
                 'employee_id' => Auth::id(),
-                'last_weight' => $last ? $last->new_weight : null,
-                'new_weight' => $mainWeights,
-            ]
-        );
+                'last_weight' => $history,
+                'new_weight' => $mainWeights->toArray(),
+            ]);
 
-        if ($last) {
-            $last->update($data);
+            if ($existingWeight) {
+                $existingWeight->update($data);
+                $riskWeight = $existingWeight;
+            } else {
+                $riskWeight = RiskWeight::create($data);
+            }
+
+            DB::commit();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Weights updated (existing record updated).',
-                'data' => $last,
+                'message' => 'Risk weights saved successfully.',
+                'data' => $riskWeight,
             ]);
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to save risk weights: ' . $e->getMessage(),
+            ], 500);
         }
-
-        $riskWeight = RiskWeight::create($data);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Weights added successfully.',
-            'data' => $riskWeight,
-        ], 201);
     }
 
     /**
-     * Update existing weights explicitly by ID (keeps last/new history)
+     * Get weights for a user
      */
-    public function update(Request $request, RiskWeight $riskWeight)
-    {
-        $validated = $request->validate([
-            'user_id' => 'required|integer|exists:users,id',
-
-            // Main weights
-            'cr_id' => 'required|numeric|min:0',
-            'pos' => 'required|numeric|min:0',
-            'repayment' => 'required|numeric|min:0',
-            'industry' => 'required|numeric|min:0',
-            'location' => 'required|numeric|min:0',
-
-            // CR / ID sub-weights
-            'cr_id_sub_id_match' => 'nullable|numeric|min:0',
-            'cr_id_sub_id_expiry' => 'nullable|numeric|min:0',
-            'cr_id_sub_cr_expiry' => 'nullable|numeric|min:0',
-            'cr_id_sub_industry' => 'nullable|numeric|min:0',
-            'cr_id_sub_activity' => 'nullable|numeric|min:0',
-            'cr_id_sub_total' => 'nullable|numeric|min:0',
-
-            // POS
-            'pos_threshold' => 'nullable|numeric|min:0',
-
-            // Repayment
-            'repayment_few_threshold' => 'nullable|integer|min:0',
-            'repayment_score_no_delays' => 'nullable|numeric|min:0',
-            'repayment_score_few_delays' => 'nullable|numeric|min:0',
-            'repayment_score_many_delays' => 'nullable|numeric|min:0',
-
-            // Location
-            'location_activity_max' => 'nullable|numeric|min:0',
-            'location_default_rate_max' => 'nullable|numeric|min:0',
-            'location_sub_total_max' => 'nullable|numeric|min:0',
-        ]);
-
-        // ---- Validate sum of main weights ----
-        $mainWeights = collect($validated)->only(['cr_id', 'pos', 'repayment', 'industry', 'location']);
-        $mainSum = $mainWeights->sum();
-
-        if ($mainSum != 95) {
-            return response()->json([
-                'success' => false,
-                'message' => "The sum of all main weights must equal 95. Current sum: {$mainSum}",
-            ], 422);
-        }
-
-        // ---- Validate sum of CR/ID sub-weights ----
-        $subWeights = collect($validated)->only([
-            'cr_id_sub_id_match',
-            'cr_id_sub_id_expiry',
-            'cr_id_sub_cr_expiry',
-            'cr_id_sub_industry',
-            'cr_id_sub_activity',
-            'cr_id_sub_total'
-        ])->map(fn($v) => $v ?? 0);
-
-        $subSum = $subWeights->sum();
-
-        if ($subSum != 100) {
-            return response()->json([
-                'success' => false,
-                'message' => "The sum of all CR/ID sub-weights must equal 100. Current sum: {$subSum}",
-            ], 422);
-        }
-
-        $data = array_merge(
-            $validated,
-            [
-                'employee_id' => Auth::id(),
-                'last_weight' => $riskWeight->new_weight,
-                'new_weight' => $mainWeights,
-            ]
-        );
-
-        $riskWeight->update($data);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Weights updated successfully.',
-            'data' => $riskWeight,
-        ]);
-    }
-
-    /**
-     * Return the single/latest weights row if exists for provided user_id
-     */
-    public function getLast(Request $request)
+    public function getWeights(Request $request)
     {
         $request->validate([
             'user_id' => 'required|integer|exists:users,id',
         ]);
 
-        $last = RiskWeight::where('user_id', $request->user_id)->latest()->first();
+        $weights = RiskWeight::where('user_id', $request->user_id)->first();
 
-        if (!$last) {
-            return response()->json(['success' => false, 'weights' => null]);
+        if (!$weights) {
+            // Return default weights if none exist
+            $defaultWeights = RiskWeight::getDefaultWeights();
+            // Add user_id to the response for consistency
+            $defaultWeights['user_id'] = (int)$request->user_id;
+
+            return response()->json([
+                'success' => true,
+                'weights' => $defaultWeights,
+                'is_default' => true,
+            ]);
         }
 
         return response()->json([
             'success' => true,
-            'weights' => $last,
+            'weights' => $weights,
+            'is_default' => false,
+        ]);
+    }
+
+    /**
+     * Reset weights to default for a user
+     */
+    public function resetToDefault(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+        ]);
+
+        $existing = RiskWeight::where('user_id', $request->user_id)->first();
+
+        if ($existing) {
+            $existing->delete();
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Weights reset to default successfully.',
+            'weights' => RiskWeight::getDefaultWeights(),
+        ]);
+    }
+
+    /**
+     * Get weight history for a user
+     */
+    public function getWeightHistory(Request $request)
+    {
+        $request->validate([
+            'user_id' => 'required|integer|exists:users,id',
+        ]);
+
+        $history = RiskWeight::with('employee')
+            ->where('user_id', $request->user_id)
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'history' => $history,
         ]);
     }
 }

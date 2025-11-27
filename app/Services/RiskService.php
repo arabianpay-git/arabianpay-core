@@ -10,6 +10,7 @@ use App\Models\Order;
 use App\Models\RefundRequest;
 use App\Models\SchedulePayment;
 use App\Models\User;
+use App\Models\RiskWeight; // <- added
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
@@ -45,13 +46,23 @@ class RiskService
     ];
 
     /**
+     * Active weights (populated per-request by loadWeights())
+     * Uses RiskWeight values if provided, otherwise RiskWeight::getDefaultWeights()
+     */
+    protected array $weights = [];
+
+    /**
      * Public entry that returns everything
      * @param int|Customer|Merchant $customerOrMerchantOrId
      * @param string $type 'customer' or 'merchant'
+     * @param int|null $weightUserId Optional: user_id used to load RiskWeight (dynamic weights)
      * @return array
      */
-    public function analyzeCustomer($customerOrMerchantOrId, string $type = 'customer'): array
+    public function analyzeCustomer($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): array
     {
+        // load weights for this request
+        $this->weights = $this->loadWeights($customerOrMerchantOrId->user_id);
+
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
         if (! $entity) {
             return ['error' => ucfirst($type) . ' not found'];
@@ -116,23 +127,26 @@ class RiskService
             'notes'     => $notes,
             'components' => $components,
             'type'      => $type, // Include type in response
+            'weights_used' => $this->weights, // helpful for debugging
         ];
     }
 
     /**
      * Return only Overall Merchant Risk Score (0-100)
      */
-    public function getOMRS($customerOrMerchantOrId, string $type = 'customer'): float
+    public function getOMRS($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
-        $res = $this->analyzeCustomer($customerOrMerchantOrId, $type);
+        $this->weights = $this->loadWeights($weightUserId);
+        $res = $this->analyzeCustomer($customerOrMerchantOrId, $type, $weightUserId);
         return $res['omrs'] ?? 0;
     }
 
     /**
      * Return only LPS
      */
-    public function getLPS($customerOrMerchantOrId, string $type = 'customer'): float
+    public function getLPS($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
+        $this->weights = $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
         if (! $entity) return 0;
         $res = $this->computeLPS($entity, $type);
@@ -142,8 +156,9 @@ class RiskService
     /**
      * Return only CHS
      */
-    public function getCHS($customerOrMerchantOrId, string $type = 'customer'): float
+    public function getCHS($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
+        $this->weights = $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
         if (! $entity) return $this->policy['default_chs'];
         $res = $this->computeCHS($entity, $type);
@@ -153,8 +168,9 @@ class RiskService
     /**
      * Return only BCS
      */
-    public function getBCS($customerOrMerchantOrId, string $type = 'customer'): float
+    public function getBCS($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
+        $this->weights = $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
         if (! $entity) return $this->policy['default_bcs'];
         $res = $this->computeBCS($entity, $type);
@@ -164,8 +180,9 @@ class RiskService
     /**
      * Return only BPS
      */
-    public function getBPS($customerOrMerchantOrId, string $type = 'customer'): float
+    public function getBPS($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
+        $this->weights = $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
         if (! $entity) return 0;
         $res = $this->computeBPS($entity, $type);
@@ -175,8 +192,9 @@ class RiskService
     /**
      * Return only BES
      */
-    public function getBES($customerOrMerchantOrId, string $type = 'customer'): float
+    public function getBES($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
+        $this->weights = $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
         if (! $entity) return $this->policy['default_bes'];
         $res = $this->computeBES($entity, $type);
@@ -267,10 +285,18 @@ class RiskService
         // CR score
         $crScore = $crValid ? 100 : 0;
 
-        // LPS formula: 0.4*Age + 0.3*CR + 0.3*Doc
-        $lps = 0.4 * $ageScore + 0.3 * $crScore + 0.3 * $docScore;
+        // LPS formula uses dynamic weights from RiskWeight (lps_age_weight, lps_cr_weight, lps_doc_weight)
+        $ageW = $this->weights['lps_age_weight'] ?? 40;
+        $crW   = $this->weights['lps_cr_weight'] ?? 30;
+        $docW  = $this->weights['lps_doc_weight'] ?? 30;
+        $sum = ($ageW + $crW + $docW) ?: 1;
+        $ageFrac = $ageW / $sum;
+        $crFrac = $crW / $sum;
+        $docFrac = $docW / $sum;
 
-        $notes[] = "Age_score={$ageScore}, CR_score={$crScore}, Doc_score={$docScore}";
+        $lps = $ageFrac * $ageScore + $crFrac * $crScore + $docFrac * $docScore;
+
+        $notes[] = "Age_score={$ageScore}, CR_score={$crScore}, Doc_score={$docScore}; weights(age,cr,doc)=({$ageW},{$crW},{$docW})";
 
         return [
             'score' => (float)$lps,
@@ -281,6 +307,11 @@ class RiskService
                 'cr_score'  => round($crScore, 2),
                 'doc_score' => round($docScore, 2),
                 't_business_months' => $tMonths,
+                'used_weights' => [
+                    'lps_age_weight' => $ageW,
+                    'lps_cr_weight' => $crW,
+                    'lps_doc_weight' => $docW,
+                ],
             ],
         ];
     }
@@ -326,6 +357,17 @@ class RiskService
         $flags = [];
         $notes = [];
 
+        // load component weights for BCS
+        $turnoverW = $this->weights['bcs_turnover_weight'] ?? 35;
+        $volatilityW = $this->weights['bcs_volatility_weight'] ?? 25;
+        $returnedW = $this->weights['bcs_returned_weight'] ?? 25;
+        $balanceW = $this->weights['bcs_balance_weight'] ?? 15;
+        $sumW = ($turnoverW + $volatilityW + $returnedW + $balanceW) ?: 1;
+        $turnoverFrac = $turnoverW / $sumW;
+        $volFrac = $volatilityW / $sumW;
+        $returnedFrac = $returnedW / $sumW;
+        $balanceFrac = $balanceW / $sumW;
+
         // Get user ID based on entity type
         $userId = $this->getUserId($entity, $type);
 
@@ -352,17 +394,34 @@ class RiskService
                 $revenues = array_values($monthlyRevenue);
                 $avgMonthly = count($revenues) ? (array_sum($revenues) / count($revenues)) : 0;
             } else {
-                // For customers, use the existing method
+                // For customers, use the existing method if present
                 $months = 6;
-                $revenueData = Order::getRevenueStreams($months);
-                $revenues = $revenueData['revenue'] ?? [];
+                if (method_exists(Order::class, 'getRevenueStreams')) {
+                    $revenueData = Order::getRevenueStreams($months);
+                    $revenues = $revenueData['revenue'] ?? [];
+                } else {
+                    // fallback to using orders by user
+                    $recentOrders = Order::where('user_id', $userId)
+                        ->where('created_at', '>=', Carbon::now()->subMonths($months))
+                        ->get();
+                    $monthlyRevenue = [];
+                    foreach ($recentOrders as $order) {
+                        $month = $order->created_at->format('Y-m');
+                        if (!isset($monthlyRevenue[$month])) {
+                            $monthlyRevenue[$month] = 0;
+                        }
+                        $monthlyRevenue[$month] += $order->grand_total ?? 0;
+                    }
+                    $revenues = array_values($monthlyRevenue);
+                }
+
                 $avgMonthly = count($revenues) ? (array_sum($revenues) / count($revenues)) : 0;
             }
 
             // volatility: standard deviation / mean
             $mean = $avgMonthly;
             $variance = 0;
-            if (count($revenues) > 0) {
+            if (!empty($revenues)) {
                 foreach ($revenues as $v) {
                     $variance += pow(($v - $mean), 2);
                 }
@@ -389,7 +448,7 @@ class RiskService
             // min_balance_ratio - we don't have account balance, approximate from orders vs avg turnover
             $minBalanceRatio = $avgMonthly > 0 ? 0.1 : 0.05;
 
-            // Map turnover_score
+            // Map turnover_score (keep prior thresholds)
             if ($avgMonthly >= $this->policy['bcs_th_high']) {
                 $turnoverScore = 100;
             } elseif ($avgMonthly >= $this->policy['bcs_th_mid']) {
@@ -433,10 +492,10 @@ class RiskService
                 $minBalanceScore = 40;
             }
 
-            // Compose BCS
-            $bcs = 0.35 * $turnoverScore + 0.25 * $volScore + 0.25 * $returnedScore + 0.15 * $minBalanceScore;
+            // Compose BCS using dynamic weights
+            $bcs = $turnoverFrac * $turnoverScore + $volFrac * $volScore + $returnedFrac * $returnedScore + $balanceFrac * $minBalanceScore;
 
-            $notes[] = "turnoverScore={$turnoverScore}, volScore={$volScore}, returnedScore={$returnedScore}, minBalanceScore={$minBalanceScore}";
+            $notes[] = "turnoverScore={$turnoverScore}, volScore={$volScore}, returnedScore={$returnedScore}, minBalanceScore={$minBalanceScore}; weights(turnover,volatility,returned,balance)=({$turnoverW},{$volatilityW},{$returnedW},{$balanceW})";
 
             // If we detect absence of real open-banking info, flag it
             if ($avgMonthly == 0) {
@@ -457,6 +516,12 @@ class RiskService
                     'returned_score' => round($returnedScore, 2),
                     'min_balance_ratio' => round($minBalanceRatio, 4),
                     'min_balance_score' => round($minBalanceScore, 2),
+                    'used_weights' => [
+                        'bcs_turnover_weight' => $turnoverW,
+                        'bcs_volatility_weight' => $volatilityW,
+                        'bcs_returned_weight' => $returnedW,
+                        'bcs_balance_weight' => $balanceW,
+                    ],
                 ],
             ];
         } catch (\Throwable $e) {
@@ -533,8 +598,15 @@ class RiskService
         $regionMapping = [1 => 100, 2 => 80, 3 => 60];
         $regionScore = $regionMapping[$regionRiskClass] ?? 80;
 
-        $bps = 0.7 * $sectorScore + 0.3 * $regionScore;
-        $notes[] = "sectorScore={$sectorScore}, regionScore={$regionScore}";
+        // use dynamic weights for bps
+        $sectorW = $this->weights['bps_sector_weight'] ?? 70;
+        $regionW = $this->weights['bps_region_weight'] ?? 30;
+        $sum = ($sectorW + $regionW) ?: 1;
+        $sectorFrac = $sectorW / $sum;
+        $regionFrac = $regionW / $sum;
+
+        $bps = $sectorFrac * $sectorScore + $regionFrac * $regionScore;
+        $notes[] = "sectorScore={$sectorScore}, regionScore={$regionScore}; weights(sector,region)=({$sectorW},{$regionW})";
 
         return [
             'score' => (float)$bps,
@@ -545,6 +617,10 @@ class RiskService
                 'sector_score' => round($sectorScore, 2),
                 'region_risk_class' => $regionRiskClass,
                 'region_score' => round($regionScore, 2),
+                'used_weights' => [
+                    'bps_sector_weight' => $sectorW,
+                    'bps_region_weight' => $regionW,
+                ],
             ],
         ];
     }
@@ -557,6 +633,17 @@ class RiskService
     {
         $flags = [];
         $notes = [];
+
+        // component weights for BES
+        $dpdW = $this->weights['bes_dpd_weight'] ?? 40;
+        $utilW = $this->weights['bes_utilization_weight'] ?? 25;
+        $disputeW = $this->weights['bes_dispute_weight'] ?? 25;
+        $trendW = $this->weights['bes_trend_weight'] ?? 10;
+        $sumW = ($dpdW + $utilW + $disputeW + $trendW) ?: 1;
+        $dpdFrac = $dpdW / $sumW;
+        $utilFrac = $utilW / $sumW;
+        $disputeFrac = $disputeW / $sumW;
+        $trendFrac = $trendW / $sumW;
 
         $userId = $this->getUserId($entity, $type);
 
@@ -697,8 +784,8 @@ class RiskService
 
         $notes[] = "turnover_trend_pct={$trendPct}, trendScore={$trendScore}";
 
-        // Combine BES = 0.4*AP_DPD_score + 0.25*Utilization_score + 0.25*Dispute_score + 0.10*Trend_score
-        $bes = 0.4 * $apDpdScore + 0.25 * $utilScore + 0.25 * $disputeScore + 0.10 * $trendScore;
+        // Combine BES using dynamic weights
+        $bes = $dpdFrac * $apDpdScore + $utilFrac * $utilScore + $disputeFrac * $disputeScore + $trendFrac * $trendScore;
 
         // If no AP history at all (no schedule payments and no orders), set default
         if ($type === 'merchant') {
@@ -726,6 +813,12 @@ class RiskService
                 'dispute_score' => round($disputeScore, 2),
                 'turnover_trend_pct' => round($trendPct, 2),
                 'trend_score' => round($trendScore, 2),
+                'used_weights' => [
+                    'bes_dpd_weight' => $dpdW,
+                    'bes_utilization_weight' => $utilW,
+                    'bes_dispute_weight' => $disputeW,
+                    'bes_trend_weight' => $trendW,
+                ],
             ],
         ];
     }
@@ -751,19 +844,20 @@ class RiskService
     }
 
     /**
-     * Compose OMRS using weights from doc
+     * Compose OMRS using weights from RiskWeight
      * Input array must contain lps, chs, bcs, bps, bes, caf values (lps..bes in 0..100)
      * Returns final score in 0..100
      */
     protected function computeOMRS(array $values): float
     {
-        $w = [
-            'w_lps' => 0.15,
-            'w_chs' => 0.25,
-            'w_bcs' => 0.20,
-            'w_bps' => 0.10,
-            'w_bes' => 0.30,
-        ];
+        // read weights from loaded weights (lps_weight, chs_weight, bcs_weight, bps_weight, bes_weight)
+        $w_lps = $this->weights['lps_weight'] ?? 15;
+        $w_chs = $this->weights['chs_weight'] ?? 25;
+        $w_bcs = $this->weights['bcs_weight'] ?? 20;
+        $w_bps = $this->weights['bps_weight'] ?? 10;
+        $w_bes = $this->weights['bes_weight'] ?? 30;
+
+        $sumW = ($w_lps + $w_chs + $w_bcs + $w_bps + $w_bes) ?: 1;
 
         $LPS = (($values['lps'] ?? 60) / 100.0);
         $CHS = (($values['chs'] ?? $this->policy['default_chs']) / 100.0);
@@ -772,13 +866,54 @@ class RiskService
         $BES = (($values['bes'] ?? $this->policy['default_bes']) / 100.0);
         $CAF = ($values['caf'] ?? 1.0);
 
-        $base = $w['w_lps'] * $LPS + $w['w_chs'] * $CHS + $w['w_bcs'] * $BCS + $w['w_bps'] * $BPS + $w['w_bes'] * $BES;
+        // normalized weights -> fractions that sum to 1
+        $base = ($w_lps / $sumW) * $LPS
+            + ($w_chs / $sumW) * $CHS
+            + ($w_bcs / $sumW) * $BCS
+            + ($w_bps / $sumW) * $BPS
+            + ($w_bes / $sumW) * $BES;
+
         $omrs01 = $base * $CAF;
 
         return $omrs01 * 100;
     }
 
     // ---------- Helpers ----------
+
+    /**
+     * Load RiskWeight for a given user_id (the user who sets weights). If not found, return defaults.
+     * @param int|null $weightUserId
+     * @return array
+     */
+    protected function loadWeights($weightUserId = null): array
+    {
+        $defaults = RiskWeight::getDefaultWeights();
+
+        if (empty($weightUserId)) {
+            return $defaults;
+        }
+
+        $rw = RiskWeight::where('user_id', $weightUserId)->first();
+        if (! $rw) {
+            return $defaults;
+        }
+
+        // merge values: prefer non-null values from model, else defaults
+        $mapped = [];
+        foreach ($defaults as $k => $v) {
+            $mapped[$k] = $rw->{$k} !== null ? $rw->{$k} : $v;
+        }
+
+        // also allow last_weight/new_weight arrays if present to be included (optional)
+        if ($rw->last_weight) {
+            $mapped['last_weight'] = $rw->last_weight;
+        }
+        if ($rw->new_weight) {
+            $mapped['new_weight'] = $rw->new_weight;
+        }
+
+        return $mapped;
+    }
 
     protected function resolveEntity($entityOrId, string $type)
     {

@@ -17,38 +17,36 @@ return new class extends Migration
             // Employee who last updated weights
             $table->foreignId('employee_id')->constrained('users')->onDelete('cascade');
 
-            // Keep track of last and new weights (for audit/versioning)
             $table->json('last_weight')->nullable();
             $table->json('new_weight')->nullable();
 
-            // ---- Main default weights ----
-            $table->decimal('cr_id', 6, 2)->default(25.00);
-            $table->decimal('pos', 6, 2)->default(25.00);
-            $table->decimal('repayment', 6, 2)->default(20.00);
-            $table->decimal('industry', 6, 2)->default(15.00);
-            $table->decimal('location', 6, 2)->default(10.00);
+            $table->decimal('lps_weight', 5, 2)->default(15);
+            $table->decimal('chs_weight', 5, 2)->default(25);
+            $table->decimal('bcs_weight', 5, 2)->default(20);
+            $table->decimal('bps_weight', 5, 2)->default(10);
+            $table->decimal('bes_weight', 5, 2)->default(30);
+            $table->decimal('caf_weight', 5, 2)->default(0);
 
-            // ---- CR / ID sub-weights ----
-            $table->decimal('cr_id_sub_id_match', 6, 2)->default(30.00);
-            $table->decimal('cr_id_sub_id_expiry', 6, 2)->default(20.00);
-            $table->decimal('cr_id_sub_cr_expiry', 6, 2)->default(20.00);
-            $table->decimal('cr_id_sub_industry', 6, 2)->default(15.00);
-            $table->decimal('cr_id_sub_activity', 6, 2)->default(15.00);
-            $table->decimal('cr_id_sub_total', 6, 2)->default(100.00);
+            // Sub-weights for LPS
+            $table->decimal('lps_age_weight', 5, 2)->default(40);
+            $table->decimal('lps_cr_weight', 5, 2)->default(30);
+            $table->decimal('lps_doc_weight', 5, 2)->default(30);
 
-            // ---- POS thresholds ----
-            $table->decimal('pos_threshold', 12, 2)->default(50000.00);
+            // Sub-weights for BCS
+            $table->decimal('bcs_turnover_weight', 5, 2)->default(35);
+            $table->decimal('bcs_volatility_weight', 5, 2)->default(25);
+            $table->decimal('bcs_returned_weight', 5, 2)->default(25);
+            $table->decimal('bcs_balance_weight', 5, 2)->default(15);
 
-            // ---- Repayment thresholds ----
-            $table->integer('repayment_few_threshold')->default(2);
-            $table->decimal('repayment_score_no_delays', 6, 2)->default(20.00);
-            $table->decimal('repayment_score_few_delays', 6, 2)->default(15.00);
-            $table->decimal('repayment_score_many_delays', 6, 2)->default(5.00);
+            // Sub-weights for BPS
+            $table->decimal('bps_sector_weight', 5, 2)->default(70);
+            $table->decimal('bps_region_weight', 5, 2)->default(30);
 
-            // ---- Location sub-weights ----
-            $table->decimal('location_activity_max', 6, 2)->default(4.50);
-            $table->decimal('location_default_rate_max', 6, 2)->default(4.50);
-            $table->decimal('location_sub_total_max', 6, 2)->default(15.00);
+            // Sub-weights for BES
+            $table->decimal('bes_dpd_weight', 5, 2)->default(40);
+            $table->decimal('bes_utilization_weight', 5, 2)->default(25);
+            $table->decimal('bes_dispute_weight', 5, 2)->default(25);
+            $table->decimal('bes_trend_weight', 5, 2)->default(10);
 
             $table->timestamps();
         });
