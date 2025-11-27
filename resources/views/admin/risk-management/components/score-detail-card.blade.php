@@ -175,7 +175,7 @@
 
                 <div>
                     <strong>{{ translate('Region Sectors') }}:</strong>
-                    <span class="text-gray-500">{{ $user->city->name }}</span>
+                    <span class="text-gray-500">{{ $user->city->name ?? translate('Not provided') }}</span>
                 </div>
             </div>
         </div>
