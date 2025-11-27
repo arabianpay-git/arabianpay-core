@@ -1955,7 +1955,7 @@ return [
     'sectorScore=40, regionScore=60; weights(sector,region)=(70.00,30.00)' => 'sectorScore=40, regionScore=60; weights(sector,region)=(70.00,30.00)',
     'DPD_AP_max=0 -> apDpdScore=100; Utilization not computed from credit limit -> assumed 0.5; utilizationRatio=0.5, utilScore=100; disputeRate=0, disputeScore=100; turnover_trend_pct=0, trendScore=80; No AP history; returning default BES' => 'DPD_AP_max=0 -> apDpdScore=100; Utilization not computed from credit limit -> assumed 0.5; utilizationRatio=0.5, utilScore=100; disputeRate=0, disputeScore=100; turnover_trend_pct=0, trendScore=80; No AP history; returning default BES',
     'Compliance module not integrated; using default CAF=1.0' => 'Compliance module not integrated; using default CAF=1.0',
-
     'Business Sectors' => 'Business Sectors',
     'Region Sectors' => 'Region Sectors',
+    'View Detailed Analysis' => 'View Detailed Analysis',
 ];

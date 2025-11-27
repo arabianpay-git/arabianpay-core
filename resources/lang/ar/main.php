@@ -1830,4 +1830,7 @@ return [
     'sectorScore=40, regionScore=60; weights(sector,region)=(70.00,30.00)' => 'درجة القطاع=40، درجة المنطقة=60؛ الأوزان (القطاع، المنطقة)=(70.00،30.00)',
     'DPD_AP_max=0 -> apDpdScore=100; Utilization not computed from credit limit -> assumed 0.5; utilizationRatio=0.5, utilScore=100; disputeRate=0, disputeScore=100; turnover_trend_pct=0, trendScore=80; No AP history; returning default BES' => 'أقصى DPD_AP=0 -> درجة AP DPD=100؛ لم يتم حساب الاستفادة من حد الائتمان -> افتراض 0.5؛ نسبة الاستفادة=0.5، درجة الاستفادة=100؛ معدل النزاعات=0، درجة النزاعات=100؛ نسبة اتجاه التداول=0، درجة الاتجاه=80؛ لا يوجد سجل AP؛ إرجاع BES الافتراضي',
     'Compliance module not integrated; using default CAF=1.0' => 'لم يتم دمج وحدة الالتزام؛ استخدام CAF الافتراضي=1.0',
+    'Business Sectors' => 'قطاعات الأعمال',
+    'Region Sectors' => 'قطاعات المنطقة',
+    'View Detailed Analysis' => 'عرض التحليل التفصيلي',
 ];
