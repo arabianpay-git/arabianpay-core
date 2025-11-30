@@ -19,7 +19,7 @@
                 </div>
 
                 <x-validation-errors class="mb-4" />
-
+                <!--
                 <div class="flex flex-col gap-1">
                     <label class="form-label font-normal text-gray-900">
                         Email
@@ -48,16 +48,29 @@
                         Remember me
                     </span>
                 </label>
+                -->
                 <div class="flex flex-col gap-3 mt-4">
+                    <!--
                     <button class="btn btn-primary w-full flex justify-center items-center" type="submit">
                         {{ __('Signin') }}
                     </button>
+                    -->
 
                     <button type="button" id="passkey-btn"
                         class="btn btn-outline btn-secondary w-full flex items-center justify-center gap-2">
                         <i class="ki-duotone ki-key text-xl"></i>
                         {{ __('Login with Passkey') }}
                     </button>
+
+                     <button type="button" id="microsoft-login"
+                        class="btn btn-outline btn-light w-full flex items-center justify-center gap-2"
+                        onclick="window.location.href='{{ route('auth.microsoft.redirect') }}'">
+                        <img src="{{ asset('assets/media/microsoft-svgrepo-com.svg') }}"
+                            alt="M"
+                            class="w-5 h-5">
+                        {{ __('Sign in with Microsoft') }}
+                    </button>
+
 
                     <div id="passkey-message" class="text-sm mt-2 text-center hidden p-2 rounded"></div>
                 </div>
