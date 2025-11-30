@@ -68,6 +68,7 @@ use App\Http\Controllers\{
     UserRoleController,
 };
 use App\Http\Controllers\Admin\PayoutPortalController;
+use App\Http\Controllers\Auth\MicrosoftController;
 use App\Http\Middleware\{
     CheckAdmin,
     EnsureOtpVerified,
@@ -79,6 +80,9 @@ use App\Http\Middleware\{
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
+
+Route::get('/auth/microsoft/redirect', [MicrosoftController::class, 'redirect'])->name('auth.microsoft.redirect');
+Route::get('/auth/microsoft/callback', [MicrosoftController::class, 'callback']);
 
 Route::group([
     'prefix'     => LaravelLocalization::setLocale(),

@@ -10,6 +10,9 @@ use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Support\Facades\Blade;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
+use SocialiteProviders\Manager\SocialiteWasCalled;
+use SocialiteProviders\Microsoft\Provider as MicrosoftProvider;
+use Event;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -80,6 +83,10 @@ class AppServiceProvider extends ServiceProvider
                     ->by($identifier)
                     ->response(fn() => back()->withErrors(['email' => 'Too many password reset requests. Try again later.']));
             });
+        });
+
+        Event::listen(function (SocialiteWasCalled $event) {
+            $event->extendSocialite('microsoft', MicrosoftProvider::class);
         });
     }
 }
