@@ -19,58 +19,20 @@
                 </div>
 
                 <x-validation-errors class="mb-4" />
-                <!--
-                <div class="flex flex-col gap-1">
-                    <label class="form-label font-normal text-gray-900">
-                        Email
-                    </label>
-                    <input id="email" class="input" name="email" placeholder="email@email.com" type="email"
-                        value="{{ old('email') }}" required />
-                </div>
-                <div class="flex flex-col gap-1">
-                    <div class="flex items-center justify-between gap-1">
-                        <label class="form-label font-normal text-gray-900">
-                            Password
-                        </label>
-                    </div>
-                    <div class="input" data-toggle-password="true">
-                        <input name="password" placeholder="Enter Password" type="password" required />
-                        <button class="btn btn-icon" data-toggle-password-trigger="true" type="button">
-                            <i class="ki-filled ki-eye text-gray-500 toggle-password-active:hidden"> </i>
-                            <i class="ki-filled ki-eye-slash text-gray-500 hidden toggle-password-active:block"> </i>
-                        </button>
-                    </div>
-                </div>
 
-                <label class="checkbox-group">
-                    <input class="checkbox checkbox-sm" id="remember_me" name="remember" type="checkbox" value="1" />
-                    <span class="checkbox-label">
-                        Remember me
-                    </span>
-                </label>
-                -->
                 <div class="flex flex-col gap-3 mt-4">
-                    <!--
-                    <button class="btn btn-primary w-full flex justify-center items-center" type="submit">
-                        {{ __('Signin') }}
-                    </button>
-                    -->
-
                     <button type="button" id="passkey-btn"
                         class="btn btn-outline btn-secondary w-full flex items-center justify-center gap-2">
                         <i class="ki-duotone ki-key text-xl"></i>
                         {{ __('Login with Passkey') }}
                     </button>
 
-                     <button type="button" id="microsoft-login"
+                    <button type="button" id="microsoft-login"
                         class="btn btn-outline btn-light w-full flex items-center justify-center gap-2"
                         onclick="window.location.href='{{ route('auth.microsoft.redirect') }}'">
-                        <img src="{{ asset('assets/media/microsoft-svgrepo-com.svg') }}"
-                            alt="M"
-                            class="w-5 h-5">
+                        <img src="{{ asset('assets/media/microsoft-svgrepo-com.svg') }}" alt="M" class="w-5 h-5">
                         {{ __('Sign in with Microsoft') }}
                     </button>
-
 
                     <div id="passkey-message" class="text-sm mt-2 text-center hidden p-2 rounded"></div>
                 </div>
@@ -80,6 +42,7 @@
 @endsection
 
 @push('scripts')
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script>
         function base64urlToUint8Array(base64url) {
             let base64 = base64url.replace(/-/g, '+').replace(/_/g, '/');
@@ -97,7 +60,6 @@
 
         document.addEventListener('DOMContentLoaded', () => {
             const passkeyBtn = document.getElementById('passkey-btn');
-            const emailInput = document.getElementById('email');
             const messageBox = document.getElementById('passkey-message');
 
             function showMessage(msg, type = 'info') {
@@ -107,8 +69,31 @@
             }
 
             passkeyBtn.addEventListener('click', async () => {
-                const email = emailInput.value.trim();
-                if (!email) return showMessage('Please enter your email address.', 'error');
+                // Show SweetAlert to get email
+                const {
+                    value: email
+                } = await Swal.fire({
+                    title: 'Enter your email',
+                    input: 'email',
+                    inputLabel: 'Email address',
+                    inputPlaceholder: 'Enter your email address',
+                    showCancelButton: true,
+                    confirmButtonText: 'Continue with Passkey',
+                    cancelButtonText: 'Cancel',
+                    inputValidator: (value) => {
+                        if (!value) {
+                            return 'You need to enter your email address!';
+                        }
+                        if (!/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/.test(value)) {
+                            return 'Please enter a valid email address!';
+                        }
+                    }
+                });
+
+                // If user cancelled the SweetAlert, return early
+                if (!email) {
+                    return;
+                }
 
                 showMessage('Checking for registered passkey…');
                 passkeyBtn.disabled = true;
@@ -122,7 +107,7 @@
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         },
                         body: JSON.stringify({
-                            email
+                            email: email
                         }),
                     });
 
