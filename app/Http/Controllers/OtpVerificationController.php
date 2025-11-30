@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\Otp;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
@@ -23,6 +25,7 @@ class OtpVerificationController extends Controller
                 'otp' => "Please wait {$seconds}s before requesting another OTP."
             ]);
         }
+
         RateLimiter::hit($key, self::COOLDOWN_SECONDS);
 
         $activeOtp = Otp::where('phone', self::PHONE)
@@ -32,7 +35,7 @@ class OtpVerificationController extends Controller
             ->first();
 
         if ($activeOtp) {
-            return redirect()->route('risk.score')->with('error', 'An active OTP is already pending. Please wait or use that one.');
+            return redirect()->route('risk.merchantScore')->with('error', 'An active OTP is already pending. Please wait or use that one.');
         }
 
         Otp::where('phone', self::PHONE)->update(['used' => true]);
@@ -47,7 +50,7 @@ class OtpVerificationController extends Controller
             'sends' => 1,
         ]);
 
-        $this->sendSms(self::PHONE, "Your OTP code is: {$code}");
+        $this->sendSmsOtp(self::PHONE, $code, "Your OTP code is: {$code}");
 
         return redirect()
             ->route('otp.verify.form', ['phone' => self::PHONE])
@@ -132,5 +135,39 @@ class OtpVerificationController extends Controller
         ]);
         curl_exec($curl);
         curl_close($curl);
+    }
+
+    public function sendSmsOtp(array|string $phones, string $otp, ?string $message = null): array
+    {
+        $phones = is_array($phones) ? $phones : [$phones];
+        $message = $message ?? "Your OTP is: {$otp}";
+
+        $postData = [
+            "src"   => "Arabianpay",
+            "dests" => $phones,
+            "body"  => $message,
+        ];
+
+        try {
+            $response = Http::withToken('EGE4CF3dD_Q6yXGnnMRJ')
+                ->acceptJson()
+                ->post('https://api.oursms.com/msgs/sms', $postData);
+
+            if (!$response->successful()) {
+                Log::error('SMS OTP sending failed', ['response' => $response->body()]);
+                throw new \RuntimeException('SMS OTP sending failed: ' . substr($response->body(), 0, 500));
+            }
+
+            return [
+                'otp' => $otp,
+                'response' => $response->json(),
+            ];
+        } catch (\Throwable $e) {
+            Log::error('SMS OTP sending exception', [
+                'error' => $e->getMessage(),
+                'phones' => $phones
+            ]);
+            throw $e;
+        }
     }
 }

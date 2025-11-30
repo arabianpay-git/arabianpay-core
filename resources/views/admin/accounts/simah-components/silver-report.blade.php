@@ -26,7 +26,7 @@
         </div>
     </div>
 
-    <div id="simahContainer" class="min-h-[10rem]">
+    <div id="simahContainer" class="min-h-[5rem]">
         <div class="p-6">
             <p class="text-sm text-gray-600">{{ translate('Click "Get Data" to fetch SIMAH report.') }}</p>
         </div>

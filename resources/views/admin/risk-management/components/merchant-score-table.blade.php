@@ -389,6 +389,39 @@
     </table>
 </div>
 
+<div class="modal" data-modal="true" id="score_modal">
+    <div class="modal-content max-w-[600px] top-[5%]">
+        <div class="modal-header py-4 px-5">
+            <h5 class="modal-title">{{ translate('User Risk Management') }}</h5>
+            <button type="button" class="btn btn-sm btn-icon btn-light btn-clear shrink-0"
+                data-modal-dismiss="true">
+                <i class="ki-filled ki-cross"></i>
+            </button>
+        </div>
+        <div class="modal-body p-0 pb-5">
+            <form action="{{ route('risk.scoreUpdate') }}" method="POST" class="px-5 pt-3">
+                @csrf
+                <input type="hidden" id="user_id" name="user_id">
+
+                <div class="mb-4">
+                    <label class="form-label" for="risk_score">{{ translate('Score') }}</label>
+                    <input type="text" id="risk_score" name="risk_score" class="input"
+                        value="{{ old('risk_score') }}" required>
+                </div>
+
+                <div class="mb-4">
+                    <label class="form-label" for="reason">{{ translate('Reason') }}</label>
+                    <textarea id="reason" name="reason" class="textarea" required>{{ old('reason') }}</textarea>
+                </div>
+
+                <div class="flex justify-end">
+                    <button type="submit" class="btn btn-primary">{{ translate('Upgrade') }}</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
 @include('layouts.includes.table-pagination', ['paginator' => $risks])
 @include('admin.risk-management.components.risk-weight-modal')
 
@@ -829,14 +862,14 @@
                             <h4>Risk Flags</h4>
                             <p><strong>Total Flags:</strong> ${flagCount}</p>
                             ${flagCount > 0 ? `
-                                                                                                                                                                                                                                                                <div class="component-grid">
-                                                                                                                                                                                                                                                                    ${flags.map(flag => `
+                                                                                                                                                                                                                                                                    <div class="component-grid">
+                                                                                                                                                                                                                                                                        ${flags.map(flag => `
                                         <div class="component-item">
                                             <span class="risk-badge high">${flag}</span>
                                         </div>
                                     `).join('')}
-                                                                                                                                                                                                                                                                </div>
-                                                                                                                                                                                                                                                            ` : '<p>No risk flags detected</p>'}
+                                                                                                                                                                                                                                                                    </div>
+                                                                                                                                                                                                                                                                ` : '<p>No risk flags detected</p>'}
                         `;
                         break;
                 }

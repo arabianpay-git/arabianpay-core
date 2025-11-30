@@ -26,11 +26,18 @@
         <!-- Container -->
         <div class="container-fixed">
             <!-- begin: grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 lg:gap-7.5">
+            <div class="grid grid-cols-1 lg:grid-cols-1 gap-5 lg:gap-7.5">
 
-                <div class="col-span-1 lg:col-span-3">
+                <!-- Silver report (existing) -->
+                <div class="col-span-1">
                     @include('admin.accounts.simah-components.silver-report')
                 </div>
+
+                <!-- Consumer score (new) -->
+                <div class="col-span-1">
+                    @include('admin.accounts.simah-components.consumer-score')
+                </div>
+
             </div>
             <!-- end: grid -->
         </div>

@@ -187,4 +187,107 @@ class SimahService
             'isNationalId' => $data['isNationalId'] ?? true,
         ];
     }
+
+    /**
+     * Consumer Score (v2)
+     *
+     * POST {base}/api/v2/enquiry/consumer/score
+     *
+     * Required: identityInfo.idNumber (will validate minimal)
+     *
+     * You can provide 'language' in $data (defaults to 'en').
+     */
+    public function consumerScore(array $data): array
+    {
+        if (empty($data['identityInfo']['idNumber'] ?? null)) {
+            throw new \InvalidArgumentException('identityInfo.idNumber is required.');
+        }
+
+        $body = $this->prepareConsumerScoreBody($data);
+        $language = $data['language'] ?? 'en';
+        $token = $this->getToken();
+        $start = microtime(true);
+
+        $response = Http::withToken($token)
+            ->withHeaders([
+                'Accept' => 'application/json',
+                'Content-Type' => 'application/json',
+                'language' => $language,
+            ])
+            ->withOptions([
+                'timeout' => 60,
+                'connect_timeout' => 10,
+            ])
+            ->retry($this->retryAttempts, $this->retryInterval)
+            ->post($this->baseUrl . '/api/v2/enquiry/consumer/score', $body);
+
+        Log::info('Simah consumerScore request time: ' . round(microtime(true) - $start, 2) . ' seconds');
+
+        // Retry once if token expired (401)
+        if ($response->status() === 401) {
+            Cache::forget($this->cacheKey);
+            $token = $this->getToken();
+            $response = Http::withToken($token)
+                ->withHeaders([
+                    'Accept' => 'application/json',
+                    'Content-Type' => 'application/json',
+                    'language' => $language,
+                ])
+                ->withOptions([
+                    'timeout' => 60,
+                    'connect_timeout' => 10,
+                ])
+                ->post($this->baseUrl . '/api/v2/enquiry/consumer/score', $body);
+        }
+
+        if (!$response->successful()) {
+            Log::error('Simah consumerScore failed', [
+                'status' => $response->status(),
+                'body' => $response->body()
+            ]);
+            throw new RequestException($response);
+        }
+
+        return $response->json();
+    }
+
+    /**
+     * Prepare Consumer Score request body
+     *
+     * Accepts full array as user provided; fills defaults for missing keys similar to sample.
+     */
+    protected function prepareConsumerScoreBody(array $data): array
+    {
+        // identityInfo defaults
+        $identityInfo = $data['identityInfo'] ?? [];
+        $applicationDetails = $data['applicationDetails'] ?? [];
+        $demographicInfo = $data['demographicInfo'] ?? [];
+
+        return [
+            'identityInfo' => [
+                'idType' => $identityInfo['idType'] ?? 2,
+                'idNumber' => $identityInfo['idNumber'] ?? null,
+                'productId' => $identityInfo['productId'] ?? 23,
+            ],
+            'applicationDetails' => [
+                'amount' => $applicationDetails['amount'] ?? 100,
+                'productType' => $applicationDetails['productType'] ?? ($applicationDetails['productType'] ?? 23),
+            ],
+            'demographicInfo' => [
+                'isHijriIDExpiryDate' => $demographicInfo['isHijriIDExpiryDate'] ?? true,
+                'idExpiryDate' => $demographicInfo['idExpiryDate'] ?? '30/05/1453',
+                'nationality' => $demographicInfo['nationality'] ?? 168,
+                'maritalStatus' => $demographicInfo['maritalStatus'] ?? 1,
+                'isHijriDateOfBirth' => $demographicInfo['isHijriDateOfBirth'] ?? true,
+                'dateOfBirth' => $demographicInfo['dateOfBirth'] ?? '09/06/1930',
+                'firstName' => $demographicInfo['firstName'] ?? 'Asad',
+                'gender' => $demographicInfo['gender'] ?? 1,
+                'secondName' => $demographicInfo['secondName'] ?? 'Mahmood',
+                'thirdName' => $demographicInfo['thirdName'] ?? 'third',
+                'familyName' => $demographicInfo['familyName'] ?? 'family',
+            ],
+            'accept' => $data['accept'] ?? true,
+            'referenceNumber' => $data['referenceNumber'] ?? Str::random(20),
+        ];
+    }
 }

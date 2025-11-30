@@ -514,3 +514,50 @@ Route::get('/test-silver-report', function () {
         ], 500);
     }
 });
+
+Route::get('/test-consumer-score', function () {
+    ini_set('max_execution_time', 300);
+    try {
+        $simahService = app(SimahService::class);
+
+        // Dummy data for testing
+        $data = [
+            'language' => 'en',
+            'identityInfo' => [
+                'idType'   => 2,
+                'idNumber' => '2583103284',
+                'productId' => 23,
+            ],
+            'applicationDetails' => [
+                'amount'      => 100,
+                'productType' => 23,
+            ],
+            'demographicInfo' => [
+                'isHijriIDExpiryDate' => true,
+                'idExpiryDate'        => '30/05/1453',
+                'nationality'         => 168,
+                'maritalStatus'       => 1,
+                'isHijriDateOfBirth'  => true,
+                'dateOfBirth'         => '09/06/1930',
+                'firstName'           => 'Asad',
+                'gender'              => 1,
+                'secondName'          => 'Mahmood',
+                'thirdName'           => 'third',
+                'familyName'          => 'family',
+            ],
+            'accept'          => true,
+        ];
+
+        $result = $simahService->consumerScore($data);
+
+        return response()->json([
+            'success' => true,
+            'data'    => $result
+        ]);
+    } catch (\Exception $e) {
+        return response()->json([
+            'success' => false,
+            'error'   => $e->getMessage()
+        ], 500);
+    }
+});

@@ -16,8 +16,8 @@ class EnsureOtpVerified
      */
     public function handle(Request $request, Closure $next): Response
     {
-        $phone = OtpVerificationController::PHONE;
-
+        // $phone = OtpVerificationController::PHONE;
+        $phone = "0545232968";
         // Get the latest OTP
         $otp = Otp::where('phone', $phone)->latest()->first();
 
