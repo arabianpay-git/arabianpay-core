@@ -321,6 +321,8 @@ Route::group([
             //
             Route::post('admin/accounts/customer-simah/fetch', [SimahController::class, 'fetchCustomerSimah'])
                 ->name('customer.simah.fetch');
+            Route::post('/customer/simah/consumer-score', [SimahController::class, 'fetchConsumerScore'])
+                ->name('customer.simah.consumer-score');
 
             //
             // Single View
