@@ -6,6 +6,7 @@ use App\Models\SchedulePayment;
 use App\Models\User;
 use App\Services\CreditAssessmentService;
 use App\Services\RiskAnalyticsService;
+use App\Services\RiskService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -14,13 +15,16 @@ class CreditManagmentController extends Controller
 
     protected $creditAssesmentService;
     protected $riskAnalyticsService;
+    protected $riskService;
 
     public function __construct(
         CreditAssessmentService $creditAssesmentService,
-        RiskAnalyticsService $riskAnalyticsService
+        RiskAnalyticsService $riskAnalyticsService,
+        RiskService $riskService
     ) {
         $this->creditAssesmentService = $creditAssesmentService;
         $this->riskAnalyticsService = $riskAnalyticsService;
+        $this->riskService = $riskService;
     }
 
     private function calculateTotalOrderAmount($orders): float
@@ -76,10 +80,11 @@ class CreditManagmentController extends Controller
                     $customer->total_used = $this->calculateTotalOrderAmount($orders);
 
                     $creditScoreService = $this->creditAssesmentService->assess($customer->id);
-                    $riskScoreService = $this->riskAnalyticsService->calculateForUser($customer);
+                    $riskScoreService = $this->riskService->analyzeCustomer($customer->customer, 'customer');
+                    // $riskScoreService = $this->riskAnalyticsService->calculateForUser($customer);
 
                     $creditScore = $creditScoreService['creditScore']['compositeScore'] ?? 0;
-                    $riskScore = $riskScoreService->total_score ?? 0;
+                    $riskScore = $riskScoreService['omrs'] ?? 0;
 
                     $oldCreditLimit = 20000;
 

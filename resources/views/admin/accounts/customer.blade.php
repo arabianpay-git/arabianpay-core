@@ -60,65 +60,48 @@
                                             </th>
 
                                             <th class="">
-                                                <span class="sort asc">
-                                                    <span class="sort-label font-normal text-gray-700">
-                                                        {{ translate('User Info') }}
-                                                    </span>
-                                                    <span class="sort-icon"> </span>
+                                                <span class="sort-label font-normal text-gray-700">
+                                                    {{ translate('User Info') }}
                                                 </span>
                                             </th>
 
                                             <th class="">
-                                                <span class="sort asc">
-                                                    <span class="sort-label font-normal text-gray-700">
-                                                        {{ translate('Business Data') }}
-                                                    </span>
-                                                    <span class="sort-icon"> </span>
+                                                <span class="sort-label font-normal text-gray-700">
+                                                    {{ translate('Business Data') }}
                                                 </span>
                                             </th>
 
                                             <th class="">
-                                                <span class="sort asc">
-                                                    <span class="sort-label font-normal text-gray-700">
-                                                        {{ translate('Value of Goods') }}
-                                                    </span>
-                                                    <span class="sort-icon"> </span>
+                                                <span class="sort-label font-normal text-gray-700">
+                                                    {{ translate('Value of Goods') }}
                                                 </span>
+
+                                            </th>
+                                            <th class="">
+
+                                                <span class="sort-label font-normal text-gray-700">
+                                                    {{ translate('Status') }}
+                                                </span>
+
+                                            </th>
+                                            <th class="">
+
+                                                <span class="sort-label font-normal text-gray-700">
+                                                    {{ translate('Joining Date') }}
+                                                </span>
+
                                             </th>
 
                                             <th class="">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">
-                                                        {{ translate('Status') }}
-                                                    </span>
-                                                    <span class="sort-icon"> </span>
+                                                <span class="sort-label font-normal text-gray-700">
+                                                    {{ translate('Assigned To') }}
                                                 </span>
+
                                             </th>
 
                                             <th class="">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">
-                                                        {{ translate('Joining Date') }}
-                                                    </span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-
-                                            <th class="">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">
-                                                        {{ translate('Assigned To') }}
-                                                    </span>
-                                                    <span class="sort-icon"> </span>
-                                                </span>
-                                            </th>
-
-                                            <th class="">
-                                                <span class="sort">
-                                                    <span class="sort-label font-normal text-gray-700">
-                                                        {{ translate('Action') }}
-                                                    </span>
-                                                    <span class="sort-icon"> </span>
+                                                <span class="sort-label font-normal text-gray-700">
+                                                    {{ translate('Action') }}
                                                 </span>
                                             </th>
                                         </tr>
@@ -165,8 +148,7 @@
                                                     $riskScore = get_risk_score($item->user?->id);
                                                     $oldCreditLimit = 20000;
                                                     $finalScore =
-                                                        $creditScore['compositeScore'] *
-                                                        ($riskScore->total_score / 100);
+                                                        $creditScore['compositeScore'] * ($riskScore['omrs'] / 100);
 
                                                     $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
                                                 @endphp

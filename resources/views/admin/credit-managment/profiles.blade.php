@@ -66,11 +66,15 @@
                                                         </div>
                                                     </td>
 
-                                                    <td>{{ number_format($item->creditLimit ?? 0, 2) }}</td>
+                                                    <td><span class="icon-saudi_riyal"></span>
+                                                        {{ number_format($item->creditLimit ?? 0, 2) }}</td>
 
-                                                    <td>{{ number_format($item->total_used ?? 0, 2) }}</td>
-                                                    <td>{{ number_format($item->limit_remaining ?? 0, 2) }}</td>
-                                                    <td>{{ number_format($item->repayment_history ?? 0, 2) }}</td>
+                                                    <td><span class="icon-saudi_riyal"></span>
+                                                        {{ number_format($item->total_used ?? 0, 2) }}</td>
+                                                    <td><span class="icon-saudi_riyal"></span>
+                                                        {{ number_format($item->limit_remaining ?? 0, 2) }}</td>
+                                                    <td><span class="icon-saudi_riyal"></span>
+                                                        {{ number_format($item->repayment_history ?? 0, 2) }}</td>
 
                                                     {{-- Static repayment history --}}
                                                     <td>

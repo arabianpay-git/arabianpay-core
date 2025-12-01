@@ -186,7 +186,7 @@ if (! function_exists('get_credit_score')) {
     }
 }
 
-use App\Services\RiskAnalyticsService;
+use App\Services\RiskService;
 
 /**
  * Get risk score object for a given user or user ID
@@ -196,7 +196,7 @@ use App\Services\RiskAnalyticsService;
  */
 function get_risk_score($userOrId)
 {
-    $service = app(RiskAnalyticsService::class);
+    $service = app(RiskService::class);
 
     if ($userOrId instanceof User) {
         $user = $userOrId;
@@ -207,7 +207,7 @@ function get_risk_score($userOrId)
         }
     }
 
-    return $service->calculateForUser($user);
+    return $service->analyzeCustomer($user->customer, 'customer');
 }
 
 use Carbon\Carbon;
