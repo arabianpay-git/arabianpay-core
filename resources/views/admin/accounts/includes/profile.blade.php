@@ -3,21 +3,19 @@
         <div
             class="flex items-center justify-center rounded-full border-2 border-success-clarity size-[100px] shrink-0 bg-light">
             @php
-                // 1. Check shop logo
                 $shopLogo = \App\Models\ShopSetting::where('user_id', $merchant->user_id)->first();
-                $logoPath = null;
 
                 if ($shopLogo && $shopLogo->logo) {
-                    // Show Shop Logo
-                    $logoPath = $shopLogo->logo;
-                } elseif ($merchant->user && $merchant->user->profile_photo_path) {
-                    // 2. Show User Profile Photo (from core/public/profile-photos)
-                    $logoPath = asset('profile-photos/' . $merchant->user->profile_photo_path);
+                    $logoPath = Str::startsWith($shopLogo->logo, ['http://', 'https://'])
+                        ? $shopLogo->logo
+                        : asset($shopLogo->logo);
+                } elseif (!empty($merchant->user->profile_photo_path)) {
+                    $logoPath = 'https://partners.arabianpay.net/storage/' . $merchant->user->profile_photo_path;
                 } else {
-                    // 3. Default Image
                     $logoPath = asset('assets/media/images/ap.png');
                 }
             @endphp
+
             <img class="size-[70px]" src="{{ $logoPath }}" alt="Shop Logo" />
 
         </div>
