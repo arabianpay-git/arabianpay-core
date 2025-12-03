@@ -36,7 +36,7 @@
                 <div class="media-grid" id="mediaGrid">
                     @foreach ($media as $item)
                         @php
-                            $mediaUrl = getMediaUrl($item->file_name, asset('assets/media/images/default-image.png'));
+                            $mediaUrl = supplierMedia($item->file_name, asset('assets/media/images/default-image.png'));
                             $isVideo = str_starts_with($item->mime_type, 'video');
                             $isPdf = $item->mime_type === 'application/pdf';
                             $userName = $item->user
