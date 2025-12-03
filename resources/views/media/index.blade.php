@@ -36,7 +36,7 @@
                 <div class="media-grid" id="mediaGrid">
                     @foreach ($media as $item)
                         @php
-                            $mediaUrl = supplierMedia($item->file_name, asset('assets/media/images/default-image.png'));
+                            $mediaUrl = getMediaUrl($item->file_name, asset('assets/media/images/default-image.png'));
                             $isVideo = str_starts_with($item->mime_type, 'video');
                             $isPdf = $item->mime_type === 'application/pdf';
                             $userName = $item->user
@@ -44,6 +44,7 @@
                                 $item->user->first_name . ' ' . $item->user->last_name)
                                 : 'Unknown User';
                             $sizeKB = number_format($item->size / 1024, 1) . ' KB';
+
                         @endphp
 
                         <div class="media-card" data-id="{{ $item->id }}" data-url="{{ $mediaUrl }}"
@@ -344,6 +345,7 @@
     </style>
 @endpush
 
+{{-- prettier-ignore-start --}}
 @push('scripts')
     <script>
         $(function() {
@@ -380,8 +382,7 @@
             }
 
             function renderCard(media) {
-                const mediaUrl =
-                    "{{ getMediaUrl($item->file_name, asset('assets/media/images/default-image.png')) }}";
+                const mediaUrl = media.url ?? '#';  
                 const isVideo = media.mime_type && media.mime_type.startsWith('video');
                 const isPdf = media.mime_type === 'application/pdf';
                 // Lazyload response for user object is simple
@@ -730,3 +731,4 @@
         });
     </script>
 @endpush
+{{-- prettier-ignore-end --}}
