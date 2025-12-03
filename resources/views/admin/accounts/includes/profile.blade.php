@@ -83,16 +83,14 @@
 
                     <div class="flex gap-1.25 items-center separator">
                         <i class="ki-filled ki-phone text-gray-500 text-sm"> </i>
-                        <a class="text-gray-600 font-medium hover:text-primary"
-                            href="tel: {{ $merchant->user->phone_number }}">
+                        <a class="underline link" href="tel: {{ $merchant->user->phone_number }}">
                             {{ $merchant->user->phone_number }}
                         </a>
                     </div>
 
                     <div class="flex gap-1.25 items-center separator">
                         <i class="ki-filled ki-sms text-gray-500 text-sm"> </i>
-                        <a class="text-gray-600 font-medium hover:text-primary"
-                            href="mailto: {{ $merchant->user->email }}">
+                        <a class="underline link" href="mailto: {{ $merchant->user->email }}">
                             {{ $merchant->user->email }}
                         </a>
                     </div>

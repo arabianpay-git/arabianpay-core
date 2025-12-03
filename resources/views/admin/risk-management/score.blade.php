@@ -57,13 +57,13 @@
                     <div class="card-header flex-wrap gap-2">
                         <ul class="risk-tab-buttons">
                             <li>
-                                <a href="{{ route('risk.score', array_merge(request()->query(), ['type' => 'merchant'])) }}"
+                                <a href="{{ route('risk.merchantScore', array_merge(request()->query(), ['type' => 'merchant'])) }}"
                                     class="{{ request('type') === 'merchant' ? 'active' : '' }}">
                                     {{ translate('Supplier') }}
                                 </a>
                             </li>
                             <li>
-                                <a href="{{ route('risk.score', array_merge(request()->query(), ['type' => 'user'])) }}"
+                                <a href="{{ route('risk.merchantScore', array_merge(request()->query(), ['type' => 'user'])) }}"
                                     class="{{ request('type') === 'user' || !request('type') ? 'active' : '' }}">
                                     {{ translate('Merchant') }}
                                 </a>
@@ -72,7 +72,7 @@
 
                         <div class="flex flex-wrap gap-2 lg:gap-5 items-center mt-3">
                             <div class="flex">
-                                <form id="risk-search-form" method="GET" action="{{ route('risk.score') }}"
+                                <form id="risk-search-form" method="GET" action="{{ route('risk.merchantScore') }}"
                                     class="flex">
                                     <!-- Preserve type parameter in search -->
                                     <input type="hidden" name="type" value="{{ request('type') }}">
@@ -117,7 +117,7 @@
                 </button>
             </div>
             <div class="modal-body p-0 pb-5">
-                <form action="{{ route('risk.scoreUpdate') }}" method="POST" class="px-5 pt-3">
+                <form action="{{ route('risk.merchantScoreUpdate') }}" method="POST" class="px-5 pt-3">
                     @csrf
                     <input type="hidden" id="user_id" name="user_id">
 

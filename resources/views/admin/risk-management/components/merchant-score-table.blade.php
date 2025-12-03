@@ -364,7 +364,7 @@
 
                                     <a class="btn btn-sm btn-icon btn-clear btn-primary"
                                         data-modal-toggle="#score_modal" data-id="{{ $user->id }}"
-                                        data-action="{{ route('risk.scoreUpdate') }}"
+                                        data-action="{{ route('risk.merchantScoreUpdate') }}"
                                         data-score="{{ optional($score)->risk_score }}"
                                         data-reason="{{ optional($score)->reason }}"
                                         title="{{ translate('Manual Score Adjustment') }}">
@@ -399,7 +399,7 @@
             </button>
         </div>
         <div class="modal-body p-0 pb-5">
-            <form action="{{ route('risk.scoreUpdate') }}" method="POST" class="px-5 pt-3">
+            <form action="{{ route('risk.merchantScoreUpdate') }}" method="POST" class="px-5 pt-3">
                 @csrf
                 <input type="hidden" id="user_id" name="user_id">
 
@@ -862,14 +862,14 @@
                             <h4>Risk Flags</h4>
                             <p><strong>Total Flags:</strong> ${flagCount}</p>
                             ${flagCount > 0 ? `
-                                                                                                                                                                                                                                                                    <div class="component-grid">
-                                                                                                                                                                                                                                                                        ${flags.map(flag => `
+                                                                                                                                                                                                                                                                        <div class="component-grid">
+                                                                                                                                                                                                                                                                            ${flags.map(flag => `
                                         <div class="component-item">
                                             <span class="risk-badge high">${flag}</span>
                                         </div>
                                     `).join('')}
-                                                                                                                                                                                                                                                                    </div>
-                                                                                                                                                                                                                                                                ` : '<p>No risk flags detected</p>'}
+                                                                                                                                                                                                                                                                        </div>
+                                                                                                                                                                                                                                                                    ` : '<p>No risk flags detected</p>'}
                         `;
                         break;
                 }

@@ -112,7 +112,7 @@ class OtpVerificationController extends Controller
 
         $otp->forceFill(['used' => true])->save();
 
-        return redirect()->route('risk.score')->with('success', 'OTP verified. You may now update the score.');
+        return redirect()->route('risk.merchantScore')->with('success', 'OTP verified. You may now update the score.');
     }
 
     protected function sendSms($phone, $message)

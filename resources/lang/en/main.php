@@ -2021,6 +2021,7 @@ return [
     'Guaranteed Credit Instruments' => 'Guaranteed Credit Instruments',
     'Range' => 'Range',
     'No score information available.' => 'No score information available.',
-
     'Main Report Information' => 'Main Report Information',
+    'Risk Alerts' => 'Risk Alerts',
+    'Active alerts requiring attention' => 'Active alerts requiring attention',
 ];

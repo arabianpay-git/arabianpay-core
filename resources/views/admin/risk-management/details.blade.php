@@ -133,6 +133,7 @@
             <!-- Risk Flags -->
             @include('admin.risk-management.components.risk-flags', [
                 'riskAnalysis' => $riskAnalysis,
+                'alerts' => $riskData['alerts'] ?? [],
             ])
 
             <!-- Calculation Notes -->

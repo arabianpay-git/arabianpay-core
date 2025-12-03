@@ -131,7 +131,8 @@
                             <div class="flex gap-1">
                                 <!-- Existing Risk Score Edit Button -->
                                 <a class="btn btn-sm btn-icon btn-clear btn-primary" data-modal-toggle="#score_modal"
-                                    data-id="{{ $item->id }}" data-action="{{ route('risk.scoreUpdate') }}"
+                                    data-id="{{ $item->id }}"
+                                    data-action="{{ route('risk.merchantScoreUpdate') }}"
                                     data-score="{{ $item->risk_score ?? '' }}" data-reason="{{ $item->reason ?? '' }}"
                                     title="{{ translate('Manual Score Adjustment') }}">
                                     <i class="ki-filled ki-notepad-edit"></i>

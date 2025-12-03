@@ -6,6 +6,7 @@ use App\Models\SchedulePayment;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\BusinessType;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
@@ -13,6 +14,8 @@ use Illuminate\Support\Collection;
 class RiskDashboardService
 {
     protected $riskAnalyticsService;
+    protected $userId = null;
+    protected $userType = null;
 
     // Risk thresholds configuration
     protected $thresholds = [
@@ -35,6 +38,15 @@ class RiskDashboardService
 
     public function getDashboardData($filters = [])
     {
+        // Extract user_id from filters if provided
+        $this->userId = $filters['user_id'] ?? null;
+
+        // If user_id provided, get user type
+        if ($this->userId) {
+            $user = User::find($this->userId);
+            $this->userType = $user->user_type ?? null;
+        }
+
         $this->dateRange = $this->getDateRange($filters);
 
         return [
@@ -53,7 +65,9 @@ class RiskDashboardService
                     'from' => $this->dateRange['previous_from']->format('Y-m-d'),
                     'to' => $this->dateRange['previous_to']->format('Y-m-d')
                 ]
-            ]
+            ],
+            'user_specific' => !is_null($this->userId),
+            'user_type' => $this->userType
         ];
     }
 
@@ -120,19 +134,41 @@ class RiskDashboardService
 
     protected function getPipelineSummary()
     {
-        $totalApplications = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])->count();
+        $query = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']]);
+
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $totalApplications = $query->count();
 
         $activeApplications = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->whereIn('status', ['under_review', 'contract_sent', 'pending'])
-            ->count();
+            ->whereIn('status', ['under_review', 'contract_sent', 'pending']);
+
+        if ($this->userId && $this->userType === 'merchant') {
+            $activeApplications->where('id', $this->userId);
+        }
+
+        $activeApplications = $activeApplications->count();
 
         $completedApplications = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->whereIn('status', ['approved', 'active', 'rejected', 'suspended', 'blacklisted'])
-            ->count();
+            ->whereIn('status', ['approved', 'active', 'rejected', 'suspended', 'blacklisted']);
+
+        if ($this->userId && $this->userType === 'merchant') {
+            $completedApplications->where('id', $this->userId);
+        }
+
+        $completedApplications = $completedApplications->count();
 
         $avgProcessingTime = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->whereIn('status', ['approved', 'active', 'rejected'])
-            ->avg(DB::raw('TIMESTAMPDIFF(HOUR, created_at, updated_at)'));
+            ->whereIn('status', ['approved', 'active', 'rejected']);
+
+        if ($this->userId && $this->userType === 'merchant') {
+            $avgProcessingTime->where('id', $this->userId);
+        }
+
+        $avgProcessingTime = $avgProcessingTime->avg(DB::raw('TIMESTAMPDIFF(HOUR, created_at, updated_at)'));
 
         return [
             'total_applications' => $totalApplications,
@@ -149,13 +185,19 @@ class RiskDashboardService
         $endDate = $this->dateRange['to'];
         $startDate = $endDate->copy()->subDays(29);
 
-        $trendData = Merchant::whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()])
-            ->select(
-                DB::raw('DATE(created_at) as date'),
-                DB::raw('COUNT(*) as applications'),
-                DB::raw('SUM(CASE WHEN status IN ("approved", "active") THEN 1 ELSE 0 END) as approved'),
-                DB::raw('SUM(CASE WHEN status = "rejected" THEN 1 ELSE 0 END) as rejected')
-            )
+        $query = Merchant::whereBetween('created_at', [$startDate->startOfDay(), $endDate->endOfDay()]);
+
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $trendData = $query->select(
+            DB::raw('DATE(created_at) as date'),
+            DB::raw('COUNT(*) as applications'),
+            DB::raw('SUM(CASE WHEN status IN ("approved", "active") THEN 1 ELSE 0 END) as approved'),
+            DB::raw('SUM(CASE WHEN status = "rejected" THEN 1 ELSE 0 END) as rejected')
+        )
             ->groupBy('date')
             ->orderBy('date')
             ->get();
@@ -200,15 +242,21 @@ class RiskDashboardService
 
     protected function getProcessingTimes()
     {
-        $processingData = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->whereIn('status', ['approved', 'active', 'rejected'])
-            ->select(
-                DB::raw('AVG(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as avg_total_time'),
-                DB::raw('AVG(CASE WHEN status IN ("approved", "active") THEN TIMESTAMPDIFF(HOUR, created_at, updated_at) ELSE NULL END) as avg_approval_time'),
-                DB::raw('AVG(CASE WHEN status = "rejected" THEN TIMESTAMPDIFF(HOUR, created_at, updated_at) ELSE NULL END) as avg_rejection_time'),
-                DB::raw('MAX(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as max_processing_time'),
-                DB::raw('MIN(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as min_processing_time')
-            )
+        $query = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+            ->whereIn('status', ['approved', 'active', 'rejected']);
+
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $processingData = $query->select(
+            DB::raw('AVG(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as avg_total_time'),
+            DB::raw('AVG(CASE WHEN status IN ("approved", "active") THEN TIMESTAMPDIFF(HOUR, created_at, updated_at) ELSE NULL END) as avg_approval_time'),
+            DB::raw('AVG(CASE WHEN status = "rejected" THEN TIMESTAMPDIFF(HOUR, created_at, updated_at) ELSE NULL END) as avg_rejection_time'),
+            DB::raw('MAX(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as max_processing_time'),
+            DB::raw('MIN(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as min_processing_time')
+        )
             ->first();
 
         return [
@@ -222,14 +270,20 @@ class RiskDashboardService
 
     protected function getUnderwritingStats()
     {
-        $stats = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->select(
-                DB::raw('COUNT(*) as total'),
-                DB::raw('SUM(CASE WHEN status = "under_review" THEN 1 ELSE 0 END) as under_review'),
-                DB::raw('SUM(CASE WHEN status = "contract_sent" THEN 1 ELSE 0 END) as contract_sent'),
-                DB::raw('SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending_documents'),
-                DB::raw('AVG(CASE WHEN status = "under_review" THEN TIMESTAMPDIFF(HOUR, created_at, updated_at) ELSE NULL END) as avg_review_time')
-            )
+        $query = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']]);
+
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $stats = $query->select(
+            DB::raw('COUNT(*) as total'),
+            DB::raw('SUM(CASE WHEN status = "under_review" THEN 1 ELSE 0 END) as under_review'),
+            DB::raw('SUM(CASE WHEN status = "contract_sent" THEN 1 ELSE 0 END) as contract_sent'),
+            DB::raw('SUM(CASE WHEN status = "pending" THEN 1 ELSE 0 END) as pending_documents'),
+            DB::raw('AVG(CASE WHEN status = "under_review" THEN TIMESTAMPDIFF(HOUR, created_at, updated_at) ELSE NULL END) as avg_review_time')
+        )
             ->first();
 
         return [
@@ -274,14 +328,24 @@ class RiskDashboardService
             $dayEnd = Carbon::now()->subDays($i)->endOfDay();
 
             // Underwriting compliance for this day
-            $totalProcessed = Merchant::whereBetween('created_at', [$dayStart, $dayEnd])
-                ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-                ->count();
+            $underwritingQuery = Merchant::whereBetween('created_at', [$dayStart, $dayEnd])
+                ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted']);
+
+            if ($this->userId && $this->userType === 'merchant') {
+                $underwritingQuery->where('id', $this->userId);
+            }
+
+            $totalProcessed = $underwritingQuery->count();
 
             $compliantUnderwriting = Merchant::whereBetween('created_at', [$dayStart, $dayEnd])
                 ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-                ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.6 <= 6')
-                ->count();
+                ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.6 <= 6');
+
+            if ($this->userId && $this->userType === 'merchant') {
+                $compliantUnderwriting->where('id', $this->userId);
+            }
+
+            $compliantUnderwriting = $compliantUnderwriting->count();
 
             $trendData['underwriting'][] = $totalProcessed > 0
                 ? round(($compliantUnderwriting / $totalProcessed) * 100)
@@ -290,8 +354,13 @@ class RiskDashboardService
             // Approval compliance for this day
             $compliantApproval = Merchant::whereBetween('created_at', [$dayStart, $dayEnd])
                 ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-                ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.3 <= 4')
-                ->count();
+                ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.3 <= 4');
+
+            if ($this->userId && $this->userType === 'merchant') {
+                $compliantApproval->where('id', $this->userId);
+            }
+
+            $compliantApproval = $compliantApproval->count();
 
             $trendData['approval'][] = $totalProcessed > 0
                 ? round(($compliantApproval / $totalProcessed) * 100)
@@ -300,8 +369,13 @@ class RiskDashboardService
             // Disbursement compliance for this day
             $compliantDisbursement = Merchant::whereBetween('created_at', [$dayStart, $dayEnd])
                 ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-                ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.1 <= 8')
-                ->count();
+                ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.1 <= 8');
+
+            if ($this->userId && $this->userType === 'merchant') {
+                $compliantDisbursement->where('id', $this->userId);
+            }
+
+            $compliantDisbursement = $compliantDisbursement->count();
 
             $trendData['disbursement'][] = $totalProcessed > 0
                 ? round(($compliantDisbursement / $totalProcessed) * 100)
@@ -342,46 +416,89 @@ class RiskDashboardService
     {
         $alerts = [];
 
-        // 1. Critical: Merchant CR Expiry within 30 days
-        $expiringCRs = $this->getExpiringCommercialRegistrations();
-        if ($expiringCRs->isNotEmpty()) {
-            $alerts[] = $this->createExpiringCRAlert($expiringCRs);
-        }
+        // If user-specific view, only show relevant alerts
+        if ($this->userId) {
+            if ($this->userType === 'merchant') {
+                // Merchant-specific alerts
+                $merchant = Merchant::where('user_id', $this->userId)->first();
+                if ($merchant) {
+                    // 1. Merchant CR Expiry within 30 days
+                    $expiringCRs = $this->getExpiringCommercialRegistrations();
+                    if ($expiringCRs->contains('id', $this->userId)) {
+                        $alerts[] = $this->createExpiringCRAlert($expiringCRs->where('id', $this->userId));
+                    }
 
-        // 2. Low Capital Merchants
-        $lowCapitalMerchants = $this->getLowCapitalMerchants();
-        if ($lowCapitalMerchants->isNotEmpty()) {
-            $alerts[] = $this->createLowCapitalAlert($lowCapitalMerchants);
-        }
+                    // 2. Low Capital Merchant
+                    $lowCapitalMerchants = $this->getLowCapitalMerchants();
+                    if ($lowCapitalMerchants->contains('id', $this->userId)) {
+                        $alerts[] = $this->createLowCapitalAlert($lowCapitalMerchants->where('id', $this->userId));
+                    }
 
-        // 3. High Activity Concentration Risk
-        $highActivityMerchants = $this->getHighActivityMerchants();
-        if ($highActivityMerchants->isNotEmpty()) {
-            $alerts[] = $this->createHighActivityAlert($highActivityMerchants);
-        }
+                    // 3. High Activity Concentration Risk
+                    $highActivityMerchants = $this->getHighActivityMerchants();
+                    if ($highActivityMerchants->contains('id', $this->userId)) {
+                        $alerts[] = $this->createHighActivityAlert($highActivityMerchants->where('id', $this->userId));
+                    }
+                }
+            }
 
-        // 4. High Individual Exposure
-        $highExposureAccounts = $this->getHighExposureAccounts();
-        if ($highExposureAccounts->isNotEmpty()) {
-            $alerts[] = $this->createHighExposureAlert($highExposureAccounts);
-        }
+            // 4. High Individual Exposure (for any user type)
+            $highExposureAccounts = $this->getHighExposureAccounts();
+            if ($highExposureAccounts->contains('user_id', $this->userId)) {
+                $alerts[] = $this->createHighExposureAlert($highExposureAccounts->where('user_id', $this->userId));
+            }
 
-        // 5. NPL Ratio Alert
-        $nplRatio = $this->calculateNplRatio();
-        if ($nplRatio['current'] > $this->thresholds['high_npl']) {
-            $alerts[] = $this->createNPLAlert($nplRatio);
-        }
+            // 5. Critical DPD Accounts (for any user type)
+            $criticalDPDAccounts = $this->getCriticalDPDAccounts();
+            if (isset($criticalDPDAccounts[$this->userId])) {
+                $alerts[] = $this->createCriticalDPDAlert(collect([$this->userId => $criticalDPDAccounts[$this->userId]]));
+            }
 
-        // 6. High Utilization Alert
-        $utilization = $this->calculateUtilization();
-        if ($utilization['rate'] > $this->thresholds['high_utilization']) {
-            $alerts[] = $this->createUtilizationAlert($utilization);
-        }
+            // For user-specific view, skip global alerts like NPL Ratio and Utilization
+        } else {
+            // Global alerts (no user_id specified)
 
-        // 7. Critical DPD Accounts
-        $criticalDPDAccounts = $this->getCriticalDPDAccounts();
-        if ($criticalDPDAccounts->isNotEmpty()) {
-            $alerts[] = $this->createCriticalDPDAlert($criticalDPDAccounts);
+            // 1. Critical: Merchant CR Expiry within 30 days
+            $expiringCRs = $this->getExpiringCommercialRegistrations();
+            if ($expiringCRs->isNotEmpty()) {
+                $alerts[] = $this->createExpiringCRAlert($expiringCRs);
+            }
+
+            // 2. Low Capital Merchants
+            $lowCapitalMerchants = $this->getLowCapitalMerchants();
+            if ($lowCapitalMerchants->isNotEmpty()) {
+                $alerts[] = $this->createLowCapitalAlert($lowCapitalMerchants);
+            }
+
+            // 3. High Activity Concentration Risk
+            $highActivityMerchants = $this->getHighActivityMerchants();
+            if ($highActivityMerchants->isNotEmpty()) {
+                $alerts[] = $this->createHighActivityAlert($highActivityMerchants);
+            }
+
+            // 4. High Individual Exposure
+            $highExposureAccounts = $this->getHighExposureAccounts();
+            if ($highExposureAccounts->isNotEmpty()) {
+                $alerts[] = $this->createHighExposureAlert($highExposureAccounts);
+            }
+
+            // 5. NPL Ratio Alert
+            $nplRatio = $this->calculateNplRatio();
+            if ($nplRatio['current'] > $this->thresholds['high_npl']) {
+                $alerts[] = $this->createNPLAlert($nplRatio);
+            }
+
+            // 6. High Utilization Alert
+            $utilization = $this->calculateUtilization();
+            if ($utilization['rate'] > $this->thresholds['high_utilization']) {
+                $alerts[] = $this->createUtilizationAlert($utilization);
+            }
+
+            // 7. Critical DPD Accounts
+            $criticalDPDAccounts = $this->getCriticalDPDAccounts();
+            if ($criticalDPDAccounts->isNotEmpty()) {
+                $alerts[] = $this->createCriticalDPDAlert($criticalDPDAccounts);
+            }
         }
 
         // Default info alert if no critical alerts
@@ -396,22 +513,41 @@ class RiskDashboardService
     {
         $flags = [];
 
-        // 1. Highest Risk Merchant
-        $highestRiskMerchant = $this->getHighestRiskMerchant();
-        if ($highestRiskMerchant) {
-            $flags[] = $this->createHighestRiskFlag($highestRiskMerchant);
-        }
+        // If user-specific view, show user-specific flags
+        if ($this->userId) {
+            if ($this->userType === 'merchant') {
+                // Merchant-specific flag
+                $merchant = Merchant::where('user_id', $this->userId)->first();
+                if ($merchant) {
+                    $riskScore = $this->calculateMerchantRiskScore($merchant, Carbon::today());
+                    $highestRiskMerchant = [
+                        'merchant' => $merchant,
+                        'risk_score' => $riskScore['score'],
+                        'factors' => $riskScore['factors']
+                    ];
+                    $flags[] = $this->createHighestRiskFlag($highestRiskMerchant);
+                }
+            }
+        } else {
+            // Global flags (no user_id specified)
 
-        // 2. Industry Concentration Risk
-        $industryConcentration = $this->getIndustryConcentration();
-        if ($industryConcentration['is_high']) {
-            $flags[] = $this->createIndustryConcentrationFlag($industryConcentration);
-        }
+            // 1. Highest Risk Merchant
+            $highestRiskMerchant = $this->getHighestRiskMerchant();
+            if ($highestRiskMerchant) {
+                $flags[] = $this->createHighestRiskFlag($highestRiskMerchant);
+            }
 
-        // 3. Geographic Concentration Risk
-        $geoConcentration = $this->getGeographicConcentration();
-        if ($geoConcentration['is_high']) {
-            $flags[] = $this->createGeographicConcentrationFlag($geoConcentration);
+            // 2. Industry Concentration Risk
+            $industryConcentration = $this->getIndustryConcentration();
+            if ($industryConcentration['is_high']) {
+                $flags[] = $this->createIndustryConcentrationFlag($industryConcentration);
+            }
+
+            // 3. Geographic Concentration Risk
+            $geoConcentration = $this->getGeographicConcentration();
+            if ($geoConcentration['is_high']) {
+                $flags[] = $this->createGeographicConcentrationFlag($geoConcentration);
+            }
         }
 
         return $flags;
@@ -421,21 +557,36 @@ class RiskDashboardService
 
     protected function calculateExposure()
     {
-        $currentExposure = SchedulePayment::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->sum('instalment_amount');
+        $query = SchedulePayment::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']]);
 
-        $previousExposure = SchedulePayment::whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']])
-            ->sum('instalment_amount');
+        if ($this->userId) {
+            $query->where('user_id', $this->userId);
+        }
+
+        $currentExposure = $query->sum('instalment_amount');
+
+        $previousQuery = SchedulePayment::whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']]);
+
+        if ($this->userId) {
+            $previousQuery->where('user_id', $this->userId);
+        }
+
+        $previousExposure = $previousQuery->sum('instalment_amount');
 
         $change = $previousExposure > 0 ?
             round((($currentExposure - $previousExposure) / $previousExposure) * 100, 1) : 0;
 
-        $breakdown = SchedulePayment::join('users', 'schedule_payments.user_id', '=', 'users.id')
-            ->whereBetween('schedule_payments.created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->select(
-                DB::raw('CASE WHEN users.user_type = "merchant" THEN "Business Loans" ELSE "Personal Loans" END as loan_type'),
-                DB::raw('SUM(instalment_amount) as total_amount')
-            )
+        $breakdownQuery = SchedulePayment::join('users', 'schedule_payments.user_id', '=', 'users.id')
+            ->whereBetween('schedule_payments.created_at', [$this->dateRange['from'], $this->dateRange['to']]);
+
+        if ($this->userId) {
+            $breakdownQuery->where('schedule_payments.user_id', $this->userId);
+        }
+
+        $breakdown = $breakdownQuery->select(
+            DB::raw('CASE WHEN users.user_type = "merchant" THEN "Business Loans" ELSE "Personal Loans" END as loan_type'),
+            DB::raw('SUM(instalment_amount) as total_amount')
+        )
             ->groupBy('loan_type')
             ->pluck('total_amount', 'loan_type')
             ->toArray();
@@ -456,13 +607,23 @@ class RiskDashboardService
     {
         $totalLimit = $this->thresholds['total_credit_limit'];
 
-        $usedAmount = SchedulePayment::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->where('payment_status', '!=', 'paid')
-            ->sum('instalment_amount');
+        $query = SchedulePayment::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+            ->where('payment_status', '!=', 'paid');
 
-        $previousUsedAmount = SchedulePayment::whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']])
-            ->where('payment_status', '!=', 'paid')
-            ->sum('instalment_amount');
+        if ($this->userId) {
+            $query->where('user_id', $this->userId);
+        }
+
+        $usedAmount = $query->sum('instalment_amount');
+
+        $previousQuery = SchedulePayment::whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']])
+            ->where('payment_status', '!=', 'paid');
+
+        if ($this->userId) {
+            $previousQuery->where('user_id', $this->userId);
+        }
+
+        $previousUsedAmount = $previousQuery->sum('instalment_amount');
 
         $rate = $totalLimit > 0 ? round(($usedAmount / $totalLimit) * 100, 1) : 0;
         $previousRate = $totalLimit > 0 ? round(($previousUsedAmount / $totalLimit) * 100, 1) : 0;
@@ -478,17 +639,22 @@ class RiskDashboardService
 
     protected function getDpdBuckets()
     {
-        $dpdData = SchedulePayment::whereBetween('due_date', [$this->dateRange['from']->subDays(90), $this->dateRange['to']])
-            ->select(
-                DB::raw('CASE 
+        $query = SchedulePayment::whereBetween('due_date', [$this->dateRange['from']->subDays(90), $this->dateRange['to']]);
+
+        if ($this->userId) {
+            $query->where('user_id', $this->userId);
+        }
+
+        $dpdData = $query->select(
+            DB::raw('CASE 
                     WHEN payment_status = "paid" OR payment_status = "current" THEN "Current"
                     WHEN late_days BETWEEN 1 AND 30 THEN "1-30"
                     WHEN late_days BETWEEN 31 AND 60 THEN "31-60" 
                     WHEN late_days BETWEEN 61 AND 90 THEN "61-90"
                     ELSE "90+"
                 END as dpd_bucket'),
-                DB::raw('COUNT(*) as count')
-            )
+            DB::raw('COUNT(*) as count')
+        )
             ->groupBy('dpd_bucket')
             ->pluck('count', 'dpd_bucket')
             ->toArray();
@@ -520,15 +686,39 @@ class RiskDashboardService
 
     protected function calculateNplRatio()
     {
-        $totalLoans = SchedulePayment::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])->count();
-        $nplLoans = SchedulePayment::where('late_days', '>=', 90)
-            ->whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->count();
+        $query = SchedulePayment::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']]);
 
-        $previousTotalLoans = SchedulePayment::whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']])->count();
-        $previousNplLoans = SchedulePayment::where('late_days', '>=', 90)
-            ->whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']])
-            ->count();
+        if ($this->userId) {
+            $query->where('user_id', $this->userId);
+        }
+
+        $totalLoans = $query->count();
+
+        $nplQuery = SchedulePayment::where('late_days', '>=', 90)
+            ->whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']]);
+
+        if ($this->userId) {
+            $nplQuery->where('user_id', $this->userId);
+        }
+
+        $nplLoans = $nplQuery->count();
+
+        $previousQuery = SchedulePayment::whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']]);
+
+        if ($this->userId) {
+            $previousQuery->where('user_id', $this->userId);
+        }
+
+        $previousTotalLoans = $previousQuery->count();
+
+        $previousNplQuery = SchedulePayment::where('late_days', '>=', 90)
+            ->whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']]);
+
+        if ($this->userId) {
+            $previousNplQuery->where('user_id', $this->userId);
+        }
+
+        $previousNplLoans = $previousNplQuery->count();
 
         $currentRatio = $totalLoans > 0 ? round(($nplLoans / $totalLoans) * 100, 1) : 0;
         $previousRatio = $previousTotalLoans > 0 ? round(($previousNplLoans / $previousTotalLoans) * 100, 1) : 0;
@@ -545,12 +735,22 @@ class RiskDashboardService
 
     protected function calculateChargeOffRate()
     {
-        $chargedOffAmount = SchedulePayment::where('payment_status', 'charged_off')
-            ->whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->sum('instalment_amount');
+        $query = SchedulePayment::where('payment_status', 'charged_off')
+            ->whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']]);
 
-        $averagePortfolio = SchedulePayment::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->avg('instalment_amount');
+        if ($this->userId) {
+            $query->where('user_id', $this->userId);
+        }
+
+        $chargedOffAmount = $query->sum('instalment_amount');
+
+        $avgQuery = SchedulePayment::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']]);
+
+        if ($this->userId) {
+            $avgQuery->where('user_id', $this->userId);
+        }
+
+        $averagePortfolio = $avgQuery->avg('instalment_amount');
 
         $currentRate = $averagePortfolio > 0 ? round(($chargedOffAmount / $averagePortfolio) * 100, 1) : 0;
 
@@ -563,13 +763,17 @@ class RiskDashboardService
 
     protected function getVintageCurves()
     {
-        // Enhanced vintage analysis with actual data
-        $vintageData = SchedulePayment::whereBetween('created_at', [$this->dateRange['from']->subMonths(12), $this->dateRange['to']])
-            ->select(
-                DB::raw("CONCAT(YEAR(created_at), ' Q', QUARTER(created_at)) as cohort"),
-                DB::raw('AVG(CASE WHEN late_days > 0 THEN 1 ELSE 0 END) as delinquency_rate'),
-                DB::raw('COUNT(*) as total_loans')
-            )
+        $query = SchedulePayment::whereBetween('created_at', [$this->dateRange['from']->subMonths(12), $this->dateRange['to']]);
+
+        if ($this->userId) {
+            $query->where('user_id', $this->userId);
+        }
+
+        $vintageData = $query->select(
+            DB::raw("CONCAT(YEAR(created_at), ' Q', QUARTER(created_at)) as cohort"),
+            DB::raw('AVG(CASE WHEN late_days > 0 THEN 1 ELSE 0 END) as delinquency_rate'),
+            DB::raw('COUNT(*) as total_loans')
+        )
             ->groupBy('cohort')
             ->orderBy('cohort')
             ->get();
@@ -605,11 +809,17 @@ class RiskDashboardService
     {
         $today = Carbon::today();
 
-        return Merchant::with(['user', 'businessType'])
+        $query = Merchant::with(['user', 'businessType'])
             ->whereHas('user', function ($q) {
                 $q->where('user_type', 'merchant');
-            })
-            ->get()
+            });
+
+        // If user-specific, filter by user_id
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        return $query->get()
             ->filter(function ($merchant) use ($today) {
                 $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
                 if (!$crData || !isset($crData['status']['confirmationDate']['gregorian'])) {
@@ -623,11 +833,17 @@ class RiskDashboardService
 
     protected function getLowCapitalMerchants()
     {
-        return Merchant::with(['user', 'businessType'])
+        $query = Merchant::with(['user', 'businessType'])
             ->whereHas('user', function ($q) {
                 $q->where('user_type', 'merchant');
-            })
-            ->get()
+            });
+
+        // If user-specific, filter by user_id
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        return $query->get()
             ->filter(function ($merchant) {
                 $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
                 if (!$crData || !isset($crData['capital']['contributionCapital']['cashCapital'])) {
@@ -641,11 +857,17 @@ class RiskDashboardService
 
     protected function getHighActivityMerchants()
     {
-        return Merchant::with(['user', 'businessType'])
+        $query = Merchant::with(['user', 'businessType'])
             ->whereHas('user', function ($q) {
                 $q->where('user_type', 'merchant');
-            })
-            ->get()
+            });
+
+        // If user-specific, filter by user_id
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        return $query->get()
             ->filter(function ($merchant) {
                 $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
                 if (!$crData || !isset($crData['activities'])) {
@@ -659,22 +881,34 @@ class RiskDashboardService
 
     protected function getHighExposureAccounts()
     {
-        return SchedulePayment::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+        $query = SchedulePayment::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
             ->select('user_id', DB::raw('SUM(instalment_amount) as total_exposure'))
             ->groupBy('user_id')
             ->having('total_exposure', '>', $this->thresholds['large_exposure'])
-            ->with(['user'])
-            ->get();
+            ->with(['user']);
+
+        // If user-specific, filter by user_id
+        if ($this->userId) {
+            $query->where('user_id', $this->userId);
+        }
+
+        return $query->get();
     }
 
     protected function getCriticalDPDAccounts()
     {
         $today = Carbon::today();
 
-        return SchedulePayment::whereIn('payment_status', ['due', 'late'])
+        $query = SchedulePayment::whereIn('payment_status', ['due', 'late'])
             ->whereRaw("DATEDIFF(?, due_date) > ?", [$today, $this->thresholds['critical_dpd']])
-            ->with(['user'])
-            ->get()
+            ->with(['user']);
+
+        // If user-specific, filter by user_id
+        if ($this->userId) {
+            $query->where('user_id', $this->userId);
+        }
+
+        return $query->get()
             ->groupBy('user_id');
     }
 
@@ -911,11 +1145,17 @@ class RiskDashboardService
     {
         $today = Carbon::today();
 
-        return Merchant::with(['user', 'businessType'])
+        $query = Merchant::with(['user', 'businessType'])
             ->whereHas('user', function ($q) {
                 $q->where('user_type', 'merchant');
-            })
-            ->get()
+            });
+
+        // If user-specific, filter by user_id
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        return $query->get()
             ->map(function ($merchant) use ($today) {
                 $riskScore = $this->calculateMerchantRiskScore($merchant, $today);
                 return [
@@ -976,11 +1216,17 @@ class RiskDashboardService
 
     protected function getIndustryConcentration()
     {
-        $industryConcentration = Merchant::with(['businessType'])
+        $query = Merchant::with(['businessType'])
             ->whereHas('user', function ($q) {
                 $q->where('user_type', 'merchant');
-            })
-            ->get()
+            });
+
+        // If user-specific, only return data for that user
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $industryConcentration = $query->get()
             ->groupBy('business_type_id')
             ->map(function ($group) {
                 return $group->count();
@@ -988,9 +1234,7 @@ class RiskDashboardService
             ->sortDesc()
             ->take(3);
 
-        $totalMerchants = Merchant::whereHas('user', function ($q) {
-            $q->where('user_type', 'merchant');
-        })->count();
+        $totalMerchants = $query->count();
 
         $concentrationPercentage = $industryConcentration->sum() > 0 ?
             round(($industryConcentration->sum() / $totalMerchants) * 100) : 0;
@@ -1012,11 +1256,17 @@ class RiskDashboardService
 
     protected function getGeographicConcentration()
     {
-        $geoConcentration = Merchant::with(['user'])
+        $query = Merchant::with(['user'])
             ->whereHas('user', function ($q) {
                 $q->where('user_type', 'merchant');
-            })
-            ->get()
+            });
+
+        // If user-specific, only return data for that user
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $geoConcentration = $query->get()
             ->filter(function ($merchant) {
                 $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
                 return $crData && isset($crData['headquarterCityName']);
@@ -1031,9 +1281,7 @@ class RiskDashboardService
             ->sortDesc()
             ->take(3);
 
-        $totalMerchants = Merchant::whereHas('user', function ($q) {
-            $q->where('user_type', 'merchant');
-        })->count();
+        $totalMerchants = $query->count();
 
         $concentrationPercentage = $geoConcentration->sum() > 0 ?
             round(($geoConcentration->sum() / $totalMerchants) * 100) : 0;
@@ -1123,8 +1371,14 @@ class RiskDashboardService
 
     protected function getStatusDistribution()
     {
-        $statusCounts = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->select('status', DB::raw('COUNT(*) as count'))
+        $query = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']]);
+
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $statusCounts = $query->select('status', DB::raw('COUNT(*) as count'))
             ->groupBy('status')
             ->pluck('count', 'status')
             ->toArray();
@@ -1179,12 +1433,18 @@ class RiskDashboardService
 
     protected function calculateSlaMetrics()
     {
-        $approvalTimeline = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-            ->select(
-                DB::raw('AVG(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as avg_processing_time'),
-                DB::raw('COUNT(*) as total_processed')
-            )
+        $query = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+            ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted']);
+
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $approvalTimeline = $query->select(
+            DB::raw('AVG(TIMESTAMPDIFF(HOUR, created_at, updated_at)) as avg_processing_time'),
+            DB::raw('COUNT(*) as total_processed')
+        )
             ->first();
 
         $avgProcessingHours = $approvalTimeline->avg_processing_time ?? 0;
@@ -1221,16 +1481,22 @@ class RiskDashboardService
 
     protected function getApprovalRates()
     {
-        $approvalStats = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->select(
-                DB::raw('COUNT(*) as total_applications'),
-                DB::raw('SUM(CASE WHEN status = "approved" THEN 1 ELSE 0 END) as approved'),
-                DB::raw('SUM(CASE WHEN status = "rejected" THEN 1 ELSE 0 END) as declined'),
-                DB::raw('SUM(CASE WHEN status IN ("under_review", "contract_sent", "pending") THEN 1 ELSE 0 END) as pending'),
-                DB::raw('SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active'),
-                DB::raw('SUM(CASE WHEN status = "suspended" THEN 1 ELSE 0 END) as suspended'),
-                DB::raw('SUM(CASE WHEN status = "blacklisted" THEN 1 ELSE 0 END) as blacklisted')
-            )
+        $query = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']]);
+
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $approvalStats = $query->select(
+            DB::raw('COUNT(*) as total_applications'),
+            DB::raw('SUM(CASE WHEN status = "approved" THEN 1 ELSE 0 END) as approved'),
+            DB::raw('SUM(CASE WHEN status = "rejected" THEN 1 ELSE 0 END) as declined'),
+            DB::raw('SUM(CASE WHEN status IN ("under_review", "contract_sent", "pending") THEN 1 ELSE 0 END) as pending'),
+            DB::raw('SUM(CASE WHEN status = "active" THEN 1 ELSE 0 END) as active'),
+            DB::raw('SUM(CASE WHEN status = "suspended" THEN 1 ELSE 0 END) as suspended'),
+            DB::raw('SUM(CASE WHEN status = "blacklisted" THEN 1 ELSE 0 END) as blacklisted')
+        )
             ->first();
 
         $total = $approvalStats->total_applications ?: 1;
@@ -1266,9 +1532,16 @@ class RiskDashboardService
 
     protected function getExceptionRate()
     {
-        $totalApplications = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])->count();
+        $query = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']]);
 
-        $exceptionApplications = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $totalApplications = $query->count();
+
+        $exceptionQuery = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
             ->where(function ($query) {
                 $query->whereIn('status', ['suspended', 'blacklisted'])
                     ->orWhereHas('user', function ($userQuery) {
@@ -1277,14 +1550,28 @@ class RiskDashboardService
                                 ->whereIn('payment_status', ['due', 'late']);
                         });
                     });
-            })
-            ->count();
+            });
+
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $exceptionQuery->where('id', $this->userId);
+        }
+
+        $exceptionApplications = $exceptionQuery->count();
 
         $currentRate = $totalApplications > 0 ? round(($exceptionApplications / $totalApplications) * 100, 1) : 0;
 
         // Previous period calculation
-        $previousTotal = Merchant::whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']])->count();
-        $previousExceptions = Merchant::whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']])
+        $previousQuery = Merchant::whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']]);
+
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $previousQuery->where('id', $this->userId);
+        }
+
+        $previousTotal = $previousQuery->count();
+
+        $previousExceptionsQuery = Merchant::whereBetween('created_at', [$this->dateRange['previous_from'], $this->dateRange['previous_to']])
             ->where(function ($query) {
                 $query->whereIn('status', ['suspended', 'blacklisted'])
                     ->orWhereHas('user', function ($userQuery) {
@@ -1293,8 +1580,14 @@ class RiskDashboardService
                                 ->whereIn('payment_status', ['due', 'late']);
                         });
                     });
-            })
-            ->count();
+            });
+
+        // Filter by user if specified
+        if ($this->userId && $this->userType === 'merchant') {
+            $previousExceptionsQuery->where('id', $this->userId);
+        }
+
+        $previousExceptions = $previousExceptionsQuery->count();
 
         $previousRate = $previousTotal > 0 ? round(($previousExceptions / $previousTotal) * 100, 1) : 0;
         $change = round($currentRate - $previousRate, 1);
@@ -1311,12 +1604,17 @@ class RiskDashboardService
 
     protected function getPaymentBehavior()
     {
-        $delinquencyTrend = SchedulePayment::whereBetween('due_date', [$this->dateRange['from']->subDays(60), $this->dateRange['to']])
-            ->select(
-                DB::raw('WEEK(due_date) as week'),
-                DB::raw('SUM(CASE WHEN late_days > 0 THEN 1 ELSE 0 END) as late_count'),
-                DB::raw('COUNT(*) as total_count')
-            )
+        $query = SchedulePayment::whereBetween('due_date', [$this->dateRange['from']->subDays(60), $this->dateRange['to']]);
+
+        if ($this->userId) {
+            $query->where('user_id', $this->userId);
+        }
+
+        $delinquencyTrend = $query->select(
+            DB::raw('WEEK(due_date) as week'),
+            DB::raw('SUM(CASE WHEN late_days > 0 THEN 1 ELSE 0 END) as late_count'),
+            DB::raw('COUNT(*) as total_count')
+        )
             ->groupBy('week')
             ->orderBy('week')
             ->get()
@@ -1326,13 +1624,23 @@ class RiskDashboardService
             ->take(7)
             ->toArray();
 
-        $avgDaysLate = SchedulePayment::whereBetween('due_date', [$this->dateRange['from'], $this->dateRange['to']])
-            ->where('late_days', '>', 0)
-            ->avg('late_days') ?? 0;
+        $avgQuery = SchedulePayment::whereBetween('due_date', [$this->dateRange['from'], $this->dateRange['to']])
+            ->where('late_days', '>', 0);
 
-        $repeatLatePayers = SchedulePayment::whereBetween('due_date', [$this->dateRange['from'], $this->dateRange['to']])
-            ->where('late_days', '>', 0)
-            ->distinct('user_id')
+        if ($this->userId) {
+            $avgQuery->where('user_id', $this->userId);
+        }
+
+        $avgDaysLate = $avgQuery->avg('late_days') ?? 0;
+
+        $repeatQuery = SchedulePayment::whereBetween('due_date', [$this->dateRange['from'], $this->dateRange['to']])
+            ->where('late_days', '>', 0);
+
+        if ($this->userId) {
+            $repeatQuery->where('user_id', $this->userId);
+        }
+
+        $repeatLatePayers = $repeatQuery->distinct('user_id')
             ->count('user_id');
 
         return [
@@ -1368,17 +1676,22 @@ class RiskDashboardService
         $sevenDaysAgo = $today->copy()->subDays(7);
 
         // 1. Geo Velocity Alerts
-        $geoVelocityAlerts = DB::table('orders')
+        $geoVelocityQuery = DB::table('orders')
             ->join('users', 'orders.user_id', '=', 'users.id')
-            ->whereBetween('orders.created_at', [$sevenDaysAgo, $today])
-            ->select(
-                'users.id',
-                'users.business_name',
-                DB::raw('COUNT(DISTINCT orders.shipping_city) as distinct_cities'),
-                DB::raw('COUNT(*) as order_count'),
-                DB::raw('MAX(orders.created_at) as latest_order'),
-                DB::raw('MIN(orders.created_at) as earliest_order')
-            )
+            ->whereBetween('orders.created_at', [$sevenDaysAgo, $today]);
+
+        if ($this->userId) {
+            $geoVelocityQuery->where('orders.user_id', $this->userId);
+        }
+
+        $geoVelocityAlerts = $geoVelocityQuery->select(
+            'users.id',
+            'users.business_name',
+            DB::raw('COUNT(DISTINCT orders.shipping_city) as distinct_cities'),
+            DB::raw('COUNT(*) as order_count'),
+            DB::raw('MAX(orders.created_at) as latest_order'),
+            DB::raw('MIN(orders.created_at) as earliest_order')
+        )
             ->whereNotNull('orders.shipping_city')
             ->groupBy('users.id', 'users.business_name')
             ->having('distinct_cities', '>', 1)
@@ -1394,16 +1707,21 @@ class RiskDashboardService
             ->count();
 
         // 2. Transaction Pattern Alerts
-        $transactionPatternAlerts = DB::table('orders')
+        $transactionQuery = DB::table('orders')
             ->join('users', 'orders.user_id', '=', 'users.id')
-            ->whereBetween('orders.created_at', [$thirtyDaysAgo, $today])
-            ->select(
-                'users.id',
-                DB::raw('AVG(orders.grand_total) as avg_order_value'),
-                DB::raw('STDDEV(orders.grand_total) as std_order_value'),
-                DB::raw('COUNT(*) as total_orders'),
-                DB::raw('MAX(orders.grand_total) as max_order_value')
-            )
+            ->whereBetween('orders.created_at', [$thirtyDaysAgo, $today]);
+
+        if ($this->userId) {
+            $transactionQuery->where('orders.user_id', $this->userId);
+        }
+
+        $transactionPatternAlerts = $transactionQuery->select(
+            'users.id',
+            DB::raw('AVG(orders.grand_total) as avg_order_value'),
+            DB::raw('STDDEV(orders.grand_total) as std_order_value'),
+            DB::raw('COUNT(*) as total_orders'),
+            DB::raw('MAX(orders.grand_total) as max_order_value')
+        )
             ->groupBy('users.id')
             ->having('total_orders', '>=', 3)
             ->get()
@@ -1415,9 +1733,14 @@ class RiskDashboardService
 
                 if ($std === 0) return false; // no variation → no anomaly check
 
-                $recentOrders = Order::where('user_id', $user->id)
-                    ->where('created_at', '>=', $sevenDaysAgo)
-                    ->pluck('grand_total')
+                $recentOrdersQuery = Order::where('user_id', $user->id)
+                    ->where('created_at', '>=', $sevenDaysAgo);
+
+                if ($this->userId) {
+                    $recentOrdersQuery->where('user_id', $this->userId);
+                }
+
+                $recentOrders = $recentOrdersQuery->pluck('grand_total')
                     ->map(fn($v) => (float) $v);
 
                 if ($recentOrders->count() === 0) return false;
@@ -1437,17 +1760,22 @@ class RiskDashboardService
             ->count();
 
         // 3. Behavioral Alerts
-        $behavioralAlerts = DB::table('schedule_payments')
+        $behavioralQuery = DB::table('schedule_payments')
             ->join('users', 'schedule_payments.user_id', '=', 'users.id')
-            ->whereBetween('schedule_payments.due_date', [$thirtyDaysAgo, $today])
-            ->select(
-                'users.id',
-                DB::raw('SUM(CASE WHEN payment_status = "paid" AND late_days = 0 THEN 1 ELSE 0 END) as on_time_payments'),
-                DB::raw('SUM(CASE WHEN payment_status = "paid" AND late_days > 0 THEN 1 ELSE 0 END) as late_payments'),
-                DB::raw('SUM(CASE WHEN payment_status IN ("due", "late") THEN 1 ELSE 0 END) as outstanding_payments'),
-                DB::raw('COUNT(*) as total_payments'),
-                DB::raw('AVG(late_days) as avg_days_late')
-            )
+            ->whereBetween('schedule_payments.due_date', [$thirtyDaysAgo, $today]);
+
+        if ($this->userId) {
+            $behavioralQuery->where('schedule_payments.user_id', $this->userId);
+        }
+
+        $behavioralAlerts = $behavioralQuery->select(
+            'users.id',
+            DB::raw('SUM(CASE WHEN payment_status = "paid" AND late_days = 0 THEN 1 ELSE 0 END) as on_time_payments'),
+            DB::raw('SUM(CASE WHEN payment_status = "paid" AND late_days > 0 THEN 1 ELSE 0 END) as late_payments'),
+            DB::raw('SUM(CASE WHEN payment_status IN ("due", "late") THEN 1 ELSE 0 END) as outstanding_payments'),
+            DB::raw('COUNT(*) as total_payments'),
+            DB::raw('AVG(late_days) as avg_days_late')
+        )
             ->groupBy('users.id')
             ->having('total_payments', '>=', 3)
             ->get()
@@ -1457,12 +1785,17 @@ class RiskDashboardService
                     ? ($user->on_time_payments / $user->total_payments) * 100
                     : 100;
 
-                $historicalPayments = SchedulePayment::where('user_id', $user->id)
-                    ->where('due_date', '<', Carbon::now()->subDays(30))
-                    ->select(
-                        DB::raw('SUM(CASE WHEN payment_status = "paid" AND late_days = 0 THEN 1 ELSE 0 END) as historical_on_time'),
-                        DB::raw('COUNT(*) as historical_total')
-                    )
+                $historicalPaymentsQuery = SchedulePayment::where('user_id', $user->id)
+                    ->where('due_date', '<', Carbon::now()->subDays(30));
+
+                if ($this->userId) {
+                    $historicalPaymentsQuery->where('user_id', $this->userId);
+                }
+
+                $historicalPayments = $historicalPaymentsQuery->select(
+                    DB::raw('SUM(CASE WHEN payment_status = "paid" AND late_days = 0 THEN 1 ELSE 0 END) as historical_on_time'),
+                    DB::raw('COUNT(*) as historical_total')
+                )
                     ->first();
 
                 $historicalOnTimeRate = $historicalPayments->historical_total > 0
@@ -1476,13 +1809,18 @@ class RiskDashboardService
             ->count();
 
         // 4. High Risk Alerts
-        $highRiskAlerts = Merchant::where('status', 'active')
+        $highRiskQuery = Merchant::where('status', 'active')
             ->join('users', 'merchants.id', '=', 'users.id')
             ->with(['businessType', 'schedulePayments' => function ($q) use ($thirtyDaysAgo) {
                 $q->where('due_date', '>=', $thirtyDaysAgo);
             }])
-            ->select('merchants.*', 'users.business_name', 'users.email')
-            ->get()
+            ->select('merchants.*', 'users.business_name', 'users.email');
+
+        if ($this->userId && $this->userType === 'merchant') {
+            $highRiskQuery->where('merchants.id', $this->userId);
+        }
+
+        $highRiskAlerts = $highRiskQuery->get()
             ->filter(function ($merchant) {
 
                 $riskFactors = [];
@@ -1516,9 +1854,14 @@ class RiskDashboardService
                 }
 
                 // 3. Business Activity
-                $recentOrders = Order::where('user_id', $merchant->id)
-                    ->where('created_at', '>=', Carbon::now()->subDays(30))
-                    ->count();
+                $recentOrdersQuery = Order::where('user_id', $merchant->id)
+                    ->where('created_at', '>=', Carbon::now()->subDays(30));
+
+                if ($this->userId) {
+                    $recentOrdersQuery->where('user_id', $this->userId);
+                }
+
+                $recentOrders = $recentOrdersQuery->count();
 
                 if ($recentOrders === 0) {
                     $riskFactors[] = 'Account Inactivity';
@@ -1534,12 +1877,17 @@ class RiskDashboardService
                 elseif ($businessRisk === 'high') $totalScore += 10;
 
                 // 5. Order Value Concentration
-                $orderStats = Order::where('user_id', $merchant->id)
-                    ->where('created_at', '>=', Carbon::now()->subDays(30))
-                    ->select(
-                        DB::raw('AVG(grand_total) as avg_value'),
-                        DB::raw('STDDEV(grand_total) as std_value')
-                    )
+                $orderStatsQuery = Order::where('user_id', $merchant->id)
+                    ->where('created_at', '>=', Carbon::now()->subDays(30));
+
+                if ($this->userId) {
+                    $orderStatsQuery->where('user_id', $this->userId);
+                }
+
+                $orderStats = $orderStatsQuery->select(
+                    DB::raw('AVG(grand_total) as avg_value'),
+                    DB::raw('STDDEV(grand_total) as std_value')
+                )
                     ->first();
 
                 $avgValue = (float) ($orderStats->avg_value ?? 0);
@@ -1565,12 +1913,17 @@ class RiskDashboardService
     protected function getConcentrationRisks()
     {
         // Get top 5 suppliers by total order value
-        $supplierConcentration = Order::join('users', 'orders.seller_id', '=', 'users.id')
-            ->whereBetween('orders.created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->select(
-                'users.business_name',
-                DB::raw('SUM(orders.grand_total) as total_value')
-            )
+        $supplierQuery = Order::join('users', 'orders.seller_id', '=', 'users.id')
+            ->whereBetween('orders.created_at', [$this->dateRange['from'], $this->dateRange['to']]);
+
+        if ($this->userId) {
+            $supplierQuery->where('orders.seller_id', $this->userId);
+        }
+
+        $supplierConcentration = $supplierQuery->select(
+            'users.business_name',
+            DB::raw('SUM(orders.grand_total) as total_value')
+        )
             ->groupBy('users.business_name')
             ->orderByDesc('total_value')
             ->get();
@@ -1681,32 +2034,52 @@ class RiskDashboardService
 
     protected function getExceptionBreakdown()
     {
-        $suspendedCount = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->where('status', 'suspended')
-            ->count();
+        $suspendedQuery = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+            ->where('status', 'suspended');
 
-        $blacklistedCount = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->where('status', 'blacklisted')
-            ->count();
+        if ($this->userId && $this->userType === 'merchant') {
+            $suspendedQuery->where('id', $this->userId);
+        }
 
-        $delinquentCount = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+        $suspendedCount = $suspendedQuery->count();
+
+        $blacklistedQuery = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+            ->where('status', 'blacklisted');
+
+        if ($this->userId && $this->userType === 'merchant') {
+            $blacklistedQuery->where('id', $this->userId);
+        }
+
+        $blacklistedCount = $blacklistedQuery->count();
+
+        $delinquentQuery = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
             ->whereHas('user', function ($query) {
                 $query->whereHas('schedulePayments', function ($paymentQuery) {
                     $paymentQuery->where('late_days', '>', 30)
                         ->whereIn('payment_status', ['due', 'late']);
                 });
-            })
-            ->count();
+            });
 
-        $documentIssueCount = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+        if ($this->userId && $this->userType === 'merchant') {
+            $delinquentQuery->where('id', $this->userId);
+        }
+
+        $delinquentCount = $delinquentQuery->count();
+
+        $documentQuery = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
             ->where(function ($query) {
                 $query->whereNull('goverment_data')
                     ->orWhere('cr_number', '')
                     ->orWhere('vat_register_file', '')
                     ->orWhere('balady_certificate', '')
                     ->orWhere('owner_iqama_number', '');
-            })
-            ->count();
+            });
+
+        if ($this->userId && $this->userType === 'merchant') {
+            $documentQuery->where('id', $this->userId);
+        }
+
+        $documentIssueCount = $documentQuery->count();
 
         $totalExceptions = $suspendedCount + $blacklistedCount + $delinquentCount + $documentIssueCount;
 
@@ -1729,42 +2102,72 @@ class RiskDashboardService
 
     protected function calculateUnderwritingCompliance()
     {
-        $totalProcessed = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-            ->count();
+        $query = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+            ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted']);
 
-        $compliantUnderwriting = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $totalProcessed = $query->count();
+
+        $compliantQuery = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
             ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-            ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.6 <= 6')
-            ->count();
+            ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.6 <= 6');
+
+        if ($this->userId && $this->userType === 'merchant') {
+            $compliantQuery->where('id', $this->userId);
+        }
+
+        $compliantUnderwriting = $compliantQuery->count();
 
         return $totalProcessed > 0 ? round(($compliantUnderwriting / $totalProcessed) * 100) : 100;
     }
 
     protected function calculateApprovalCompliance()
     {
-        $totalProcessed = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-            ->count();
+        $query = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+            ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted']);
 
-        $compliantApproval = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $totalProcessed = $query->count();
+
+        $compliantQuery = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
             ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-            ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.3 <= 4')
-            ->count();
+            ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.3 <= 4');
+
+        if ($this->userId && $this->userType === 'merchant') {
+            $compliantQuery->where('id', $this->userId);
+        }
+
+        $compliantApproval = $compliantQuery->count();
 
         return $totalProcessed > 0 ? round(($compliantApproval / $totalProcessed) * 100) : 100;
     }
 
     protected function calculateDisbursementCompliance()
     {
-        $totalProcessed = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
-            ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-            ->count();
+        $query = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+            ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted']);
 
-        $compliantDisbursement = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
+        if ($this->userId && $this->userType === 'merchant') {
+            $query->where('id', $this->userId);
+        }
+
+        $totalProcessed = $query->count();
+
+        $compliantQuery = Merchant::whereBetween('created_at', [$this->dateRange['from'], $this->dateRange['to']])
             ->whereIn('status', ['approved', 'active', 'suspended', 'blacklisted'])
-            ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.1 <= 8')
-            ->count();
+            ->whereRaw('TIMESTAMPDIFF(HOUR, created_at, updated_at) * 0.1 <= 8');
+
+        if ($this->userId && $this->userType === 'merchant') {
+            $compliantQuery->where('id', $this->userId);
+        }
+
+        $compliantDisbursement = $compliantQuery->count();
 
         return $totalProcessed > 0 ? round(($compliantDisbursement / $totalProcessed) * 100) : 100;
     }
@@ -1860,5 +2263,56 @@ class RiskDashboardService
             'low' => 'Low Priority',
             default => 'Information'
         };
+    }
+    
+    // ==================== USER SPECIFIC METHODS ====================
+
+    /**
+     * Get user-specific dashboard data
+     */
+    public function getUserDashboardData($userId, $filters = [])
+    {
+        $filters['user_id'] = $userId;
+        $this->userId = $filters['user_id'] ?? null;
+
+        // If user_id provided, get user type
+        if ($this->userId) {
+            $user = User::find($this->userId);
+            $this->userType = $user->user_type ?? null;
+        }
+
+        $this->dateRange = $this->getDateRange($filters);
+
+        return [
+            'risk_scores' => $this->getRiskScores(),
+            'alerts' => $this->buildRiskAlerts(),
+            'flags' => $this->buildRiskFlags(),
+            'user_specific' => !is_null($this->userId),
+            'user_type' => $this->userType
+        ];
+    }
+
+    /**
+     * Check if current dashboard is user-specific
+     */
+    public function isUserSpecific()
+    {
+        return !is_null($this->userId);
+    }
+
+    /**
+     * Get current user ID if set
+     */
+    public function getCurrentUserId()
+    {
+        return $this->userId;
+    }
+
+    /**
+     * Get current user type if set
+     */
+    public function getCurrentUserType()
+    {
+        return $this->userType;
     }
 }

@@ -68,85 +68,85 @@ class RiskAnalyticsController extends Controller
         ]);
     }
 
-    public function score(Request $request)
-    {
-        $search = trim($request->input('search', ''));
-        $order = $request->input('order', 'desc');
-        $perPage = 10;
+    // public function score(Request $request)
+    // {
+    //     $search = trim($request->input('search', ''));
+    //     $order = $request->input('order', 'desc');
+    //     $perPage = 10;
 
-        $typeParam = strtolower($request->input('type', ''));
-        $allowedTypes = ['merchant', 'user'];
-        $userTypes = in_array($typeParam, $allowedTypes) ? [$typeParam] : $allowedTypes;
+    //     $typeParam = strtolower($request->input('type', ''));
+    //     $allowedTypes = ['merchant', 'user'];
+    //     $userTypes = in_array($typeParam, $allowedTypes) ? [$typeParam] : $allowedTypes;
 
-        $weights = array_filter([
-            'cr_id' => $request->input('weight_cr_id'),
-            'pos' => $request->input('weight_pos'),
-            'repayment' => $request->input('weight_repayment'),
-            'industry' => $request->input('weight_industry'),
-            'location' => $request->input('weight_location'),
-        ], fn($weight) => !is_null($weight));
+    //     $weights = array_filter([
+    //         'cr_id' => $request->input('weight_cr_id'),
+    //         'pos' => $request->input('weight_pos'),
+    //         'repayment' => $request->input('weight_repayment'),
+    //         'industry' => $request->input('weight_industry'),
+    //         'location' => $request->input('weight_location'),
+    //     ], fn($weight) => !is_null($weight));
 
-        $baseQuery = User::query()
-            ->whereIn('user_type', $userTypes)
-            ->where(function ($query) {
-                $query->whereHas('merchant')
-                    ->orWhereHas('customer');
-            })
-            ->with(['merchant.businessType', 'customer.businessType', 'transactions'])
-            ->orderBy('created_at', $order);
+    //     $baseQuery = User::query()
+    //         ->whereIn('user_type', $userTypes)
+    //         ->where(function ($query) {
+    //             $query->whereHas('merchant')
+    //                 ->orWhereHas('customer');
+    //         })
+    //         ->with(['merchant.businessType', 'customer.businessType', 'transactions'])
+    //         ->orderBy('created_at', $order);
 
-        if ($search) {
-            $searchLower = strtolower($search);
+    //     if ($search) {
+    //         $searchLower = strtolower($search);
 
-            $baseQuery->where(function ($query) use ($searchLower) {
-                $query->where('first_name', 'like', "%{$searchLower}%")
-                    ->orWhere('last_name', 'like', "%{$searchLower}%")
-                    ->orWhere('email', 'like', "%{$searchLower}%")
-                    ->orWhere('phone_number', 'like', "%{$searchLower}%")
-                    ->orWhere('iqama', 'like', "%{$searchLower}%");
+    //         $baseQuery->where(function ($query) use ($searchLower) {
+    //             $query->where('first_name', 'like', "%{$searchLower}%")
+    //                 ->orWhere('last_name', 'like', "%{$searchLower}%")
+    //                 ->orWhere('email', 'like', "%{$searchLower}%")
+    //                 ->orWhere('phone_number', 'like', "%{$searchLower}%")
+    //                 ->orWhere('iqama', 'like', "%{$searchLower}%");
 
-                $query->orWhereHas('merchant', function ($q) use ($searchLower) {
-                    $q->where('business_name', 'like', "%{$searchLower}%");
-                });
+    //             $query->orWhereHas('merchant', function ($q) use ($searchLower) {
+    //                 $q->where('business_name', 'like', "%{$searchLower}%");
+    //             });
 
-                $query->orWhereHas('customer', function ($q) use ($searchLower) {
-                    $q->where('business_name', 'like', "%{$searchLower}%");
-                });
-            });
-        }
+    //             $query->orWhereHas('customer', function ($q) use ($searchLower) {
+    //                 $q->where('business_name', 'like', "%{$searchLower}%");
+    //             });
+    //         });
+    //     }
 
-        $usersPaginator = $baseQuery->paginate($perPage);
-        $usersCollection = $usersPaginator->getCollection();
+    //     $usersPaginator = $baseQuery->paginate($perPage);
+    //     $usersCollection = $usersPaginator->getCollection();
 
-        if ($usersCollection->isEmpty()) {
-            return view('admin.risk-management.score', [
-                'risks' => new LengthAwarePaginator(collect(), 0, $perPage, 1, [
-                    'path' => request()->url(),
-                    'query' => request()->query(),
-                ])
-            ]);
-        }
+    //     if ($usersCollection->isEmpty()) {
+    //         return view('admin.risk-management.score', [
+    //             'risks' => new LengthAwarePaginator(collect(), 0, $perPage, 1, [
+    //                 'path' => request()->url(),
+    //                 'query' => request()->query(),
+    //             ])
+    //         ]);
+    //     }
 
-        $businessNames = $this->riskAnalyticsService->extractBusinessNamesFromUsers($usersCollection);
-        if (!empty($businessNames)) {
-            $this->riskAnalyticsService->prefetchGoogleRatings($businessNames);
-        }
+    //     $businessNames = $this->riskAnalyticsService->extractBusinessNamesFromUsers($usersCollection);
+    //     if (!empty($businessNames)) {
+    //         $this->riskAnalyticsService->prefetchGoogleRatings($businessNames);
+    //     }
 
-        $risksCollection = $this->riskAnalyticsService->calculateForUsers(
-            $usersCollection,
-            $weights
-        );
+    //     $risksCollection = $this->riskAnalyticsService->calculateForUsers(
+    //         $usersCollection,
+    //         $weights
+    //     );
 
-        $paginatedRisks = new LengthAwarePaginator(
-            $risksCollection->values(),
-            $usersPaginator->total(),
-            $usersPaginator->perPage(),
-            $usersPaginator->currentPage(),
-            ['path' => request()->url(), 'query' => request()->query()]
-        );
+    //     $paginatedRisks = new LengthAwarePaginator(
+    //         $risksCollection->values(),
+    //         $usersPaginator->total(),
+    //         $usersPaginator->perPage(),
+    //         $usersPaginator->currentPage(),
+    //         ['path' => request()->url(), 'query' => request()->query()]
+    //     );
 
-        return view('admin.risk-management.score', ['risks' => $paginatedRisks]);
-    }
+    //     return view('admin.risk-management.score', ['risks' => $paginatedRisks]);
+    // }
 
     public function scoreUpdate(Request $request)
     {
@@ -338,7 +338,12 @@ class RiskAnalyticsController extends Controller
             // Get complete risk analysis
             $riskAnalysis = $this->riskService->analyzeCustomer($entity, $type);
 
-            return view('admin.risk-management.details', compact('user', 'riskAnalysis', 'type'));
+            $riskData = $this->riskDashboardService->getUserDashboardData($userId, [
+                'date_from' => '2024-01-01',
+                'date_to' => '2024-01-31'
+            ]);
+
+            return view('admin.risk-management.details', compact('user', 'riskAnalysis', 'type', 'riskData'));
         } catch (\Exception $e) {
             return back()->with('error', 'Error loading risk analysis: ' . $e->getMessage());
         }

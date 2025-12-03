@@ -143,7 +143,7 @@
                     EXPIRE_EL.textContent = '❌ OTP expired';
                     clearInterval(tid);
                     setTimeout(() => {
-                        window.location.href = "{{ route('risk.score') }}";
+                        window.location.href = "{{ route('risk.merchantScore') }}";
                     }, 3000);
                 }
             }, 1000);

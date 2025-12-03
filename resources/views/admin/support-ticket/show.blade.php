@@ -13,8 +13,10 @@
                     </h1>
                 </div>
 
-
-                @if ($ticket->user_id == Auth::id() || Auth::user()->user_type == 'admin')
+                @if (
+                    $ticket->user_id == Auth::id() ||
+                        Auth::user()->user_type == 'admin' ||
+                        (Auth::user()->user_type == 'employee' && Auth::user()->is_manager))
                     <div class="">
                         <form action="{{ route('ticketUpdateStatus', $ticket->ticket_number) }}" method="POST"
                             class="w-full">

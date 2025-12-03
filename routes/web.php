@@ -354,8 +354,8 @@ Route::group([
             Route::controller(RiskAnalyticsController::class)->prefix('risk')->group(function () {
                 Route::get('dashboard', 'dashboard')->name('risk.dashboard');
                 Route::get('alerts', 'allAlerts')->name('risk.alerts');
-                Route::get('score-engine', 'score')->name('risk.score');
-                Route::post('score-update', 'scoreUpdate')->name('risk.scoreUpdate')->middleware(EnsureOtpVerified::class);
+                // Route::get('score-engine', 'score')->name('risk.merchantScore');
+                Route::post('score-update', 'scoreUpdate')->name('risk.merchantScoreUpdate')->middleware(EnsureOtpVerified::class);
                 Route::get('export/pdf', 'exportPdf')->name('risk.exportPdf');
                 Route::get('export/csv', 'exportCsv')->withoutMiddleware([PreventBackHistory::class])->name('risk.exportCsv');
 

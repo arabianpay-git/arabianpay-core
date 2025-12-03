@@ -1897,4 +1897,7 @@ return [
     'Range' => 'النطاق',
     'No score information available.' => 'لا توجد معلومات عن الدرجة.',
     'Main Report Information' => 'معلومات التقرير الرئيسية',
+    'Main Report Information' => 'المعلومات الرئيسية للتقرير',
+    'Risk Alerts' => 'تنبيهات المخاطر',
+    'Active alerts requiring attention' => 'تنبيهات نشطة تتطلب الانتباه',
 ];
