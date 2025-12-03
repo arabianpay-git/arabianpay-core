@@ -6,8 +6,8 @@
                 // 1. First check logo from ShopSetting
                 $shopLogo = \App\Models\ShopSetting::where('user_id', $merchant->user_id)->first();
 
-                if ($shopLogo && supplierMedia($shopLogo->logo)) {
-                    $logoPath = supplierMedia($shopLogo->logo);
+                if ($shopLogo && !empty($shopLogo->logo)) {
+                    $logoPath = 'https://partners.arabianpay.net/storage/' . $shopLogo->logo;
                 }
                 // 2. Then check profile_photo_path
                 elseif (!empty($merchant->user->profile_photo_path)) {
