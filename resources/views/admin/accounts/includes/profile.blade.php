@@ -7,19 +7,19 @@
 </style>
 
 <div class="container-fixed">
-    {{-- Main Header: Logo, Name, Status, and Transfer Button --}}
     <div class="flex items-start justify-between gap-4 py-4 lg:py-6">
 
-        {{-- Left Side: Logo, Name, and Status --}}
         <div class="flex items-center gap-4">
-            {{-- Logo --}}
             <div class="flex items-center justify-center rounded-full border-2 border-success-clarity shrink-0 bg-light">
                 @php
-                    // Logo retrieval logic (remains the same)
                     $shopLogo = \App\Models\ShopSetting::where('user_id', $merchant->user_id)->first();
 
                     if ($shopLogo && !empty($shopLogo->logo)) {
-                        $logoPath = 'https://partners.arabianpay.net' . $shopLogo->logo;
+                        if (Str::startsWith($shopLogo->logo, ['http://', 'https://'])) {
+                            $logoPath = supplierMedia($shopLogo->logo);
+                        } else {
+                            $logoPath = 'https://partners.arabianpay.net' . $shopLogo->logo;
+                        }
                     } elseif (!empty($merchant->user->profile_photo_path)) {
                         $logoPath = 'https://partners.arabianpay.net/storage/' . $merchant->user->profile_photo_path;
                     } else {
@@ -27,10 +27,10 @@
                     }
                 @endphp
 
+
                 <img class="logo" src="{{ $logoPath }}" alt="Shop Logo" />
             </div>
 
-            {{-- Business Name and Status Stack --}}
             <div class="flex flex-col">
                 <div class="flex items-center gap-1.5">
                     <div class="text-xl leading-6 font-bold text-gray-900">
@@ -66,7 +66,6 @@
 
                 </div>
 
-                {{-- Merchant Name (Moved closer to business name) --}}
                 <div class="flex items-center mt-1 text-sm">
                     <i class="ki-filled ki-abstract-41 text-gray-500 text-sm me-1"> </i>
                     <span class="text-gray-600 font-medium">
@@ -75,7 +74,6 @@
                 </div>
 
                 <div class="flex flex-wrap items-center justify-start gap-3 text-sm pt-4 contact-info-list">
-                    {{-- Location --}}
                     <div class="flex gap-1.25 items-center separator">
                         <i class="ki-filled ki-geolocation text-gray-500 text-sm"> </i>
                         <span class="text-gray-600 font-medium">
@@ -83,7 +81,6 @@
                         </span>
                     </div>
 
-                    {{-- Phone Number --}}
                     <div class="flex gap-1.25 items-center separator">
                         <i class="ki-filled ki-phone text-gray-500 text-sm"> </i>
                         <a class="text-gray-600 font-medium hover:text-primary"
@@ -92,7 +89,6 @@
                         </a>
                     </div>
 
-                    {{-- Email --}}
                     <div class="flex gap-1.25 items-center separator">
                         <i class="ki-filled ki-sms text-gray-500 text-sm"> </i>
                         <a class="text-gray-600 font-medium hover:text-primary"
@@ -107,11 +103,9 @@
                     </div>
                 </div>
             </div>
-
         </div>
 
-        {{-- Right Side: Transfer Request Button --}}
-        <div class="shrink-0 pt-4"> {{-- Padding to align button better with logo --}}
+        <div class="shrink-0 pt-4">
             <button class="btn btn-sm btn-light" data-modal-toggle="#transfer_request">
                 <i class="ki-filled ki-disconnect"></i> Transfer Request
             </button>
