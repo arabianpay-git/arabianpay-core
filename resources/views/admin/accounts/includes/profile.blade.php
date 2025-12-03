@@ -6,9 +6,10 @@
                 $shopLogo = \App\Models\ShopSetting::where('user_id', $merchant->user_id)->first();
 
                 if ($shopLogo && $shopLogo->logo) {
-                    $logoPath = Str::startsWith($shopLogo->logo, ['http://', 'https://'])
-                        ? $shopLogo->logo
-                        : asset($shopLogo->logo);
+                    $logoPath =
+                        $shopLogo && supplierMedia($shopLogo->logo)
+                            ? supplierMedia($shopLogo->logo)
+                            : asset('assets/media/images/ap.png');
                 } elseif (!empty($merchant->user->profile_photo_path)) {
                     $logoPath = 'https://partners.arabianpay.net/storage/' . $merchant->user->profile_photo_path;
                 } else {
