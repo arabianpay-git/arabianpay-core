@@ -1,106 +1,123 @@
+<style>
+    .logo {
+        height: 100px !important;
+        width: 100px !important;
+        border-radius: 100%;
+    }
+</style>
+
 <div class="container-fixed">
-    <div class="flex flex-col items-center gap-2 lg:gap-3.5 py-4 lg:pt-5 lg:pb-10">
-        <div
-            class="flex items-center justify-center rounded-full border-2 border-success-clarity size-[100px] shrink-0 bg-light">
-            @php
-                // 1. First check logo from ShopSetting
-                $shopLogo = \App\Models\ShopSetting::where('user_id', $merchant->user_id)->first();
+    {{-- Main Header: Logo, Name, Status, and Transfer Button --}}
+    <div class="flex items-start justify-between gap-4 py-4 lg:py-6">
 
-                if ($shopLogo && !empty($shopLogo->logo)) {
-                    $logoPath = 'https://partners.arabianpay.net' . $shopLogo->logo;
-                }
-                // 2. Then check profile_photo_path
-                elseif (!empty($merchant->user->profile_photo_path)) {
-                    $logoPath = 'https://partners.arabianpay.net/storage/' . $merchant->user->profile_photo_path;
-                }
-                // 3. Otherwise use default logo
-                else {
-                    $logoPath = asset('assets/media/images/ap.png');
-                }
-            @endphp
+        {{-- Left Side: Logo, Name, and Status --}}
+        <div class="flex items-center gap-4">
+            {{-- Logo --}}
+            <div class="flex items-center justify-center rounded-full border-2 border-success-clarity shrink-0 bg-light">
+                @php
+                    // Logo retrieval logic (remains the same)
+                    $shopLogo = \App\Models\ShopSetting::where('user_id', $merchant->user_id)->first();
 
-            <img class="size-[70px]" src="{{ $logoPath }}" alt="Shop Logo" />
+                    if ($shopLogo && !empty($shopLogo->logo)) {
+                        $logoPath = 'https://partners.arabianpay.net' . $shopLogo->logo;
+                    } elseif (!empty($merchant->user->profile_photo_path)) {
+                        $logoPath = 'https://partners.arabianpay.net/storage/' . $merchant->user->profile_photo_path;
+                    } else {
+                        $logoPath = asset('assets/media/images/ap.png');
+                    }
+                @endphp
+
+                <img class="logo" src="{{ $logoPath }}" alt="Shop Logo" />
+            </div>
+
+            {{-- Business Name and Status Stack --}}
+            <div class="flex flex-col">
+                <div class="flex items-center gap-1.5">
+                    <div class="text-xl leading-6 font-bold text-gray-900">
+                        {{ $merchant->user?->business_name }}
+                    </div>
+                    @php
+                        $status = strtolower($merchant->status);
+
+                        $statusMap = [
+                            'approved' => ['success', 'Approved'],
+                            'under_review' => ['secondary', 'Under Review'],
+                            'contract_sent' => ['primary', 'Contract Sent'],
+                            'active' => ['primary', 'Active'],
+                            'pending' => ['warning', 'Pending'],
+                            'suspended' => ['danger', 'Suspended'],
+                            'blacklisted' => ['info', 'Blacklisted'],
+                        ];
+                    @endphp
+
+                    @if ($status === 'active')
+                        <svg class="text-primary" fill="none" height="16" width="15" viewBox="0 0 15 16">
+                            <path d="M14.5425 6.89749L13.5 5.83999..." fill="currentColor" />
+                        </svg>
+                    @elseif(isset($statusMap[$status]))
+                        <span class="badge badge-sm badge-outline badge-{{ $statusMap[$status][0] }}">
+                            {{ $statusMap[$status][1] }}
+                        </span>
+                    @else
+                        <span class="badge badge-sm badge-outline badge-dark">
+                            {{ ucwords(str_replace('_', ' ', $merchant->status)) }}
+                        </span>
+                    @endif
+
+                </div>
+
+                {{-- Merchant Name (Moved closer to business name) --}}
+                <div class="flex items-center mt-1 text-sm">
+                    <i class="ki-filled ki-abstract-41 text-gray-500 text-sm me-1"> </i>
+                    <span class="text-gray-600 font-medium">
+                        {{ $merchant->user?->first_name }} {{ $merchant->user?->last_name }}
+                    </span>
+                </div>
+
+                <div class="flex flex-wrap items-center justify-start gap-3 text-sm pt-4 contact-info-list">
+                    {{-- Location --}}
+                    <div class="flex gap-1.25 items-center separator">
+                        <i class="ki-filled ki-geolocation text-gray-500 text-sm"> </i>
+                        <span class="text-gray-600 font-medium">
+                            {{ $sellerShop->address ?? 'N/A' }}
+                        </span>
+                    </div>
+
+                    {{-- Phone Number --}}
+                    <div class="flex gap-1.25 items-center separator">
+                        <i class="ki-filled ki-phone text-gray-500 text-sm"> </i>
+                        <a class="text-gray-600 font-medium hover:text-primary"
+                            href="tel: {{ $merchant->user->phone_number }}">
+                            {{ $merchant->user->phone_number }}
+                        </a>
+                    </div>
+
+                    {{-- Email --}}
+                    <div class="flex gap-1.25 items-center separator">
+                        <i class="ki-filled ki-sms text-gray-500 text-sm"> </i>
+                        <a class="text-gray-600 font-medium hover:text-primary"
+                            href="mailto: {{ $merchant->user->email }}">
+                            {{ $merchant->user->email }}
+                        </a>
+                    </div>
+
+                    <div class="flex gap-1.25 items-center separator">
+                        <i class="ki-filled ki-calendar text-gray-500 text-sm"> </i>
+                        {{ $merchant->user->created_at->format('d M Y') }}
+                    </div>
+                </div>
+            </div>
 
         </div>
-        <div class="flex items-center gap-1.5">
-            <div class="text-lg leading-5 font-semibold text-gray-900">
-                {{ $merchant->user?->business_name }}
-            </div>
-            @php
-                $status = strtolower($merchant->status);
-            @endphp
 
-            @if ($status === 'approved')
-                <span class="badge badge-sm badge-outline badge-success">
-                    Approved
-                </span>
-            @elseif ($status === 'active')
-                <svg class="text-primary" fill="none" height="16" viewBox="0 0 15 16" width="15"
-                    xmlns="http://www.w3.org/2000/svg">
-                    <path d="M14.5425 6.89749L13.5 5.83999C13.4273 5.76877 ... Z" fill="currentColor" />
-                </svg>
-            @elseif ($status === 'under_review')
-                <span class="badge badge-sm badge-outline badge-secondary">
-                    Under Review
-                </span>
-            @elseif ($status === 'contracted')
-                <span class="badge badge-sm badge-outline badge-primary">
-                    Contracted
-                </span>
-            @elseif ($status === 'pending')
-                <span class="badge badge-sm badge-outline badge-warning">
-                    Pending
-                </span>
-            @elseif ($status === 'suspended')
-                <span class="badge badge-sm badge-outline badge-danger">
-                    Suspended
-                </span>
-            @elseif ($status === 'blacklisted')
-                <span class="badge badge-sm badge-outline badge-info">
-                    Blacklisted
-                </span>
-            @else
-                <span class="badge badge-sm badge-outline badge-outline badge-dark">
-                    {{ ucfirst($merchant->status) }}
-                </span>
-            @endif
-        </div>
-        <div class="flex flex-wrap justify-center gap-1 lg:gap-4.5 text-sm">
-            <div class="flex gap-1.25 items-center">
-                <i class="ki-filled ki-abstract-41 text-gray-500 text-sm"> </i>
-                <span class="text-gray-600 font-medium">
-                    {{ $merchant->user?->first_name }} {{ $merchant->user?->last_name }}
-                </span>
-            </div>
-
-            <div class="flex gap-1.25 items-center">
-                <i class="ki-filled ki-geolocation text-gray-500 text-sm"> </i>
-                <span class="text-gray-600 font-medium">
-                    {{ $sellerShop->address ?? 'N/A' }}
-                </span>
-            </div>
-
-            <div class="flex gap-1.25 items-center">
-                <i class="ki-filled ki-phone text-gray-500 text-sm"> </i>
-                <a class="text-gray-600 font-medium hover:text-primary" href="tel: {{ $merchant->user->phone_number }}">
-                    {{ $merchant->user->phone_number }}
-                </a>
-            </div>
-
-            <div class="flex gap-1.25 items-center">
-                <i class="ki-filled ki-sms text-gray-500 text-sm"> </i>
-                <a class="text-gray-600 font-medium hover:text-primary" href="mailto: {{ $merchant->user->email }}">
-                    {{ $merchant->user->email }}
-                </a>
-            </div>
+        {{-- Right Side: Transfer Request Button --}}
+        <div class="shrink-0 pt-4"> {{-- Padding to align button better with logo --}}
+            <button class="btn btn-sm btn-light" data-modal-toggle="#transfer_request">
+                <i class="ki-filled ki-disconnect"></i> Transfer Request
+            </button>
         </div>
     </div>
-    <div class="flex justify-end mb-4">
-        <button class="btn btn-sm btn-light" data-modal-toggle="#transfer_request">
-            <i class="ki-filled ki-disconnect">
-            </i> Transfer Request
-        </button>
-    </div>
+
 </div>
 
 
