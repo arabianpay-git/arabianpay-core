@@ -16,6 +16,7 @@
         </thead>
         <tbody>
             @foreach ($risks as $item)
+                @dd($item)
                 <tr>
                     <td class="text-center">{{ $item->id }}</td>
                     <td>

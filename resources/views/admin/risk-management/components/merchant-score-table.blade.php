@@ -862,14 +862,14 @@
                             <h4>Risk Flags</h4>
                             <p><strong>Total Flags:</strong> ${flagCount}</p>
                             ${flagCount > 0 ? `
-                                                                                                                                                                                                                                                                        <div class="component-grid">
-                                                                                                                                                                                                                                                                            ${flags.map(flag => `
+                                                                                                                                                                                                                                                                                <div class="component-grid">
+                                                                                                                                                                                                                                                                                    ${flags.map(flag => `
                                         <div class="component-item">
                                             <span class="risk-badge high">${flag}</span>
                                         </div>
                                     `).join('')}
-                                                                                                                                                                                                                                                                        </div>
-                                                                                                                                                                                                                                                                    ` : '<p>No risk flags detected</p>'}
+                                                                                                                                                                                                                                                                                </div>
+                                                                                                                                                                                                                                                                            ` : '<p>No risk flags detected</p>'}
                         `;
                         break;
                 }

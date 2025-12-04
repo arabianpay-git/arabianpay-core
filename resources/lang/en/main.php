@@ -2030,5 +2030,8 @@ return [
     'Non-Scorable' => 'Non-Scorable',
     'Active Credit' => 'Active Credit',
     'Score Card' => 'Score Card',
-    'bureau rating score' => 'Bureau Rating Score'
+    'bureau rating score' => 'Bureau Rating Score',
+
+    'No SIMAH Report' => 'No SIMAH Report',
+    'Using default credit history score' => 'Using default credit history score',
 ];
