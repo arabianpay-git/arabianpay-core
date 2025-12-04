@@ -337,7 +337,7 @@ class AccountController extends Controller
         );
 
         // Send email & SMS if approved
-        if ($status === 'approved') {
+        if ($status === 'active') {
             $this->sendEmail(
                 'emails.welcome_account_approved',
                 $customer->user->email,
