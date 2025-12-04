@@ -1900,4 +1900,11 @@ return [
     'Main Report Information' => 'المعلومات الرئيسية للتقرير',
     'Risk Alerts' => 'تنبيهات المخاطر',
     'Active alerts requiring attention' => 'تنبيهات نشطة تتطلب الانتباه',
+    'All Statuses' => 'جميع الحالات',
+    'All Employees' => 'جميع الموظفين',
+    'Credit History from SIMAH' => 'السجل الائتماني من سمة',
+    'Non-Scorable' => 'غير قابل للتقييم',
+    'Active Credit' => 'الائتمان النشط',
+    'Score Card' => 'بطاقة التقييم',
+    'bureau rating score' => 'درجة التقييم الائتماني',
 ];

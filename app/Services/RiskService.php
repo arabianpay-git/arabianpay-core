@@ -11,6 +11,7 @@ use App\Models\RefundRequest;
 use App\Models\SchedulePayment;
 use App\Models\User;
 use App\Models\RiskWeight; // <- added
+use App\Models\SimahReport;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
@@ -160,7 +161,8 @@ class RiskService
     {
         $this->weights = $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (! $entity) return $this->policy['default_chs'];
+        if (!$entity) return $this->policy['default_chs'];
+
         $res = $this->computeCHS($entity, $type);
         return round($res['score'], 2);
     }
@@ -317,10 +319,12 @@ class RiskService
     }
 
     /**
-     * Compute CHS per spec.
-     * For now SIMAH is not integrated — return default and set flag
+     * Compute CHS per spec using SIMAH if available.
      * Returns [
-     *   score, notes, flags, components: ['bureau_rating_score'=>..., 'dpd_score'=>...]
+     *   'score' => float,
+     *   'notes' => string,
+     *   'flags' => array,
+     *   'components' => array
      * ]
      */
     protected function computeCHS($entity, string $type): array
@@ -328,25 +332,96 @@ class RiskService
         $flags = [];
         $notes = [];
 
-        // default behavior: no bureau integration yet
-        $chs = (float)$this->policy['default_chs'];
-        $notes[] = 'No bureau (SIMAH) integrated — returning default CHS.';
-        $flags[] = 'no_bureau_data';
-
-        // components placeholders
+        // components placeholders (will fill from SIMAH if possible)
         $components = [
             'bureau_rating_score' => null,
             'dpd_score' => null,
             'max_dpd_12m' => null,
+            'raw_report' => null, // small copy for debugging (optional)
         ];
+
+        try {
+            // get user id for lookups
+            $userId = $this->getUserId($entity, $type);
+            if ($userId) {
+                // latest SIMAH consumerScore report for this user
+                $simah = SimahReport::where('user_id', $userId)
+                    ->where('type', 'consumerScore')
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+
+                if ($simah && !empty($simah->report_json)) {
+                    $report = is_array($simah->report_json) ? $simah->report_json : json_decode($simah->report_json, true);
+                    $components['raw_report'] = $report;
+
+                    // typical path: data -> score -> [ { score: <number>, scoreCard: {...} } ]
+                    $scoreEntry = $report['data']['score'][0] ?? null;
+                    $bureauScore = $scoreEntry['score'] ?? null;
+
+                    if (is_numeric($bureauScore)) {
+                        // use SIMAH score directly (assumed 0..100)
+                        $chs = (float)$bureauScore;
+                        $components['bureau_rating_score'] = $chs;
+                        $notes[] = 'SIMAH consumerScore used from latest report.';
+                        // detect non-scorable indicator
+                        $scoreCardCode = $scoreEntry['scoreCard']['scoreCardCode'] ?? null;
+                        if ($scoreCardCode === 'NS' || $chs === 0) {
+                            $flags[] = 'simah_non_scorable';
+                        }
+
+                        // try to extract some DPD / delinquency info if present
+                        // common fields: summaryInfo -> summCurrentDelinquentBalance / summDefaults etc.
+                        $summary = $report['data']['summaryInfo'] ?? null;
+                        if (is_array($summary)) {
+                            // If there is a field that looks like a max DPD in 12m, pick it (best-effort)
+                            if (isset($summary['summCurrentDelinquentBalance'])) {
+                                $components['max_dpd_12m'] = $summary['summCurrentDelinquentBalance'];
+                            } elseif (isset($summary['summDefaults'])) {
+                                $components['max_dpd_12m'] = $summary['summDefaults'];
+                            }
+                        }
+
+                        // dpd_score not available directly in many SIMAH payloads — leave null unless you compute mapping
+                        $components['dpd_score'] = null;
+
+                        return [
+                            'score' => $chs,
+                            'notes' => implode('; ', $notes),
+                            'flags' => array_values(array_unique($flags)),
+                            'components' => $components,
+                        ];
+                    }
+
+                    // if score exists but not numeric, add flag and fallthrough to default
+                    $flags[] = 'simah_score_unparseable';
+                    $notes[] = 'SIMAH report found but score not numeric.';
+                } else {
+                    $notes[] = 'No SIMAH consumerScore report found for user.';
+                    $flags[] = 'no_bureau_data';
+                }
+            } else {
+                $notes[] = 'Unable to resolve user id for SIMAH lookup.';
+                $flags[] = 'no_bureau_data';
+            }
+        } catch (\Throwable $e) {
+            Log::warning('RiskService computeCHS: Simah parse/lookup failed: ' . $e->getMessage());
+            $notes[] = 'Error reading SIMAH report: ' . $e->getMessage();
+            $flags[] = 'simah_lookup_error';
+        }
+
+        // fallback: return default CHS with flags/notes
+        $chs = (float)$this->policy['default_chs'];
+        $notes[] = 'Returning default CHS.';
+        $flags[] = 'no_bureau_data';
 
         return [
             'score' => $chs,
             'notes' => implode('; ', $notes),
-            'flags' => $flags,
+            'flags' => array_values(array_unique($flags)),
             'components' => $components,
         ];
     }
+
 
     /**
      * Compute BCS per spec using Orders as proxy for open-banking.
