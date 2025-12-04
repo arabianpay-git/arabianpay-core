@@ -2024,4 +2024,7 @@ return [
     'Main Report Information' => 'Main Report Information',
     'Risk Alerts' => 'Risk Alerts',
     'Active alerts requiring attention' => 'Active alerts requiring attention',
+
+    'All Statuses' => 'All Statuses',
+    'All Employees' => 'All Employees',
 ];

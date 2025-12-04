@@ -460,28 +460,32 @@ class AccountController extends Controller
     {
         $user = currentUser();
         $search = $request->input('search');
+        $status = $request->input('status');
+        $employee = $request->input('employee');
 
-        // Base merchant query with approval relation
         $merchantsQuery = Merchant::with(['user', 'businessType', 'assigned', 'approval'])
             ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to', 'created_at')
             ->when(
                 !($user->user_type === 'employee' && $user->is_manager) && $user->user_type !== 'admin',
                 fn($query) => $query->where('assigned_to', $user->id)
             )
+            ->when(!$status, fn($q) => $q->where('status', '!=', 'blacklisted'))
+            ->when($status, fn($q) => $q->where('status', $status))
+            ->when($employee, fn($q) => $q->where('assigned_to', $employee))
             ->orderByDesc('id')
             ->orderByRaw('ISNULL(assigned_to) DESC');
 
-        // Get collection
         $merchants = $merchantsQuery->get();
 
-        // Apply search
+        // Apply search filter
         if ($search) {
             $merchants = $this->filterMerchants($merchants, $search);
         }
 
-        // Paginate manually
+        // Manual pagination
         $page = $request->input('page', 1);
         $perPage = 10;
+
         $paginated = new \Illuminate\Pagination\LengthAwarePaginator(
             $merchants->forPage($page, $perPage),
             $merchants->count(),
@@ -496,6 +500,7 @@ class AccountController extends Controller
 
         return view('admin.accounts.suppliers', ['merchants' => $paginated]);
     }
+
 
     public function updateCommission(Request $request)
     {

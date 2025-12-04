@@ -21,20 +21,52 @@
                         <h3 class="card-title font-medium text-sm">
                             {{ translate('Suppliers') }}
                         </h3>
-                        <div class="flex flex-wrap">
-                            <div class="flex">
-                                <label class="input input-sm">
-                                    <i class="ki-filled ki-magnifier"></i>
-                                    <input id="supplier-search-input" placeholder="Search users" type="text"
-                                        autocomplete="off" />
-                                </label>
+
+                        <div class="flex flex-wrap items-center gap-3">
+
+                            <div class="flex gap-2">
+                                <div class="flex">
+                                    <label class="input input-sm">
+                                        <i class="ki-filled ki-magnifier"></i>
+                                        <input id="supplier-search-input" placeholder="Search users" type="text"
+                                            value="{{ request('search') }}" autocomplete="off" />
+                                    </label>
+                                </div>
+
+                                <select id="filter-status" class="select select-sm" style="width: 10rem;">
+                                    <option value="">{{ translate('All Statuses') }}</option>
+                                    @foreach (['under_review', 'contract_sent', 'active', 'pending', 'approved', 'suspended', 'blacklisted'] as $st)
+                                        <option value="{{ $st }}"
+                                            {{ request('status') == $st ? 'selected' : '' }}>
+                                            {{ ucfirst(str_replace('_', ' ', $st)) }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <select id="filter-employee" class="select select-sm" style="width: 10rem;">
+                                    <option value="">{{ translate('All Employees') }}</option>
+                                    @foreach (\App\Models\User::where('user_type', 'employee')->get() as $emp)
+                                        <option value="{{ $emp->id }}"
+                                            {{ request('employee') == $emp->id ? 'selected' : '' }}>
+                                            {{ $emp->first_name }} {{ $emp->last_name }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
+                                <a href="{{ route('suppliers') }}" class="btn btn-sm btn-light" id="clear-filters-btn"
+                                    type="button">
+                                    <i class="ki-filled ki-arrows-circle"> </i>
+                                    {{ translate('Clear') }}
+                                </a>
                             </div>
+
                             <div class="flex justify-end">
                                 <button id="bulk-transfer-btn" class="btn btn-sm btn-primary hidden"
                                     data-modal-toggle="#transfer_request_bulk">
                                     <i class="ki-filled ki-disconnect"></i> {{ translate('Bulk Transfer') }}
                                 </button>
                             </div>
+
                             @include('admin.components.transfer-request-bulk', [
                                 'employees' => getEmployees(),
                                 'model_type' => 'App\Models\Merchant',
@@ -42,13 +74,11 @@
                         </div>
                     </div>
 
-                    <!-- Table + Pagination container for AJAX refresh -->
                     <div class="card-body">
                         <div id="suppliers-table-container">
                             @include('admin.accounts.partials.suppliers-table', [
                                 'merchants' => $merchants,
                             ])
-                            {{-- @include('admin.accounts.partials.commission-update-modal') --}}
                         </div>
                     </div>
                 </div>
@@ -62,61 +92,75 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
+
             const searchInput = document.getElementById('supplier-search-input');
+            const statusFilter = document.getElementById('filter-status');
+            const employeeFilter = document.getElementById('filter-employee');
             const tableContainer = document.getElementById('suppliers-table-container');
             const bulkBtn = document.getElementById('bulk-transfer-btn');
-
             let timeout = null;
 
-            function initCheckboxes() {
-                const checkboxes = document.querySelectorAll('.row-checkbox');
-                const selectAllCheckbox = document.querySelector('input[data-datatable-check="true"]');
+            function updateUrl() {
+                const url = new URL(window.location.href);
+                url.searchParams.set('search', searchInput.value.trim());
+                url.searchParams.set('status', statusFilter.value);
+                url.searchParams.set('employee', employeeFilter.value);
 
-                function toggleBulkBtn() {
-                    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
-                    bulkBtn.classList.toggle('hidden', !anyChecked);
-                }
-
-                checkboxes.forEach(cb => cb.addEventListener('change', () => {
-                    toggleBulkBtn();
-                    const allChecked = Array.from(checkboxes).every(cb => cb.checked);
-                    if (selectAllCheckbox) selectAllCheckbox.checked = allChecked;
-                }));
-
-                if (selectAllCheckbox) {
-                    selectAllCheckbox.addEventListener('change', () => {
-                        const checked = selectAllCheckbox.checked;
-                        checkboxes.forEach(cb => cb.checked = checked);
-                        toggleBulkBtn();
-                    });
-                }
+                // 🔥 UPDATE URL WITHOUT RELOAD
+                window.history.replaceState({}, '', url);
+                return url.toString();
             }
 
-            function fetchSuppliers(search = '') {
-                const url = new URL(window.location.href);
-                url.searchParams.set('search', search);
+            function fetchSuppliers() {
+                const finalUrl = updateUrl();
 
-                fetch(url.toString(), {
+                fetch(finalUrl, {
                         headers: {
                             'X-Requested-With': 'XMLHttpRequest'
                         }
                     })
-                    .then(response => response.text())
+                    .then(res => res.text())
                     .then(html => {
                         tableContainer.innerHTML = html;
                         initCheckboxes();
+                    });
+            }
+
+            function initCheckboxes() {
+                const checkboxes = document.querySelectorAll('.row-checkbox');
+                const selectAll = document.querySelector('input[data-datatable-check="true"]');
+
+                function toggleBtn() {
+                    const anyChecked = [...checkboxes].some(cb => cb.checked);
+                    bulkBtn.classList.toggle('hidden', !anyChecked);
+                }
+
+                checkboxes.forEach(cb =>
+                    cb.addEventListener('change', () => {
+                        toggleBtn();
+                        if (selectAll) {
+                            selectAll.checked = [...checkboxes].every(c => c.checked);
+                        }
                     })
-                    .catch(err => console.error('Error fetching suppliers:', err));
+                );
+
+                if (selectAll) {
+                    selectAll.addEventListener('change', () => {
+                        const checked = selectAll.checked;
+                        checkboxes.forEach(cb => cb.checked = checked);
+                        toggleBtn();
+                    });
+                }
             }
 
             searchInput.addEventListener('input', function() {
                 clearTimeout(timeout);
-                timeout = setTimeout(() => {
-                    fetchSuppliers(this.value.trim());
-                }, 400);
+                timeout = setTimeout(fetchSuppliers, 400);
             });
 
-            // Initialize checkbox events on first load
+            statusFilter.addEventListener('change', fetchSuppliers);
+            employeeFilter.addEventListener('change', fetchSuppliers);
+
             initCheckboxes();
         });
     </script>
