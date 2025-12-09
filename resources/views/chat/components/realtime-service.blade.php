@@ -20,27 +20,13 @@
                         // Initialize Echo
                         this.echo = new Echo({
                             broadcaster: 'pusher',
+                            key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
 
-                            // ✔ Use Reverb key
-                            key: '{{ env('REVERB_APP_KEY') }}',
-
-                            // ✔ Reverb host (domain)
-                            wsHost: '{{ env('REVERB_HOST') }}',
-                            wssHost: '{{ env('REVERB_HOST') }}',
-
-                            // ✔ We do NOT use port 8080 on live (NGINX proxies)
+                            wsHost: '{{ env('REVERB_HOST', '127.0.0.1') }}',
                             wsPort: 443,
                             wssPort: 443,
-
-                            // ✔ TLS must be true on production
                             forceTLS: true,
-
-                            // ✔ Disable stats (Reverb)
-                            disableStats: true,
-
-                            // ✔ Required for Reverb
                             enabledTransports: ['ws', 'wss'],
-
                             authEndpoint: '/broadcasting/auth',
                             auth: {
                                 headers: {
@@ -48,7 +34,6 @@
                                 }
                             }
                         });
-
 
                         this.setupConnectionListeners();
                         this.setupChannels();
