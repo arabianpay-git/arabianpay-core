@@ -31,7 +31,7 @@ class SecureHeaders
         // Clickjacking protection
         $response->headers->set('X-Frame-Options', 'DENY');
 
-        // XSS protection
+        // XSS protection (legacy header, but harmless)
         $response->headers->set('X-XSS-Protection', '1; mode=block');
 
         // Referrer policy
@@ -49,39 +49,98 @@ class SecureHeaders
 
     private function buildCsp(Request $request): string
     {
+        // Base directives from config
         $directives = config('csp.directives', []);
-        $currentHost = $request->getHost();
-        $isSecure = $request->isSecure();
+
+        $currentHost = $request->getHost();                      // e.g. core.arabianpay.net
+        $isSecure = $request->isSecure();                        // https?
         $httpProtocol = $isSecure ? 'https://' : 'http://';
+        $httpsHost = $httpProtocol . $currentHost;               // https://core.arabianpay.net
+        $wssHost = 'wss://' . $currentHost;                      // wss://core.arabianpay.net
 
-        // Add dynamic domains
-        $directives['img-src'][] = $httpProtocol . $currentHost;
-        $directives['form-action'][] = $httpProtocol . $currentHost;
-
-        // Explicitly allow WSS connections
-        $wssUrl = 'wss://' . $currentHost . ':8080';
-        if (!in_array($wssUrl, $directives['connect-src'])) {
-            $directives['connect-src'][] = $wssUrl;
+        // If you run Reverb on a specific port (like 8080 internally), add that too (optional)
+        $reverbPort = env('REVERB_SERVER_PORT', null);
+        if (!empty($reverbPort) && is_numeric($reverbPort) && (int)$reverbPort !== 443) {
+            $directives['connect-src'][] = 'wss://' . $currentHost . ':' . $reverbPort;
         }
 
-        // Also allow HTTPS fallback
-        $directives['connect-src'][] = $httpProtocol . $currentHost;
+        // Add dynamic domains to sensible directives
+        $directives['img-src'][] = $httpsHost;
+        $directives['form-action'][] = $httpsHost;
 
-        // Development rules
+        // Connect-src: allow secure websocket to this host and the HTTPS origin
+        // Include scheme sources 'wss:' and 'ws:' so other valid ws/wss endpoints are allowed if needed
+        $connectSrc = $directives['connect-src'] ?? [];
+
+        // Ensure scheme tokens exist (prefer scheme tokens over ws://* / wss://*).
+        array_unshift($connectSrc, 'wss:', 'ws:'); // allow websocket schemes (kept first)
+
+        // Allow this application's domain via wss and https explicitly
+        $connectSrc[] = $wssHost;
+        $connectSrc[] = $httpsHost;
+
+        // Allow CDN and pusher sources for maps / requests
+        $connectSrc[] = 'https://cdn.jsdelivr.net';
+        $connectSrc[] = 'https://js.pusher.com';
+
+        // Keep other well-known Google/Firebase sources
+        $connectSrc[] = 'https://fcm.googleapis.com';
+        $connectSrc[] = 'https://firebase.googleapis.com';
+        $connectSrc[] = 'https://www.googleapis.com';
+        $connectSrc[] = 'https://www.gstatic.com';
+        $connectSrc[] = 'https://firebaseinstallations.googleapis.com';
+        $connectSrc[] = 'https://fcmregistrations.googleapis.com';
+
+        // Add Vite dev server if present in env
+        $viteDev = env('VITE_DEV_SERVER', null);
+        if ($viteDev) {
+            $connectSrc[] = $viteDev;
+        }
+
+        // Replace the connect-src directive with the cleaned one
+        $directives['connect-src'] = $connectSrc;
+
+        // For development environment, merge more permissive rules
         if (app()->environment('local', 'development')) {
             $devDirectives = config('csp.development', []);
             foreach ($devDirectives as $directive => $sources) {
                 if (isset($directives[$directive])) {
                     $directives[$directive] = array_merge($directives[$directive], $sources);
+                } else {
+                    $directives[$directive] = $sources;
                 }
             }
         }
 
-        // Build CSP string
+        // Normalize and deduplicate per-directive entries, keep the order
         $cspParts = [];
         foreach ($directives as $directive => $sources) {
-            if (!empty($sources)) {
-                $cspParts[] = $directive . ' ' . implode(' ', array_unique($sources)) . ';';
+            if (empty($sources)) {
+                continue;
+            }
+
+            // flatten and unique
+            $flat = [];
+            foreach ($sources as $s) {
+                if (is_string($s)) {
+                    $flat[] = trim($s);
+                }
+            }
+            // unique while preserving order
+            $seen = [];
+            $unique = [];
+            foreach ($flat as $s) {
+                if ($s === '') {
+                    continue;
+                }
+                if (!isset($seen[$s])) {
+                    $seen[$s] = true;
+                    $unique[] = $s;
+                }
+            }
+
+            if (!empty($unique)) {
+                $cspParts[] = $directive . ' ' . implode(' ', $unique) . ';';
             }
         }
 
