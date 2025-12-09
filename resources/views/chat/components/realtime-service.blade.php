@@ -22,10 +22,10 @@
                             broadcaster: 'pusher',
                             key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
 
-                            wsHost: '127.0.0.1',
+                            wsHost: '{{ env('REVERB_HOST', '127.0.0.1') }}',
                             wsPort: 8080,
                             wssPort: 8080,
-                            forceTLS: false,
+                            forceTLS: '{{ env('REVERB_TLS', 'false') }}',
                             enabledTransports: ['ws', 'wss'],
                             authEndpoint: '/broadcasting/auth',
                             auth: {
@@ -80,6 +80,16 @@
                     pusher.connection.bind('disconnected', () => {
                         window.ChatApp.logger.log('Disconnected from Reverb');
                         window.ChatApp.events.emit('connection:disconnected');
+                    });
+
+                    pusher.connection.bind('unavailable', () => {
+                        window.ChatApp.logger.error('Realtime service unavailable');
+                        window.ChatApp.events.emit('connection:unavailable');
+                    });
+
+                    pusher.connection.bind('connecting', () => {
+                        window.ChatApp.logger.log('Attempting to reconnect...');
+                        window.ChatApp.events.emit('connection:reconnecting');
                     });
                 },
 
