@@ -23,8 +23,8 @@
                             key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
 
                             wsHost: '{{ env('REVERB_HOST', '127.0.0.1') }}',
-                            wsPort: 8080,
-                            wssPort: 8080,
+                            wsPort: '{{ env('REVERB_PORT', '8080') }}',
+                            wssPort: '{{ env('REVERB_PORT', '8080') }}',
                             forceTLS: '{{ env('REVERB_TLS', 'false') }}',
                             enabledTransports: ['ws', 'wss'],
                             authEndpoint: '/broadcasting/auth',
