@@ -21,10 +21,11 @@
                         this.echo = new Echo({
                             broadcaster: 'pusher',
                             key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
-                            wsHost: window.location.hostname,
-                            wsPort: 443, // Apache handles TLS
-                            wssPort: 443,
-                            forceTLS: true,
+
+                            wsHost: '{{ env('REVERB_HOST', '127.0.0.1') }}',
+                            wsPort: 8080,
+                            wssPort: 8080,
+                            forceTLS: false,
                             enabledTransports: ['ws', 'wss'],
                             authEndpoint: '/broadcasting/auth',
                             auth: {
@@ -33,7 +34,6 @@
                                 }
                             }
                         });
-
 
                         this.setupConnectionListeners();
                         this.setupChannels();
