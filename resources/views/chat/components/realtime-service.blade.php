@@ -62,46 +62,25 @@
                     try {
                         // IMPORTANT: Try different connection strategies
                         const connectionStrategies = [{
-                                name: 'direct-ip-ws',
-                                config: {
-                                    broadcaster: 'pusher',
-                                    key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
-                                    wsHost: '{{ env('REVERB_HOST', '127.0.0.1') }}',
-                                    wsPort: 6001,
-                                    wssPort: 6001,
-                                    forceTLS: false,
-                                    enabledTransports: ['ws'],
-                                    disableStats: true,
-                                    cluster: 'mt1',
-                                    authEndpoint: '/broadcasting/auth',
-                                    auth: {
-                                        headers: {
-                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                        }
-                                    }
-                                }
-                            },
-                            {
-                                name: 'direct-ws-domain',
-                                config: {
-                                    broadcaster: 'pusher',
-                                    key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
-                                    wsHost: 'core.arabianpay.net',
-                                    wsPort: 8080,
-                                    wssPort: 8080,
-                                    forceTLS: false,
-                                    enabledTransports: ['ws'],
-                                    disableStats: true,
-                                    cluster: 'mt1',
-                                    authEndpoint: '/broadcasting/auth',
-                                    auth: {
-                                        headers: {
-                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                                        }
+                            name: 'direct-ip-ws',
+                            config: {
+                                broadcaster: 'pusher',
+                                key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
+                                wsHost: '{{ env('REVERB_HOST', '127.0.0.1') }}',
+                                wsPort: 6001,
+                                wssPort: 6001,
+                                forceTLS: false,
+                                enabledTransports: ['ws'],
+                                disableStats: true,
+                                cluster: 'mt1',
+                                authEndpoint: '/broadcasting/auth',
+                                auth: {
+                                    headers: {
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
                                     }
                                 }
                             }
-                        ];
+                        }];
 
                         // Try first strategy
                         const strategy = connectionStrategies[0];
@@ -113,12 +92,20 @@
                         // Create Echo instance
                         this.echo = new window.Echo(strategy.config);
 
+                        // CRITICAL: Make Echo instance globally available
+                        window.echoInstance = this.echo;
+
+                        // Also make it available via ChatApp
+                        window.ChatApp.echo = this.echo;
+
                         // Verify Echo instance
                         window.ChatApp.logger.log('Echo instance created:', {
                             hasJoin: typeof this.echo.join === 'function',
                             hasPrivate: typeof this.echo.private === 'function',
                             hasChannel: typeof this.echo.channel === 'function',
-                            instanceType: this.echo.constructor.name
+                            instanceType: this.echo.constructor.name,
+                            // Log the actual methods available
+                            methods: Object.getOwnPropertyNames(Object.getPrototypeOf(this.echo))
                         });
 
                         if (!this.echo.private || !this.echo.join) {
@@ -129,6 +116,11 @@
                         this.setupChannels();
 
                         window.ChatApp.logger.log('✅ Echo setup complete, attempting connection...');
+
+                        // Emit event that Echo is ready
+                        setTimeout(() => {
+                            window.ChatApp.events.emit('echo:ready', this.echo);
+                        }, 100);
 
                     } catch (error) {
                         window.ChatApp.logger.error('Failed to setup Echo connection', {
@@ -339,6 +331,10 @@
                     return this.echo.connector.pusher.connection.socket_id;
                 },
 
+                getEcho() {
+                    return this.echo;
+                },
+
                 disconnect() {
                     if (this.echo && this.echo.connector && this.echo.connector.pusher) {
                         this.echo.connector.pusher.disconnect();
@@ -349,10 +345,18 @@
             // Store service globally
             window.ChatApp.RealtimeService = RealtimeService;
 
-            // Initialize
-            setTimeout(() => {
-                RealtimeService.init();
-            }, 1000);
+            // Initialize immediately
+            RealtimeService.init();
+
+            // Add global helper to get Echo instance
+            window.getEchoInstance = function() {
+                return window.ChatApp.RealtimeService.getEcho();
+            };
+
+            // Add global helper for backward compatibility
+            window.getEcho = function() {
+                return window.ChatApp.RealtimeService.getEcho();
+            };
         });
     </script>
 @endpush
