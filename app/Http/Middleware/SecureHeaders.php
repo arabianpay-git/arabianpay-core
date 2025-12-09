@@ -56,10 +56,18 @@ class SecureHeaders
 
         // Add dynamic domains
         $directives['img-src'][] = $httpProtocol . $currentHost;
-        $directives['connect-src'][] = $httpProtocol . $currentHost;
         $directives['form-action'][] = $httpProtocol . $currentHost;
 
-        // For development, add permissive rules
+        // Explicitly allow WSS connections
+        $wssUrl = 'wss://' . $currentHost . ':8080';
+        if (!in_array($wssUrl, $directives['connect-src'])) {
+            $directives['connect-src'][] = $wssUrl;
+        }
+
+        // Also allow HTTPS fallback
+        $directives['connect-src'][] = $httpProtocol . $currentHost;
+
+        // Development rules
         if (app()->environment('local', 'development')) {
             $devDirectives = config('csp.development', []);
             foreach ($devDirectives as $directive => $sources) {
