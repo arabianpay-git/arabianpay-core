@@ -21,12 +21,12 @@
                         this.echo = new Echo({
                             broadcaster: 'pusher',
                             key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
-
                             wsHost: '{{ env('REVERB_HOST', '127.0.0.1') }}',
                             wsPort: 8080,
                             wssPort: 8080,
                             forceTLS: false,
-                            enabledTransports: ['ws', 'wss'],
+                            enabledTransports: ['ws'],
+                            disableStats: true,
                             authEndpoint: '/broadcasting/auth',
                             auth: {
                                 headers: {
