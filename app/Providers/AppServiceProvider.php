@@ -8,11 +8,10 @@ use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
-use Illuminate\Support\Facades\Blade;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider as MicrosoftProvider;
-use Event;
+use Illuminate\Support\Facades\Event;
 
 class AppServiceProvider extends ServiceProvider
 {

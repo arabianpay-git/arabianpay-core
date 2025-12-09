@@ -1,10 +1,45 @@
 <?php
 
+use App\Http\Controllers\ChatController;
 use App\Services\NafithService;
 use App\Services\SimahService;
 use App\Services\SingleViewService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
+
+
+
+// routes in routes/api.php
+Route::middleware('auth')->group(function () {
+    Route::get('/messages/{userId}', [ChatController::class, 'fetchMessages']);
+    Route::post('/messages', [ChatController::class, 'sendMessage']);
+    Route::post('/messages/read/{userId}', [ChatController::class, 'markAsRead']);
+});
+
+Route::post('/typing', function (Illuminate\Http\Request $request) {
+    $request->validate(['receiver_id' => 'required|integer|exists:users,id']);
+    broadcast(new \App\Events\TypingEvent(Auth::id(), $request->receiver_id));
+    return response()->json(['status' => 'ok']);
+})->middleware('auth');
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 Route::prefix('singleview')->group(function () {
 

@@ -29,6 +29,7 @@ use App\Http\Controllers\{
     Financial\FinancialDashboardController,
     Financial\ExpenseSettingController,
     Admin\InvestmentPoolsController,
+    ChatController,
     InstalmentPlanController,
     MediaController,
     MerchantUpdateController,
@@ -75,9 +76,9 @@ use App\Http\Middleware\{
     PreventBackHistory,
     SecureHeaders
 };
-
-
+use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\ThrottleRequests;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
@@ -103,12 +104,54 @@ Route::group([
         Route::get('/get-cities/{state}',    'getCities');
     });
 
+    // Add this to your routes/web.php
+    Route::get('/admin/chat/debug', function () {
+        return response()->json([
+            'echo_loaded' => class_exists(\Illuminate\Support\Facades\Broadcast::class),
+            'reverb_config' => [
+                'app_id' => config('reverb.apps.0.id'),
+                'app_key' => config('reverb.apps.0.key'),
+                'host' => config('reverb.servers.0.host'),
+                'port' => config('reverb.servers.0.port'),
+            ],
+            'broadcast_driver' => config('broadcasting.default'),
+            'auth_user' => Auth::user() ? Auth::user()->id : null,
+        ]);
+    })->middleware(['auth:sanctum']);
+
+
     //
     // Admin area (all routes under /{locale}/admin)
     //
     Route::prefix('admin')
         ->middleware(['auth:sanctum', PreventBackHistory::class, SecureHeaders::class, CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
         ->group(function () {
+
+            // Chat page
+            Route::get('/chat/{user}', function (App\Models\User $user) {
+                return view('chat.index', ['otherUser' => $user]);
+            })->name('chat');
+
+            // Web routes for chat (session auth)
+            Route::get('/messages/{user}', [ChatController::class, 'fetchMessages']);
+            Route::post('/messages', [ChatController::class, 'sendMessage']);
+            Route::post('/messages/{user}/read', [ChatController::class, 'markAsRead']);
+
+            // Typing indicator
+            Route::post('/typing', [ChatController::class, 'typing']);
+            Route::post('/typing/stop', [ChatController::class, 'stopTyping']);
+
+            // Sidebar AJAX users
+            Route::get('/chat-users', [ChatController::class, 'listUsers']);
+
+
+
+
+
+
+
+
+
 
             Route::post('/device-token', [DeviceTokenController::class, 'store']);
 
