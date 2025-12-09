@@ -11,17 +11,39 @@
                     window.ChatApp.logger.log('RealtimeService initializing...', {
                         currentProtocol: window.location.protocol,
                         currentHost: window.location.hostname,
-                        isSecureContext: window.isSecureContext
+                        isSecureContext: window.isSecureContext,
+                        mustUseWSS: window.location.protocol === 'https:'
                     });
 
+                    // IMPORTANT: If on HTTPS, we MUST use WSS
+                    if (window.location.protocol === 'https:' && !this.canUseWSS()) {
+                        window.ChatApp.logger.error('❌ Page is HTTPS but WSS is not available!');
+                        this.showHttpsWarning();
+                        return;
+                    }
+
                     this.loadAndSetupEcho();
+                },
+
+                canUseWSS() {
+                    // Check if WebSocket and WSS are supported
+                    return 'WebSocket' in window && window.isSecureContext;
+                },
+
+                showHttpsWarning() {
+                    if (window.ChatApp?.notification) {
+                        window.ChatApp.notification.error(
+                            'Cannot establish secure WebSocket connection. ' +
+                            'Please ensure the server supports WSS (WebSocket Secure) on port 443.'
+                        );
+                    }
                 },
 
                 async loadAndSetupEcho() {
                     try {
                         window.ChatApp.logger.log('Loading Pusher and Echo scripts...');
 
-                        // Load Pusher first
+                        // Load Pusher
                         if (typeof Pusher === 'undefined') {
                             await this.loadScript('https://js.pusher.com/7.6/pusher.min.js');
                             window.ChatApp.logger.log('✅ Pusher script loaded');
@@ -34,17 +56,14 @@
                             window.ChatApp.logger.log('✅ Echo script loaded');
                         }
 
-                        // Wait a moment for scripts to initialize
                         await new Promise(resolve => setTimeout(resolve, 100));
 
-                        // Check if Echo is available
                         if (typeof window.Echo === 'undefined') {
                             throw new Error('Echo is not defined after loading script');
                         }
 
                         window.ChatApp.logger.log('Echo available:', {
                             hasEcho: typeof window.Echo !== 'undefined',
-                            echoType: typeof window.Echo,
                             isFunction: typeof window.Echo === 'function'
                         });
 
@@ -52,25 +71,66 @@
 
                     } catch (error) {
                         window.ChatApp.logger.error('Failed to load scripts', {
-                            error: error.message,
-                            stack: error.stack
+                            error: error.message
                         });
                     }
                 },
 
                 setupEchoConnection() {
                     try {
-                        // IMPORTANT: Try different connection strategies
-                        const connectionStrategies = [{
-                            name: 'direct-ip-ws',
+                        // Determine connection strategy based on protocol
+                        const isHttps = window.location.protocol === 'https:';
+
+                        const connectionStrategies = isHttps ? [{
+                                name: 'secure-wss-443',
+                                config: {
+                                    broadcaster: 'pusher',
+                                    key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
+                                    wsHost: 'core.arabianpay.net',
+                                    wsPort: 443,
+                                    wssPort: 443,
+                                    forceTLS: true,
+                                    enabledTransports: ['wss'],
+                                    disableStats: true,
+                                    cluster: 'mt1',
+                                    authEndpoint: '/broadcasting/auth',
+                                    auth: {
+                                        headers: {
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        }
+                                    }
+                                }
+                            },
+                            {
+                                name: 'secure-wss-6001',
+                                config: {
+                                    broadcaster: 'pusher',
+                                    key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
+                                    wsHost: 'core.arabianpay.net',
+                                    wsPort: 6001,
+                                    wssPort: 6001,
+                                    forceTLS: true,
+                                    enabledTransports: ['wss'],
+                                    disableStats: true,
+                                    cluster: 'mt1',
+                                    authEndpoint: '/broadcasting/auth',
+                                    auth: {
+                                        headers: {
+                                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                        }
+                                    }
+                                }
+                            }
+                        ] : [{
+                            name: 'direct-ws',
                             config: {
                                 broadcaster: 'pusher',
                                 key: '{{ env('REVERB_APP_KEY', 'reverb_key') }}',
-                                wsHost: '{{ env('REVERB_HOST', '127.0.0.1') }}',
+                                wsHost: 'core.arabianpay.net',
                                 wsPort: 6001,
                                 wssPort: 6001,
-                                forceTLS: true,
-                                enabledTransports: ['wss'],
+                                forceTLS: false,
+                                enabledTransports: ['ws', 'wss'],
                                 disableStats: true,
                                 cluster: 'mt1',
                                 authEndpoint: '/broadcasting/auth',
@@ -82,45 +142,44 @@
                             }
                         }];
 
-                        // Try first strategy
-                        const strategy = connectionStrategies[0];
-                        window.ChatApp.logger.log('Using connection strategy:', {
-                            strategy: strategy.name,
-                            wsUrl: `ws://${strategy.config.wsHost}:${strategy.config.wsPort}/app/${strategy.config.key}`
-                        });
+                        // Try strategies in order
+                        for (let strategy of connectionStrategies) {
+                            try {
+                                window.ChatApp.logger.log('Trying connection strategy:', {
+                                    strategy: strategy.name,
+                                    config: strategy.config
+                                });
 
-                        // Create Echo instance
-                        this.echo = new window.Echo(strategy.config);
+                                this.echo = new window.Echo(strategy.config);
+                                window.echoInstance = this.echo;
+                                window.ChatApp.echo = this.echo;
 
-                        // CRITICAL: Make Echo instance globally available
-                        window.echoInstance = this.echo;
+                                // Verify Echo instance
+                                if (!this.echo.private || !this.echo.join) {
+                                    throw new Error('Echo instance missing required methods');
+                                }
 
-                        // Also make it available via ChatApp
-                        window.ChatApp.echo = this.echo;
+                                this.setupConnectionListeners();
+                                this.setupChannels();
 
-                        // Verify Echo instance
-                        window.ChatApp.logger.log('Echo instance created:', {
-                            hasJoin: typeof this.echo.join === 'function',
-                            hasPrivate: typeof this.echo.private === 'function',
-                            hasChannel: typeof this.echo.channel === 'function',
-                            instanceType: this.echo.constructor.name,
-                            // Log the actual methods available
-                            methods: Object.getOwnPropertyNames(Object.getPrototypeOf(this.echo))
-                        });
+                                window.ChatApp.logger.log(`✅ Using ${strategy.name} configuration`);
 
-                        if (!this.echo.private || !this.echo.join) {
-                            throw new Error('Echo instance missing required methods');
+                                // Emit event that Echo is ready
+                                setTimeout(() => {
+                                    window.ChatApp.events.emit('echo:ready', this.echo);
+                                }, 100);
+
+                                return; // Success, exit loop
+
+                            } catch (strategyError) {
+                                window.ChatApp.logger.warn(`Strategy ${strategy.name} failed:`, {
+                                    error: strategyError.message
+                                });
+                                continue; // Try next strategy
+                            }
                         }
 
-                        this.setupConnectionListeners();
-                        this.setupChannels();
-
-                        window.ChatApp.logger.log('✅ Echo setup complete, attempting connection...');
-
-                        // Emit event that Echo is ready
-                        setTimeout(() => {
-                            window.ChatApp.events.emit('echo:ready', this.echo);
-                        }, 100);
+                        throw new Error('All connection strategies failed');
 
                     } catch (error) {
                         window.ChatApp.logger.error('Failed to setup Echo connection', {
@@ -158,21 +217,8 @@
 
                     window.ChatApp.logger.log('Setting up Pusher connection listeners', {
                         attempt: this.connectionAttempt,
-                        pusherAvailable: !!pusher
-                    });
-
-                    // Log all connection states
-                    const states = ['initialized', 'connecting', 'connected', 'unavailable', 'failed',
-                        'disconnected'
-                    ];
-                    states.forEach(state => {
-                        pusher.connection.bind(state, (data) => {
-                            window.ChatApp.logger.log(`Pusher state: ${state}`, {
-                                data: data,
-                                socketId: pusher.connection.socket_id,
-                                activityTimeout: pusher.connection.activity_timeout
-                            });
-                        });
+                        pusherAvailable: !!pusher,
+                        config: this.echo.connector.options
                     });
 
                     pusher.connection.bind('connecting', () => {
@@ -185,7 +231,9 @@
                         window.ChatApp.logger.log('✅ Connected to Reverb server!', {
                             socketId: socketId,
                             transport: pusher.connection.transport ? pusher.connection.transport
-                                .name : 'unknown'
+                                .name : 'unknown',
+                            url: pusher.connection.transport ? pusher.connection.transport.url :
+                                'unknown'
                         });
                         window.ChatApp.events.emit('connection:connected', socketId);
                         this.isConnecting = false;
@@ -197,12 +245,13 @@
                             type: error.type,
                             message: error.message,
                             code: error.code,
-                            state: pusher.connection.state
+                            state: pusher.connection.state,
+                            transport: pusher.connection.transport ? pusher.connection.transport
+                                .name : 'unknown'
                         });
                         window.ChatApp.events.emit('connection:error', error);
                         this.isConnecting = false;
 
-                        // Try alternative configuration
                         setTimeout(() => this.retryConnection(), 2000);
                     });
 
@@ -211,7 +260,6 @@
                         window.ChatApp.events.emit('connection:unavailable');
                         this.isConnecting = false;
 
-                        // Retry after delay
                         setTimeout(() => this.retryConnection(), 3000);
                     });
                 },
@@ -238,11 +286,7 @@
                         this.echo.join('presence.chat')
                             .here((users) => {
                                 window.ChatApp.logger.log('👥 Users online:', {
-                                    count: users.length,
-                                    users: users.map(u => ({
-                                        id: u.id,
-                                        name: u.name
-                                    }))
+                                    count: users.length
                                 });
                                 window.ChatApp.events.emit('presence:here', users);
                             })
@@ -273,19 +317,19 @@
 
                         privateChannel
                             .listen('MessageSent', (event) => {
-                                window.ChatApp.logger.log('📨 Message received:', event);
+                                window.ChatApp.logger.log('📨 Message received');
                                 window.ChatApp.events.emit('message:received', event.message);
                             })
                             .listen('TypingEvent', (event) => {
-                                window.ChatApp.logger.log('⌨️ Typing started:', event);
+                                window.ChatApp.logger.log('⌨️ Typing started');
                                 window.ChatApp.events.emit('typing:start', event.senderId);
                             })
                             .listen('TypingStopped', (event) => {
-                                window.ChatApp.logger.log('⏹️ Typing stopped:', event);
+                                window.ChatApp.logger.log('⏹️ Typing stopped');
                                 window.ChatApp.events.emit('typing:stop', event.senderId);
                             })
                             .listen('MessagesRead', (event) => {
-                                window.ChatApp.logger.log('👁️ Messages read:', event);
+                                window.ChatApp.logger.log('👁️ Messages read');
                                 window.ChatApp.events.emit('messages:read', event);
                             })
                             .error((error) => {
@@ -316,7 +360,6 @@
                     }, 2000);
                 },
 
-                // Public methods
                 getConnectionStatus() {
                     if (!this.echo || !this.echo.connector || !this.echo.connector.pusher) {
                         return 'not_initialized';
@@ -342,19 +385,10 @@
                 }
             };
 
-            // Store service globally
             window.ChatApp.RealtimeService = RealtimeService;
-
-            // Initialize immediately
             RealtimeService.init();
 
-            // Add global helper to get Echo instance
             window.getEchoInstance = function() {
-                return window.ChatApp.RealtimeService.getEcho();
-            };
-
-            // Add global helper for backward compatibility
-            window.getEcho = function() {
                 return window.ChatApp.RealtimeService.getEcho();
             };
         });
