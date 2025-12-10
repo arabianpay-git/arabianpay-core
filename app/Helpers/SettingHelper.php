@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Auth;
 if (!function_exists('get_setting')) {
     function get_setting($label, $default = null)
     {
-        $setting = Setting::where('label', $label)->first();
+        $setting = Setting::where('key', $label)->first();
         return $setting ? $setting->value : $default;
     }
 }
