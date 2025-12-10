@@ -13,8 +13,15 @@ return new class extends Migration
     {
         Schema::create('settings', function (Blueprint $table) {
             $table->id();
-            $table->string('label');
-            $table->text('value')->nullable();
+            $table->string('key')->unique();
+            $table->json('value')->nullable();
+            $table->string('group')->default('core');
+            $table->string('type')->default('text');
+            $table->json('options')->nullable();
+            $table->text('description')->nullable();
+            $table->boolean('is_required')->default(false);
+            $table->boolean('is_encrypted')->default(false);
+            $table->integer('order')->default(0);
             $table->timestamps();
         });
     }

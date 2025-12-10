@@ -40,6 +40,39 @@
         .weight-section.invalid {
             border-color: #ef4444;
         }
+
+        .custom-alert {
+            border-left: 4px solid #f59e0b;
+            background-color: #fffbeb;
+            color: #92400e;
+            padding: 12px 16px;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .custom-alert i {
+            font-size: 1.25rem;
+        }
+
+        .info-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            background: #e0f2fe;
+            color: #0369a1;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.875rem;
+            margin-bottom: 10px;
+        }
+
+        /* Ensure d-none class works */
+        .d-none {
+            display: none !important;
+        }
     </style>
 @endpush
 
@@ -55,6 +88,22 @@
         <div class="modal-body p-0 overflow-auto">
             <form id="riskWeightsForm" class="p-5">
                 <input type="hidden" name="user_id" id="risk_weight_user_id">
+
+                <!-- Weights Source Info -->
+                <div id="weights_source_info" class="info-badge mb-4 d-none">
+                    <i class="ki-duotone ki-information-2 fs-3 text-primary"></i>
+                    <span id="weights_source_text">Loading weights source...</span>
+                </div>
+
+                <!-- Warning Alert for Existing User Weights -->
+                <div id="existing_weights_warning" class="custom-alert d-none">
+                    <i class="ki-duotone ki-information fs-3 text-warning"></i>
+                    <div>
+                        <strong>Note:</strong> This user already has custom risk weights. The values below are specific
+                        to this user.
+                        To use system defaults instead, click "Reset to Default".
+                    </div>
+                </div>
 
                 <!-- Main Weights Section -->
                 <div class="weight-section mb-6" id="main_weights_section">
@@ -296,6 +345,30 @@
     </div>
 </div>
 
+@php
+    $defaultWeights = \App\Models\Setting::getByKey('risk_weights', [
+        'bcs_weight' => 20,
+        'bes_weight' => 30,
+        'bps_weight' => 10,
+        'caf_weight' => 0,
+        'chs_weight' => 25,
+        'lps_weight' => 15,
+        'lps_cr_weight' => 30,
+        'bes_dpd_weight' => 40,
+        'lps_age_weight' => 40,
+        'lps_doc_weight' => 30,
+        'bes_trend_weight' => 10,
+        'bps_region_weight' => 30,
+        'bps_sector_weight' => 70,
+        'bcs_balance_weight' => 15,
+        'bes_dispute_weight' => 25,
+        'bcs_returned_weight' => 25,
+        'bcs_turnover_weight' => 35,
+        'bcs_volatility_weight' => 25,
+        'bes_utilization_weight' => 25,
+    ]);
+@endphp
+
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
@@ -305,6 +378,12 @@
             const saveWeightsBtn = document.getElementById('saveWeightsBtn');
             const validationSummary = document.getElementById('validation_summary');
             const validationStatus = document.getElementById('validation_status');
+            const weightsSourceInfo = document.getElementById('weights_source_info');
+            const weightsSourceText = document.getElementById('weights_source_text');
+            const existingWeightsWarning = document.getElementById('existing_weights_warning');
+
+            // PHP variables for defaults from settings
+            const defaultWeights = @json($defaultWeights);
 
             function showAlert(icon, title, text) {
                 return Swal.fire({
@@ -485,6 +564,33 @@
                 updateValidationStatus();
             }
 
+            // Function to show user has custom weights
+            function showCustomWeightsWarning() {
+                console.log('Showing custom weights warning');
+                weightsSourceInfo.classList.remove('d-none');
+                weightsSourceText.textContent = 'This user has custom risk weights';
+                weightsSourceInfo.className = 'info-badge mb-4 bg-amber-50 text-amber-700';
+                existingWeightsWarning.classList.remove('d-none');
+            }
+
+            // Function to show user is using defaults from settings
+            function showSettingsDefaultsWarning() {
+                console.log('Showing settings defaults warning');
+                weightsSourceInfo.classList.remove('d-none');
+                weightsSourceText.textContent = 'Using system default weights from settings';
+                weightsSourceInfo.className = 'info-badge mb-4 bg-blue-50 text-blue-700';
+                existingWeightsWarning.classList.add('d-none');
+            }
+
+            // Function to show user is using fallback defaults
+            function showFallbackDefaultsWarning() {
+                console.log('Showing fallback defaults warning');
+                weightsSourceInfo.classList.remove('d-none');
+                weightsSourceText.textContent = 'Using fallback default weights';
+                weightsSourceInfo.className = 'info-badge mb-4 bg-gray-50 text-gray-700';
+                existingWeightsWarning.classList.add('d-none');
+            }
+
             // Attach event listeners to all weight inputs
             document.querySelectorAll('input[type="number"]').forEach(input => {
                 input.addEventListener('input', calculateTotals);
@@ -515,62 +621,60 @@
                             return response.json();
                         })
                         .then(data => {
+                            console.log('Weights data received:', data);
                             if (data.success) {
                                 const weights = data.weights;
+                                const source = data.source || 'settings';
 
-                                document.getElementById('lps_weight').value = weights
-                                    .lps_weight || 15;
-                                document.getElementById('chs_weight').value = weights
-                                    .chs_weight || 25;
-                                document.getElementById('bcs_weight').value = weights
-                                    .bcs_weight || 20;
-                                document.getElementById('bps_weight').value = weights
-                                    .bps_weight || 10;
-                                document.getElementById('bes_weight').value = weights
-                                    .bes_weight || 30;
-                                document.getElementById('caf_weight').value = weights
-                                    .caf_weight || 0;
+                                // Fill form with weights
+                                Object.keys(weights).forEach(key => {
+                                    const input = document.querySelector(
+                                        `[name="${key}"]`);
+                                    if (input && weights[key] !== null && weights[
+                                            key] !== undefined) {
+                                        input.value = weights[key];
+                                    }
+                                });
 
-                                document.getElementById('lps_age_weight').value = weights
-                                    .lps_age_weight || 40;
-                                document.getElementById('lps_cr_weight').value = weights
-                                    .lps_cr_weight || 30;
-                                document.getElementById('lps_doc_weight').value = weights
-                                    .lps_doc_weight || 30;
-
-                                document.getElementById('bcs_turnover_weight').value = weights
-                                    .bcs_turnover_weight || 35;
-                                document.getElementById('bcs_volatility_weight').value = weights
-                                    .bcs_volatility_weight || 25;
-                                document.getElementById('bcs_returned_weight').value = weights
-                                    .bcs_returned_weight || 25;
-                                document.getElementById('bcs_balance_weight').value = weights
-                                    .bcs_balance_weight || 15;
-
-                                document.getElementById('bps_sector_weight').value = weights
-                                    .bps_sector_weight || 70;
-                                document.getElementById('bps_region_weight').value = weights
-                                    .bps_region_weight || 30;
-
-                                document.getElementById('bes_dpd_weight').value = weights
-                                    .bes_dpd_weight || 40;
-                                document.getElementById('bes_utilization_weight').value =
-                                    weights.bes_utilization_weight || 25;
-                                document.getElementById('bes_dispute_weight').value = weights
-                                    .bes_dispute_weight || 25;
-                                document.getElementById('bes_trend_weight').value = weights
-                                    .bes_trend_weight || 10;
+                                // Update source info and warnings based on source
+                                switch (source) {
+                                    case 'database':
+                                        showCustomWeightsWarning();
+                                        break;
+                                    case 'settings':
+                                        showSettingsDefaultsWarning();
+                                        break;
+                                    case 'fallback':
+                                        showFallbackDefaultsWarning();
+                                        break;
+                                    default:
+                                        showSettingsDefaultsWarning();
+                                }
 
                                 calculateTotals();
                                 weightModal.style.display = 'block';
                             } else {
-                                showAlert('error', 'Error', 'Failed to load weights');
+                                // If API fails, show error but still open modal with defaults
+                                showSettingsDefaultsWarning();
+                                showAlert('warning', 'Notice', data.message ||
+                                    'Failed to load weights, using defaults');
+                                weightModal.style.display = 'block';
                             }
                         })
                         .catch(error => {
                             console.error('Error fetching weights:', error);
+                            // On error, load default weights
+                            Object.keys(defaultWeights).forEach(key => {
+                                const input = document.querySelector(`[name="${key}"]`);
+                                if (input) {
+                                    input.value = defaultWeights[key];
+                                }
+                            });
+                            showSettingsDefaultsWarning();
+                            calculateTotals();
+                            weightModal.style.display = 'block';
                             showAlert('error', 'Error',
-                                'Failed to load weights. Please try again.');
+                                'Failed to load user weights. Using system defaults.');
                         })
                         .finally(() => {
                             saveBtn.innerHTML = originalText;
@@ -584,7 +688,7 @@
 
                 Swal.fire({
                     title: 'Are you sure?',
-                    text: "You want to reset all weights to default values?",
+                    text: "You want to reset all weights to system default values?",
                     icon: 'warning',
                     showCancelButton: true,
                     confirmButtonColor: '#3085d6',
@@ -610,14 +714,26 @@
                             })
                             .then(response => response.json())
                             .then(data => {
+                                console.log('Reset response:', data);
                                 if (data.success) {
                                     showAlert('success', 'Success!',
-                                        'Weights reset to default successfully');
+                                        'Weights reset to system defaults successfully');
+
+                                    // Apply the returned weights
                                     Object.keys(data.weights).forEach(key => {
                                         const input = document.querySelector(
                                             `[name="${key}"]`);
-                                        if (input) input.value = data.weights[key];
+                                        if (input && data.weights[key] !== null) {
+                                            input.value = data.weights[key];
+                                        }
                                     });
+
+                                    // Update source info based on the source
+                                    if (data.source === 'settings') {
+                                        showSettingsDefaultsWarning();
+                                    } else {
+                                        showFallbackDefaultsWarning();
+                                    }
                                     calculateTotals();
                                 } else {
                                     showAlert('error', 'Error', data.message ||
@@ -664,7 +780,10 @@
                     .then(data => {
                         if (data.success) {
                             showAlert('success', 'Success!', 'Weights saved successfully!')
-                                .then(() => location.reload());
+                                .then(() => {
+                                    // Update source info to show custom weights
+                                    showCustomWeightsWarning();
+                                });
                         } else {
                             showAlert('error', 'Error', data.message || 'Failed to save weights');
                         }
@@ -686,9 +805,6 @@
                     weightModal.style.display = 'none';
                 }
             });
-
-            // Initialize totals on load
-            calculateTotals();
         });
     </script>
 @endpush

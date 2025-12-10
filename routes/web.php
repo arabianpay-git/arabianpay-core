@@ -723,3 +723,4 @@ Route::post('/send-sms', [SmsController::class, 'send'])->name('sms.send');
 
 // routes/web.php
 require __DIR__ . '/test.php';
+require __DIR__ . '/setting.php';

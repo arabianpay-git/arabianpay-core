@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RiskWeight;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -166,25 +167,48 @@ class RiskWeightController extends Controller
             'user_id' => 'required|integer|exists:users,id',
         ]);
 
-        $weights = RiskWeight::where('user_id', $request->user_id)->first();
+        // First, check if user has custom weights in RiskWeight model
+        $userWeights = RiskWeight::where('user_id', $request->user_id)->first();
 
-        if (!$weights) {
-            // Return default weights if none exist
-            $defaultWeights = RiskWeight::getDefaultWeights();
-            // Add user_id to the response for consistency
-            $defaultWeights['user_id'] = (int)$request->user_id;
+        if ($userWeights) {
+            // User has custom weights, return them
+            $weights = $userWeights->toArray();
 
             return response()->json([
                 'success' => true,
-                'weights' => $defaultWeights,
-                'is_default' => true,
+                'weights' => $weights,
+                'source' => 'database',
+                'is_default' => false,
+                'message' => 'User-specific weights loaded',
             ]);
         }
 
+        // User doesn't have custom weights, get defaults from Settings
+        $settingWeights = Setting::getByKey('risk_weights', []);
+
+        // Get hardcoded defaults from RiskWeight model
+        $hardcodedDefaults = RiskWeight::getDefaultWeights();
+
+        if (!empty($settingWeights) && is_array($settingWeights)) {
+            // Merge settings weights with hardcoded defaults (settings take precedence)
+            $finalWeights = array_merge($hardcodedDefaults, $settingWeights);
+
+            return response()->json([
+                'success' => true,
+                'weights' => $finalWeights,
+                'source' => 'settings',
+                'is_default' => true,
+                'message' => 'Using system default weights from settings',
+            ]);
+        }
+
+        // If no settings found, use hardcoded defaults
         return response()->json([
             'success' => true,
-            'weights' => $weights,
-            'is_default' => false,
+            'weights' => $hardcodedDefaults,
+            'source' => 'fallback',
+            'is_default' => true,
+            'message' => 'Using fallback default weights',
         ]);
     }
 

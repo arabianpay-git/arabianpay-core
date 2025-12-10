@@ -5,15 +5,15 @@ namespace App\Services;
 use App\Models\BusinessCategory;
 use App\Models\City;
 use App\Models\Customer;
-use App\Models\Merchant; // Add Merchant model
+use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\RefundRequest;
 use App\Models\SchedulePayment;
 use App\Models\User;
-use App\Models\RiskWeight; // <- added
+use App\Models\RiskWeight;
 use App\Models\SimahReport;
+use App\Models\Setting; // Added Setting model
 use Carbon\Carbon;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -48,9 +48,13 @@ class RiskService
 
     /**
      * Active weights (populated per-request by loadWeights())
-     * Uses RiskWeight values if provided, otherwise RiskWeight::getDefaultWeights()
      */
     protected array $weights = [];
+
+    /**
+     * Source of weights for this analysis
+     */
+    protected string $weightsSource = 'defaults';
 
     /**
      * Public entry that returns everything
@@ -62,10 +66,10 @@ class RiskService
     public function analyzeCustomer($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): array
     {
         // load weights for this request
-        $this->weights = $this->loadWeights($customerOrMerchantOrId->user_id);
+        $this->loadWeights($weightUserId);
 
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (! $entity) {
+        if (!$entity) {
             return ['error' => ucfirst($type) . ' not found'];
         }
 
@@ -117,18 +121,19 @@ class RiskService
         $omrs = $this->computeOMRS(compact('lps', 'chs', 'bcs', 'bps', 'bes', 'caf'));
 
         return [
-            'lps'       => round($lps, 2),
-            'chs'       => round($chs, 2),
-            'bcs'       => round($bcs, 2),
-            'bps'       => round($bps, 2),
-            'bes'       => round($bes, 2),
-            'caf'       => round($caf, 2),
-            'omrs'      => round($omrs, 2),
-            'flags'     => array_values(array_unique($flags)),
-            'notes'     => $notes,
-            'components' => $components,
-            'type'      => $type, // Include type in response
-            'weights_used' => $this->weights, // helpful for debugging
+            'lps'           => round($lps, 2),
+            'chs'           => round($chs, 2),
+            'bcs'           => round($bcs, 2),
+            'bps'           => round($bps, 2),
+            'bes'           => round($bes, 2),
+            'caf'           => round($caf, 2),
+            'omrs'          => round($omrs, 2),
+            'flags'         => array_values(array_unique($flags)),
+            'notes'         => $notes,
+            'components'    => $components,
+            'type'          => $type,
+            'weights_used'  => $this->weights,
+            'weights_source' => $this->weightsSource, // Added weights source
         ];
     }
 
@@ -137,7 +142,7 @@ class RiskService
      */
     public function getOMRS($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
-        $this->weights = $this->loadWeights($weightUserId);
+        $this->loadWeights($weightUserId);
         $res = $this->analyzeCustomer($customerOrMerchantOrId, $type, $weightUserId);
         return $res['omrs'] ?? 0;
     }
@@ -147,9 +152,9 @@ class RiskService
      */
     public function getLPS($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
-        $this->weights = $this->loadWeights($weightUserId);
+        $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (! $entity) return 0;
+        if (!$entity) return 0;
         $res = $this->computeLPS($entity, $type);
         return round($res['score'], 2);
     }
@@ -159,7 +164,7 @@ class RiskService
      */
     public function getCHS($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
-        $this->weights = $this->loadWeights($weightUserId);
+        $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
         if (!$entity) return $this->policy['default_chs'];
 
@@ -172,9 +177,9 @@ class RiskService
      */
     public function getBCS($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
-        $this->weights = $this->loadWeights($weightUserId);
+        $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (! $entity) return $this->policy['default_bcs'];
+        if (!$entity) return $this->policy['default_bcs'];
         $res = $this->computeBCS($entity, $type);
         return round($res['score'], 2);
     }
@@ -184,9 +189,9 @@ class RiskService
      */
     public function getBPS($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
-        $this->weights = $this->loadWeights($weightUserId);
+        $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (! $entity) return 0;
+        if (!$entity) return 0;
         $res = $this->computeBPS($entity, $type);
         return round($res['score'], 2);
     }
@@ -196,9 +201,9 @@ class RiskService
      */
     public function getBES($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): float
     {
-        $this->weights = $this->loadWeights($weightUserId);
+        $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (! $entity) return $this->policy['default_bes'];
+        if (!$entity) return $this->policy['default_bes'];
         $res = $this->computeBES($entity, $type);
         return round($res['score'], 2);
     }
@@ -221,7 +226,7 @@ class RiskService
 
         // Use appropriate data source based on type
         if ($type === 'merchant') {
-            $crData = json_decode($entity->goverment_data ?? '{}', true) ?? null; // Note: misspelled as 'goverment_data'
+            $crData = json_decode($entity->goverment_data ?? '{}', true) ?? null;
         } else {
             $crData = $entity->cr_data ?? null;
         }
@@ -287,7 +292,7 @@ class RiskService
         // CR score
         $crScore = $crValid ? 100 : 0;
 
-        // LPS formula uses dynamic weights from RiskWeight (lps_age_weight, lps_cr_weight, lps_doc_weight)
+        // LPS formula uses dynamic weights
         $ageW = $this->weights['lps_age_weight'] ?? 40;
         $crW   = $this->weights['lps_cr_weight'] ?? 30;
         $docW  = $this->weights['lps_doc_weight'] ?? 30;
@@ -337,7 +342,7 @@ class RiskService
             'bureau_rating_score' => null,
             'dpd_score' => null,
             'max_dpd_12m' => null,
-            'raw_report' => null, // small copy for debugging (optional)
+            'raw_report' => null,
         ];
 
         try {
@@ -370,10 +375,8 @@ class RiskService
                         }
 
                         // try to extract some DPD / delinquency info if present
-                        // common fields: summaryInfo -> summCurrentDelinquentBalance / summDefaults etc.
                         $summary = $report['data']['summaryInfo'] ?? null;
                         if (is_array($summary)) {
-                            // If there is a field that looks like a max DPD in 12m, pick it (best-effort)
                             if (isset($summary['summCurrentDelinquentBalance'])) {
                                 $components['max_dpd_12m'] = $summary['summCurrentDelinquentBalance'];
                             } elseif (isset($summary['summDefaults'])) {
@@ -381,7 +384,7 @@ class RiskService
                             }
                         }
 
-                        // dpd_score not available directly in many SIMAH payloads — leave null unless you compute mapping
+                        // dpd_score not available directly in many SIMAH payloads
                         $components['dpd_score'] = null;
 
                         return [
@@ -421,7 +424,6 @@ class RiskService
             'components' => $components,
         ];
     }
-
 
     /**
      * Compute BCS per spec using Orders as proxy for open-banking.
@@ -869,7 +871,7 @@ class RiskService
             $hasAPHistory = SchedulePayment::where('user_id', $userId)->exists() || Order::where('user_id', $userId)->exists();
         }
 
-        if (! $hasAPHistory) {
+        if (!$hasAPHistory) {
             $flags[] = 'no_behavior_history';
             $bes = $this->policy['default_bes'];
             $notes[] = 'No AP history; returning default BES';
@@ -919,13 +921,13 @@ class RiskService
     }
 
     /**
-     * Compose OMRS using weights from RiskWeight
+     * Compose OMRS using weights from loaded weights
      * Input array must contain lps, chs, bcs, bps, bes, caf values (lps..bes in 0..100)
      * Returns final score in 0..100
      */
     protected function computeOMRS(array $values): float
     {
-        // read weights from loaded weights (lps_weight, chs_weight, bcs_weight, bps_weight, bes_weight)
+        // read weights from loaded weights
         $w_lps = $this->weights['lps_weight'] ?? 15;
         $w_chs = $this->weights['chs_weight'] ?? 25;
         $w_bcs = $this->weights['bcs_weight'] ?? 20;
@@ -956,38 +958,77 @@ class RiskService
     // ---------- Helpers ----------
 
     /**
-     * Load RiskWeight for a given user_id (the user who sets weights). If not found, return defaults.
+     * Load weights for a given user_id (the user who sets weights). If not found, use defaults from settings.
      * @param int|null $weightUserId
-     * @return array
+     * @return void
      */
-    protected function loadWeights($weightUserId = null): array
+    protected function loadWeights($weightUserId = null): void
     {
-        $defaults = RiskWeight::getDefaultWeights();
+        // First get defaults from settings
+        $settingsDefaults = Setting::getByKey('risk_weights', []);
 
-        if (empty($weightUserId)) {
-            return $defaults;
+        // Fallback hardcoded defaults in case settings are empty
+        $hardcodedDefaults = [
+            'lps_weight' => 15,
+            'chs_weight' => 25,
+            'bcs_weight' => 20,
+            'bps_weight' => 10,
+            'bes_weight' => 30,
+            'lps_age_weight' => 40,
+            'lps_cr_weight' => 30,
+            'lps_doc_weight' => 30,
+            'bcs_turnover_weight' => 35,
+            'bcs_volatility_weight' => 25,
+            'bcs_returned_weight' => 25,
+            'bcs_balance_weight' => 15,
+            'bps_sector_weight' => 70,
+            'bps_region_weight' => 30,
+            'bes_dpd_weight' => 40,
+            'bes_utilization_weight' => 25,
+            'bes_dispute_weight' => 25,
+            'bes_trend_weight' => 10,
+        ];
+
+        // Merge settings with hardcoded defaults (settings take precedence)
+        $defaults = array_merge($hardcodedDefaults, $settingsDefaults);
+
+        // Start with defaults
+        $this->weightsSource = 'default weights from controls';
+        $finalWeights = $defaults;
+
+        // Check if we have a specific user with custom weights
+        if (!empty($weightUserId)) {
+            $rw = RiskWeight::where('user_id', $weightUserId)->first();
+            if ($rw) {
+                // Merge user-specific weights with defaults (user values take precedence)
+                foreach ($defaults as $key => $defaultValue) {
+                    if (property_exists($rw, $key) && $rw->{$key} !== null) {
+                        $finalWeights[$key] = $rw->{$key};
+                    }
+                }
+
+                // Also include last_weight/new_weight arrays if present
+                if ($rw->last_weight) {
+                    $finalWeights['last_weight'] = $rw->last_weight;
+                }
+                if ($rw->new_weight) {
+                    $finalWeights['new_weight'] = $rw->new_weight;
+                }
+
+                $this->weightsSource = 'risk changes for that user';
+            }
         }
 
-        $rw = RiskWeight::where('user_id', $weightUserId)->first();
-        if (! $rw) {
-            return $defaults;
-        }
+        $this->weights = $finalWeights;
+    }
 
-        // merge values: prefer non-null values from model, else defaults
-        $mapped = [];
-        foreach ($defaults as $k => $v) {
-            $mapped[$k] = $rw->{$k} !== null ? $rw->{$k} : $v;
-        }
-
-        // also allow last_weight/new_weight arrays if present to be included (optional)
-        if ($rw->last_weight) {
-            $mapped['last_weight'] = $rw->last_weight;
-        }
-        if ($rw->new_weight) {
-            $mapped['new_weight'] = $rw->new_weight;
-        }
-
-        return $mapped;
+    /**
+     * Get the current weights source
+     * @return string
+     */
+    public function getWeightsSource(): string
+    {
+        return $this->weightsSource;
     }
 
     protected function resolveEntity($entityOrId, string $type)
