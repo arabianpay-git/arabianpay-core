@@ -10,7 +10,7 @@
             <input type="email" id="email" name="email" required class="border p-2 rounded w-full mb-4">
 
             <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-                Start Passkey Login
+                Check for Passkey
             </button>
         </form>
 
@@ -21,7 +21,7 @@
 
         <div id="error-message" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded"></div>
 
-        <!-- Add alternative login methods -->
+        <!-- Alternative login methods -->
         <div class="mt-6 pt-6 border-t border-gray-200">
             <p class="text-sm text-gray-600 mb-3">No passkey? Use another login method:</p>
             <a href="{{ route('login') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
@@ -67,7 +67,6 @@
                 errorDiv.textContent = message;
                 errorDiv.classList.remove('hidden');
                 authBtn.classList.add('hidden');
-                showMessage('', 'info'); // Clear any existing info messages
             }
 
             function clearError() {
@@ -75,11 +74,17 @@
                 errorDiv.textContent = '';
             }
 
+            function resetForm() {
+                clearError();
+                authBtn.classList.add('hidden');
+                showMessage('', 'info');
+                options = null;
+            }
+
             form.addEventListener('submit', async e => {
                 e.preventDefault();
-                clearError();
-                showMessage('Checking for passkeys…', 'info');
-                authBtn.classList.add('hidden');
+                resetForm();
+                showMessage('Checking account and passkeys…', 'info');
 
                 const email = form.email.value.trim();
                 if (!email) {
@@ -101,52 +106,60 @@
 
                     const data = await res.json();
 
-                    // Always successful response (200), but check if user has passkeys
+                    // Check if user has passkeys
                     if (data.hasPasskeys === false) {
                         if (data.error === 'User not found') {
                             showError('No account found with this email address.');
                         } else {
                             showError(
-                                'No passkeys registered for this email address. Please use another login method or register a passkey.'
+                                'This email address does not have any passkeys registered. Please use password login or contact support to register a passkey.'
                                 );
                         }
                         return;
                     }
 
-                    // User has passkeys, proceed with authentication
-                    options = data;
-
-                    if (!Array.isArray(options.allowCredentials) || !options.allowCredentials.length) {
+                    // Check if we have valid credentials to proceed
+                    if (!data.allowCredentials || !Array.isArray(data.allowCredentials) || data
+                        .allowCredentials.length === 0) {
                         showError(
-                            'No passkeys found for this email address. Please use another login method.'
+                            'No passkeys found for this email address. Please register a passkey first.'
                             );
                         return;
                     }
 
+                    options = data;
+
+                    // Check if platform authenticator is available
                     const platformAvailable = await PublicKeyCredential
                         .isUserVerifyingPlatformAuthenticatorAvailable();
 
                     if (!platformAvailable) {
-                        showError('No supported passkey authenticator is available on this device.');
+                        showError(
+                            'Your device/browser does not support passkey authentication. Please use password login instead.'
+                            );
                         return;
                     }
 
-                    showMessage('Passkey found. Click below to authenticate.', 'success');
+                    // Show success message and authentication button
+                    showMessage(
+                        '✓ Passkey found for this email. Click the button below to authenticate.',
+                        'success');
                     authBtn.classList.remove('hidden');
+
                 } catch (err) {
-                    console.error('Error during challenge fetch:', err);
-                    showError('Network or server error. Please try again.');
+                    console.error('Error during passkey check:', err);
+                    showError('Unable to check for passkeys. Please try again or use password login.');
                 }
             });
 
             authBtn.addEventListener('click', async () => {
                 if (!options) {
-                    showError('Submit your email first.');
+                    showError('Please check your email first.');
                     return;
                 }
 
                 clearError();
-                showMessage('Starting authentication…', 'info');
+                showMessage('Prompting for passkey authentication…', 'info');
 
                 try {
                     const publicKey = {
@@ -164,6 +177,7 @@
                         publicKey
                     });
 
+                    // If we get here, user successfully authenticated with their device
                     const credential = {
                         id: assertion.id,
                         rawId: arrayBufferToBase64url(assertion.rawId),
@@ -181,7 +195,7 @@
                         },
                     };
 
-                    showMessage('Verifying authentication…', 'info');
+                    showMessage('Verifying passkey with server…', 'info');
 
                     const res = await fetch('{{ route('passkeys.authenticate') }}', {
                         method: 'POST',
@@ -193,20 +207,33 @@
                     });
 
                     if (res.ok) {
-                        showMessage('Logged in successfully! Redirecting…', 'success');
+                        showMessage('✓ Authentication successful! Redirecting…', 'success');
                         setTimeout(() => window.location.href = "{{ route('dashboard') }}", 1000);
                     } else {
                         const err = await res.text();
-                        showError(`Authentication failed: ${err}`);
+                        if (res.status === 401) {
+                            showError('Authentication failed: Invalid passkey or user mismatch.');
+                        } else {
+                            showError(`Authentication failed: ${err}`);
+                        }
                     }
                 } catch (err) {
                     console.error('Authentication error:', err);
                     if (err.name === 'NotAllowedError') {
-                        showError('Authentication was cancelled or timed out.');
+                        showError('Authentication was cancelled or timed out. Please try again.');
+                    } else if (err.name === 'NotSupportedError') {
+                        showError(
+                            'Your browser does not support passkey authentication. Please try a different browser.'
+                            );
                     } else {
-                        showError('Authentication failed. Please try again.');
+                        showError('Authentication failed. Please try again or use password login.');
                     }
                 }
+            });
+
+            // Reset when user changes email
+            form.email.addEventListener('input', () => {
+                resetForm();
             });
         });
     </script>

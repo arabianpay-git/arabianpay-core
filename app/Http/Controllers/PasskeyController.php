@@ -89,15 +89,14 @@ class PasskeyController extends Controller
      */
     public function getPublicKey(Request $request)
     {
-        $request->validate(['email' => 'required|email']);
 
-        // Only find the user - DO NOT log them in yet
+        $request->validate(['email' => 'required|email']);
         $user = User::whereEncrypted('email', $request->email)->first();
         if (! $user) {
             return response()->json([
                 'error' => 'User not found',
                 'hasPasskeys' => false
-            ], 200); // Changed from 404 to 200 for consistency
+            ], 200);
         }
 
         $base64url = fn(string $data): string => rtrim(
@@ -111,12 +110,10 @@ class PasskeyController extends Controller
         ])->values()->all();
 
         if (empty($allowCredentials)) {
-            Log::warning("{$user->email} has no passkeys");
-
-            // Return success response but with hasPasskeys flag set to false
-            // This allows frontend to show appropriate message
+            Log::warning("User {$user->email} has no passkeys");
             return response()->json([
                 'hasPasskeys' => false,
+                'message' => 'No passkeys registered for this account',
                 'email' => $user->email,
                 'allowCredentials' => []
             ], 200);
@@ -209,10 +206,10 @@ class PasskeyController extends Controller
 
             return redirect()->route('dashboard')->with('success', 'Logged in with passkey');
         } catch (InvalidPasskey $e) {
-            return response('Authentication failed: Invalid passkey. ' . $e->getMessage(), 401);
+            return response('Authentication failed: The passkey is not valid or does not match this account.', 401);
         } catch (\Throwable $e) {
             Log::error('PasskeyController@authenticate error', ['exception' => $e]);
-            return response('Authentication failed: ' . $e->getMessage(), 500);
+            return response('Authentication failed. Please try again.', 500);
         }
     }
 
