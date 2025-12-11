@@ -385,7 +385,8 @@
                                 <div class="space-y-3">
                                     <input type="email" id="testEmailInput" class="input w-full"
                                         placeholder="{{ translate('Enter test email address') }}" />
-                                    <button type="button" onclick="testEmailConfiguration()"
+                                    <!-- CHANGED: added id and removed inline onclick to avoid relying on attribute selector -->
+                                    <button type="button" id="sendTestEmailBtn"
                                         class="btn btn-secondary whitespace-nowrap" style="margin-top: 0.725rem">
                                         {{ translate('Send Test Email') }}
                                     </button>
@@ -460,6 +461,12 @@
             if (mailDriverSelect) {
                 mailDriverSelect.addEventListener('change', toggleSMTPFields);
             }
+
+            // CHANGED: attach click handler to button by id instead of relying on inline onclick attribute
+            const sendTestBtn = document.getElementById('sendTestEmailBtn'); /* CHANGED */
+            if (sendTestBtn) {
+                sendTestBtn.addEventListener('click', testEmailConfiguration); /* CHANGED */
+            }
         });
 
         function togglePasswordVisibility(button) {
@@ -478,7 +485,7 @@
         function testEmailConfiguration() {
             const testEmailInput = document.getElementById('testEmailInput') || document.querySelector(
                 'input[name="test_email"]');
-            const testEmail = testEmailInput.value;
+            const testEmail = testEmailInput ? testEmailInput.value : '';
 
             if (!testEmail) {
                 Swal.fire({
@@ -497,10 +504,13 @@
             }
 
             // Show loading state
-            const button = document.querySelector('button[onclick="testEmailConfiguration()"]');
-            const originalText = button.innerHTML;
-            button.innerHTML = '<i class="ki-filled ki-loader animate-spin"></i> {{ translate('Sending...') }}';
-            button.disabled = true;
+            // CHANGED: select button by id and guard against null
+            const button = document.getElementById('sendTestEmailBtn'); /* CHANGED */
+            const originalText = button ? button.innerHTML : ''; /* CHANGED */
+            if (button) {
+                button.innerHTML = '<i class="ki-filled ki-loader animate-spin"></i> {{ translate('Sending...') }}';
+                button.disabled = true;
+            }
 
             // Send test email via AJAX
             fetch('{{ route('settings.email.test') }}', {
@@ -515,8 +525,10 @@
                 })
                 .then(response => response.json())
                 .then(data => {
-                    button.innerHTML = originalText;
-                    button.disabled = false;
+                    if (button) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
 
                     if (data.success) {
                         Swal.fire({
@@ -532,8 +544,10 @@
                     }
                 })
                 .catch(error => {
-                    button.innerHTML = originalText;
-                    button.disabled = false;
+                    if (button) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
 
                     Swal.fire({
                         icon: 'error',
