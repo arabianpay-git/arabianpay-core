@@ -9,8 +9,9 @@
             <label for="email" class="block mb-2">Email</label>
             <input type="email" id="email" name="email" required class="border p-2 rounded w-full mb-4">
 
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">Start Passkey
-                Login</button>
+            <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                Start Passkey Login
+            </button>
         </form>
 
         <div id="messages" class="mt-4"></div>
@@ -19,6 +20,14 @@
         </button>
 
         <div id="error-message" class="hidden mt-4 p-3 bg-red-100 text-red-700 rounded"></div>
+
+        <!-- Add alternative login methods -->
+        <div class="mt-6 pt-6 border-t border-gray-200">
+            <p class="text-sm text-gray-600 mb-3">No passkey? Use another login method:</p>
+            <a href="{{ route('login') }}" class="text-blue-600 hover:text-blue-800 text-sm font-medium">
+                Use password instead →
+            </a>
+        </div>
     </div>
 @endsection
 
@@ -58,6 +67,7 @@
                 errorDiv.textContent = message;
                 errorDiv.classList.remove('hidden');
                 authBtn.classList.add('hidden');
+                showMessage('', 'info'); // Clear any existing info messages
             }
 
             function clearError() {
@@ -68,7 +78,7 @@
             form.addEventListener('submit', async e => {
                 e.preventDefault();
                 clearError();
-                showMessage('Requesting passkey challenge…', 'info');
+                showMessage('Checking for passkeys…', 'info');
                 authBtn.classList.add('hidden');
 
                 const email = form.email.value.trim();
@@ -91,19 +101,25 @@
 
                     const data = await res.json();
 
-                    if (!res.ok) {
-                        if (data.hasPasskeys === false) {
-                            showError('No passkeys found for this email address.');
+                    // Always successful response (200), but check if user has passkeys
+                    if (data.hasPasskeys === false) {
+                        if (data.error === 'User not found') {
+                            showError('No account found with this email address.');
                         } else {
-                            showError(`Error: ${data.error || 'User not found'}`);
+                            showError(
+                                'No passkeys registered for this email address. Please use another login method or register a passkey.'
+                                );
                         }
                         return;
                     }
 
+                    // User has passkeys, proceed with authentication
                     options = data;
 
                     if (!Array.isArray(options.allowCredentials) || !options.allowCredentials.length) {
-                        showError('No passkeys found for this email on this device.');
+                        showError(
+                            'No passkeys found for this email address. Please use another login method.'
+                            );
                         return;
                     }
 

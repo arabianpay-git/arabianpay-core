@@ -86,7 +86,6 @@ class PasskeyController extends Controller
 
     /**
      * Get public key options for passkey authentication by email.
-     * IMPORTANT: This method doesn't log anyone in. It just prepares options for the given email.
      */
     public function getPublicKey(Request $request)
     {
@@ -98,7 +97,7 @@ class PasskeyController extends Controller
             return response()->json([
                 'error' => 'User not found',
                 'hasPasskeys' => false
-            ], 404);
+            ], 200); // Changed from 404 to 200 for consistency
         }
 
         $base64url = fn(string $data): string => rtrim(
@@ -113,10 +112,14 @@ class PasskeyController extends Controller
 
         if (empty($allowCredentials)) {
             Log::warning("{$user->email} has no passkeys");
+
+            // Return success response but with hasPasskeys flag set to false
+            // This allows frontend to show appropriate message
             return response()->json([
-                'error' => 'No passkeys found for this user',
-                'hasPasskeys' => false
-            ], 400);
+                'hasPasskeys' => false,
+                'email' => $user->email,
+                'allowCredentials' => []
+            ], 200);
         }
 
         $publicKeyJson = app(GeneratePasskeyAuthenticationOptionsAction::class)
@@ -144,7 +147,6 @@ class PasskeyController extends Controller
 
     /**
      * Verify the assertion and authenticate user.
-     * IMPORTANT: This verifies that the authenticated user matches the one we expected.
      */
     public function authenticate(Request $request)
     {
@@ -184,7 +186,7 @@ class PasskeyController extends Controller
 
             $user = User::find($passkey->authenticatable_id);
 
-            // CRITICAL: Verify the authenticated user matches the expected user
+            // Verify the authenticated user matches the expected user
             if (!$user || $user->id !== $expectedUserId) {
                 Log::error('Passkey authentication user mismatch', [
                     'expected_user_id' => $expectedUserId,
