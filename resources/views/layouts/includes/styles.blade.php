@@ -91,7 +91,7 @@
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
         gap: 15px;
-        max-height: 400px;
+        max-height: auto;
         overflow-y: auto;
     }
 

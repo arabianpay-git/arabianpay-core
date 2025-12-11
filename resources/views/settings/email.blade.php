@@ -385,7 +385,6 @@
                                 <div class="space-y-3">
                                     <input type="email" id="testEmailInput" class="input w-full"
                                         placeholder="{{ translate('Enter test email address') }}" />
-                                    <!-- CHANGED: added id and removed inline onclick to avoid relying on attribute selector -->
                                     <button type="button" id="sendTestEmailBtn"
                                         class="btn btn-secondary whitespace-nowrap" style="margin-top: 0.725rem">
                                         {{ translate('Send Test Email') }}
@@ -462,10 +461,9 @@
                 mailDriverSelect.addEventListener('change', toggleSMTPFields);
             }
 
-            // CHANGED: attach click handler to button by id instead of relying on inline onclick attribute
-            const sendTestBtn = document.getElementById('sendTestEmailBtn'); /* CHANGED */
+            const sendTestBtn = document.getElementById('sendTestEmailBtn')
             if (sendTestBtn) {
-                sendTestBtn.addEventListener('click', testEmailConfiguration); /* CHANGED */
+                sendTestBtn.addEventListener('click', testEmailConfiguration)
             }
         });
 
@@ -504,9 +502,8 @@
             }
 
             // Show loading state
-            // CHANGED: select button by id and guard against null
-            const button = document.getElementById('sendTestEmailBtn'); /* CHANGED */
-            const originalText = button ? button.innerHTML : ''; /* CHANGED */
+            const button = document.getElementById('sendTestEmailBtn');
+            const originalText = button ? button.innerHTML : '';
             if (button) {
                 button.innerHTML = '<i class="ki-filled ki-loader animate-spin"></i> {{ translate('Sending...') }}';
                 button.disabled = true;
