@@ -140,7 +140,7 @@
                     <td class="invoice-details" style="width: 50%;">
                         <div><strong>Invoice Number:</strong> #INV-{{ str_pad($order->id, 6, '0', STR_PAD_LEFT) }}</div>
                         <div><strong>Issue Date:</strong>
-                            {{ \Carbon\Carbon::parse($order->created_at)->format('d M Y') }}</div>
+                            {{ \Carbon\Carbon::parse($order->created_at)->format(dateFormat()) }}</div>
                         <div><strong>Status:</strong>
                             @if ($order->status === 'pending')
                                 Pending

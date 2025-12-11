@@ -36,7 +36,7 @@
                             </td>
                         @endif
 
-                        <td>{{ \Carbon\Carbon::parse($payment->due_date)->format('d M Y') }}</td>
+                        <td>{{ \Carbon\Carbon::parse($payment->due_date)->format(dateFormat()) }}</td>
                         <td>
                             <span class="icon-saudi_riyal"></span>
                             {{ number_format($payment->instalment_amount, 2) }}

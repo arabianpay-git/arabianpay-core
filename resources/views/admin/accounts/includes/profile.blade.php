@@ -97,7 +97,7 @@
 
                     <div class="flex gap-1.25 items-center separator">
                         <i class="ki-filled ki-calendar text-gray-500 text-sm"> </i>
-                        {{ $merchant->user->created_at->format('d M Y') }}
+                        {{ $merchant->user->created_at->format(dateFormat()) }}
                     </div>
                 </div>
             </div>

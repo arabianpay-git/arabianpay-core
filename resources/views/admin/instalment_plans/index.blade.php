@@ -145,7 +145,7 @@
                                                     {{ $item->transaction_fee > 0 ? number_format($item->transaction_fee) : '-' }}
                                                 </td>
 
-                                                <td>{{ $item->created_at->format('d M Y') }}</td>
+                                                <td>{{ $item->created_at->format(dateFormat()) }}</td>
                                                 <td>
                                                     <div class="flex gap-1">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"

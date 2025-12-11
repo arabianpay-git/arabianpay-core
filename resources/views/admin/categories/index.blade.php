@@ -160,7 +160,7 @@
                                                             class="badge badge-sm badge-outline badge-danger">{{ translate('No') }}</span>
                                                     @endif
                                                 </td>
-                                                <td>{{ $category->created_at->format('d M Y') }}</td>
+                                                <td>{{ $category->created_at->format(dateFormat()) }}</td>
                                                 <td>
                                                     <div class="flex gap-1">
                                                         @can('category.update')

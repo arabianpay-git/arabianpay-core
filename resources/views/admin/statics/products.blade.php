@@ -133,7 +133,7 @@
                                                             class="badge badge-sm badge-outline badge-danger">{{ translate($product->approved) }}</span>
                                                     @endif
                                                 </td>
-                                                <td>{{ $product->created_at->format('d M Y') }}</td>
+                                                <td>{{ $product->created_at->format(dateFormat()) }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>

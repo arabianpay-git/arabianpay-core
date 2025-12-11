@@ -437,3 +437,70 @@ if (!function_exists('partnerRoute')) {
         return rtrim($base, '/') . '/' . ltrim($path, '/');
     }
 }
+
+if (!function_exists('settings')) {
+    function settings($key, $default = [])
+    {
+        $value = App\Models\Setting::where('key', $key)->value('value');
+        return $value ? json_decode($value, true) : $default;
+    }
+}
+
+if (!function_exists('dateFormat')) {
+    /**
+     * Get the date format from general settings
+     *
+     * @param bool $includeTime Include time format if true
+     * @return string
+     */
+    function dateFormat($includeTime = false)
+    {
+        $general = settings('general', []);
+
+        // Date format from settings or fallback
+        $dateFormat = $general['date_format'] ?? 'd M Y';
+
+        if ($includeTime) {
+            // Time format: 12h or 24h
+            $timeFormat = isset($general['time_format']) && $general['time_format'] == '24' ? 'H:i' : 'h:i A';
+            return $dateFormat . ' ' . $timeFormat;
+        }
+
+        return $dateFormat;
+    }
+}
+
+
+if (!function_exists('updateEnvValue')) {
+    /**
+     * Update or add a key in the .env file
+     *
+     * @param string $key
+     * @param string $value
+     * @return void
+     */
+    function updateEnvValue(string $key, string $value)
+    {
+        $path = base_path('.env');
+
+        if (file_exists($path)) {
+            $envContents = file_get_contents($path);
+
+            // Get current value
+            $oldValue = env($key);
+
+            // If key exists, replace it; else, append
+            if (strpos($envContents, $key . '=') !== false) {
+                $envContents = preg_replace(
+                    "/^{$key}=.*/m",
+                    $key . '="' . $value . '"',
+                    $envContents
+                );
+            } else {
+                $envContents .= PHP_EOL . $key . '="' . $value . '"';
+            }
+
+            file_put_contents($path, $envContents);
+        }
+    }
+}

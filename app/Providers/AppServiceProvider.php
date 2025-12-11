@@ -2,12 +2,14 @@
 
 namespace App\Providers;
 
+use App\Models\Setting;
 use App\Services\TokenEncryptionService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Support\Facades\Config;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider as MicrosoftProvider;
@@ -28,12 +30,22 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        // Set default locale
-        App::setLocale('ar');
+        // Get default language from settings
+        $general = settings('general', []);
+        $locale = $general['default_language'] ?? config('app.locale', 'en');
 
-        // If you also use LaravelLocalization
+        // Set Laravel locale
+        App::setLocale($locale);
+
+        // If LaravelLocalization is installed, set its locale too
         if (class_exists(LaravelLocalization::class)) {
-            LaravelLocalization::setLocale('ar');
+            LaravelLocalization::setLocale($locale);
+        }
+
+        $general = Setting::getByKey('general', []);
+        if (!empty($general['timezone'])) {
+            Config::set('app.timezone', $general['timezone']);
+            date_default_timezone_set($general['timezone']);
         }
 
         RateLimiter::for('global', function (Request $request) {

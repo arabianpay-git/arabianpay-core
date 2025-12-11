@@ -78,7 +78,7 @@
                                                     @endif
                                                 </td>
 
-                                                <td>{{ $item->created_at->format('d M Y') }}</td>
+                                                <td>{{ $item->created_at->format(dateFormat()) }}</td>
                                             </tr>
                                         @empty
                                             <tr>

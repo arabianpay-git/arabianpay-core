@@ -140,7 +140,7 @@
                                                     </span>
                                                 </td>
                                                 <td class="text-center">
-                                                    {{ $item->created_at->format('d M Y') }}
+                                                    {{ $item->created_at->format(dateFormat()) }}
                                                 </td>
                                                 <td class="text-center">
                                                     <div class="flex gap-1 justify-center">

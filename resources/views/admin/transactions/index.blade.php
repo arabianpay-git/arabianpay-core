@@ -120,11 +120,11 @@
                                                     @if ($item->loan_start_date && $item->loan_end_date)
                                                         <div>
                                                             <strong>Start Date:</strong>
-                                                            {{ \Carbon\Carbon::parse($item->loan_start_date)->format('d M Y') }}
+                                                            {{ \Carbon\Carbon::parse($item->loan_start_date)->format(dateFormat()) }}
                                                         </div>
                                                         <div>
                                                             <strong>End Date:</strong>
-                                                            {{ \Carbon\Carbon::parse($item->loan_end_date)->format('d M Y') }}
+                                                            {{ \Carbon\Carbon::parse($item->loan_end_date)->format(dateFormat()) }}
                                                         </div>
                                                     @else
                                                         N/A
@@ -177,7 +177,7 @@
                                                 </td>
 
                                                 <td class="whitespace-nowrap">
-                                                    {{ $item->created_at ? $item->created_at->format('d M Y') : 'N/A' }}
+                                                    {{ $item->created_at ? $item->created_at->format(dateFormat()) : 'N/A' }}
                                                 </td>
                                                 <td>
                                                     {{ $item->assigned ? $item->assigned->first_name . ' ' . $item->assigned->last_name : __('--Not Assigned--') }}

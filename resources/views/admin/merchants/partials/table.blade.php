@@ -19,7 +19,7 @@
                     <td class="px-4 py-3">{{ $user->last_name }}</td>
                     <td class="px-4 py-3">{{ $user->business_name }}</td>
                     <td class="px-4 py-3">{{ $user->email }}</td>
-                    <td class="px-4 py-3">{{ optional($user->created_at)->format('d M Y') }}</td>
+                    <td class="px-4 py-3">{{ optional($user->created_at)->format(dateFormat()) }}</td>
                     <td class="px-4 py-3 text-center">
                         <button
                             class="edit-btn px-4 py-1.5 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"

@@ -219,7 +219,7 @@
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Issue Date (G)') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ !empty($g['issueDateGregorian']) ? \Carbon\Carbon::parse($g['issueDateGregorian'])->format('d M Y') : '-' }}
+                                                    {{ !empty($g['issueDateGregorian']) ? \Carbon\Carbon::parse($g['issueDateGregorian'])->format(dateFormat()) : '-' }}
                                                 </td>
                                             </tr>
                                             <tr>
@@ -244,7 +244,7 @@
                                                     @endphp
 
                                                     @if (!empty($gregorian))
-                                                        {{ \Carbon\Carbon::parse($gregorian)->format('d M Y') }}<br />
+                                                        {{ \Carbon\Carbon::parse($gregorian)->format(dateFormat()) }}<br />
                                                         {{ $hijri }}
                                                     @elseif (!empty($hijri))
                                                         {{ $hijri }}
@@ -257,21 +257,21 @@
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Reactivation Date') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ !empty($g['status']['reactivationDate']['gregorian']) ? \Carbon\Carbon::parse($g['status']['reactivationDate']['gregorian'])->format('d M Y') : '-' }}
+                                                    {{ !empty($g['status']['reactivationDate']['gregorian']) ? \Carbon\Carbon::parse($g['status']['reactivationDate']['gregorian'])->format(dateFormat()) : '-' }}
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Suspension Date') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ !empty($g['status']['suspensionDate']['gregorian']) ? \Carbon\Carbon::parse($g['status']['suspensionDate']['gregorian'])->format('d M Y') : '-' }}
+                                                    {{ !empty($g['status']['suspensionDate']['gregorian']) ? \Carbon\Carbon::parse($g['status']['suspensionDate']['gregorian'])->format(dateFormat()) : '-' }}
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Deletion Date') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ !empty($g['status']['deletionDate']['gregorian']) ? \Carbon\Carbon::parse($g['status']['deletionDate']['gregorian'])->format('d M Y') : '-' }}
+                                                    {{ !empty($g['status']['deletionDate']['gregorian']) ? \Carbon\Carbon::parse($g['status']['deletionDate']['gregorian'])->format(dateFormat()) : '-' }}
                                                 </td>
                                             </tr>
                                             <tr>

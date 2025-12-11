@@ -195,7 +195,8 @@
                                                                 class="badge badge-sm badge-outline badge-info">{{ ucfirst($item->general_status) }}</span>
                                                         @endif
                                                     </td>
-                                                    <td class="text-center">{{ $item->created_at->format('d M Y') }}</td>
+                                                    <td class="text-center">{{ $item->created_at->format(dateFormat()) }}
+                                                    </td>
                                                     <!-- Action buttons -->
                                                     <td class="text-center">
                                                         <div class="flex gap-1 justify-center">

@@ -178,7 +178,7 @@
                                                     </span>
                                                 </td>
 
-                                                <td>{{ $item->created_at->format('d M Y') }}</td>
+                                                <td>{{ $item->created_at->format(dateFormat()) }}</td>
 
                                                 <td>
                                                     {{ $item->assigned ? $item->assigned->first_name . ' ' . $item->assigned->last_name : translate('--Not Assigned--') }}

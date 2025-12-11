@@ -101,7 +101,7 @@
                                                 <td>{{ $city->name }}</td>
                                                 <td>{{ $city->risk }}</td>
                                                 <td>{{ $city->state->name }}</td>
-                                                <td>{{ $city->created_at->format('d M Y') }}</td>
+                                                <td>{{ $city->created_at->format(dateFormat()) }}</td>
                                                 <td>
                                                     <div class="flex gap-1">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"

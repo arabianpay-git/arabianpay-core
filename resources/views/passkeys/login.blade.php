@@ -1,4 +1,3 @@
-<!-- resources/views/passkeys/login-form.blade.php -->
 @extends('layouts.pass')
 
 @section('content')
@@ -152,8 +151,11 @@
                     });
 
                     if (res.ok) {
+                        // server returns JSON with redirect URL
+                        const data = await res.json().catch(() => null);
                         showMessage('Logged in! Redirecting…', 'success');
-                        setTimeout(() => window.location.href = "{{ route('dashboard') }}", 1000);
+                        const redirectUrl = data?.redirect ?? "{{ route('dashboard') }}";
+                        setTimeout(() => window.location.href = redirectUrl, 900);
                     } else {
                         const err = await res.text();
                         showMessage(`Authentication failed: ${err}`, 'error');

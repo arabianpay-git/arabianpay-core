@@ -117,7 +117,8 @@
                                                             class="badge badge-sm badge-outline badge-secondary">{{ translate('N/A') }}</span>
                                                     @endif
                                                 </td>
-                                                <td class="text-center">{{ $request->created_at->format('d M Y') }}</td>
+                                                <td class="text-center">{{ $request->created_at->format(dateFormat()) }}
+                                                </td>
                                                 <td>
                                                     {{ $request->assigned ? $request->assigned->first_name . ' ' . $request->assigned->last_name : translate('--Not Assigned--') }}
                                                 </td>

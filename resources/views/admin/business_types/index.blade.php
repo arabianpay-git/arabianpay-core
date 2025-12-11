@@ -195,7 +195,7 @@
                                                     @endif
                                                 </td>
 
-                                                <td>{{ $item->created_at->format('d M Y') }}</td>
+                                                <td>{{ $item->created_at->format(dateFormat()) }}</td>
 
                                                 <td>
                                                     <div class="flex gap-1">

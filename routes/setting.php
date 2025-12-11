@@ -22,7 +22,15 @@ Route::group([
 
                 // Core Settings
                 Route::get('/general', 'general')->name('general');
+                Route::put('/general', 'generalUpdate')->name('general.update');
+                Route::post('/general/reset', 'generalReset')->name('general.reset');
+
                 Route::get('/email', 'email')->name('email');
+                Route::put('/email', 'emailUpdate')->name('email.update');
+                Route::post('email/test', 'emailTest')->name('email.test');
+                Route::post('email/reset', 'emailReset')->name('email.reset');
+
+
                 Route::get('/media', 'media')->name('media');
                 Route::get('/api', 'api')->name('api');
                 Route::get('/cache', 'cache')->name('cache');

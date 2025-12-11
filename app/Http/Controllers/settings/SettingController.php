@@ -6,6 +6,9 @@ use App\Http\Controllers\Controller;
 use App\Models\Setting;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Validator;
 
 class SettingController extends Controller
 {
@@ -23,13 +26,13 @@ class SettingController extends Controller
                 [
                     'title' => 'Email Rules',
                     'description' => 'Configure email validation, templates, and delivery settings.',
-                    'icon' => 'ki-security-check',
+                    'icon' => 'ki-shield-tick',
                     'route' => route('settings.email')
                 ],
                 [
                     'title' => 'Media & Storage',
                     'description' => 'Manage file uploads, storage drivers, and media configurations.',
-                    'icon' => 'ki-cloud-done',
+                    'icon' => 'ki-folder',
                     'route' => route('settings.media')
                 ],
                 [
@@ -81,7 +84,7 @@ class SettingController extends Controller
                 [
                     'title' => 'Payout Settings',
                     'description' => 'Manage payout schedules, methods, and thresholds.',
-                    'icon' => 'ki-money',
+                    'icon' => 'ki-bank',
                     'route' => route('settings.payout')
                 ],
                 [
@@ -446,10 +449,195 @@ class SettingController extends Controller
         return view('settings.general');
     }
 
+    public function generalUpdate(Request $request)
+    {
+        $data = [
+            'site_name'         => $request->site_name,
+            'site_title'        => $request->site_title,
+            'site_description'  => $request->site_description,
+
+            'contact_email'     => $request->contact_email,
+            'contact_phone'     => $request->contact_phone,
+            'address_line'      => $request->address_line,
+
+            'default_language'  => $request->default_language,
+            'timezone'          => $request->timezone,
+            'date_format'       => $request->date_format,
+            'time_format'       => $request->time_format,
+
+            'logo'              => $request->logo,
+            'favicon'           => $request->favicon,
+        ];
+
+        Setting::setByKey('general', $data, 'general');
+        updateEnvValue('APP_NAME', $request->site_name);
+
+        return back()->with('success', 'Settings Updated Successfully');
+    }
+
     // Email Settings
     public function email()
     {
         return view('settings.email');
+    }
+
+    /**
+     * Update email settings
+     */
+    public function emailUpdate(Request $request)
+    {
+        // Validate all email settings
+        $validated = $this->validateEmailSettings($request);
+
+        // Dynamically handle all checkbox fields
+        // Convention: any input in request with value 'on' or type checkbox will be normalized
+        $checkboxes = collect($request->all())->filter(function ($value, $key) use ($request) {
+            // Laravel unchecked checkboxes won't be in $request, so we detect manually
+            return $request->has($key) && in_array($value, ['1', 'on', 0, 1, null], true);
+        });
+
+        foreach ($checkboxes as $key => $value) {
+            $validated[$key] = $request->has($key) ? 1 : 0;
+        }
+
+        // Alternatively, if you want all known checkboxes starting with 'notify_' or specific known names
+        $checkboxKeys = ['email_enabled', 'notify_new_user', 'notify_password_reset', 'notify_order_confirmation', 'notify_contact_form', 'use_queue'];
+
+        foreach ($checkboxKeys as $key) {
+            $validated[$key] = $request->has($key) ? 1 : 0;
+        }
+
+        // Store all settings as JSON
+        Setting::updateOrCreate(
+            ['key' => 'email'],
+            ['value' => json_encode($validated)]
+        );
+
+        // Update .env file (optional)
+        $this->updateEnvSettings($validated);
+
+        return redirect()->route('settings.email')
+            ->with('success', 'Email settings updated successfully!');
+    }
+
+
+    /**
+     * Validate email settings
+     */
+    private function validateEmailSettings(Request $request)
+    {
+        return $request->validate([
+            'email_enabled' => 'nullable|boolean',
+            'mail_driver' => 'required|in:smtp,sendmail,mailgun,ses,postmark',
+            'mail_host' => 'required_if:mail_driver,smtp|string|max:255',
+            'mail_port' => 'required_if:mail_driver,smtp|integer|min:1|max:65535',
+            'mail_encryption' => 'nullable|in:tls,ssl',
+            'mail_username' => 'nullable|string|max:255',
+            'mail_password' => 'nullable|string|max:500',
+            'from_address' => 'required|email|max:255',
+            'from_name' => 'required|string|max:255',
+            'notify_new_user' => 'nullable|boolean',
+            'notify_password_reset' => 'nullable|boolean',
+            'notify_order_confirmation' => 'nullable|boolean',
+            'notify_contact_form' => 'nullable|boolean',
+            'test_email' => 'nullable|email',
+            'timeout' => 'nullable|integer|min:5|max:300',
+            'retry_attempts' => 'nullable|integer|min:1|max:10',
+            'use_queue' => 'nullable|boolean',
+            'charset' => 'nullable|in:utf-8,iso-8859-1',
+            'mailgun_domain' => 'nullable|string|max:255',
+            'mailgun_secret' => 'nullable|string|max:255',
+            'ses_key' => 'nullable|string|max:255',
+            'ses_secret' => 'nullable|string|max:255',
+            'postmark_token' => 'nullable|string|max:255',
+        ], [
+            'mail_host.required_if' => 'SMTP host is required when using SMTP driver.',
+            'mail_port.required_if' => 'SMTP port is required when using SMTP driver.',
+            'from_address.required' => 'From email address is required.',
+            'from_name.required' => 'From name is required.',
+        ]);
+    }
+
+    /**
+     * Update .env file with email settings
+     */
+    private function updateEnvSettings(array $settings)
+    {
+        try {
+            $envPath = base_path('.env');
+
+            if (file_exists($envPath)) {
+                $envContent = file_get_contents($envPath);
+
+                $updates = [
+                    'MAIL_MAILER' => $settings['mail_driver'] ?? 'smtp',
+                    'MAIL_HOST' => $settings['mail_host'] ?? 'smtp.mailgun.org',
+                    'MAIL_PORT' => $settings['mail_port'] ?? '587',
+                    'MAIL_USERNAME' => $settings['mail_username'] ?? '',
+                    'MAIL_PASSWORD' => $settings['mail_password'] ?? '',
+                    'MAIL_ENCRYPTION' => $settings['mail_encryption'] ?? 'tls',
+                    'MAIL_FROM_ADDRESS' => $settings['from_address'] ?? 'hello@example.com',
+                    'MAIL_FROM_NAME' => '"' . addslashes($settings['from_name'] ?? 'Laravel') . '"',
+                    'MAILGUN_DOMAIN' => $settings['mailgun_domain'] ?? '',
+                    'MAILGUN_SECRET' => $settings['mailgun_secret'] ?? '',
+                    'AWS_ACCESS_KEY_ID' => $settings['ses_key'] ?? '',
+                    'AWS_SECRET_ACCESS_KEY' => $settings['ses_secret'] ?? '',
+                    'MAIL_PRETEND' => ($settings['email_enabled'] ?? 1) ? 'false' : 'true',
+                ];
+
+                foreach ($updates as $key => $value) {
+                    $pattern = "/^{$key}=.*/m";
+
+                    if (preg_match($pattern, $envContent)) {
+                        $envContent = preg_replace($pattern, "{$key}={$value}", $envContent);
+                    } else {
+                        $envContent .= "\n{$key}={$value}";
+                    }
+                }
+
+                file_put_contents($envPath, $envContent);
+            }
+        } catch (\Exception $e) {
+            // Log error but don't break the flow
+            Log::error('Failed to update .env file: ' . $e->getMessage());
+        }
+    }
+
+    /**
+     * Send test email
+     */
+    public function emailTest(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'email' => 'required|email'
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Invalid email address'
+            ], 422);
+        }
+
+        try {
+            $email = $request->email;
+
+            // Send test email
+            Mail::raw('This is a test email from ' . config('app.name') . '. If you received this, your email configuration is working correctly.', function ($message) use ($email) {
+                $message->to($email)
+                    ->subject('Test Email from ' . config('app.name'));
+            });
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Test email sent successfully!'
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Failed to send test email: ' . $e->getMessage()
+            ], 500);
+        }
     }
 
     // Media Settings

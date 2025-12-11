@@ -90,7 +90,7 @@
                                                 <td class="text-center">{{ $index + 1 }}</td>
                                                 <td>{{ $role->name }}</td>
                                                 <td>{{ $role->guard_name }}</td>
-                                                <td>{{ $role->created_at->format('d M Y') }}</td>
+                                                <td>{{ $role->created_at->format(dateFormat()) }}</td>
                                                 <td>
                                                     <div class="flex gap-1">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"

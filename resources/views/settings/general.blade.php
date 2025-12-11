@@ -1,206 +1,252 @@
 @extends('layouts.base')
 
+@push('styles')
+    <style>
+        .select2-container .select2-selection--single {
+            height: 37px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__rendered,
+        .select2-container--default .select2-selection--single .select2-selection__clear {
+            line-height: 37px !important;
+        }
+
+        .select2-container--default .select2-selection--single .select2-selection__arrow {
+            top: 5px !important;
+        }
+    </style>
+@endpush
 @section('content')
-    <main class="grow content pt-5">
+    @php
+        $general = settings('general');
+    @endphp
+
+    <main class="grow content pt-5" id="content" role="content">
         <div class="container-fixed">
-            {{-- Breadcrumb --}}
-            <div class="flex items-center gap-2 mb-6">
-                <a href="{{ route('settings.index') }}" class="text-gray-500 hover:text-primary">
-                    <i class="ki-duotone ki-setting-2">
-                        <span class="path1"></span><span class="path2"></span>
-                    </i>
-                </a>
-                <i class="ki-duotone ki-right text-gray-400 text-xs"></i>
-                <span class="text-sm font-medium text-gray-700">General Settings</span>
-            </div>
 
-            {{-- Page Header --}}
             <div class="mb-6">
-                <h1 class="text-2xl font-bold text-gray-900 mb-2">General Settings</h1>
-                <p class="text-gray-600">Configure your site's basic information and general preferences.</p>
+                <h1 class="text-2xl font-bold text-gray-900 mb-2">{{ translate('General Settings') }}</h1>
+                <p class="text-gray-600">
+                    {{ translate('Configure your site basic information, branding, and localization preferences.') }}
+                </p>
             </div>
 
-            {{-- Settings Form --}}
-            <form action="{{ route('settings.update', 'general') }}" method="POST">
+            <form action="{{ route('settings.general.update') }}" method="POST">
                 @csrf
                 @method('PUT')
 
-                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                    {{-- Left Column --}}
-                    <div class="lg:col-span-2 space-y-6">
-                        {{-- Site Information Card --}}
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Site Information</h3>
-                                <p class="card-subtitle">Basic information about your website</p>
+                <div class="flex grow gap-5 lg:gap-7.5 mt-5">
+
+                    <div class="flex flex-col items-stretch grow gap-5 lg:gap-7.5 lg:w-2/3">
+
+                        <div class="card pb-2.5">
+                            <div class="card-header" id="site_information">
+                                <h3 class="card-title">{{ translate('Site Information') }}</h3>
                             </div>
-                            <div class="card-body">
-                                <div class="space-y-4">
-                                    <div class="form-group">
-                                        <label class="form-label">Site Name</label>
-                                        <input type="text" class="form-control" name="site_name"
-                                            value="{{ Setting::getByKey('site_name', config('app.name')) }}">
-                                    </div>
 
-                                    <div class="form-group">
-                                        <label class="form-label">Site Title</label>
-                                        <input type="text" class="form-control" name="site_title"
-                                            value="{{ Setting::getByKey('site_title') }}">
-                                    </div>
+                            <div class="card-body grid gap-5">
 
-                                    <div class="form-group">
-                                        <label class="form-label">Site Description</label>
-                                        <textarea class="form-control" name="site_description" rows="3">{{ Setting::getByKey('site_description') }}</textarea>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label">Contact Email</label>
-                                        <input type="email" class="form-control" name="contact_email"
-                                            value="{{ Setting::getByKey('contact_email') }}">
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label">Contact Phone</label>
-                                        <input type="text" class="form-control" name="contact_phone"
-                                            value="{{ Setting::getByKey('contact_phone') }}">
-                                    </div>
+                                <div class="w-full">
+                                    <label class="form-label flex items-center gap-1">
+                                        {{ translate('Site Name') }}
+                                    </label>
+                                    <input class="input @error('site_name') border-red-500 @enderror" name="site_name"
+                                        type="text" value="{{ old('site_name', $general['site_name'] ?? '') }}"
+                                        required />
+                                    @error('site_name')
+                                        <span class="text-danger text-sm">{{ $message }}</span>
+                                    @enderror
                                 </div>
+
+                                <div class="w-full">
+                                    <label class="form-label flex items-center gap-1">
+                                        {{ translate('Site Title') }}
+                                    </label>
+                                    <input class="input @error('site_title') border-red-500 @enderror" name="site_title"
+                                        type="text" value="{{ old('site_title', $general['site_title'] ?? '') }}" />
+                                    @error('site_title')
+                                        <span class="text-danger text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <div class="w-full">
+                                    <label class="form-label flex items-center gap-1">
+                                        {{ translate('Site Description') }}
+                                    </label>
+                                    <textarea class="textarea @error('site_description') border-red-500 @enderror" name="site_description" rows="3">{{ old('site_description', $general['site_description'] ?? '') }}</textarea>
+                                    @error('site_description')
+                                        <span class="text-danger text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
                             </div>
                         </div>
 
-                        {{-- Localization Card --}}
-                        <div class="card">
-                            <div class="card-header">
-                                <h3 class="card-title">Localization</h3>
-                                <p class="card-subtitle">Language and regional settings</p>
+                        <div class="card pb-2.5">
+                            <div class="card-header" id="contact_information">
+                                <h3 class="card-title">{{ translate('Contact Information') }}</h3>
                             </div>
-                            <div class="card-body">
-                                <div class="space-y-4">
-                                    <div class="form-group">
-                                        <label class="form-label">Default Language</label>
-                                        <select class="form-select" name="default_language">
-                                            <option value="en"
-                                                {{ Setting::getByKey('default_language', 'en') == 'en' ? 'selected' : '' }}>
-                                                English</option>
-                                            <option value="ar"
-                                                {{ Setting::getByKey('default_language', 'en') == 'ar' ? 'selected' : '' }}>
-                                                Arabic</option>
-                                            <option value="fr"
-                                                {{ Setting::getByKey('default_language', 'en') == 'fr' ? 'selected' : '' }}>
-                                                French</option>
-                                        </select>
+
+                            <div class="card-body grid gap-5">
+
+                                <div class="grid gap-5 md:grid-cols-2">
+                                    <div class="w-full">
+                                        <label class="form-label flex items-center gap-1">
+                                            {{ translate('Contact Email') }}
+                                        </label>
+                                        <input class="input @error('contact_email') border-red-500 @enderror"
+                                            name="contact_email" type="email"
+                                            value="{{ old('contact_email', $general['contact_email'] ?? '') }}" />
+                                        @error('contact_email')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
                                     </div>
 
-                                    <div class="form-group">
-                                        <label class="form-label">Timezone</label>
-                                        <select class="form-select" name="timezone">
-                                            @foreach (timezone_identifiers_list() as $timezone)
-                                                <option value="{{ $timezone }}"
-                                                    {{ Setting::getByKey('timezone', config('app.timezone')) == $timezone ? 'selected' : '' }}>
-                                                    {{ $timezone }}
-                                                </option>
-                                            @endforeach
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label">Date Format</label>
-                                        <select class="form-select" name="date_format">
-                                            <option value="d/m/Y"
-                                                {{ Setting::getByKey('date_format', 'd/m/Y') == 'd/m/Y' ? 'selected' : '' }}>
-                                                DD/MM/YYYY</option>
-                                            <option value="m/d/Y"
-                                                {{ Setting::getByKey('date_format', 'd/m/Y') == 'm/d/Y' ? 'selected' : '' }}>
-                                                MM/DD/YYYY</option>
-                                            <option value="Y-m-d"
-                                                {{ Setting::getByKey('date_format', 'd/m/Y') == 'Y-m-d' ? 'selected' : '' }}>
-                                                YYYY-MM-DD</option>
-                                        </select>
-                                    </div>
-
-                                    <div class="form-group">
-                                        <label class="form-label">Time Format</label>
-                                        <select class="form-select" name="time_format">
-                                            <option value="12"
-                                                {{ Setting::getByKey('time_format', '12') == '12' ? 'selected' : '' }}>12
-                                                Hour</option>
-                                            <option value="24"
-                                                {{ Setting::getByKey('time_format', '12') == '24' ? 'selected' : '' }}>24
-                                                Hour</option>
-                                        </select>
+                                    <div class="w-full">
+                                        <label class="form-label flex items-center gap-1">
+                                            {{ translate('Contact Phone') }}
+                                        </label>
+                                        <input class="input @error('contact_phone') border-red-500 @enderror"
+                                            name="contact_phone" type="text"
+                                            value="{{ old('contact_phone', $general['contact_phone'] ?? '') }}" />
+                                        @error('contact_phone')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
                                     </div>
                                 </div>
+
+                                <div class="w-full">
+                                    <label class="form-label flex items-center gap-1">
+                                        {{ translate('Address Line') }}
+                                    </label>
+                                    <textarea class="textarea @error('address_line') border-red-500 @enderror" name="address_line" rows="2">{{ old('address_line', $general['address_line'] ?? '') }}</textarea>
+                                    @error('address_line')
+                                        <span class="text-danger text-sm">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
                             </div>
                         </div>
+
+                        <div class="card pb-2.5">
+                            <div class="card-header" id="localization_settings">
+                                <h3 class="card-title">{{ translate('Localization') }}</h3>
+                            </div>
+
+                            <div class="card-body grid gap-5 md:grid-cols-2 lg:grid-cols-4">
+
+                                <div class="w-full">
+                                    <label
+                                        class="form-label flex items-center gap-1">{{ translate('Default Language') }}</label>
+                                    <select class="select" name="default_language">
+                                        <option value="en"
+                                            {{ ($general['default_language'] ?? '') == 'en' ? 'selected' : '' }}>
+                                            {{ translate('English') }}
+                                        </option>
+                                        <option value="ar"
+                                            {{ ($general['default_language'] ?? '') == 'ar' ? 'selected' : '' }}>
+                                            {{ translate('Arabic') }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="w-full">
+                                    <label class="form-label flex items-center gap-1">{{ translate('Timezone') }}</label>
+                                    <select class="select select2 w-full" name="timezone">
+                                        @foreach (timezone_identifiers_list() as $timezone)
+                                            <option value="{{ $timezone }}"
+                                                {{ ($general['timezone'] ?? config('app.timezone')) == $timezone ? 'selected' : '' }}>
+                                                {{ $timezone }}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="w-full">
+                                    <label
+                                        class="form-label flex items-center gap-1">{{ translate('Date Format') }}</label>
+                                    <select class="select" name="date_format">
+                                        <option value="d M Y"
+                                            {{ ($general['date_format'] ?? '') == 'd M Y' ? 'selected' : '' }}>
+                                            DD/MM/YYYY
+                                        </option>
+                                        <option value="M d Y"
+                                            {{ ($general['date_format'] ?? '') == 'M d Y' ? 'selected' : '' }}>
+                                            MM/DD/YYYY
+                                        </option>
+                                        <option value="Y-m-d"
+                                            {{ ($general['date_format'] ?? '') == 'Y-m-d' ? 'selected' : '' }}>
+                                            YYYY-MM-DD
+                                        </option>
+                                    </select>
+                                </div>
+
+                                <div class="w-full">
+                                    <label
+                                        class="form-label flex items-center gap-1">{{ translate('Time Format') }}</label>
+                                    <select class="select" name="time_format">
+                                        <option value="12"
+                                            {{ ($general['time_format'] ?? '') == '12' ? 'selected' : '' }}>
+                                            12 {{ translate('Hour') }}
+                                        </option>
+                                        <option value="24"
+                                            {{ ($general['time_format'] ?? '') == '24' ? 'selected' : '' }}>
+                                            24 {{ translate('Hour') }}
+                                        </option>
+                                    </select>
+                                </div>
+
+                            </div>
+                        </div>
+
                     </div>
 
-                    {{-- Right Column --}}
-                    <div class="space-y-6">
-                        {{-- Logo & Favicon Card --}}
-                        <div class="card">
+                    <div class="lg:w-1/3 flex flex-col items-stretch gap-5 lg:gap-7.5">
+                        <div class="card pb-2.5">
                             <div class="card-header">
-                                <h3 class="card-title">Branding</h3>
-                                <p class="card-subtitle">Logos and favicon</p>
+                                <h3 class="card-title">{{ translate('Branding') }}</h3>
                             </div>
-                            <div class="card-body">
-                                <div class="space-y-4">
-                                    <div class="form-group">
-                                        <label class="form-label">Logo</label>
-                                        <div class="mt-2">
-                                            <img id="logo-preview"
-                                                src="{{ Setting::getByKey('logo') ? asset(Setting::getByKey('logo')) : asset('assets/media/images/default-logo.svg') }}"
-                                                class="h-10 mb-2">
-                                            <input type="file" class="form-control" name="logo" id="logo-upload"
-                                                accept="image/*">
-                                            <input type="hidden" name="logo_url"
-                                                value="{{ Setting::getByKey('logo') }}">
-                                        </div>
-                                    </div>
 
-                                    <div class="form-group">
-                                        <label class="form-label">Favicon</label>
-                                        <div class="mt-2">
-                                            <img id="favicon-preview"
-                                                src="{{ Setting::getByKey('favicon') ? asset(Setting::getByKey('favicon')) : asset('favicon.ico') }}"
-                                                class="h-8 w-8 mb-2">
-                                            <input type="file" class="form-control" name="favicon"
-                                                id="favicon-upload" accept="image/x-icon,image/png">
-                                            <input type="hidden" name="favicon_url"
-                                                value="{{ Setting::getByKey('favicon') }}">
-                                        </div>
-                                    </div>
+                            <div class="card-body grid gap-5">
+
+                                <div class="w-full">
+                                    @include('media.single', [
+                                        'name' => 'logo',
+                                        'label' => translate('Upload Logo'),
+                                        'value' => $general['logo'] ?? null,
+                                    ])
                                 </div>
+
+                                <div class="w-full">
+                                    @include('media.single', [
+                                        'name' => 'favicon',
+                                        'label' => translate('Upload Favicon'),
+                                        'value' => $general['favicon'] ?? null,
+                                    ])
+                                </div>
+
                             </div>
                         </div>
 
-                        {{-- Actions Card --}}
                         <div class="card">
                             <div class="card-header">
-                                <h3 class="card-title">Actions</h3>
+                                <h3 class="card-title">{{ translate('Actions') }}</h3>
                             </div>
+
                             <div class="card-body">
-                                <div class="space-y-4">
-                                    <button type="submit" class="btn btn-primary w-full">
-                                        <i class="ki-duotone ki-check-circle me-2">
-                                            <span class="path1"></span><span class="path2"></span>
-                                        </i>
-                                        Save Changes
-                                    </button>
+                                <div class="flex gap-3">
 
-                                    <button type="button" class="btn btn-outline-secondary w-full"
-                                        onclick="resetForm()">
-                                        <i class="ki-duotone ki-reset me-2">
-                                            <span class="path1"></span><span class="path2"></span>
-                                        </i>
-                                        Reset to Default
-                                    </button>
-
-                                    <a href="{{ route('settings.index') }}" class="btn btn-light w-full">
-                                        <i class="ki-duotone ki-arrow-left me-2">
-                                            <span class="path1"></span><span class="path2"></span>
-                                        </i>
-                                        Back to Settings
+                                    <a href="{{ route('settings.index') }}" type="button"
+                                        class="btn btn-outline btn-secondary w-full d-flex align-items-center justify-content-center">
+                                        <i class="ki-filled ki-arrow-left me-2"></i>
+                                        {{ translate('Cancel') }}
                                     </a>
+
+                                    <button type="submit"
+                                        class="btn btn-primary w-full d-flex align-items-center justify-content-center">
+                                        <i class="ki-filled ki-check-circle me-2"></i>
+                                        {{ translate('Save Changes') }}
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -209,37 +255,20 @@
             </form>
         </div>
     </main>
-
-    @push('scripts')
-        <script>
-            // Handle logo upload preview
-            document.getElementById('logo-upload').addEventListener('change', function(e) {
-                if (e.target.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        document.getElementById('logo-preview').src = e.target.result;
-                    }
-                    reader.readAsDataURL(e.target.files[0]);
-                }
-            });
-
-            // Handle favicon upload preview
-            document.getElementById('favicon-upload').addEventListener('change', function(e) {
-                if (e.target.files[0]) {
-                    const reader = new FileReader();
-                    reader.onload = function(e) {
-                        document.getElementById('favicon-preview').src = e.target.result;
-                    }
-                    reader.readAsDataURL(e.target.files[0]);
-                }
-            });
-
-            function resetForm() {
-                if (confirm('Are you sure you want to reset all settings to default?')) {
-                    // Implement reset logic here
-                    window.location.reload();
-                }
-            }
-        </script>
-    @endpush
 @endsection
+
+
+@push('scripts')
+    <!-- Select2 CSS & JS -->
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select2').select2({
+                width: '100%',
+                placeholder: "{{ translate('Select a timezone') }}",
+                allowClear: true
+            });
+        });
+    </script>
+@endpush

@@ -68,7 +68,7 @@
                                                     <td>{{ number_format($item->creditLimit ?? 0, 2) }}</td>
                                                     <td>600 (static)</td>
 
-                                                    <td>{{ $item->created_at->format('d M Y') }}</td>
+                                                    <td>{{ $item->created_at->format(dateFormat()) }}</td>
 
                                                     {{-- <td>
                                                         <div class="flex gap-1">

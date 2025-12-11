@@ -80,7 +80,7 @@
                         </div>
                     </td>
                     <td class="text-center">
-                        {{ $item->created_at->format('d M Y') }}
+                        {{ $item->created_at->format(dateFormat()) }}
                     </td>
 
                     <td>

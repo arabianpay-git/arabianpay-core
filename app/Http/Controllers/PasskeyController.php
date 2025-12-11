@@ -26,6 +26,7 @@ class PasskeyController extends Controller
         $publicKey = app(GeneratePasskeyRegisterOptionsAction::class)
             ->execute($user, true);
 
+        // Keep same shape as before (json-encoded)
         session(['passkey_registration_options' => json_encode($publicKey)]);
 
         return view('passkeys.register', [
@@ -85,12 +86,15 @@ class PasskeyController extends Controller
     }
 
     /**
-     * Get public key options for passkey authentication by phone.
+     * Get public key options for passkey authentication by email.
+     *
+     * SECURITY CHANGE:
+     * - We store the target user's id in session ('passkey_authentication_user_id')
+     *   so the subsequent authenticate() call can confirm that the assertion
+     *   maps to that same user.
      */
     public function getPublicKey(Request $request)
     {
-        // $user = User::whereEncrypted('email', $request->email)->first();
-        // Auth::login($user);
         $request->validate(['email' => 'required|email']);
         $user = User::whereEncrypted('email', $request->email)->first();
         if (! $user) {
@@ -104,13 +108,17 @@ class PasskeyController extends Controller
 
         $allowCredentials = $user->passkeys->map(fn(Passkey $p) => [
             'type' => 'public-key',
+            // ensure this is base64url of the credential id bytes
             'id'   => $base64url($p->data->publicKeyCredentialId),
         ])->values()->all();
 
         if (empty($allowCredentials)) {
             Log::warning("{$user->email} has no passkeys");
         } else {
-            Log::info('AllowCredentials:', $allowCredentials);
+            Log::info('AllowCredentials for passkey login request', [
+                'email' => $user->email,
+                'allowCredentials_count' => count($allowCredentials),
+            ]);
         }
 
         $publicKeyJson = app(GeneratePasskeyAuthenticationOptionsAction::class)
@@ -124,12 +132,25 @@ class PasskeyController extends Controller
         $publicKey['timeout']          = $publicKey['timeout'] ?? 60000;
 
         // store for later verification
-        session(['passkey_authentication_options' => $publicKey]);
+        // SECURITY: store both the options AND the intended user id
+        session([
+            'passkey_authentication_options' => $publicKey,
+            'passkey_authentication_user_id' => $user->id,
+            'passkey_authentication_user_email' => $user->email, // helpful for logging/debug
+        ]);
 
         return response()->json($publicKey);
     }
+
     /**
      * Verify the assertion and authenticate user.
+     *
+     * SECURITY CHANGES:
+     * 1. We ensure a stored session user id exists for this authentication attempt.
+     * 2. After FindPasskeyToAuthenticateAction returns the matched Passkey, we
+     *    check the passkey->authenticatable_id == session user id. If not, reject.
+     * 3. We clear the session passkey_authentication_* keys after success/failure to avoid reuse.
+     * 4. Return JSON response (success/failure) so XHR clients handle redirects explicitly.
      */
     public function authenticate(Request $request)
     {
@@ -152,6 +173,15 @@ class PasskeyController extends Controller
             );
 
             $options = session('passkey_authentication_options', []);
+            $sessionUserId = session('passkey_authentication_user_id', null);
+
+            if (! $sessionUserId) {
+                Log::warning('Passkey authentication attempt without stored session user id', [
+                    'session_options_present' => !empty($options),
+                ]);
+                return response('Authentication failed: session expired or not initialized.', 400);
+            }
+
             $passkeyOptionsJson = json_encode(
                 $options,
                 JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR
@@ -160,24 +190,61 @@ class PasskeyController extends Controller
             $passkey = app(FindPasskeyToAuthenticateAction::class)
                 ->execute($cleanJson, $passkeyOptionsJson);
 
+            if (! $passkey) {
+                Log::warning('PasskeyController@authenticate: No passkey found from assertion', [
+                    'session_user_id' => $sessionUserId,
+                ]);
+                // clear session keys to avoid replay attempts
+                session()->forget(['passkey_authentication_options', 'passkey_authentication_user_id', 'passkey_authentication_user_email']);
+                return response('Authentication failed: no matching passkey found.', 401);
+            }
+
+            // Ensure the passkey belongs to the same user we created the challenge for
+            if ((int) $passkey->authenticatable_id !== (int) $sessionUserId) {
+                Log::warning('Passkey used does not belong to the user that requested the challenge', [
+                    'session_user_id' => $sessionUserId,
+                    'passkey_user_id' => $passkey->authenticatable_id,
+                    'passkey_id' => $passkey->id,
+                ]);
+
+                // clear session keys immediately
+                session()->forget(['passkey_authentication_options', 'passkey_authentication_user_id', 'passkey_authentication_user_email']);
+
+                return response('Authentication failed: passkey does not belong to the requested user.', 403);
+            }
+
             $user = User::find($passkey->authenticatable_id);
             Log::info('Passkey authentication successful', [
                 'passkey_id' => $passkey->id,
                 'user_id'    => $user?->id,
+                'user_email' => $user?->email,
                 'phone'      => $user?->phone_number,
             ]);
 
             if (! $user) {
+                session()->forget(['passkey_authentication_options', 'passkey_authentication_user_id', 'passkey_authentication_user_email']);
                 return response('Authentication failed: No user associated with this passkey.', 500);
             }
 
             Auth::login($user);
 
-            return redirect()->route('dashboard')->with('success', 'Logged in with passkey');
+            // Clean up session tokens after success
+            session()->forget(['passkey_authentication_options', 'passkey_authentication_user_id', 'passkey_authentication_user_email']);
+
+            // Return JSON for JS to handle redirection
+            return response()->json([
+                'message' => 'Logged in with passkey',
+                'redirect' => route('dashboard'),
+            ]);
         } catch (InvalidPasskey $e) {
+            Log::warning('InvalidPasskey during authentication', ['message' => $e->getMessage()]);
+            // clear session keys to avoid reuse
+            session()->forget(['passkey_authentication_options', 'passkey_authentication_user_id', 'passkey_authentication_user_email']);
             return response('Authentication failed: Invalid passkey. ' . $e->getMessage(), 401);
         } catch (\Throwable $e) {
             Log::error('PasskeyController@authenticate error', ['exception' => $e]);
+            // clear session keys to avoid reuse
+            session()->forget(['passkey_authentication_options', 'passkey_authentication_user_id', 'passkey_authentication_user_email']);
             return response('Authentication failed: ' . $e->getMessage(), 500);
         }
     }

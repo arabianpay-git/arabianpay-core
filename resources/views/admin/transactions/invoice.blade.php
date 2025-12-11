@@ -37,11 +37,11 @@
                 </div>
                 <div style="margin-bottom:0.3rem;">
                     <span style="font-weight:600;">Issued:</span>
-                    <span>{{ $transaction->created_at->format('d M Y') }}</span>
+                    <span>{{ $transaction->created_at->format(dateFormat()) }}</span>
                 </div>
                 <div>
                     <span style="font-weight:600;">Due:</span>
-                    <span>{{ optional($transaction->schedulePayments->last())->due_date->format('d M Y') ?? '-' }}</span>
+                    <span>{{ optional($transaction->schedulePayments->last())->due_date->format(dateFormat()) ?? '-' }}</span>
                 </div>
             </td>
         </tr>
@@ -137,8 +137,9 @@
             @foreach ($transaction->schedulePayments as $sp)
                 <tr>
                     <td style="border-bottom:1px solid #e0e0e0;">{{ $sp->instalment_number }}</td>
-                    <td style="border-bottom:1px solid #e0e0e0;">{{ $sp->due_date->format('d M Y') }}</td>
-                    <td style="border-bottom:1px solid #e0e0e0;">{{ number_format($sp->instalment_amount, 2) }} SAR</td>
+                    <td style="border-bottom:1px solid #e0e0e0;">{{ $sp->due_date->format(dateFormat()) }}</td>
+                    <td style="border-bottom:1px solid #e0e0e0;">{{ number_format($sp->instalment_amount, 2) }} SAR
+                    </td>
                     <td style="border-bottom:1px solid #e0e0e0;"><span class="badge {{ $sp->payment_status }}"
                             style="padding:3px 8px; border-radius:4px; background:#3498db; color:#fff; text-transform:capitalize;">{{ ucfirst($sp->payment_status) }}</span>
                     </td>

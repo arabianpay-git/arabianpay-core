@@ -79,7 +79,7 @@
                                                 <td class="whitespace-nowrap">{{ $item->name }}</td>
                                                 <td>{{ $item->number_of_sales > 0 ? number_format($item->number_of_sales) : '-' }}
                                                 </td>
-                                                <td>{{ $item->created_at->format('d M Y') }}</td>
+                                                <td>{{ $item->created_at->format(dateFormat()) }}</td>
                                             </tr>
                                         @endforeach
                                     </tbody>

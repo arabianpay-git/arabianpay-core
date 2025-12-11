@@ -34,7 +34,7 @@
                         default => translate('UPCOMING'),
                     };
 
-                    $dueDate = $dueDateCarbon->format('d M Y');
+                    $dueDate = $dueDateCarbon->format(dateFormat());
                     $amount = number_format($payment->instalment_amount ?? 0, 2);
                     $installmentNumber = $payment->installment_number ?? $index + 1;
                     $referenceId = $payment->uuid ?? 'INV-' . str_pad($payment->id, 6, '0', STR_PAD_LEFT);
@@ -47,7 +47,7 @@
                     $promise = $payment->promise ?? null;
                     $hasPromise = $promise ? true : false;
                     $promiseDueDate = $hasPromise
-                        ? \Carbon\Carbon::parse($promise->promise_date)->format('d M Y')
+                        ? \Carbon\Carbon::parse($promise->promise_date)->format(dateFormat())
                         : null;
                 @endphp
 
@@ -122,7 +122,7 @@
                                         @if ($payment->paid_at)
                                             <span class="due text-xs text-gray-500">
                                                 {{ translate('Paid At:') }}
-                                                {{ \Carbon\Carbon::parse($payment->paid_at)->format('d M Y') }}
+                                                {{ \Carbon\Carbon::parse($payment->paid_at)->format(dateFormat()) }}
                                             </span>
                                         @endif
                                     @elseif ($status === 'late' || $status === 'due' || $status === 'failed')

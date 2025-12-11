@@ -58,11 +58,7 @@ class Setting extends Model
      */
     public static function setByKey($key, $value, $group = null, $type = null, $is_encrypted = false)
     {
-        $toSave = $value;
-
-        if (is_array($value) || is_object($value)) {
-            $toSave = json_encode($value, JSON_UNESCAPED_UNICODE);
-        }
+        $toSave = json_encode($value, JSON_UNESCAPED_UNICODE);
 
         $attributes = [
             'value' => $is_encrypted ? encrypt($toSave) : $toSave,

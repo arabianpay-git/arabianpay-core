@@ -90,7 +90,7 @@
                                                 <td class="text-center">{{ $index + 1 }}</td>
                                                 <td>{{ Str::headline(str_replace('.', ' ', $permission->name)) }}</td>
                                                 <td>{{ ucfirst($permission->guard_name) }}</td>
-                                                <td>{{ $permission->created_at->format('d M Y') }}</td>
+                                                <td>{{ $permission->created_at->format(dateFormat()) }}</td>
                                                 <td>
                                                     <div class="flex gap-1">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"

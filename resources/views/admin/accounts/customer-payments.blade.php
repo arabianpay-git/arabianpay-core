@@ -101,7 +101,7 @@
                                                 </td>
 
                                                 <td class="whitespace-nowrap">
-                                                    {{ $wallet->created_at ? $wallet->created_at->format('d M Y') : 'N/A' }}
+                                                    {{ $wallet->created_at ? $wallet->created_at->format(dateFormat()) : 'N/A' }}
                                                 </td>
 
                                                 <td>

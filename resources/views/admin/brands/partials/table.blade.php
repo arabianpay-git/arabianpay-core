@@ -32,7 +32,7 @@
                             <span class="badge badge-sm badge-outline badge-danger">{{ translate('No') }}</span>
                         @endif
                     </td>
-                    <td>{{ $brand->created_at->format('d M Y') }}</td>
+                    <td>{{ $brand->created_at->format(dateFormat()) }}</td>
                     <td>
                         <div class="flex gap-1">
                             @can('brand.update')

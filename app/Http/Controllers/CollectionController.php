@@ -1013,7 +1013,7 @@ class CollectionController extends Controller
             // order_id should be the actual order->id (per your request)
             $orderId = optional($r->order)->id ?? 'N/A';
 
-            $dueDate = $r->due_date ? Carbon::parse($r->due_date)->format('d M Y') : 'N/A';
+            $dueDate = $r->due_date ? Carbon::parse($r->due_date)->format(dateFormat()) : 'N/A';
             $amount = '<span class="icon-saudi_riyal"></span>' . number_format($r->instalment_amount, 2);
             $status = $r->payment_status ?? 'unknown';
             $dpd = ($r->due_date && $r->due_date->lessThan($today)) ? $today->diffInDays($r->due_date) : 0;

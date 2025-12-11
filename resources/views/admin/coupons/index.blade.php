@@ -147,9 +147,9 @@
                                                         {{ ucfirst($item->discount_type) }}
                                                     </span>
                                                 </td>
-                                                <td>{{ $item->start_date->format('d M Y') }}</td>
-                                                <td>{{ $item->end_date->format('d M Y') }}</td>
-                                                <td>{{ $item->created_at->format('d M Y') }}</td>
+                                                <td>{{ $item->start_date->format(dateFormat()) }}</td>
+                                                <td>{{ $item->end_date->format(dateFormat()) }}</td>
+                                                <td>{{ $item->created_at->format(dateFormat()) }}</td>
                                                 <td>
                                                     <div class="flex gap-1">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"

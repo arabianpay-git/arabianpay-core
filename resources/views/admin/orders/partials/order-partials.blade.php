@@ -86,7 +86,7 @@
 
                 <div class="sp-row mt-2">
                     <div class="due text-xs text-gray-600">
-                        {{ \Carbon\Carbon::parse($partial->partial_due_date)->format('d M Y') }}
+                        {{ \Carbon\Carbon::parse($partial->partial_due_date)->format(dateFormat()) }}
                     </div>
 
                     @if ($partial->status !== 'paid')
@@ -119,7 +119,7 @@
                             @if ($partial->paid_at)
                                 <span class="due text-xs text-gray-500">
                                     {{ translate('Paid At:') }}
-                                    {{ \Carbon\Carbon::parse($partial->paid_at)->format('d M Y') }}
+                                    {{ \Carbon\Carbon::parse($partial->paid_at)->format(dateFormat()) }}
                                 </span>
                             @endif
                         </div>

@@ -68,8 +68,9 @@
     }
 
     .media-info {
-        padding: 8px 6px 0px 6px;
+        padding: 8px 6px 6px 6px;
         font-size: 14px;
+        background-color: #f5f5f5;
     }
 
     .media-info .name {

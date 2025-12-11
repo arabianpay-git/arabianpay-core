@@ -62,7 +62,7 @@
 @endphp
 
 <!-- Preview Card -->
-<div class="mt-3 {{ $inputValue ? '' : 'hidden' }}" id="{{ $inputId }}_previewCard">
+<div class="{{ $inputValue ? '' : 'hidden' }}" id="{{ $inputId }}_previewCard" style="margin-top: 10px;">
     <div class="media-card w-40" data-url="{{ $mediaUrl }}">
         @if ($isPdf)
             <img id="{{ $inputId }}_previewImage" class="media-thumb" src="{{ $pdfImage }}"

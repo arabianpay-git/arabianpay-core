@@ -90,7 +90,7 @@
                                                 <td class="text-center">{{ $index + 1 }}</td>
                                                 <td>{{ $state->name }}</td>
                                                 <td>{{ $state->country->name }}</td>
-                                                <td>{{ $state->created_at->format('d M Y') }}</td>
+                                                <td>{{ $state->created_at->format(dateFormat()) }}</td>
                                                 <td>
                                                     <div class="flex gap-1">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"

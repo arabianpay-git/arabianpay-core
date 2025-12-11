@@ -162,7 +162,8 @@
                                                 <tr>
                                                     <td class="text-center">{{ $index + 1 }}</td>
                                                     <td class="text-center">{{ $order->tracking ?? '-' }}</td>
-                                                    <td class="text-center">{{ $order->created_at->format('d M Y') }}</td>
+                                                    <td class="text-center">{{ $order->created_at->format(dateFormat()) }}
+                                                    </td>
 
                                                     {{-- Total Amount --}}
                                                     <td class="text-right">

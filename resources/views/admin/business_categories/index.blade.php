@@ -130,7 +130,7 @@
                                                             class="badge badge-sm badge-outline badge-danger">{{ translate('No') }}</span>
                                                     @endif
                                                 </td>
-                                                <td>{{ $item->created_at->format('d M Y') }}</td>
+                                                <td>{{ $item->created_at->format(dateFormat()) }}</td>
                                                 <td>
                                                     <div class="flex gap-1">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"

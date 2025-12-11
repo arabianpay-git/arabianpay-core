@@ -94,7 +94,7 @@
                                                             {{ $item->user?->business_name ?? '—' }}</small>
                                                     </div>
                                                 </td>
-                                                <td>{{ optional($item->schedulePayment)->due_date?->format('d M Y') ?? '-' }}
+                                                <td>{{ optional($item->schedulePayment)->due_date?->format(dateFormat()) ?? '-' }}
                                                 </td>
                                                 <td>
                                                     <span class="icon-saudi_riyal"></span>

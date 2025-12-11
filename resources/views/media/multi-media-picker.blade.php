@@ -40,6 +40,7 @@
         .media-info {
             padding: 8px 10px;
             font-size: 14px;
+            background-color: #f5f5f5;
         }
 
         .media-info .name {

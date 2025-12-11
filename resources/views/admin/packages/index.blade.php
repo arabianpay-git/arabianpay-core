@@ -133,7 +133,7 @@
                                                 <td>{{ number_format($package->value) }}</td>
 
 
-                                                <td>{{ $package->created_at->format('d M Y') }}</td>
+                                                <td>{{ $package->created_at->format(dateFormat()) }}</td>
 
                                                 <td>
                                                     <div class="flex gap-1">

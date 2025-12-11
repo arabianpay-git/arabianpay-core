@@ -200,7 +200,7 @@
                                                 <td>{{ number_format($item->limit_arabianpay_after, 2) ?? '—' }}</td>
                                                 <td>{{ number_format($item->limit_arabianpay_before, 2) ?? '—' }}</td>
                                                 <td>{{ number_format($item->comission, 2) ?? '—' }} %</td>
-                                                <td>{{ $item->created_at->format('d M Y') }}</td>
+                                                <td>{{ $item->created_at->format(dateFormat()) }}</td>
                                                 <td>
                                                     <div class="flex gap-1">
                                                         <a class="btn btn-sm btn-icon btn-clear btn-primary"
