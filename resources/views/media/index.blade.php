@@ -157,7 +157,6 @@
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            margin-bottom: 0.25rem;
         }
 
         .media-info .size {

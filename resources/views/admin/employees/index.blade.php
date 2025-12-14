@@ -53,7 +53,7 @@
                                     <tbody>
                                         @foreach ($employees as $index => $employee)
                                             <tr>
-                                                <td class="text-center">{{ $index + $employees->firstItem() }}</td>
+                                                <td class="text-center">{{ $employee->id }}</td>
                                                 <td>{{ $employee->first_name ?? '-' }} {{ $employee->last_name ?? '' }}
                                                 </td>
                                                 <td class="text-center">
