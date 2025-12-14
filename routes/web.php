@@ -31,6 +31,7 @@ use App\Http\Controllers\{
     Admin\InvestmentPoolsController,
     ChatController,
     InstalmentPlanController,
+    LeanController,
     MediaController,
     MerchantUpdateController,
     NoteController,
@@ -361,6 +362,19 @@ Route::group([
                 Route::get('suppliers-statics',    'suppliersStatics')->name('suppliers.statics');
 
                 Route::get('nafath', 'nafath')->name('nafath');
+            });
+
+            //
+            // LEAN routes
+            //
+            Route::controller(LeanController::class)->prefix('lean')->name('lean.')->group(function () {
+                Route::get('/{id}', 'index')->name('index');
+                Route::get('/{id}/banks', 'getBanks')->name('banks');
+                Route::get('/{id}/entities', 'getEntities')->name('entities');
+                Route::get('/{id}/bank-statement/{reportId}', 'getBankStatement')->name('bank-statement');
+
+                Route::post('/test-connection', 'testConnection')->name('test-connection');
+                Route::post('/clear-cache', 'clearCache')->name('clear-cache');
             });
 
             //

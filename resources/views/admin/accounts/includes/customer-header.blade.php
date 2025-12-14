@@ -54,6 +54,17 @@
                     </div>
 
                     <div
+                        class="menu-item border-b-2 {{ Route::is('lean.index') ? 'border-b-primary' : 'border-b-transparent' }}">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('lean.index', ['id' => $customer->user_id]) }}">
+                            <span
+                                class="menu-title text-sm font-medium {{ Route::is('lean.index') ? 'text-primary font-semibold' : 'text-gray-700' }}">
+                                Lean
+                            </span>
+                        </a>
+                    </div>
+
+                    <div
                         class="{{ Route::is('customerCreditAssessment') ? 'border-b-primary' : '' }} menu-item border-b-2 border-b-transparent menu-item-active:border-b-primary menu-item-here:border-b-primary">
                         <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
                             href="{{ route('customerCreditAssessment', ['id' => $customer->user_id]) }}">
@@ -114,9 +125,12 @@
                     </div>
 
                     {{-- Log --}}
-                    <div class="menu-item border-b-2 {{ Route::is('customerLog') ? 'border-b-primary' : 'border-b-transparent' }}">
-                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2" href="{{ route('customerLog', ['id' => $customer->user_id]) }}">
-                            <span class="menu-title text-sm font-medium {{ Route::is('customerLog') ? 'text-primary font-semibold' : 'text-gray-700' }}">
+                    <div
+                        class="menu-item border-b-2 {{ Route::is('customerLog') ? 'border-b-primary' : 'border-b-transparent' }}">
+                        <a class="menu-link gap-1.5 pb-2 lg:pb-4 px-2"
+                            href="{{ route('customerLog', ['id' => $customer->user_id]) }}">
+                            <span
+                                class="menu-title text-sm font-medium {{ Route::is('customerLog') ? 'text-primary font-semibold' : 'text-gray-700' }}">
                                 Log
                             </span>
                         </a>
