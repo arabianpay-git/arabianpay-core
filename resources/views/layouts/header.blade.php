@@ -61,7 +61,7 @@
                                 </div>
                             </div>
                             <span class="badge badge-xs badge-primary badge-outline">
-                                {{ ucfirst(Auth::user()->user_type) }}
+                                {{ Auth::user()->user_type === 'employee' && Auth::user()->is_manager == 1 ? 'Manager' : ucfirst(Auth::user()->user_type) }}
                             </span>
                         </div>
                         <div class="menu-separator"></div>
