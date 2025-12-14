@@ -61,6 +61,7 @@ return [
             'https://www.gstatic.com',
             'https://firebaseinstallations.googleapis.com',
             'https://fcmregistrations.googleapis.com',
+            'https://cdn.leantech.me',
             // Allow JS/Map/CDN connections (pusher + maps)
             'https://cdn.jsdelivr.net',
             'https://js.pusher.com',
