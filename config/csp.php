@@ -46,6 +46,7 @@ return [
             'https://cdn.salla.sa',
             'https://core.arabianpay.net',
             'https://partners.arabianpay.net',
+            'https://cdn.leantech.me',
             env('VITE_DEV_SERVER', 'http://localhost:5174'),
         ],
 
