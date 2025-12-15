@@ -145,15 +145,6 @@ Route::group([
             // Sidebar AJAX users
             Route::get('/chat-users', [ChatController::class, 'listUsers']);
 
-
-
-
-
-
-
-
-
-
             Route::post('/device-token', [DeviceTokenController::class, 'store']);
 
             //

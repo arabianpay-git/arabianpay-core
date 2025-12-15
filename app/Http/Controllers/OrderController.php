@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\RefundRequest;
@@ -167,33 +168,24 @@ class OrderController extends Controller
             $newDeliveryStatus = $request->delivery_status ?? $oldDeliveryStatus;
             $newGeneralStatus = $request->general_status ?? $oldGeneralStatus;
 
-            /**
-             * DELIVERY STATUS VALIDATION
-             */
             if (array_search($newDeliveryStatus, $deliveryFlow) < array_search($oldDeliveryStatus, $deliveryFlow)) {
-                return back()->with('error', "Cannot move delivery status backward from '{$oldDeliveryStatus}' to '{$newDeliveryStatus}'.");
+                return back()->with('error', 'Invalid delivery status flow.');
             }
 
-            // Once delivered, it cannot be returned
             if ($oldDeliveryStatus === 'delivered' && $newDeliveryStatus === 'returned') {
-                return back()->with('error', "Cannot change delivery status from 'delivered' to 'returned'.");
+                return back()->with('error', 'Delivered order cannot be returned.');
             }
 
-            /**
-             * GENERAL STATUS VALIDATION
-             */
             if (array_search($newGeneralStatus, $generalFlow) < array_search($oldGeneralStatus, $generalFlow)) {
-                return back()->with('error', "Cannot move general status backward from '{$oldGeneralStatus}' to '{$newGeneralStatus}'.");
+                return back()->with('error', 'Invalid general status flow.');
             }
 
-            // Once accepted, it cannot be cancelled or failed
             if ($oldGeneralStatus === 'accepted' && in_array($newGeneralStatus, ['cancelled', 'failed'])) {
-                return back()->with('error', "Cannot change general status from 'accepted' to '{$newGeneralStatus}'.");
+                return back()->with('error', 'Accepted order cannot be cancelled or failed.');
             }
 
             DB::beginTransaction();
 
-            // Handle delivered OTP
             if ($newDeliveryStatus === 'delivered' && $oldDeliveryStatus !== 'delivered') {
                 $this->handleDeliveredStatus($order);
             }
@@ -203,53 +195,61 @@ class OrderController extends Controller
                 'general_status' => $newGeneralStatus,
             ]);
 
-            $descriptionParts = [];
+            // =========================
+            //   Notification Payload
+            // =========================
+            $title = "Order #{$order->id} Status Updated";
+            $description = "Your order status has been updated.";
+
             if ($oldDeliveryStatus !== $newDeliveryStatus) {
-                $descriptionParts[] = "Delivery status changed from '{$oldDeliveryStatus}' to '{$newDeliveryStatus}'";
+                $description .= " Delivery: {$newDeliveryStatus}.";
             }
             if ($oldGeneralStatus !== $newGeneralStatus) {
-                $descriptionParts[] = "General status changed from '{$oldGeneralStatus}' to '{$newGeneralStatus}'";
+                $description .= " Status: {$newGeneralStatus}.";
             }
-            $description = implode(' and ', $descriptionParts) ?: 'Order status updated.';
 
-            $this->logOrderAction(
-                $order,
-                'update_status',
-                $description,
-                compact('oldDeliveryStatus', 'newDeliveryStatus', 'oldGeneralStatus', 'newGeneralStatus')
-            );
+            $clickAction = url("/orders/{$order->id}");
+            $mobileScreen = 'order_details';
 
-            // ====== Send Firebase Notification ======
+            // =========================
+            //   STORE IN DATABASE
+            // =========================
+            Notification::create([
+                'user_id' => $order->user_id,
+                'type' => 'order_status',
+                'data' => json_encode([
+                    'title' => $title,
+                    'description' => $description,
+                    'click_action' => $clickAction,
+                    'mobile_screen' => $mobileScreen,
+                    'order_id' => $order->id,
+                ]),
+            ]);
+
+            // =========================
+            //   FIREBASE NOTIFICATION
+            // =========================
             $firebaseService = app(FirebaseService::class);
 
-            $notificationTitle = "Order #{$order->id} Status Updated";
-            $notificationBody = "Your order status has been updated. ";
-            if ($oldDeliveryStatus !== $newDeliveryStatus) {
-                $notificationBody .= "Delivery status: {$newDeliveryStatus}. ";
-            }
-            if ($oldGeneralStatus !== $newGeneralStatus) {
-                $notificationBody .= "General status: {$newGeneralStatus}.";
-            }
-
-            // Send notification to the user
             $firebaseService->sendCustomNotification(
-                $order->user_id, // Assuming order has user_id relation
-                $notificationTitle,
-                $notificationBody,
+                $order->user_id,
+                $title,
+                $description,
                 [
                     'order_id' => $order->id,
                     'delivery_status' => $newDeliveryStatus,
                     'general_status' => $newGeneralStatus,
+                    'click_action' => $clickAction,
+                    'mobile_screen' => $mobileScreen,
                 ]
             );
-            // ============================================
 
             DB::commit();
             return back()->with('success', 'Order status updated successfully.');
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error("Failed to update order status: {$e->getMessage()}", ['order_id' => $id]);
-            return back()->with('error', 'Failed to update order status. Please try again.');
+            Log::error('Order status update failed', ['error' => $e->getMessage()]);
+            return back()->with('error', 'Failed to update order status.');
         }
     }
 
@@ -270,9 +270,9 @@ class OrderController extends Controller
         }
 
         $order = Order::findOrFail($request->order_id);
-        $oldGeneralStatus = $order->general_status; // Capture old status
+        $oldGeneralStatus = $order->general_status;
 
-        DB::beginTransaction(); // Start transaction
+        DB::beginTransaction();
         try {
             if ($request->hasFile('invoice_file')) {
                 $disk = 'public';
@@ -281,7 +281,7 @@ class OrderController extends Controller
 
                 $extension = strtolower($file->getClientOriginalExtension());
                 $filename = Str::random(40) . '.' . $extension;
-                $fullPath = "$folder/$filename";
+                $fullPath = "{$folder}/{$filename}";
 
                 $file->storeAs($folder, $filename, $disk);
                 $order->invoice_file = $fullPath;
@@ -304,9 +304,8 @@ class OrderController extends Controller
                 ]
             );
 
-            // Nafith SANAD creation
+            // Nafith SANAD
             $nafithError = $this->createNafithSanad($order);
-
             if ($nafithError) {
                 DB::rollBack();
                 return response()->json([
@@ -317,29 +316,61 @@ class OrderController extends Controller
 
             $this->createSchedulePayments($order);
 
-            // ====== Send Firebase Notification ======
-            $firebaseService = app(FirebaseService::class);
+            // =========================
+            //   Notification Payload
+            // =========================
+            $title = "Good News! Your Order #{$order->id} has been Accepted!";
+            $body = "Invoice #{$order->invoice_number} uploaded. Estimated delivery: {$order->estimated_delivery_date}.";
 
-            $notificationTitle = "Good News! Your Order #{$order->id} has been Accepted!";
-            $notificationBody = "Invoice #{$order->invoice_number} uploaded. Estimated delivery: {$order->estimated_delivery_date}.";
+            $clickAction = url("/orders/{$order->id}");
+            $mobileScreen = 'order_details';
+
+            // =========================
+            //   STORE IN DATABASE
+            // =========================
+            Notification::create([
+                'user_id' => $order->user_id,
+                'type' => 'order_accepted',
+                'data' => json_encode([
+                    'title' => $title,
+                    'description' => $body,
+                    'click_action' => $clickAction,
+                    'mobile_screen' => $mobileScreen,
+                    'order_id' => $order->id,
+                    'invoice_number' => $order->invoice_number,
+                ]),
+            ]);
+
+            // =========================
+            // 📲 FIREBASE NOTIFICATION
+            // =========================
+            $firebaseService = app(FirebaseService::class);
 
             $firebaseService->sendCustomNotification(
                 $order->user_id,
-                $notificationTitle,
-                $notificationBody,
+                $title,
+                $body,
                 [
                     'order_id' => $order->id,
                     'general_status' => 'accepted',
                     'invoice_number' => $order->invoice_number,
+                    'click_action' => $clickAction,
+                    'mobile_screen' => $mobileScreen,
                 ]
             );
-            // ============================================
 
             DB::commit();
-            return response()->json(['status' => 'success', 'message' => translate('Order accepted successfully!')]);
+            return response()->json([
+                'status' => 'success',
+                'message' => translate('Order accepted successfully!')
+            ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error("Failed to accept order: {$e->getMessage()}", ['order_id' => $order->id]);
+            Log::error('Failed to accept order', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'status' => 'error',
                 'message' => translate('Failed to accept order. Please try again.')
@@ -358,7 +389,7 @@ class OrderController extends Controller
         ]);
 
         $order = Order::findOrFail($request->order_id);
-        $oldGeneralStatus = $order->general_status; // Capture old status
+        $oldGeneralStatus = $order->general_status;
 
         DB::beginTransaction();
         try {
@@ -375,36 +406,67 @@ class OrderController extends Controller
                 ['rejection_reason' => $order->rejection_reason]
             );
 
-            // ====== Send Firebase Notification ======
-            $firebaseService = app(FirebaseService::class);
+            // =========================
+            //   Notification Payload
+            // =========================
+            $title = "Your Order #{$order->id} has been Rejected";
+            $body = "Reason: {$order->rejection_reason}. Please contact support for more details.";
 
-            $notificationTitle = "Your Order #{$order->id} has been Rejected";
-            $notificationBody = "Reason: {$order->rejection_reason}. Please contact support for more details.";
+            $clickAction = url("/orders/{$order->id}");
+            $mobileScreen = 'order_details';
+
+            // =========================
+            //   STORE IN DATABASE
+            // =========================
+            Notification::create([
+                'user_id' => $order->user_id,
+                'type' => 'order_rejected',
+                'data' => json_encode([
+                    'title' => $title,
+                    'description' => $body,
+                    'click_action' => $clickAction,
+                    'mobile_screen' => $mobileScreen,
+                    'order_id' => $order->id,
+                    'rejection_reason' => $order->rejection_reason,
+                ]),
+            ]);
+
+            // =========================
+            //   FIREBASE NOTIFICATION
+            // =========================
+            $firebaseService = app(FirebaseService::class);
 
             $firebaseService->sendCustomNotification(
                 $order->user_id,
-                $notificationTitle,
-                $notificationBody,
+                $title,
+                $body,
                 [
                     'order_id' => $order->id,
                     'general_status' => 'rejected',
                     'rejection_reason' => $order->rejection_reason,
+                    'click_action' => $clickAction,
+                    'mobile_screen' => $mobileScreen,
                 ]
             );
-            // ============================================
 
             DB::commit();
-            return response()->json(['status' => 'success', 'message' => translate('Order has been rejected successfully.')]);
+            return response()->json([
+                'status' => 'success',
+                'message' => translate('Order has been rejected successfully.')
+            ]);
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error("Failed to reject order: {$e->getMessage()}", ['order_id' => $order->id]);
+            Log::error('Failed to reject order', [
+                'order_id' => $order->id,
+                'error' => $e->getMessage()
+            ]);
+
             return response()->json([
                 'status' => 'error',
                 'message' => translate('Failed to reject order. Please try again.')
             ], 500);
         }
     }
-
 
     /**
      * Create 3 installment payments for the accepted order.
