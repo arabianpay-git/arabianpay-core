@@ -504,3 +504,18 @@ if (!function_exists('updateEnvValue')) {
         }
     }
 }
+
+
+if (!function_exists('human_number')) {
+    /**
+     * Format numbers as human-readable strings
+     * e.g. 1K, 2.5M, 1.2B
+     */
+    function human_number(float $number): string
+    {
+        if ($number >= 1_000_000_000) return round($number / 1_000_000_000, 1) . 'B';
+        if ($number >= 1_000_000)     return round($number / 1_000_000, 1) . 'M';
+        if ($number >= 1_000)         return round($number / 1_000, 1) . 'K';
+        return number_format($number, 2, '.', '');
+    }
+}

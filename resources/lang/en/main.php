@@ -2389,4 +2389,12 @@ return [
     'Fetch Statement' => 'Fetch Statement',
     'Report ID Required' => 'Report ID Required',
     'Please enter a Report ID.' => 'Please enter a Report ID.',
+    'Legal & Identity Verification' => 'Legal & Identity Verification',
+    'Credit History from SIMAH' => 'Credit History from SIMAH',
+    'Cashflow from Open Banking' => 'Cashflow from Open Banking',
+    'Business Profile Overview' => 'Business Profile Overview',
+    'Usage & Transaction Behavior' => 'Usage & Transaction Behavior',
+    'Regulatory Risk Adjustment' => 'Regulatory Risk Adjustment',
+    'no cr issue date' => 'No Cr Issue Date',
+    'simah non scorable' => 'SIMAH Non Scorable',
 ];

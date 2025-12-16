@@ -73,6 +73,7 @@
                 'scoreType' => 'lps',
                 'scoreData' => $riskAnalysis,
                 'title' => translate('Legal & Profile Score'),
+                'subtitle' => translate('Legal & Identity Verification'),
                 'icon' => 'ki-document',
                 'color' => 'blue',
             ])
@@ -83,6 +84,7 @@
                 'scoreType' => 'chs',
                 'scoreData' => $riskAnalysis,
                 'title' => translate('Credit History Score'),
+                'subtitle' => translate('Credit History from SIMAH'),
                 'icon' => 'ki-chart-line',
                 'color' => 'green',
             ])
@@ -93,6 +95,7 @@
                 'scoreType' => 'bcs',
                 'scoreData' => $riskAnalysis,
                 'title' => translate('Banking & Cashflow Score'),
+                'subtitle' => translate('Cashflow from Open Banking'),
                 'icon' => 'ki-bank',
                 'color' => 'purple',
             ])
@@ -103,6 +106,7 @@
                 'scoreType' => 'bps',
                 'scoreData' => $riskAnalysis,
                 'title' => translate('Business Profile Score'),
+                'subtitle' => translate('Business Profile Overview'),
                 'icon' => 'ki-briefcase',
                 'color' => 'orange',
             ])
@@ -113,6 +117,7 @@
                 'scoreType' => 'bes',
                 'scoreData' => $riskAnalysis,
                 'title' => translate('Behavioral & Experience Score'),
+                'subtitle' => translate('Usage & Transaction Behavior'),
                 'icon' => 'ki-chart-simple',
                 'color' => 'red',
             ])
@@ -123,6 +128,7 @@
                 'scoreType' => 'caf',
                 'scoreData' => $riskAnalysis,
                 'title' => translate('Compliance Adjustment Factor'),
+                'subtitle' => translate('Regulatory Risk Adjustment'),
                 'icon' => 'ki-shield-tick',
                 'color' => 'gray',
             ])

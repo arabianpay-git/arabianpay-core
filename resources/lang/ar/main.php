@@ -2272,4 +2272,12 @@ return [
     'Fetch Statement' => 'جلب كشف الحساب',
     'Report ID Required' => 'معرّف التقرير مطلوب',
     'Please enter a Report ID.' => 'الرجاء إدخال معرّف التقرير.',
+    'Legal & Identity Verification' => 'التحقق القانوني والهوية',
+    'Credit History from SIMAH' => 'تاريخ الائتمان من سمة',
+    'Cashflow from Open Banking' => 'التدفق النقدي من البنوك المفتوحة',
+    'Business Profile Overview' => 'نظرة عامة على ملف الأعمال',
+    'Usage & Transaction Behavior' => 'سلوك الاستخدام والمعاملات',
+    'Regulatory Risk Adjustment' => 'تعديل المخاطر التنظيمية',
+    'no cr issue date' => 'لا يوجد تاريخ إصدار للسجل التجاري',
+    'simah non scorable' => 'سمة غير قابلة للتقييم',
 ];

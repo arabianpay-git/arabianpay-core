@@ -88,7 +88,7 @@ $isNonScorable = $simahScoreCard['scoreCardCode'] ?? null === 'NS' || $score ===
             </div>
             <div>
                 <h4 class="font-semibold text-gray-900">{{ translate($title) }}</h4>
-                <p class="text-sm text-gray-500">{{ translate('Credit History from SIMAH') }}</p>
+                <p class="text-sm text-gray-500">{{ translate($subtitle) }}</p>
             </div>
         </div>
 

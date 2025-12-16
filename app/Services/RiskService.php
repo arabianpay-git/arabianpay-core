@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\BusinessCategory;
 use App\Models\City;
 use App\Models\Customer;
+use App\Models\LeanReport;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\RefundRequest;
@@ -434,11 +435,28 @@ class RiskService
         $flags = [];
         $notes = [];
 
-        // load component weights for BCS
-        $turnoverW = $this->weights['bcs_turnover_weight'] ?? 35;
-        $volatilityW = $this->weights['bcs_volatility_weight'] ?? 25;
-        $returnedW = $this->weights['bcs_returned_weight'] ?? 25;
-        $balanceW = $this->weights['bcs_balance_weight'] ?? 15;
+        // -----------------------
+        // Defaults (CTO-provided) - preserved but overridable from $this->policy / $this->weights
+        // -----------------------
+        $defaultPolicy = [
+            'bcs_th_low'  => 30000,
+            'bcs_th_mid'  => 80000,
+            'bcs_th_high' => 150000,
+            'default_bcs' => 50,
+            'bcs_min_months' => 3, // Min months required
+            'bcs_lookback_months' => 6,
+            'bcs_as_of' => '2025-12-15', // optional override in policy
+        ];
+
+        $policy = array_merge($defaultPolicy, $this->policy ?? []);
+
+        // Weights (must sum to 1 ideally). Use provided weights, or fall back to CTO defaults.
+        $turnoverW = $this->weights['bcs_turnover_weight'] ?? 0.35;
+        $volatilityW = $this->weights['bcs_volatility_weight'] ?? 0.25;
+        $returnedW = $this->weights['bcs_returned_weight'] ?? 0.25;
+        $balanceW = $this->weights['bcs_balance_weight'] ?? 0.15;
+
+        // Normalize weights to fractions (defensive)
         $sumW = ($turnoverW + $volatilityW + $returnedW + $balanceW) ?: 1;
         $turnoverFrac = $turnoverW / $sumW;
         $volFrac = $volatilityW / $sumW;
@@ -448,71 +466,228 @@ class RiskService
         // Get user ID based on entity type
         $userId = $this->getUserId($entity, $type);
 
-        // Attempt to compute Avg_monthly_turnover from Order data
+        // Lookback and min months
+        $months = (int)($policy['bcs_lookback_months'] ?? 6);
+        $minMonths = max(1, (int)($policy['bcs_min_months'] ?? 3));
+
+        // As-Of date (evaluation reference)
         try {
-            // For merchants, we need to get orders where they are the seller
-            if ($type === 'merchant') {
-                $months = 6;
-                // You might need to adjust this based on your Order model structure
-                $recentOrders = Order::where('seller_id', $userId)
-                    ->where('created_at', '>=', Carbon::now()->subMonths($months))
+            $asOf = \Carbon\Carbon::parse($policy['bcs_as_of'] ?? now());
+        } catch (\Throwable $parseEx) {
+            $asOf = \Carbon\Carbon::now();
+        }
+
+        try {
+            $revenues = [];
+            $usedLean = false;
+            $avgMonthly = 0;
+            $leanReport = null;
+            $data = null;
+
+            // -----------------------
+            // A: Try the fast path: use generated column `has_data` if present (very cheap)
+            // -----------------------
+            try {
+                // This will fail gracefully if has_data column doesn't exist (caught below)
+                $leanReport = LeanReport::where('user_id', $userId)
+                    ->where('has_data', 1)
+                    ->orderBy('created_at', 'desc')
+                    ->first();
+            } catch (\Throwable $e) {
+                // likely `has_data` column not available — we'll fallback to a safe limited query
+                $leanReport = null;
+            }
+
+            // -----------------------
+            // B: If fast path didn't yield a report, do a controlled lookup (limit 5) and pick the first with non-empty data
+            // -----------------------
+            if (!$leanReport) {
+                $recentReports = LeanReport::where('user_id', $userId)
+                    ->orderBy('created_at', 'desc')
+                    ->limit(5)
                     ->get();
 
-                // Group by month and calculate monthly revenue
-                $monthlyRevenue = [];
-                foreach ($recentOrders as $order) {
-                    $month = $order->created_at->format('Y-m');
-                    if (!isset($monthlyRevenue[$month])) {
-                        $monthlyRevenue[$month] = 0;
+                foreach ($recentReports as $r) {
+                    if (!empty($r->data)) {
+                        $leanReport = $r;
+                        break;
                     }
-                    $monthlyRevenue[$month] += $order->grand_total ?? 0;
+                }
+            }
+
+            // -----------------------
+            // C: If we have a leanReport with data, try to compute monthly revenues from it
+            // -----------------------
+            if ($leanReport && !empty($leanReport->data)) {
+                $data = $leanReport->data; // model casts JSON -> array
+
+                $monthlyRevenue = [];
+
+                if (isset($data['report']['banks']) && is_array($data['report']['banks'])) {
+                    foreach ($data['report']['banks'] as $bank) {
+                        if (!isset($bank['accounts']) || !is_array($bank['accounts'])) {
+                            continue;
+                        }
+                        foreach ($bank['accounts'] as $acctWrapper) {
+                            $txns = $acctWrapper['transactions'] ?? [];
+                            if (!is_array($txns)) {
+                                continue;
+                            }
+                            foreach ($txns as $txn) {
+                                if (empty($txn['booking_date_time'])) {
+                                    continue;
+                                }
+                                try {
+                                    $dt = \Carbon\Carbon::parse($txn['booking_date_time']);
+                                } catch (\Throwable $e) {
+                                    continue;
+                                }
+
+                                // Only include transactions within lookback window relative to $asOf
+                                if ($dt->lt($asOf->copy()->subMonths($months)) || $dt->gt($asOf)) {
+                                    continue;
+                                }
+
+                                $monthKey = $dt->format('Y-m');
+
+                                $amount = 0.0;
+                                if (isset($txn['amount']['amount'])) {
+                                    $amount = (float)$txn['amount']['amount'];
+                                } elseif (isset($txn['amount'])) {
+                                    $amount = (float)$txn['amount'];
+                                }
+
+                                $isCredit = false;
+                                if (isset($txn['credit_debit_indicator'])) {
+                                    $isCredit = strtoupper($txn['credit_debit_indicator']) === 'CREDIT';
+                                } else {
+                                    $isCredit = $amount >= 0;
+                                }
+
+                                if ($type === 'merchant') {
+                                    if (!$isCredit) {
+                                        continue;
+                                    }
+                                    $monthlyRevenue[$monthKey] = ($monthlyRevenue[$monthKey] ?? 0.0) + $amount;
+                                } else {
+                                    $monthlyRevenue[$monthKey] = ($monthlyRevenue[$monthKey] ?? 0.0) + abs($amount);
+                                }
+                            }
+                        }
+                    }
                 }
 
-                $revenues = array_values($monthlyRevenue);
-                $avgMonthly = count($revenues) ? (array_sum($revenues) / count($revenues)) : 0;
-            } else {
-                // For customers, use the existing method if present
-                $months = 6;
-                if (method_exists(Order::class, 'getRevenueStreams')) {
-                    $revenueData = Order::getRevenueStreams($months);
-                    $revenues = $revenueData['revenue'] ?? [];
+                // Build months list (ensures zero months are present)
+                $monthsList = [];
+                for ($i = 0; $i < $months; $i++) {
+                    $m = $asOf->copy()->subMonths($i)->startOfMonth();
+                    $monthsList[] = $m->format('Y-m');
+                }
+                $monthsList = array_reverse($monthsList);
+
+                $revenues = [];
+                foreach ($monthsList as $mKey) {
+                    $revenues[] = round($monthlyRevenue[$mKey] ?? 0.0, 2);
+                }
+
+                $nonZeroMonths = 0;
+                foreach ($revenues as $r) {
+                    if ($r > 0) $nonZeroMonths++;
+                }
+
+                if ($nonZeroMonths >= $minMonths) {
+                    $usedLean = true;
+                    $avgMonthly = count($revenues) ? (array_sum($revenues) / count($revenues)) : 0.0;
+                    $notes[] = "Used LeanReport (id={$leanReport->id}) for turnover calculation; months={$months}, non_zero_months={$nonZeroMonths}";
                 } else {
-                    // fallback to using orders by user
-                    $recentOrders = Order::where('user_id', $userId)
-                        ->where('created_at', '>=', Carbon::now()->subMonths($months))
+                    $notes[] = "LeanReport present (id=" . ($leanReport->id ?? 'n/a') . ") but insufficient months (non_zero_months={$nonZeroMonths}); will fall back to orders";
+                    $flags[] = 'insufficient_lean_months';
+                    $usedLean = false;
+                }
+            }
+
+            // -----------------------
+            // D: If Lean not used, fallback to Order-based calculation
+            // -----------------------
+            if (!$usedLean) {
+                if ($type === 'merchant') {
+                    $recentOrders = Order::where('seller_id', $userId)
+                        ->where('created_at', '>=', \Carbon\Carbon::now()->subMonths($months))
                         ->get();
+
                     $monthlyRevenue = [];
                     foreach ($recentOrders as $order) {
                         $month = $order->created_at->format('Y-m');
-                        if (!isset($monthlyRevenue[$month])) {
-                            $monthlyRevenue[$month] = 0;
-                        }
-                        $monthlyRevenue[$month] += $order->grand_total ?? 0;
+                        $monthlyRevenue[$month] = ($monthlyRevenue[$month] ?? 0.0) + (float)($order->grand_total ?? 0.0);
                     }
-                    $revenues = array_values($monthlyRevenue);
-                }
 
-                $avgMonthly = count($revenues) ? (array_sum($revenues) / count($revenues)) : 0;
+                    $monthsList = [];
+                    for ($i = 0; $i < $months; $i++) {
+                        $m = \Carbon\Carbon::now()->subMonths($i)->startOfMonth();
+                        $monthsList[] = $m->format('Y-m');
+                    }
+                    $monthsList = array_reverse($monthsList);
+
+                    $revenues = [];
+                    foreach ($monthsList as $mKey) {
+                        $revenues[] = round($monthlyRevenue[$mKey] ?? 0.0, 2);
+                    }
+
+                    $avgMonthly = count($revenues) ? (array_sum($revenues) / count($revenues)) : 0.0;
+                    $notes[] = "Used Order data for merchant turnover; months={$months}";
+                } else {
+                    if (method_exists(Order::class, 'getRevenueStreams')) {
+                        $revenueData = Order::getRevenueStreams($months);
+                        $revenues = $revenueData['revenue'] ?? [];
+                        $avgMonthly = count($revenues) ? (array_sum($revenues) / count($revenues)) : 0.0;
+                        $notes[] = "Used getRevenueStreams() for customer turnover";
+                    } else {
+                        $recentOrders = Order::where('user_id', $userId)
+                            ->where('created_at', '>=', \Carbon\Carbon::now()->subMonths($months))
+                            ->get();
+                        $monthlyRevenue = [];
+                        foreach ($recentOrders as $order) {
+                            $month = $order->created_at->format('Y-m');
+                            $monthlyRevenue[$month] = ($monthlyRevenue[$month] ?? 0.0) + (float)($order->grand_total ?? 0.0);
+                        }
+                        $monthsList = [];
+                        for ($i = 0; $i < $months; $i++) {
+                            $m = \Carbon\Carbon::now()->subMonths($i)->startOfMonth();
+                            $monthsList[] = $m->format('Y-m');
+                        }
+                        $monthsList = array_reverse($monthsList);
+                        $revenues = [];
+                        foreach ($monthsList as $mKey) {
+                            $revenues[] = round($monthlyRevenue[$mKey] ?? 0.0, 2);
+                        }
+                        $avgMonthly = count($revenues) ? (array_sum($revenues) / count($revenues)) : 0.0;
+                        $notes[] = "Used Order data for customer turnover; months={$months}";
+                    }
+                }
             }
 
-            // volatility: standard deviation / mean
+            // -----------------------
+            // Volatility calculation
+            // -----------------------
             $mean = $avgMonthly;
-            $variance = 0;
+            $variance = 0.0;
             if (!empty($revenues)) {
                 foreach ($revenues as $v) {
                     $variance += pow(($v - $mean), 2);
                 }
-                $variance = $variance / count($revenues);
+                $variance = $variance / count($revenues); // population variance
                 $stddev = sqrt($variance);
-                $volatility = $mean > 0 ? ($stddev / $mean) : 0;
+                $volatility = $mean > 0 ? ($stddev / $mean) : 0.0;
             } else {
-                $stddev = 0;
-                $volatility = 0;
+                $stddev = 0.0;
+                $volatility = 0.0;
             }
 
             $notes[] = "Avg_monthly_turnover={$avgMonthly}, volatility={$volatility}";
 
-            // returned_rate (proxy): refunds / orders
+            // -----------------------
+            // Returned_rate (proxy): refunds / orders
+            // -----------------------
             if ($type === 'merchant') {
                 $totalOrders = Order::where('seller_id', $userId)->count() ?: 0;
                 $refunds = RefundRequest::where('seller_id', $userId)->count() ?: 0;
@@ -520,23 +695,58 @@ class RiskService
                 $totalOrders = Order::where('user_id', $userId)->count() ?: 0;
                 $refunds = RefundRequest::where('user_id', $userId)->count() ?: 0;
             }
-            $returnedRate = $totalOrders > 0 ? ($refunds / $totalOrders) : 0;
+            $returnedRate = $totalOrders > 0 ? ($refunds / $totalOrders) : 0.0;
 
-            // min_balance_ratio - we don't have account balance, approximate from orders vs avg turnover
-            $minBalanceRatio = $avgMonthly > 0 ? 0.1 : 0.05;
+            // -----------------------
+            // min_balance_ratio: prefer Lean closing balances if Lean used, else approximate
+            // -----------------------
+            $minBalanceRatio = 0.05; // default
+            $minClosing = null;
+            if ($leanReport && $usedLean && isset($data['report']['banks'])) {
+                foreach ($data['report']['banks'] as $bank) {
+                    foreach ($bank['accounts'] ?? [] as $acctWrapper) {
+                        foreach ($acctWrapper['balances'] ?? [] as $bal) {
+                            if (isset($bal['type']) && strtoupper($bal['type']) === 'CLOSING_BOOKED' && isset($bal['amount']['amount'])) {
+                                $val = (float)$bal['amount']['amount'];
+                                if ($minClosing === null || $val < $minClosing) {
+                                    $minClosing = $val;
+                                }
+                            }
+                        }
+                    }
+                }
+                if ($minClosing !== null && $avgMonthly > 0) {
+                    $minBalanceRatio = $minClosing / $avgMonthly;
+                } elseif ($minClosing !== null) {
+                    $minBalanceRatio = $minClosing > 0 ? 0.1 : 0.05;
+                } else {
+                    $minBalanceRatio = $avgMonthly > 0 ? 0.1 : 0.05;
+                }
+            } else {
+                $minBalanceRatio = $avgMonthly > 0 ? 0.1 : 0.05;
+            }
 
-            // Map turnover_score (keep prior thresholds)
-            if ($avgMonthly >= $this->policy['bcs_th_high']) {
+            if ($minBalanceRatio < 0) {
+                $minBalanceRatio = 0.0;
+            }
+
+            // -----------------------
+            // Score mappings using thresholds from policy
+            // -----------------------
+            $thHigh = $policy['bcs_th_high'];
+            $thMid = $policy['bcs_th_mid'];
+            $thLow = $policy['bcs_th_low'];
+
+            if ($avgMonthly >= $thHigh) {
                 $turnoverScore = 100;
-            } elseif ($avgMonthly >= $this->policy['bcs_th_mid']) {
+            } elseif ($avgMonthly >= $thMid) {
                 $turnoverScore = 80;
-            } elseif ($avgMonthly >= $this->policy['bcs_th_low']) {
+            } elseif ($avgMonthly >= $thLow) {
                 $turnoverScore = 60;
             } else {
                 $turnoverScore = 40;
             }
 
-            // Volatility_score mapping
             if ($volatility <= 0.2) {
                 $volScore = 100;
             } elseif ($volatility <= 0.5) {
@@ -547,7 +757,6 @@ class RiskService
                 $volScore = 40;
             }
 
-            // Returned rate mapping
             if ($returnedRate == 0) {
                 $returnedScore = 100;
             } elseif ($returnedRate <= 0.05) {
@@ -558,7 +767,6 @@ class RiskService
                 $returnedScore = 40;
             }
 
-            // Min balance mapping
             if ($minBalanceRatio >= 0.2) {
                 $minBalanceScore = 100;
             } elseif ($minBalanceRatio >= 0.1) {
@@ -569,21 +777,26 @@ class RiskService
                 $minBalanceScore = 40;
             }
 
-            // Compose BCS using dynamic weights
-            $bcs = $turnoverFrac * $turnoverScore + $volFrac * $volScore + $returnedFrac * $returnedScore + $balanceFrac * $minBalanceScore;
+            // Compose BCS using normalized weights
+            $bcs = $turnoverFrac * $turnoverScore
+                + $volFrac * $volScore
+                + $returnedFrac * $returnedScore
+                + $balanceFrac * $minBalanceScore;
 
             $notes[] = "turnoverScore={$turnoverScore}, volScore={$volScore}, returnedScore={$returnedScore}, minBalanceScore={$minBalanceScore}; weights(turnover,volatility,returned,balance)=({$turnoverW},{$volatilityW},{$returnedW},{$balanceW})";
 
-            // If we detect absence of real open-banking info, flag it
             if ($avgMonthly == 0) {
                 $flags[] = 'no_banking_data';
                 $notes[] = 'Avg monthly turnover computed as 0 — check open-banking integration if you expect data.';
+            }
+            if (isset($leanReport) && !$usedLean) {
+                $flags[] = 'lean_present_but_not_used';
             }
 
             return [
                 'score' => (float)$bcs,
                 'notes' => implode('; ', $notes),
-                'flags' => $flags,
+                'flags' => array_values(array_unique($flags)),
                 'components' => [
                     'avg_monthly_turnover' => round($avgMonthly, 2),
                     'turnover_score' => round($turnoverScore, 2),
@@ -599,15 +812,17 @@ class RiskService
                         'bcs_returned_weight' => $returnedW,
                         'bcs_balance_weight' => $balanceW,
                     ],
+                    'used_data_source' => ($usedLean ? 'lean_report' : 'orders'),
+                    'lean_report_id' => $leanReport->report_id ?? null,
                 ],
             ];
         } catch (\Throwable $e) {
             Log::error('RiskService computeBCS error: ' . $e->getMessage());
             $flags[] = 'no_banking_data';
             return [
-                'score' => (float)$this->policy['default_bcs'],
+                'score' => (float)($this->policy['default_bcs'] ?? $policy['default_bcs']),
                 'notes' => 'Error computing BCS; returning default',
-                'flags' => $flags,
+                'flags' => array_values(array_unique($flags)),
                 'components' => [
                     'error' => $e->getMessage(),
                 ],
