@@ -472,9 +472,9 @@ class RiskService
 
         // As-Of date (evaluation reference)
         try {
-            $asOf = \Carbon\Carbon::parse($policy['bcs_as_of'] ?? now());
+            $asOf = Carbon::parse($policy['bcs_as_of'] ?? now());
         } catch (\Throwable $parseEx) {
-            $asOf = \Carbon\Carbon::now();
+            $asOf = Carbon::now();
         }
 
         try {
@@ -488,13 +488,12 @@ class RiskService
             // A: Try the fast path: use generated column `has_data` if present (very cheap)
             // -----------------------
             try {
-                // This will fail gracefully if has_data column doesn't exist (caught below)
                 $leanReport = LeanReport::where('user_id', $userId)
                     ->where('has_data', 1)
                     ->orderBy('created_at', 'desc')
                     ->first();
             } catch (\Throwable $e) {
-                // likely `has_data` column not available — we'll fallback to a safe limited query
+                // has_data might not exist — ignore and fallback
                 $leanReport = null;
             }
 
@@ -516,7 +515,17 @@ class RiskService
             }
 
             // -----------------------
-            // C: If we have a leanReport with data, try to compute monthly revenues from it
+            // Prepare vars for reversal detection (will be filled if Lean used)
+            // -----------------------
+            $reversalKeywords = ['REVERSAL', 'REFUND', 'CHARGEBACK', 'RETURN', 'REVERSED', 'REVERS'];
+            $reversalCount = 0;
+            $reversalAmount = 0.0;
+            $totalTxnCount = 0;
+            $totalCreditAmount = 0.0;
+            $totalAbsAmount = 0.0;
+
+            // -----------------------
+            // C: If we have a leanReport with data, try to compute monthly revenues from it and detect reversals
             // -----------------------
             if ($leanReport && !empty($leanReport->data)) {
                 $data = $leanReport->data; // model casts JSON -> array
@@ -534,47 +543,79 @@ class RiskService
                                 continue;
                             }
                             foreach ($txns as $txn) {
+                                // Count total txns regardless for reversal ratio denominator
+                                $totalTxnCount++;
+
+                                // Extract booking date
                                 if (empty($txn['booking_date_time'])) {
-                                    continue;
-                                }
-                                try {
-                                    $dt = \Carbon\Carbon::parse($txn['booking_date_time']);
-                                } catch (\Throwable $e) {
-                                    continue;
-                                }
-
-                                // Only include transactions within lookback window relative to $asOf
-                                if ($dt->lt($asOf->copy()->subMonths($months)) || $dt->gt($asOf)) {
-                                    continue;
+                                    // still attempt reversal detection even if date missing
+                                    $dt = null;
+                                } else {
+                                    try {
+                                        $dt = Carbon::parse($txn['booking_date_time']);
+                                    } catch (\Throwable $e) {
+                                        $dt = null;
+                                    }
                                 }
 
-                                $monthKey = $dt->format('Y-m');
-
+                                // Determine amount numeric
                                 $amount = 0.0;
                                 if (isset($txn['amount']['amount'])) {
                                     $amount = (float)$txn['amount']['amount'];
                                 } elseif (isset($txn['amount'])) {
                                     $amount = (float)$txn['amount'];
                                 }
+                                $totalAbsAmount += abs($amount);
 
+                                // Track credit totals (inflows) — used as primary denominator for returned amount ratio
                                 $isCredit = false;
                                 if (isset($txn['credit_debit_indicator'])) {
                                     $isCredit = strtoupper($txn['credit_debit_indicator']) === 'CREDIT';
                                 } else {
                                     $isCredit = $amount >= 0;
                                 }
-
-                                if ($type === 'merchant') {
-                                    if (!$isCredit) {
-                                        continue;
-                                    }
-                                    $monthlyRevenue[$monthKey] = ($monthlyRevenue[$monthKey] ?? 0.0) + $amount;
-                                } else {
-                                    $monthlyRevenue[$monthKey] = ($monthlyRevenue[$monthKey] ?? 0.0) + abs($amount);
+                                if ($isCredit) {
+                                    $totalCreditAmount += abs($amount);
                                 }
-                            }
-                        }
-                    }
+
+                                // Only include transactions within lookback window for monthly turnover calculation
+                                if ($dt && ($dt->lt($asOf->copy()->subMonths($months)) || $dt->gt($asOf))) {
+                                    // skip adding to monthly buckets but still allow reversal detection (we may still want to consider recent reversal events only)
+                                    // continue; // DON'T continue because we want reversal detection across lookback window only? We'll only consider txns within lookback for month buckets below.
+                                }
+
+                                // Build monthly revenue buckets only if date present and within lookback window
+                                if ($dt && !$dt->lt($asOf->copy()->subMonths($months)) && !$dt->gt($asOf)) {
+                                    $monthKey = $dt->format('Y-m');
+
+                                    if ($type === 'merchant') {
+                                        // For merchant, prefer credits (inflows) as turnover
+                                        if ($isCredit) {
+                                            $monthlyRevenue[$monthKey] = ($monthlyRevenue[$monthKey] ?? 0.0) + $amount;
+                                        }
+                                    } else {
+                                        // For customer, count absolute movement
+                                        $monthlyRevenue[$monthKey] = ($monthlyRevenue[$monthKey] ?? 0.0) + abs($amount);
+                                    }
+                                }
+
+                                // -----------------------
+                                // Reversal detection (transaction_information)
+                                // -----------------------
+                                $info = $txn['transaction_information'] ?? ($txn['transactionDescription'] ?? ($txn['description'] ?? ''));
+                                if (!empty($info) && is_string($info)) {
+                                    $upperInfo = strtoupper($info);
+                                    foreach ($reversalKeywords as $kw) {
+                                        if (strpos($upperInfo, $kw) !== false) {
+                                            $reversalCount++;
+                                            $reversalAmount += abs($amount);
+                                            break; // count each txn once even if multiple keywords
+                                        }
+                                    }
+                                }
+                            } // foreach txn
+                        } // foreach accounts
+                    } // foreach banks
                 }
 
                 // Build months list (ensures zero months are present)
@@ -612,7 +653,7 @@ class RiskService
             if (!$usedLean) {
                 if ($type === 'merchant') {
                     $recentOrders = Order::where('seller_id', $userId)
-                        ->where('created_at', '>=', \Carbon\Carbon::now()->subMonths($months))
+                        ->where('created_at', '>=', Carbon::now()->subMonths($months))
                         ->get();
 
                     $monthlyRevenue = [];
@@ -623,7 +664,7 @@ class RiskService
 
                     $monthsList = [];
                     for ($i = 0; $i < $months; $i++) {
-                        $m = \Carbon\Carbon::now()->subMonths($i)->startOfMonth();
+                        $m = Carbon::now()->subMonths($i)->startOfMonth();
                         $monthsList[] = $m->format('Y-m');
                     }
                     $monthsList = array_reverse($monthsList);
@@ -643,7 +684,7 @@ class RiskService
                         $notes[] = "Used getRevenueStreams() for customer turnover";
                     } else {
                         $recentOrders = Order::where('user_id', $userId)
-                            ->where('created_at', '>=', \Carbon\Carbon::now()->subMonths($months))
+                            ->where('created_at', '>=', Carbon::now()->subMonths($months))
                             ->get();
                         $monthlyRevenue = [];
                         foreach ($recentOrders as $order) {
@@ -652,7 +693,7 @@ class RiskService
                         }
                         $monthsList = [];
                         for ($i = 0; $i < $months; $i++) {
-                            $m = \Carbon\Carbon::now()->subMonths($i)->startOfMonth();
+                            $m = Carbon::now()->subMonths($i)->startOfMonth();
                             $monthsList[] = $m->format('Y-m');
                         }
                         $monthsList = array_reverse($monthsList);
@@ -686,16 +727,44 @@ class RiskService
             $notes[] = "Avg_monthly_turnover={$avgMonthly}, volatility={$volatility}";
 
             // -----------------------
-            // Returned_rate (proxy): refunds / orders
+            // Returned_rate (proxy)
+            // If Lean used -> derive from bank transactions (transaction_information keywords)
+            // Otherwise -> fallback to Order/RefundRequest counts (legacy)
             // -----------------------
-            if ($type === 'merchant') {
-                $totalOrders = Order::where('seller_id', $userId)->count() ?: 0;
-                $refunds = RefundRequest::where('seller_id', $userId)->count() ?: 0;
+            if ($usedLean) {
+                // Use amounts as primary signal when possible
+                // totalCreditAmount computed earlier while scanning transactions
+                $reversalCount = $reversalCount ?? 0;
+                $reversalAmount = $reversalAmount ?? 0.0;
+                $totalTxnCount = $totalTxnCount ?? 0;
+                $totalCreditAmount = $totalCreditAmount ?? 0.0;
+                $totalAbsAmount = $totalAbsAmount ?? 0.0;
+
+                // Preferred ratio: reversal_amount / total_credit_amount (if credit amount > 0)
+                if ($totalCreditAmount > 0) {
+                    $returnedRate = $reversalAmount / $totalCreditAmount;
+                } elseif ($totalAbsAmount > 0) {
+                    // fallback: use reversal_amount / total_abs_amount
+                    $returnedRate = $reversalAmount / $totalAbsAmount;
+                } else {
+                    // fallback: use count-based measure
+                    $returnedRate = $totalTxnCount > 0 ? ($reversalCount / $totalTxnCount) : 0.0;
+                }
+
+                $notes[] = "Derived returnedRate from bank transactions (reversal_count={$reversalCount}, reversal_amount={$reversalAmount}, total_credit_amount={$totalCreditAmount}, total_txns={$totalTxnCount})";
             } else {
-                $totalOrders = Order::where('user_id', $userId)->count() ?: 0;
-                $refunds = RefundRequest::where('user_id', $userId)->count() ?: 0;
+                // legacy fallback using orders/refunds
+                if ($type === 'merchant') {
+                    $totalOrders = Order::where('seller_id', $userId)->count() ?: 0;
+                    $refunds = RefundRequest::where('seller_id', $userId)->count() ?: 0;
+                } else {
+                    $totalOrders = Order::where('user_id', $userId)->count() ?: 0;
+                    $refunds = RefundRequest::where('user_id', $userId)->count() ?: 0;
+                }
+                $returnedRate = $totalOrders > 0 ? ($refunds / $totalOrders) : 0.0;
+
+                $notes[] = "Used Order/Refund counts for returnedRate fallback (orders={$totalOrders}, refunds={$refunds})";
             }
-            $returnedRate = $totalOrders > 0 ? ($refunds / $totalOrders) : 0.0;
 
             // -----------------------
             // min_balance_ratio: prefer Lean closing balances if Lean used, else approximate
@@ -804,6 +873,8 @@ class RiskService
                     'volatility_score' => round($volScore, 2),
                     'returned_rate' => round($returnedRate, 4),
                     'returned_score' => round($returnedScore, 2),
+                    'returned_count' => $reversalCount ?? 0,
+                    'returned_amount' => round($reversalAmount ?? 0.0, 2),
                     'min_balance_ratio' => round($minBalanceRatio, 4),
                     'min_balance_score' => round($minBalanceScore, 2),
                     'used_weights' => [

@@ -2280,4 +2280,6 @@ return [
     'Regulatory Risk Adjustment' => 'تعديل المخاطر التنظيمية',
     'no cr issue date' => 'لا يوجد تاريخ إصدار للسجل التجاري',
     'simah non scorable' => 'سمة غير قابلة للتقييم',
+    'returned count' => 'عدد المرتجعات',
+    'returned amount' => 'مبلغ المرتجعات',
 ];

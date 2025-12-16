@@ -2397,4 +2397,7 @@ return [
     'Regulatory Risk Adjustment' => 'Regulatory Risk Adjustment',
     'no cr issue date' => 'No Cr Issue Date',
     'simah non scorable' => 'SIMAH Non Scorable',
+    'returned count' => 'Returned Count',
+    'returned amount' => 'Returned Amount',
+
 ];
