@@ -614,10 +614,6 @@ class AccountController extends Controller
             return redirect()->route('suppliers')->with('error', __('Supplier not found or not assigned to you.'));
         }
 
-        $sellerShop = ShopSetting::where('user_id', $merchant->user_id)
-            ->select('address')
-            ->first();
-
         $businessCategory = [];
         if ($merchant->business_category_id) {
             $businessCategory = BusinessCategory::whereIn(
@@ -658,7 +654,6 @@ class AccountController extends Controller
         return view('admin.accounts.supplier-profile', array_merge([
             'merchant'         => $merchant,
             'businessCategory' => $businessCategory,
-            'sellerShop'       => $sellerShop,
             'supplierBanks'    => $supplierBanks,
         ], $stats));
     }

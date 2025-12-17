@@ -5,6 +5,9 @@
         border-radius: 100%;
     }
 </style>
+@php
+    $sellerShop = App\Models\ShopSetting::where('user_id', $merchant->user_id)->select('address')->first();
+@endphp
 
 <div class="container-fixed">
     <div class="flex items-start justify-between gap-4 py-4 lg:py-6">
@@ -26,7 +29,6 @@
                         $logoPath = asset('assets/media/images/ap.png');
                     }
                 @endphp
-
 
                 <img class="logo" src="{{ $logoPath }}" alt="Shop Logo" />
             </div>
@@ -77,21 +79,35 @@
                     <div class="flex gap-1.25 items-center separator">
                         <i class="ki-filled ki-geolocation text-gray-500 text-sm"> </i>
                         <span class="text-gray-600 font-medium">
-                            {{ $sellerShop->address ?? 'N/A' }}
+                            {{ $sellerShop?->address ? maskedText($sellerShop->address) : 'N/A' }}
                         </span>
                     </div>
 
+                    {{-- Phone Number with Authorized href --}}
                     <div class="flex gap-1.25 items-center separator">
                         <i class="ki-filled ki-phone text-gray-500 text-sm"> </i>
-                        <a class="underline link" href="tel: {{ $merchant->user->phone_number }}">
-                            {{ $merchant->user->phone_number }}
+                        @php
+                            $rawPhone = $merchant->user->phone_number;
+                            // Returns raw phone if Admin/Manager, else returns '#'
+                            $authPhone = authorizeFileOrDeny($rawPhone, '#');
+                        @endphp
+                        <a class="underline link"
+                            href="{{ $authPhone !== '#' ? 'tel:' . $authPhone : 'javascript:void(0)' }}">
+                            {{ $rawPhone ? maskedText($rawPhone) : 'N/A' }}
                         </a>
                     </div>
 
+                    {{-- Email with Authorized href --}}
                     <div class="flex gap-1.25 items-center separator">
                         <i class="ki-filled ki-sms text-gray-500 text-sm"> </i>
-                        <a class="underline link" href="mailto: {{ $merchant->user->email }}">
-                            {{ $merchant->user->email }}
+                        @php
+                            $rawEmail = $merchant->user->email;
+                            // Returns raw email if Admin/Manager, else returns '#'
+                            $authEmail = authorizeFileOrDeny($rawEmail, '#');
+                        @endphp
+                        <a class="underline link"
+                            href="{{ $authEmail !== '#' ? 'mailto:' . $authEmail : 'javascript:void(0)' }}">
+                            {{ $rawEmail ? maskedText($rawEmail) : 'N/A' }}
                         </a>
                     </div>
 
@@ -109,9 +125,7 @@
             </button>
         </div>
     </div>
-
 </div>
-
 
 @include('admin.components.transfer-request', [
     'employees' => getEmployees(),

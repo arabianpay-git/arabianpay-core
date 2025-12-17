@@ -27,15 +27,28 @@
 
             <div class="mb-8">
                 <h1 class="text-2xl font-bold text-gray-800 dark:text-white">{{ translate('Customer Profile') }}</h1>
+                @php
+                    // Authorization check for financial data
+                    $isAuthorized = authorizeFileOrDeny('allow', null) === 'allow';
+
+                    // Calculations
+                    $creditScoreVal = $data['creditScore']['compositeScore'] ?? 0;
+                    $riskScoreVal = $riskScore->total_score ?? 0;
+                    $oldCreditLimit = 20000;
+                    $finalScore = $creditScoreVal * ($riskScoreVal / 100);
+                    $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
+                @endphp
+
                 <div class="grid grid-cols-1 lg:grid-cols-5 gap-4 mt-4">
 
+                    {{-- Credit Score Card --}}
                     <div class="grid grid-cols-3 lg:grid-cols-1">
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm text-gray-500">{{ translate('Credit Score') }}</p>
                                     <p class="text-2xl font-bold text-primary-600">
-                                        {{ $data['creditScore']['compositeScore'] }}/100
+                                        {{ $isAuthorized ? $creditScoreVal . '/100' : '***' }}
                                     </p>
                                 </div>
                                 <div class="bg-primary-100 p-3 rounded-full">
@@ -45,13 +58,14 @@
                         </div>
                     </div>
 
+                    {{-- Risk Score Card --}}
                     <div class="grid grid-cols-3 lg:grid-cols-1">
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm text-gray-500">{{ translate('Risk Score') }}</p>
                                     <p class="text-2xl font-bold text-primary-600">
-                                        {{ $riskScore->total_score }}/100
+                                        {{ $isAuthorized ? $riskScoreVal . '/100' : '***' }}
                                     </p>
                                 </div>
                                 <div class="bg-primary-100 p-3 rounded-full">
@@ -65,38 +79,14 @@
                         </div>
                     </div>
 
+                    {{-- Total Score Card --}}
                     <div class="grid grid-cols-3 lg:grid-cols-1">
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
-                                    @php
-                                        $creditScore = $data['creditScore']['compositeScore'];
-                                        $riskScore = $riskScore->total_score;
-                                        $oldCreditLimit = 20000;
-                                        $finalScore = $creditScore * ($riskScore / 100);
-                                        $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
-                                    @endphp
                                     <p class="text-sm text-gray-500">{{ translate('Total Score') }}</p>
-                                    <p class="text-2xl font-bold text-yellow-600">{{ number_format($finalScore, 2) }}</p>
-                                </div>
-                                <div class="bg-yellow-100 p-3 rounded-full">
-                                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor"
-                                        viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-                                    </svg>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="grid grid-cols-3 lg:grid-cols-1">
-                        <div class="card p-4 bg-white dark:bg-gray-800">
-                            <div class="flex items-center justify-between">
-                                <div>
-                                    <p class="text-sm text-gray-500">{{ translate('Credit Limit') }}</p>
                                     <p class="text-2xl font-bold text-yellow-600">
-                                        <span class="icon-saudi_riyal"></span>{{ number_format($newCreditLimit, 2) }}
+                                        {{ $isAuthorized ? number_format($finalScore, 2) : '***' }}
                                     </p>
                                 </div>
                                 <div class="bg-yellow-100 p-3 rounded-full">
@@ -110,12 +100,40 @@
                         </div>
                     </div>
 
+                    {{-- Credit Limit Card --}}
+                    <div class="grid grid-cols-3 lg:grid-cols-1">
+                        <div class="card p-4 bg-white dark:bg-gray-800">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-500">{{ translate('Credit Limit') }}</p>
+                                    <p class="text-2xl font-bold text-yellow-600">
+                                        @if ($isAuthorized)
+                                            <span class="icon-saudi_riyal"></span>{{ number_format($newCreditLimit, 2) }}
+                                        @else
+                                            {{ translate('Restricted') }}
+                                        @endif
+                                    </p>
+                                </div>
+                                <div class="bg-yellow-100 p-3 rounded-full">
+                                    <svg class="w-6 h-6 text-yellow-600" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {{-- Business Age Card --}}
                     <div class="grid grid-cols-3 lg:grid-cols-1">
                         <div class="card p-4 bg-white dark:bg-gray-800">
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm text-gray-500">{{ translate('Business Age') }}</p>
-                                    <p class="text-2xl font-bold text-green-600">{{ $data['businessAge'] }}</p>
+                                    <p class="text-2xl font-bold text-green-600">
+                                        {{ $isAuthorized ? $data['businessAge'] ?? 'N/A' : '***' }}
+                                    </p>
                                 </div>
                                 <div class="bg-green-100 p-3 rounded-full">
                                     <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor"
@@ -146,199 +164,481 @@
                             <h3 class="card-title">{{ translate('Government information') }}</h3>
                         </div>
                         <div class="card-body">
-                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            @if (empty($g))
+                                <p class="text-sm text-gray-600">{{ translate('No government data available.') }}</p>
+                            @else
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    {{-- LEFT COLUMN --}}
+                                    <table class="table-auto w-full">
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">
+                                                    {{ translate('CR National Number') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ maskedText($g['crNationalNumber'] ?? '-') }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('CR Number') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ maskedText($g['crNumber'] ?? '-') }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Version') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">{{ $g['versionNo'] ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Name') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">{{ $g['name'] ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Language') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">{{ $g['nameLangDesc'] ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Capital') }}
+                                                    ({{ $g['capital']['currencyName'] ?? '' }})</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    <span
+                                                        class="icon-saudi_riyal"></span>{{ number_format($g['crCapital']) ?? '-' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Duration (yrs)') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">{{ $g['companyDuration'] ?? '-' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">
+                                                    {{ translate('Main CR National No') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ $g['mainCrNationalNumber'] ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Main CR Number') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">{{ $g['mainCrNumber'] ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('In Liquidation?') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ !empty($g['inLiquidationProcess']) ? translate('Yes') : translate('No') }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('E-Commerce?') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ !empty($g['hasEcommerce']) ? translate('Yes') : translate('No') }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Headquarter City') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ maskedText($g['headquarterCityName'] ?? '-') }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('License Based?') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ !empty($g['isLicenseBased']) ? translate('Yes') : translate('No') }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">
+                                                    {{ translate('License Issuer No') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ $g['licenseIssuerNationalNumber'] ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">
+                                                    {{ translate('License Issuer Name') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ $g['licenseIssuerName'] ?? '-' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">
+                                                    {{ translate('Partners’ Nationality') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ $g['PartnersNationalityName'] ?? '-' }}</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
 
-                                {{-- LEFT COLUMN --}}
-                                <table class="table-auto w-full">
-                                    <tbody>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('CR National Number') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['crNationalNumber'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('CR Number') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['crNumber'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Version') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['versionNo'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Name') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['name'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Language') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['nameLangDesc'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">
-                                                {{ translate('Capital') }} ({{ $g['capital']['currencyName'] ?? '' }})
-                                            </td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['crCapital'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Duration (yrs)') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['companyDuration'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Main CR National No') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['mainCrNationalNumber'] ?? '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Main CR Number') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['mainCrNumber'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('In Liquidation?') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['inLiquidationProcess']) ? translate('Yes') : translate('No') }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('E-Commerce?') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['hasEcommerce']) ? translate('Yes') : translate('No') }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Headquarter City') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['headquarterCityName'] ?? '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('License Based?') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['isLicenseBased']) ? translate('Yes') : translate('No') }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('License Issuer No') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ $g['licenseIssuerNationalNumber'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('License Issuer Name') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['licenseIssuerName'] ?? '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">
-                                                {{ translate('Partners’ Nationality') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ $g['PartnersNationalityName'] ?? '-' }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                    {{-- RIGHT COLUMN --}}
+                                    <table class="table-auto w-full">
+                                        <tbody>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Entity Type') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ $g['entityType']['name'] ?? '-' }} –
+                                                    {{ $g['entityType']['formName'] ?? '' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Status') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    @php
+                                                        $st = strtolower($g['status']['name'] ?? '');
+                                                        $color =
+                                                            $st === 'فعال' || $st === 'active'
+                                                                ? 'success'
+                                                                : ($st === 'معلق' || $st === 'suspended'
+                                                                    ? 'warning'
+                                                                    : 'danger');
+                                                    @endphp
+                                                    <span class="badge badge-sm badge-{{ $color }} badge-outline">
+                                                        {{ $g['status']['name'] ?? '-' }}
+                                                    </span>
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Issue Date (G)') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ maskedText(
+                                                        !empty($g['issueDateGregorian']) ? \Carbon\Carbon::parse($g['issueDateGregorian'])->format(dateFormat()) : '-',
+                                                    ) }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">
+                                                    {{ translate('Issue Date (H)') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ maskedText($g['issueDateHijri'] ?? '-') }}
+                                                </td>
+                                            </tr>
 
-                                {{-- RIGHT COLUMN --}}
-                                <table class="table-auto w-full">
-                                    <tbody>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Entity Type') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['entityType']['name'] ?? '-' }} –
-                                                {{ $g['entityType']['formName'] ?? '' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Status') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                @php
-                                                    $st = strtolower($g['status']['name'] ?? '');
-                                                    $color =
-                                                        $st === 'فعال' || $st === 'active'
-                                                            ? 'success'
-                                                            : ($st === 'معلق' || $st === 'suspended'
-                                                                ? 'warning'
-                                                                : 'danger');
-                                                @endphp
-                                                <span
-                                                    class="badge badge-sm badge-{{ $color }} badge-outline">{{ $g['status']['name'] ?? '-' }}</span>
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Issue Date (G)') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['issueDateGregorian']) ? \Carbon\Carbon::parse($g['issueDateGregorian'])->format(dateFormat()) : '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Issue Date (H)') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['issueDateHijri'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Confirmation Date') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['confirmationDate']['gregorian']) ? \Carbon\Carbon::parse($g['confirmationDate']['gregorian'])->format(dateFormat()) : '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Reactivation Date') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['reactivationDate']['gregorian']) ? \Carbon\Carbon::parse($g['reactivationDate']['gregorian'])->format(dateFormat()) : '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Suspension Date') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['suspensionDate']['gregorian']) ? \Carbon\Carbon::parse($g['suspensionDate']['gregorian'])->format(dateFormat()) : '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Deletion Date') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ !empty($g['deletionDate']['gregorian']) ? \Carbon\Carbon::parse($g['deletionDate']['gregorian'])->format(dateFormat()) : '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Contact Phone') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ $g['contactInfo']['phoneNo'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Contact Mobile') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ $g['contactInfo']['mobileNo'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Contact Email') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">{{ $g['contactInfo']['email'] ?? '-' }}
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('Website') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                @if (!empty($g['contactInfo']['websiteUrl']))
-                                                    <a href="//{{ $g['contactInfo']['websiteUrl'] }}" target="_blank"
-                                                        class="text-primary">
-                                                        {{ $g['contactInfo']['websiteUrl'] }}
-                                                    </a>
-                                                @else
-                                                    -
-                                                @endif
-                                            </td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('e-Store URL') }}</td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ $g['eCommerce']['eStore'][0]['storeUrl'] ?? '-' }}</td>
-                                        </tr>
-                                        <tr>
-                                            <td class="text-sm text-gray-600 py-2">{{ translate('e-Store Platform') }}
-                                            </td>
-                                            <td class="text-sm text-gray-900 py-2">
-                                                {{ $g['eCommerce']['eStore'][0]['authenticationPlatformUrl'] ?? '-' }}</td>
-                                        </tr>
-                                    </tbody>
-                                </table>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">
+                                                    {{ translate('Confirmation Date') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    @php
+                                                        $gregorian =
+                                                            $g['status']['confirmationDate']['gregorian'] ?? null;
+                                                        $hijri = $g['status']['confirmationDate']['hijri'] ?? null;
 
-                            </div>
+                                                        if (empty($gregorian) && !empty($hijri)) {
+                                                            $converted = hijriToGregorian($hijri);
+                                                            $gregorian = $converted?->format('Y-m-d');
+                                                        }
+
+                                                        $formattedGregorian = $gregorian
+                                                            ? \Carbon\Carbon::parse($gregorian)->format(dateFormat())
+                                                            : null;
+                                                    @endphp
+
+                                                    @if ($formattedGregorian)
+                                                        {{ maskedText($formattedGregorian) }}<br>
+                                                        {{ maskedText($hijri) }}
+                                                    @elseif ($hijri)
+                                                        {{ maskedText($hijri) }}
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                            </tr>
+
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">
+                                                    {{ translate('Reactivation Date') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ !empty($g['status']['reactivationDate']['gregorian']) ? \Carbon\Carbon::parse($g['status']['reactivationDate']['gregorian'])->format(dateFormat()) : '-' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Suspension Date') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ !empty($g['status']['suspensionDate']['gregorian']) ? \Carbon\Carbon::parse($g['status']['suspensionDate']['gregorian'])->format(dateFormat()) : '-' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Deletion Date') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ !empty($g['status']['deletionDate']['gregorian']) ? \Carbon\Carbon::parse($g['status']['deletionDate']['gregorian'])->format(dateFormat()) : '-' }}
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Contact Phone') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ $g['contactInfo']['phoneNo'] ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Contact Mobile') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ $g['contactInfo']['mobileNo'] ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Contact Email') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ $g['contactInfo']['email'] ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('Website') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    @if (!empty($g['contactInfo']['websiteUrl']))
+                                                        <a href="//{{ $g['contactInfo']['websiteUrl'] }}" target="_blank"
+                                                            class="text-primary">
+                                                            {{ $g['contactInfo']['websiteUrl'] }}
+                                                        </a>
+                                                    @else
+                                                        -
+                                                    @endif
+                                                </td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('e-Store URL') }}</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ $g['eCommerce']['eStore'][0]['storeUrl'] ?? '-' }}</td>
+                                            </tr>
+                                            <tr>
+                                                <td class="text-sm text-gray-600 py-2">{{ translate('e-Store Platform') }}
+                                                </td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ $g['eCommerce']['eStore'][0]['authenticationPlatformUrl'] ?? '-' }}
+                                                </td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </div>
+
+                                <h1 class="text-xl card-title pt-5 pb-3">{{ translate('Activities') }}</h1>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 pb-3">
+                                    @foreach (array_chunk($g['activities'], 2) as $chunk)
+                                        @foreach ($chunk as $index => $activity)
+                                            @php
+                                                $groupName = null;
+                                                if (!empty($activity['id'])) {
+                                                    $groupName = DB::table('activities')
+                                                        ->where('activity_code', $activity['id'])
+                                                        ->value('group_name');
+                                                }
+                                            @endphp
+
+                                            <div class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                                                <div class="bg-gray-100 px-4 py-3">
+                                                    <h3 class="text-base font-semibold text-gray-800">
+                                                        {{ translate('Activity') }}
+                                                        #{{ $loop->parent->index * 2 + $index + 1 }}
+                                                    </h3>
+                                                </div>
+                                                <div class="overflow-x-auto">
+                                                    <table class="table-auto w-full text-sm">
+                                                        <tbody>
+                                                            @if ($groupName)
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">
+                                                                        {{ translate('Group Name') }}</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ $groupName ?? '-' }}</td>
+                                                                </tr>
+                                                            @endif
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('Activity ID') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $activity['id'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('Activity Name') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $activity['name'] ?? '-' }}</td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endforeach
+                                </div>
+
+                                <h1 class="text-xl card-title pt-5 pb-3">{{ translate('Parties') }}</h1>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 pb-3">
+                                    @foreach (array_chunk($g['parties'], 2) as $chunk)
+                                        @foreach ($chunk as $index => $party)
+                                            <div class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                                                <div class="bg-gray-100 px-4 py-3">
+                                                    <h3 class="text-base font-semibold text-gray-800">
+                                                        {{ translate('Partner') }}
+                                                        #{{ $loop->parent->index * 2 + $index + 1 }} —
+                                                        {{ maskedText($party['name'], 3, 3, 7) }}
+                                                    </h3>
+                                                </div>
+                                                <div class="overflow-x-auto">
+                                                    <table class="table-auto w-full text-sm">
+                                                        <tbody>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('Name') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ maskedText($party['name'], 3, 3, 7) }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('Identity ID') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ maskedText($party['identity']['id'] ?? '-') }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('Identity Type') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['identity']['typeName'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('Nationality') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['nationality']['name'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('Type') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['typeName'] ?? '-' }}</td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('Partnership') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    @if (!empty($party['partnership']) && is_array($party['partnership']))
+                                                                        @foreach ($party['partnership'] as $p)
+                                                                            {{ $p['name'] }}@if (!$loop->last)
+                                                                                ,
+                                                                            @endif
+                                                                        @endforeach
+                                                                    @else
+                                                                        <span
+                                                                            class="text-gray-400">{{ translate('N/A') }}</span>
+                                                                    @endif
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('Cash Contribution') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['partnerShare']['cashContributionCount'] ?? 0 }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('In-Kind Contribution') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['partnerShare']['inKindContributionCount'] ?? 0 }}
+                                                                </td>
+                                                            </tr>
+                                                            <tr>
+                                                                <td class="text-gray-600 py-2 px-4">
+                                                                    {{ translate('Total Contribution') }}</td>
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ $party['partnerShare']['totalContributionCount'] ?? 0 }}
+                                                                </td>
+                                                            </tr>
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            </div>
+                                        @endforeach
+                                    @endforeach
+                                </div>
+
+                                <h1 class="text-xl card-title pt-5 pb-3">{{ translate('Managers') }}</h1>
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-3 pb-3">
+                                    @if (!empty($g['management']['managers']) && is_array($g['management']['managers']))
+                                        @foreach (array_chunk($g['management']['managers'], 2) as $chunk)
+                                            @foreach ($chunk as $index => $manager)
+                                                <div class="border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+                                                    <div class="bg-gray-100 px-4 py-3">
+                                                        <h3 class="text-base font-semibold text-gray-800">
+                                                            {{ translate('Manager') }}
+                                                            #{{ $loop->parent->index * 2 + $index + 1 }} —
+                                                            {{ maskedText($manager['name'] ?? '-', 3, 3, 7) }}
+                                                        </h3>
+                                                    </div>
+                                                    <div class="overflow-x-auto">
+                                                        <table class="table-auto w-full text-sm">
+                                                            <tbody>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">
+                                                                        {{ translate('Name') }}</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ maskedText($manager['name'] ?? '-', 3, 3, 7) }}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">
+                                                                        {{ translate('Identity ID') }}</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ maskedText($manager['identity']['id'] ?? '-') }}
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">
+                                                                        {{ translate('Identity Type') }}</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ $manager['identity']['typeName'] ?? '-' }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">
+                                                                        {{ translate('Nationality') }}</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ $manager['nationality']['name'] ?? '-' }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">
+                                                                        {{ translate('Type') }}</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ $manager['typeName'] ?? '-' }}</td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">
+                                                                        {{ translate('Position(s)') }}</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        @if (!empty($manager['positions']) && is_array($manager['positions']))
+                                                                            @foreach ($manager['positions'] as $position)
+                                                                                {{ $position['name'] ?? '-' }}@if (!$loop->last)
+                                                                                    ,
+                                                                                @endif
+                                                                            @endforeach
+                                                                        @else
+                                                                            <span class="text-gray-400">-</span>
+                                                                        @endif
+                                                                    </td>
+                                                                </tr>
+                                                                <tr>
+                                                                    <td class="text-gray-600 py-2 px-4">
+                                                                        {{ translate('Is Licensed?') }}</td>
+                                                                    <td class="text-gray-900 py-2 px-4">
+                                                                        {{ isset($manager['isLicensed']) ? ($manager['isLicensed'] ? translate('Yes') : translate('No')) : '-' }}
+                                                                    </td>
+                                                                </tr>
+                                                            </tbody>
+                                                        </table>
+                                                    </div>
+                                                </div>
+                                            @endforeach
+                                        @endforeach
+                                    @else
+                                        <p class="text-gray-500 col-span-2">{{ translate('No manager data available.') }}
+                                        </p>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     </div>
                 </div>

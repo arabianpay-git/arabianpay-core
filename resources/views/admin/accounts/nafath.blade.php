@@ -82,58 +82,71 @@
                                                 <td>
                                                     @php
                                                         $nafathData = $item->nafath_response;
-                                                        $id =
+                                                        $fullName =
                                                             is_array($nafathData) && isset($nafathData['full_name#en'])
                                                                 ? $nafathData['full_name#en']
                                                                 : '--';
                                                     @endphp
-                                                    {{ $id }}
+                                                    {{ $fullName }}
                                                 </td>
                                                 <td>
                                                     @php
-                                                        $nafathData = $item->nafath_response;
-                                                        $id =
+                                                        $idValue =
                                                             is_array($nafathData) && isset($nafathData['id'])
-                                                                ? $nafathData['id']
-                                                                : '--';
+                                                                ? (string) $nafathData['id']
+                                                                : null;
                                                     @endphp
-                                                    {{ $id }}
+                                                    {{ $idValue ? maskedText($idValue) : '--' }}
                                                 </td>
 
-                                                <td>{{ $item->phone_number }}</td>
+                                                <td>{{ $item->phone_number ? maskedText($item->phone_number) : '--' }}</td>
 
                                                 <td>
                                                     <span
                                                         class="badge badge-sm badge-outline 
-                                                        @if ($item->status == 'approved') badge-success
-                                                        @elseif($item->status == 'pending') badge-danger
-                                                        @else badge-warning @endif">
+                    @if ($item->status == 'approved') badge-success
+                    @elseif($item->status == 'pending') badge-danger
+                    @else badge-warning @endif">
                                                         {{ ucfirst($item->status) }}
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    <button type="button" class="btn btn-sm btn-primary btn-show-nafath"
-                                                        data-modal-toggle="#nafathModal"
-                                                        data-response='@json($item->nafath_response)'>
-                                                        {{ translate('View Nafath') }}
-                                                    </button>
+                                                    {{-- Only show Nafath button if authorized --}}
+                                                    @if (authorizeFileOrDeny('allow', null) === 'allow')
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-primary btn-show-nafath"
+                                                            data-modal-toggle="#nafathModal"
+                                                            data-response='@json($item->nafath_response)'>
+                                                            {{ translate('View Nafath') }}
+                                                        </button>
+                                                    @else
+                                                        <span
+                                                            class="text-xs text-gray-400 italic">{{ translate('Restricted') }}</span>
+                                                    @endif
                                                 </td>
                                                 <td>
                                                     <span
                                                         class="badge badge-sm badge-outline 
-                                                        @if ($item->wathiq_status == 'approved') badge-success
-                                                        @elseif($item->wathiq_status == 'rejected') badge-danger
-                                                        @else badge-warning @endif">
+                    @if ($item->wathiq_status == 'approved') badge-success
+                    @elseif($item->wathiq_status == 'rejected') badge-danger
+                    @else badge-warning @endif">
                                                         {{ ucfirst($item->wathiq_status ?? 'N/A') }}
                                                     </span>
                                                 </td>
                                                 <td>{{ $item->reject_reason ?? '—' }}</td>
                                                 <td>
-                                                    <button type="button" class="btn btn-sm btn-primary btn-show-wathiq"
-                                                        data-modal-toggle="#wathiqModal"
-                                                        data-response='@json($item->cr_data)'>
-                                                        {{ translate('View Wathiq') }}
-                                                    </button>
+                                                    {{-- Only show Wathiq button if authorized --}}
+                                                    @if (authorizeFileOrDeny('allow', null) === 'allow')
+                                                        <button type="button"
+                                                            class="btn btn-sm btn-primary btn-show-wathiq"
+                                                            data-modal-toggle="#wathiqModal"
+                                                            data-response='@json($item->cr_data)'>
+                                                            {{ translate('View Wathiq') }}
+                                                        </button>
+                                                    @else
+                                                        <span
+                                                            class="text-xs text-gray-400 italic">{{ translate('Restricted') }}</span>
+                                                    @endif
                                                 </td>
                                                 <td>{{ $item->created_at->format(dateFormat()) }}</td>
                                             </tr>

@@ -97,12 +97,14 @@
                                                 <td class="text-sm text-gray-600 py-2">
                                                     {{ translate('CR National Number') }}
                                                 </td>
-                                                <td class="text-sm text-gray-900 py-2">{{ $g['crNationalNumber'] ?? '-' }}
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ maskedText($g['crNationalNumber'] ?? '-') }}
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('CR Number') }}</td>
-                                                <td class="text-sm text-gray-900 py-2">{{ $g['crNumber'] ?? '-' }}</td>
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ maskedText($g['crNumber'] ?? '-') }}</td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Version') }}</td>
@@ -158,7 +160,7 @@
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Headquarter City') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ $g['headquarterCityName'] ?? '-' }}</td>
+                                                    {{ maskedText($g['headquarterCityName'] ?? '-') }}</td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('License Based?') }}
@@ -219,17 +221,23 @@
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Issue Date (G)') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ !empty($g['issueDateGregorian']) ? \Carbon\Carbon::parse($g['issueDateGregorian'])->format(dateFormat()) : '-' }}
+                                                    {{ maskedText(
+                                                        !empty($g['issueDateGregorian']) ? \Carbon\Carbon::parse($g['issueDateGregorian'])->format(dateFormat()) : '-',
+                                                    ) }}
                                                 </td>
                                             </tr>
                                             <tr>
-                                                <td class="text-sm text-gray-600 py-2">{{ translate('Issue Date (H)') }}
+                                                <td class="text-sm text-gray-600 py-2">
+                                                    {{ translate('Issue Date (H)') }}
                                                 </td>
-                                                <td class="text-sm text-gray-900 py-2">{{ $g['issueDateHijri'] ?? '-' }}
+                                                <td class="text-sm text-gray-900 py-2">
+                                                    {{ maskedText($g['issueDateHijri'] ?? '-') }}
                                                 </td>
                                             </tr>
+
                                             <tr>
-                                                <td class="text-sm text-gray-600 py-2">{{ translate('Confirmation Date') }}
+                                                <td class="text-sm text-gray-600 py-2">
+                                                    {{ translate('Confirmation Date') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
                                                     @php
@@ -241,18 +249,23 @@
                                                             $converted = hijriToGregorian($hijri);
                                                             $gregorian = $converted?->format('Y-m-d');
                                                         }
+
+                                                        $formattedGregorian = $gregorian
+                                                            ? \Carbon\Carbon::parse($gregorian)->format(dateFormat())
+                                                            : null;
                                                     @endphp
 
-                                                    @if (!empty($gregorian))
-                                                        {{ \Carbon\Carbon::parse($gregorian)->format(dateFormat()) }}<br />
-                                                        {{ $hijri }}
-                                                    @elseif (!empty($hijri))
-                                                        {{ $hijri }}
+                                                    @if ($formattedGregorian)
+                                                        {{ maskedText($formattedGregorian) }}<br>
+                                                        {{ maskedText($hijri) }}
+                                                    @elseif ($hijri)
+                                                        {{ maskedText($hijri) }}
                                                     @else
                                                         -
                                                     @endif
                                                 </td>
                                             </tr>
+
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Reactivation Date') }}
                                                 </td>
@@ -381,7 +394,7 @@
                                                     <h3 class="text-base font-semibold text-gray-800">
                                                         {{ translate('Partner') }}
                                                         #{{ $loop->parent->index * 2 + $index + 1 }} —
-                                                        {{ $party['name'] }}
+                                                        {{ maskedText($party['name'], 3, 3, 7) }}
                                                     </h3>
                                                 </div>
                                                 <div class="overflow-x-auto">
@@ -390,14 +403,15 @@
                                                             <tr>
                                                                 <td class="text-gray-600 py-2 px-4">
                                                                     {{ translate('Name') }}</td>
-                                                                <td class="text-gray-900 py-2 px-4">{{ $party['name'] }}
+                                                                <td class="text-gray-900 py-2 px-4">
+                                                                    {{ maskedText($party['name'], 3, 3, 7) }}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <td class="text-gray-600 py-2 px-4">
                                                                     {{ translate('Identity ID') }}</td>
                                                                 <td class="text-gray-900 py-2 px-4">
-                                                                    {{ $party['identity']['id'] ?? '-' }}</td>
+                                                                    {{ maskedText($party['identity']['id'] ?? '-') }}</td>
                                                             </tr>
                                                             <tr>
                                                                 <td class="text-gray-600 py-2 px-4">
@@ -472,7 +486,7 @@
                                                         <h3 class="text-base font-semibold text-gray-800">
                                                             {{ translate('Manager') }}
                                                             #{{ $loop->parent->index * 2 + $index + 1 }} —
-                                                            {{ $manager['name'] ?? '-' }}
+                                                            {{ maskedText($manager['name'] ?? '-', 3, 3, 7) }}
                                                         </h3>
                                                     </div>
                                                     <div class="overflow-x-auto">
@@ -482,13 +496,15 @@
                                                                     <td class="text-gray-600 py-2 px-4">
                                                                         {{ translate('Name') }}</td>
                                                                     <td class="text-gray-900 py-2 px-4">
-                                                                        {{ $manager['name'] ?? '-' }}</td>
+                                                                        {{ maskedText($manager['name'] ?? '-', 3, 3, 7) }}
+                                                                    </td>
                                                                 </tr>
                                                                 <tr>
                                                                     <td class="text-gray-600 py-2 px-4">
                                                                         {{ translate('Identity ID') }}</td>
                                                                     <td class="text-gray-900 py-2 px-4">
-                                                                        {{ $manager['identity']['id'] ?? '-' }}</td>
+                                                                        {{ maskedText($manager['identity']['id'] ?? '-') }}
+                                                                    </td>
                                                                 </tr>
                                                                 <tr>
                                                                     <td class="text-gray-600 py-2 px-4">
@@ -739,16 +755,24 @@
                                                                         $bank->iban_certificate,
                                                                         PATHINFO_EXTENSION,
                                                                     );
+                                                                    $filePath = authorizeFileOrDeny(
+                                                                        $bank->iban_certificate,
+                                                                    );
                                                                 @endphp
 
                                                                 <img src="{{ asset('assets/media/images/default-pdf.png') }}"
                                                                     class="h-10" />
 
                                                                 <div class="flex flex-col">
-                                                                    <a href="{{ supplierMedia($bank->iban_certificate) }}"
-                                                                        target="_blank" class="underline">
-                                                                        {{ translate('IBAN Certificate') }}
-                                                                    </a>
+                                                                    @if ($filePath !== 'Not Allowed')
+                                                                        <a href="{{ supplierMedia($filePath) }}"
+                                                                            target="_blank" class="underline">
+                                                                            {{ translate('IBAN Certificate') }}
+                                                                        </a>
+                                                                    @else
+                                                                        <span
+                                                                            class="text-sm text-red-500">{{ $filePath }}</span>
+                                                                    @endif
                                                                     <span class="text-xs text-gray-700 dark:text-gray-300">
                                                                         {{ Carbon\Carbon::parse($bank->created_at)->format('d M Y h:i A') }}
                                                                     </span>
@@ -802,13 +826,13 @@
                                                     {{ $supplierBank->user->last_name ?? '' }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 pb-3 pe-4 lg:pe-10">
-                                                    {{ $supplierBank->bank_name ?? '-' }}
+                                                    {{ maskedText($supplierBank->bank_name ?? '-', 5, 3, 6) }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 pb-3 pe-4 lg:pe-10">
-                                                    {{ $supplierBank->account_name ?? '-' }}
+                                                    {{ maskedText($supplierBank->account_name ?? '-', 5, 3, 6) }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 pb-3">
-                                                    {{ $supplierBank->iban ?? '-' }}
+                                                    {{ maskedText($supplierBank->iban ?? '-', 5, 3, 6) }}
                                                 </td>
                                             </tr>
                                         @empty
@@ -850,7 +874,7 @@
                                                 {{ translate('CR Number') }}
                                             </td>
                                             <td class="text-sm text-gray-900 pb-3">
-                                                {{ $merchant->cr_number ?? '-' }}
+                                                {{ maskedText($merchant->cr_number ?? '-') }}
                                             </td>
                                         </tr>
 

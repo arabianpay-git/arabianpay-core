@@ -2399,5 +2399,6 @@ return [
     'simah non scorable' => 'SIMAH Non Scorable',
     'returned count' => 'Returned Count',
     'returned amount' => 'Returned Amount',
+    'Restricted' => 'Restricted',
 
 ];

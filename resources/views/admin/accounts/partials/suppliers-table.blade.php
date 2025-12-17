@@ -32,7 +32,7 @@
                             <small class="text-gray-500">— {{ $item->user?->business_name ?? '—' }}</small>
                         </div>
                     </td>
-                    <td>{{ $item->cr_number }}</td>
+                    <td>{{ maskedText($item->cr_number) }}</td>
                     <td>{{ $item->businessType->name ?? 'N/A' }}</td>
                     <td>{{ $item->assigned ? $item->assigned->first_name . ' ' . $item->assigned->last_name : __('--Not Assigned--') }}
                     </td>

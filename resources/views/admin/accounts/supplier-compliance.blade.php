@@ -13,12 +13,10 @@
                 background-image: url("{{ asset('assets/media/images/2600x1200/bg-1-dark.png') }}");
             }
 
-            /* Badge small tweaks so it looks consistent and not clipped */
             .card .relative {
                 overflow: visible;
             }
 
-            /* optional: slightly increase z-index for badges on stacked elements */
             .badge-wrapper {
                 z-index: 12;
                 pointer-events: none;
@@ -49,9 +47,6 @@
                         <div class="card-body space-y-6">
 
                             @php
-                                // ------------------------------
-                                // 1. Global compliance documents
-                                // ------------------------------
                                 $compliance = [];
 
                                 $approvals = App\Models\Approval::where('user_id', $merchant->user_id)->get();
@@ -102,11 +97,7 @@
                                     ];
                                 }
 
-                                // ------------------------------
-                                // 2. IBAN Certificates
-                                // ------------------------------
                                 $mainUserId = $merchant->user->main_user_id ?: $merchant->user_id;
-
                                 $relatedUserIds = \App\Models\User::where(function ($q) use ($mainUserId) {
                                     $q->where('id', $mainUserId)->orWhere('main_user_id', $mainUserId);
                                 })->pluck('id');
@@ -118,8 +109,6 @@
                             @foreach ($compliance as $item)
                                 <div
                                     class="relative border p-4 mt-2 rounded-xl shadow-sm bg-white dark:bg-gray-800 hover:shadow-lg transition-all">
-
-                                    {{-- Badge (top-left) --}}
                                     <div class="top-3 left-3 badge-wrapper">
                                         @if ($item['file'])
                                             <span
@@ -139,8 +128,6 @@
                                             <div>
                                                 <h4 class="text-lg font-medium text-gray-800 dark:text-white">
                                                     {{ $item['title'] }}</h4>
-
-                                                {{-- Show contract dates if Supplier Contract --}}
                                                 @if ($item['title'] === translate('Supplier Contract'))
                                                     @php
                                                         $startDate =
@@ -149,7 +136,6 @@
                                                                     'F j, Y, h:i A',
                                                                 )
                                                                 : null;
-
                                                         $endDate =
                                                             $contract && $contract->contract_end_date
                                                                 ? Carbon\Carbon::parse(
@@ -157,12 +143,10 @@
                                                                 )->format('F j, Y, h:i A')
                                                                 : null;
                                                     @endphp
-
                                                     @if ($startDate)
                                                         <p class="text-sm text-gray-600 dark:text-gray-300">Contract Start
                                                             Date: {{ $startDate }}</p>
                                                     @endif
-
                                                     @if ($endDate)
                                                         <p class="text-sm text-gray-600 dark:text-gray-300">Contract End
                                                             Date: {{ $endDate }}</p>
@@ -172,10 +156,17 @@
                                         </div>
 
                                         @if ($item['file'])
-                                            <a href="{{ asset($item['file']) }}" target="_blank"
-                                                class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition duration-150">
-                                                {{ translate('View') }}
-                                            </a>
+                                            @php $authorizedPath = authorizeFileOrDeny($item['file'], null); @endphp
+
+                                            @if ($authorizedPath)
+                                                <a href="{{ asset($authorizedPath) }}" target="_blank"
+                                                    class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition duration-150">
+                                                    {{ translate('View') }}
+                                                </a>
+                                            @else
+                                                <span
+                                                    class="text-amber-600 text-sm italic">{{ translate('Access Restricted') }}</span>
+                                            @endif
                                         @else
                                             <span
                                                 class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>
@@ -195,38 +186,25 @@
                                 <div
                                     class="border border-gray-200 dark:border-gray-700 p-5 mt-4 rounded-xl shadow-sm bg-gray-50 dark:bg-gray-900 transition hover:shadow-md">
                                     <h4 class="text-lg font-semibold text-gray-900 dark:text-gray-100 mb-4">
-                                        {{ translate('IBAN Certificates') }}
-                                    </h4>
+                                        {{ translate('IBAN Certificates') }}</h4>
 
                                     <div class="space-y-4">
                                         @foreach ($relatedUserIds as $userId)
                                             @php
                                                 $user = \App\Models\User::find($userId);
                                                 $userBanks = $ibanBanks->where('user_id', $userId);
+                                                $hasAnyCert = $userBanks->contains(
+                                                    fn($b) => !empty($b->iban_certificate),
+                                                );
                                             @endphp
 
                                             <div
                                                 class="border mb-3 border-gray-300 dark:border-gray-700 rounded-lg p-4 bg-white dark:bg-gray-800 shadow-sm transition hover:shadow-md relative">
-                                                {{-- Badge for the user-card as a whole:
-                                                     If any bank for this user has certificate, show {{ translate('COMPLIANT') }},
-                                                     otherwise {{ translate('MISSING') }}. --}}
-                                                @php
-                                                    $hasAnyCert = $userBanks->contains(function ($b) {
-                                                        return !empty($b->iban_certificate);
-                                                    });
-                                                @endphp
                                                 <div class="top-3 left-3 badge-wrapper">
-                                                    @if ($hasAnyCert)
-                                                        <span
-                                                            class="bg-green-100 text-green-800 text-xs font-semibold px-3 py-1 border-radius shadow-sm">
-                                                            {{ translate('COMPLIANT') }}
-                                                        </span>
-                                                    @else
-                                                        <span
-                                                            class="bg-red-100 text-red-800 text-xs font-semibold px-3 py-1 border-radius shadow-sm">
-                                                            {{ translate('MISSING') }}
-                                                        </span>
-                                                    @endif
+                                                    <span
+                                                        class="text-xs font-semibold px-3 py-1 border-radius shadow-sm {{ $hasAnyCert ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800' }}">
+                                                        {{ $hasAnyCert ? translate('COMPLIANT') : translate('MISSING') }}
+                                                    </span>
                                                 </div>
 
                                                 <h5 class="text-md font-semibold text-gray-800 dark:text-white mb-2">
@@ -239,14 +217,22 @@
                                                         <div
                                                             class="flex justify-between items-center p-2 border rounded-md bg-gray-50 dark:bg-gray-700">
                                                             <span class="font-medium text-gray-800 dark:text-white">
-                                                                {{ translate('IBAN') }}: {{ $bank->iban ?? 'N/A' }}
+                                                                {{ translate('IBAN') }}:
+                                                                {{ $bank->iban ? maskedText($bank->iban) : 'N/A' }}
                                                             </span>
                                                             @if ($bank->iban_certificate)
-                                                                <a href="{{ asset(supplierMedia($bank->iban_certificate)) }}"
-                                                                    target="_blank"
-                                                                    class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition">
-                                                                    {{ translate('View') }}
-                                                                </a>
+                                                                @php $authorizedIbanPath = authorizeFileOrDeny(supplierMedia($bank->iban_certificate), null); @endphp
+
+                                                                @if ($authorizedIbanPath)
+                                                                    <a href="{{ asset($authorizedIbanPath) }}"
+                                                                        target="_blank"
+                                                                        class="px-3 py-1 text-sm rounded-md bg-blue-600 text-white hover:bg-blue-700 transition">
+                                                                        {{ translate('View') }}
+                                                                    </a>
+                                                                @else
+                                                                    <span
+                                                                        class="text-amber-600 text-sm italic">{{ translate('Restricted') }}</span>
+                                                                @endif
                                                             @else
                                                                 <span
                                                                     class="text-red-500 text-sm italic">{{ translate('Not uploaded') }}</span>

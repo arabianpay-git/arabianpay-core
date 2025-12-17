@@ -120,11 +120,13 @@
                                                         {{ $item->user?->first_name }} {{ $item->user?->last_name }}
                                                         <br>
                                                         <small class="text-gray-500">
-                                                            — {{ $item->user?->phone_number ?? '—' }}
+                                                            —
+                                                            {{ $item->user?->phone_number ? maskedText($item->user->phone_number) : '—' }}
                                                         </small>
                                                         <br />
                                                         <small class="text-gray-500">
-                                                            — {{ $item->user?->email ?? '—' }}
+                                                            —
+                                                            {{ $item->user?->email ? maskedText($item->user->email) : '—' }}
                                                         </small>
                                                     </div>
                                                 </td>
@@ -134,11 +136,12 @@
                                                         {{ $item->user?->business_name }}
                                                         <br>
                                                         <small class="text-gray-500">
-                                                            — {{ translate('CR Number') }}: {{ $item->cr_number ?? '—' }}
+                                                            — {{ translate('CR Number') }}:
+                                                            {{ $item->cr_number ? maskedText($item->cr_number) : '—' }}
                                                         </small>
                                                         <br />
                                                         <small class="text-gray-500">
-                                                            — {{ $item->address ?? '—' }}
+                                                            — {{ $item->address ? maskedText($item->address, 5, 5) : '—' }}
                                                         </small>
                                                     </div>
                                                 </td>
@@ -149,31 +152,39 @@
                                                     $oldCreditLimit = 20000;
                                                     $finalScore =
                                                         $creditScore['compositeScore'] * ($riskScore['omrs'] / 100);
-
                                                     $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
+
+                                                    // Check authorization for financial data
+                                                    $isAuthorized = authorizeFileOrDeny('allow', null) === 'allow';
                                                 @endphp
                                                 <td>
                                                     <div class="whitespace-nowrap">
-                                                        <span class="icon-saudi_riyal"></span>
-                                                        {{ number_format($newCreditLimit) }}
-                                                        <small class="text-gray-500">({{ translate('Available') }})</small>
-                                                        <br>
-                                                        <small class="text-gray-500">
-                                                            — Used:
+                                                        @if ($isAuthorized)
                                                             <span class="icon-saudi_riyal"></span>
-                                                            {{ number_format($totalOrderAmount, 2) }}
-                                                        </small>
+                                                            {{ number_format($newCreditLimit) }}
+                                                            <small
+                                                                class="text-gray-500">({{ translate('Available') }})</small>
+                                                            <br>
+                                                            <small class="text-gray-500">
+                                                                — Used:
+                                                                <span class="icon-saudi_riyal"></span>
+                                                                {{ number_format($totalOrderAmount, 2) }}
+                                                            </small>
+                                                        @else
+                                                            <span
+                                                                class="text-gray-400 italic text-xs">{{ translate('Restricted') }}</span>
+                                                        @endif
                                                     </div>
                                                 </td>
 
                                                 <td>
                                                     <span
                                                         class="badge badge-sm badge-outline 
-                                                    @if ($item->status == 'approved') badge-success
-                                                    @elseif($item->status == 'pending') 
-                                                        badge-danger
-                                                    @else
-                                                        badge-warning @endif">
+                                                            @if ($item->status == 'approved') badge-success
+                                                            @elseif($item->status == 'pending') 
+                                                                badge-danger
+                                                            @else
+                                                                badge-warning @endif">
                                                         {{ ucfirst($item->status) }}
                                                     </span>
                                                 </td>

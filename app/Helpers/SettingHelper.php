@@ -1,47 +1,68 @@
 <?php
 
 use App\Models\Approval;
+use App\Models\Customer;
 use App\Models\CustomerCreditLimit;
+use App\Models\Notification;
 use App\Models\Product;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\CreditAssessmentService;
+use App\Services\NotificationService;
+use App\Services\RiskService;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
-// Get Settings
-if (!function_exists('get_setting')) {
-    function get_setting($label, $default = null)
+/**
+ * General settings access
+ */
+if (! function_exists('get_setting')) {
+    function get_setting(string $key, $default = null)
     {
-        $setting = Setting::where('key', $label)->first();
+        $setting = Setting::where('key', $key)->first();
         return $setting ? $setting->value : $default;
     }
 }
 
-// Get Tax setting
-if (!function_exists('get_tax')) {
+/**
+ * Tax setting
+ */
+if (! function_exists('get_tax')) {
     function get_tax($default = 0)
     {
         return get_setting('tax', $default);
     }
 }
 
-// Get Commission Tax setting
-if (!function_exists('get_commission_tax')) {
+/**
+ * Commission tax setting
+ */
+if (! function_exists('get_commission_tax')) {
     function get_commission_tax($default = 0)
     {
         return get_setting('commission_tax', $default);
     }
 }
 
-if (!function_exists('get_credit_limit')) {
+/**
+ * Latest credit limit for a user
+ */
+if (! function_exists('get_credit_limit')) {
     function get_credit_limit($user_id, $default = 0.00)
     {
         $creditLimit = CustomerCreditLimit::where('user_id', $user_id)->latest()->first();
-        return $creditLimit ? $creditLimit->limit_arabianpay_after : $default;
+        return $creditLimit ? (float) $creditLimit->limit_arabianpay_after : (float) $default;
     }
 }
 
-if (!function_exists('get_seller_commission')) {
+/**
+ * Latest seller commission for a user
+ */
+if (! function_exists('get_seller_commission')) {
     function get_seller_commission($user_id, $default = 5.00)
     {
         $commission = Approval::where('user_id', $user_id)->latest()->first();
@@ -49,194 +70,221 @@ if (!function_exists('get_seller_commission')) {
     }
 }
 
-if (!function_exists('get_system_commission')) {
+/**
+ * System commission setting
+ */
+if (! function_exists('get_system_commission')) {
     function get_system_commission($default = 0)
     {
         return get_setting('system_commission', $default);
     }
 }
 
-
-if (!function_exists('calculate_order_tax')) {
-    function calculate_order_tax($order)
+/**
+ * Calculate tax for an order object that has product_details JSON
+ */
+if (! function_exists('calculate_order_tax')) {
+    function calculate_order_tax($order): float
     {
-        $totalTax = 0;
-        $items = json_decode($order->product_details, true);
+        $totalTax = 0.0;
+        $items = json_decode($order->product_details ?? '[]', true) ?: [];
 
         foreach ($items as $item) {
-            $product = App\Models\Product::find($item['product_id']);
-
-            if (!$product || !isset($product->tax_type)) {
+            $productId = $item['product_id'] ?? null;
+            if (! $productId) {
                 continue;
             }
 
-            // Get tax value, use setting fallback if null
-            $productTax = $product->tax ?? get_setting('tax', 0);
+            $product = Product::find($productId);
+            if (! $product || ! isset($product->tax_type)) {
+                continue;
+            }
 
-            // Safely access attributes
-            $attributePrice = collect($item['attributes'] ?? [])->sum('price');
-            $totalPrice = $attributePrice * $item['quantity'];
+            $productTax = $product->tax ?? (float) get_setting('tax', 0);
+
+            $attributePrice = collect($item['attributes'] ?? [])->sum(fn($a) => isset($a['price']) ? (float)$a['price'] : 0.0);
+            $quantity = isset($item['quantity']) ? (int)$item['quantity'] : 0;
+            $totalPrice = $attributePrice * $quantity;
 
             if ($product->tax_type === 'percent') {
-                $tax = ($productTax / 100) * $totalPrice;
+                $tax = ($productTax / 100.0) * $totalPrice;
             } else {
-                $tax = $productTax * $item['quantity'];
+                $tax = (float) $productTax * $quantity;
             }
 
             $totalTax += $tax;
         }
 
-        return $totalTax;
+        return (float) $totalTax;
     }
 }
 
+/**
+ * Map product details JSON into a Collection of objects:
+ * ->product (Model), ->quantity, ->price, ->attributes, ->total
+ */
 if (! function_exists('map_product_details')) {
     function map_product_details(string $jsonDetails): Collection
     {
-        $items = json_decode($jsonDetails, true) ?: [];
+        $items = json_decode($jsonDetails ?: '[]', true) ?: [];
 
-        return collect($items)->map(function (array $item) {
-            // find product
-            $product = Product::find($item['product_id']);
+        return collect($items)
+            ->map(function (array $item) {
+                $productId = $item['product_id'] ?? null;
+                if (! $productId) {
+                    return null;
+                }
 
-            if ($product) {
-                // price: first attribute price or fallback to unit_price
-                $price = collect($item['attributes'] ?? [])
-                    ->pluck('price')
-                    ->first()
-                    ?: $product->unit_price
-                    ?: 0;
+                $product = Product::find($productId);
+                if (! $product) {
+                    return null;
+                }
 
-                $quantity = $item['quantity'] ?? 0;
+                $attributes = $item['attributes'] ?? [];
+                $price = collect($attributes)->pluck('price')->filter()->first() ?: ($product->unit_price ?? 0);
+                $quantity = isset($item['quantity']) ? (int) $item['quantity'] : 0;
 
-                return (object)[
-                    'product'    => $product,
-                    'quantity'   => $quantity,
-                    'price'      => $price,
-                    'attributes' => $item['attributes'] ?? [],
-                    'total'      => $price * $quantity,
+                return (object) [
+                    'product' => $product,
+                    'quantity' => $quantity,
+                    'price' => (float) $price,
+                    'attributes' => $attributes,
+                    'total' => (float) $price * $quantity,
                 ];
-            }
-        });
+            })
+            ->filter() // remove nulls
+            ->values();
     }
 }
 
-if (!function_exists('currentUser')) {
-    function currentUser()
+/**
+ * Current authenticated user (shortcut)
+ */
+if (! function_exists('currentUser')) {
+    function currentUser(): ?User
     {
         return Auth::user();
     }
 }
 
-
-if (!function_exists('getEmployees')) {
+/**
+ * Get employees list visible to the current user.
+ * - Admin sees all (or filter by department if provided)
+ * - Manager sees own department
+ * - Regular employee sees only managers of their department
+ */
+if (! function_exists('getEmployees')) {
     function getEmployees($department = null)
     {
         $user = Auth::user();
 
-        $query = User::where('user_type', 'employee');
+        $query = User::query()->where('user_type', 'employee');
 
         if ($user) {
-            // Exclude self
+            // Exclude self always
             $query->where('id', '!=', $user->id);
 
             if ($user->user_type === 'admin') {
-                // Admin can see all, or filter by department if given
                 if ($department !== null) {
                     $query->where('department_id', $department);
                 }
-            } elseif ($user->is_manager) {
-
-                $query->where(function ($q) use ($user) {
-                    $q->where('department_id', $user->department_id)
-                        ->where(function ($q2) {
-                            $q2->where('is_manager', true) // other managers
-                                ->orWhere('user_type', 'admin'); // or admins
-                        })
-                        ->orWhere(function ($q3) use ($user) {
-                            $q3->where('department_id', $user->department_id)
-                                ->where('is_manager', false); // employees
-                        });
-                });
+            } elseif (! empty($user->is_manager)) {
+                // Managers can see employees and managers in their department
+                $query->where('department_id', $user->department_id);
             } else {
-
+                // Non-manager employees see only managers in their department
                 $query->where('department_id', $user->department_id)
                     ->where('is_manager', true);
             }
+        } elseif ($department !== null) {
+            $query->where('department_id', $department);
         }
 
         return $query->orderBy('first_name')->get();
     }
 }
 
-use App\Services\CreditAssessmentService;
-
+/**
+ * Get credit score via service
+ */
 if (! function_exists('get_credit_score')) {
-    /**
-     * Get credit score for a given user id.
-     *
-     * @param int $userId
-     * @return array
-     */
     function get_credit_score(int $userId): array
     {
-        $service = new CreditAssessmentService();
+        $service = app(CreditAssessmentService::class);
         $result = $service->assess($userId);
         return $result['creditScore'] ?? [];
     }
 }
 
-use App\Services\RiskService;
-
 /**
- * Get risk score object for a given user or user ID
- *
- * @param int|User $userOrId
- * @return object|null
+ * Get risk score object for a given user id or User model.
+ * Tries customer then merchant if customer missing.
  */
-function get_risk_score($userOrId)
-{
-    $service = app(RiskService::class);
+if (! function_exists('get_risk_score')) {
+    function get_risk_score($userOrId)
+    {
+        $service = app(RiskService::class);
 
-    if ($userOrId instanceof User) {
-        $user = $userOrId;
-    } else {
-        $user = User::find($userOrId);
-        if (!$user) {
-            return null;
+        if ($userOrId instanceof User) {
+            $user = $userOrId;
+        } else {
+            $user = User::find($userOrId);
+            if (! $user) {
+                return null;
+            }
         }
-    }
 
-    return $service->analyzeCustomer($user->customer, 'customer');
+        // Prefer customer entity, fallback to merchant if present
+        if ($user->customer) {
+            return $service->analyzeCustomer($user->customer, 'customer');
+        }
+
+        if ($user->merchant) {
+            return $service->analyzeCustomer($user->merchant, 'merchant');
+        }
+
+        return null;
+    }
 }
 
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-
+/**
+ * Convert Hijri date to Gregorian using external API.
+ * Accepts either a string "YYYY/MM/DD" or (year, month, day) integers.
+ */
 if (! function_exists('hijriToGregorian')) {
-    function hijriToGregorian($hYearOrDate, int $hMonth = null, int $hDay = null, int $adjustment = 0): ?Carbon
+    function hijriToGregorian($hYearOrDate, ?int $hMonth = null, ?int $hDay = null, int $adjustment = 0): ?Carbon
     {
         if (is_string($hYearOrDate)) {
-            [$hYear, $hMonth, $hDay] = array_map('intval', explode('/', $hYearOrDate));
+            $parts = array_map('intval', preg_split('/[\/\-\.]/', $hYearOrDate));
+            if (count($parts) < 3) {
+                return null;
+            }
+            [$hYear, $hMonth, $hDay] = $parts;
         } else {
-            $hYear = $hYearOrDate;
+            $hYear = (int) $hYearOrDate;
+            if ($hMonth === null || $hDay === null) {
+                return null; // require complete Y,M,D when passing integers
+            }
         }
 
         $dateParam = sprintf('%02d-%02d-%04d', $hDay, $hMonth, $hYear);
 
-        $response = Http::timeout(5)
-            ->get('https://api.aladhan.com/v1/hToG', [
-                'date'       => $dateParam,
-                'adjustment' => $adjustment,
-            ]);
+        try {
+            $response = Http::timeout(5)
+                ->get('https://api.aladhan.com/v1/hToG', [
+                    'date' => $dateParam,
+                    'adjustment' => $adjustment,
+                ]);
+        } catch (\Throwable $e) {
+            Log::warning('hijriToGregorian: http error: ' . $e->getMessage());
+            return null;
+        }
 
         if (! $response->successful()) {
             return null;
         }
 
         $data = $response->json('data');
-
         $gregDate = $data['gregorian']['date'] ?? null;
 
         if (! $gregDate) {
@@ -247,8 +295,9 @@ if (! function_exists('hijriToGregorian')) {
     }
 }
 
-use Illuminate\Support\Str;
-
+/**
+ * Resolve media path to a fully-qualified URL.
+ */
 if (! function_exists('resolveMedia')) {
     function resolveMedia(?string $path, array $options = []): ?string
     {
@@ -264,6 +313,7 @@ if (! function_exists('resolveMedia')) {
             return $options['default'];
         }
 
+        // Absolute URL passed in
         if (Str::startsWith($path, ['http://', 'https://'])) {
             return $path;
         }
@@ -271,12 +321,12 @@ if (! function_exists('resolveMedia')) {
         $candidates = [];
 
         if ($options['type'] === 'product') {
-            $candidates[] = public_path('uploads/' . $path);
+            $candidates[] = public_path('uploads/' . ltrim($path, '/'));
         }
 
-        $candidates[] = public_path('partners-media/' . $path);
-
-        $candidates[] = public_path('storage/media/' . $path);
+        $candidates[] = public_path('partners-media/' . ltrim($path, '/'));
+        $candidates[] = public_path('storage/media/' . ltrim($path, '/'));
+        $candidates[] = public_path(ltrim($path, '/'));
 
         foreach ($candidates as $fullPath) {
             if ($fullPath && file_exists($fullPath) && is_file($fullPath)) {
@@ -286,11 +336,10 @@ if (! function_exists('resolveMedia')) {
             }
         }
 
-        $prefix = $options['partner_prefix'] ?? (
-            $options['type'] === 'product'
-            ? rtrim('https://partners.arabianpay.net/public', '/')
-            : rtrim('https://partners.arabianpay.net', '/')
-        );
+        $prefix = $options['partner_prefix'] ?? rtrim('https://partners.arabianpay.net', '/');
+        if ($options['type'] === 'product' && $options['partner_prefix'] === null) {
+            $prefix = rtrim('https://partners.arabianpay.net/public', '/');
+        }
 
         $partnerUrl = $prefix . '/' . ltrim($path, '/');
 
@@ -320,10 +369,6 @@ if (! function_exists('resolveMedia')) {
 
 /**
  * Backwards-compatible supplierMedia wrapper.
- *
- * @param string|null $path
- * @param string|null $defaultUrl
- * @return string|null
  */
 if (! function_exists('supplierMedia')) {
     function supplierMedia(?string $path, ?string $defaultUrl = null): ?string
@@ -337,10 +382,6 @@ if (! function_exists('supplierMedia')) {
 
 /**
  * Backwards-compatible productMedia wrapper.
- *
- * @param string|null $path
- * @param string|null $defaultUrl
- * @return string|null
  */
 if (! function_exists('productMedia')) {
     function productMedia(?string $path, ?string $defaultUrl = null): ?string
@@ -352,11 +393,13 @@ if (! function_exists('productMedia')) {
     }
 }
 
-
-if (!function_exists('translate')) {
+/**
+ * Simple translate wrapper that scopes keys to 'main.'
+ */
+if (! function_exists('translate')) {
     function translate($key, $replace = [], $locale = null)
     {
-        if (!str_starts_with($key, 'main.')) {
+        if (! Str::startsWith($key, 'main.')) {
             $key = "main.$key";
         }
 
@@ -364,17 +407,10 @@ if (!function_exists('translate')) {
     }
 }
 
-use App\Services\NotificationService;
-
-if (!function_exists('create_notification')) {
-    /**
-     * Create a notification easily.
-     *
-     * @param int|null $userId
-     * @param string|null $type
-     * @param string|array $data
-     * @return \App\Models\Notification
-     */
+/**
+ * Create notification via NotificationService
+ */
+if (! function_exists('create_notification')) {
     function create_notification(?int $userId, ?string $type, $data)
     {
         $service = app(NotificationService::class);
@@ -382,12 +418,13 @@ if (!function_exists('create_notification')) {
     }
 }
 
-use App\Models\Notification;
-
-if (!function_exists('current_user_notifications')) {
+/**
+ * Get current user notifications (latest 20)
+ */
+if (! function_exists('current_user_notifications')) {
     function current_user_notifications()
     {
-        if (!Auth::check()) {
+        if (! Auth::check()) {
             return collect();
         }
 
@@ -398,70 +435,61 @@ if (!function_exists('current_user_notifications')) {
     }
 }
 
-
-if (!function_exists('getMediaUrl')) {
+/**
+ * Get media URL with fallback to default image
+ */
+if (! function_exists('getMediaUrl')) {
     function getMediaUrl(string $filename, string $defaultImage = 'assets/media/images/default-image.png'): string
     {
-        // Check in core/public/uploads (symlinked to partners/uploads)
         if (file_exists(public_path($filename))) {
             return asset($filename);
         }
 
-        // Check in partners-media
         if (file_exists(public_path('partners-media/' . $filename))) {
             return asset('partners-media/' . $filename);
         }
 
-        // Check in core/public/storage/media
         if (file_exists(public_path('storage/media/' . $filename))) {
             return asset('storage/media/' . $filename);
         }
 
-        // Fallback to default image
         return asset($defaultImage);
     }
 }
 
-if (!function_exists('partnerRoute')) {
+/**
+ * Generate partner absolute route
+ */
+if (! function_exists('partnerRoute')) {
     function partnerRoute(string $name, array $parameters = []): string
     {
-        // Local environment URLs
-        if (app()->environment('local')) {
-            $base = 'https://adminpanel.test';
-        } else {
-            $base = 'https://partners.arabianpay.net';
-        }
-
-        // Generate the route path
-        $path = route($name, $parameters, false); // false => relative URL
+        $base = app()->environment('local') ? 'https://adminpanel.test' : 'https://partners.arabianpay.net';
+        $path = route($name, $parameters, false);
         return rtrim($base, '/') . '/' . ltrim($path, '/');
     }
 }
 
-if (!function_exists('settings')) {
+/**
+ * Settings helper that returns decoded JSON
+ */
+if (! function_exists('settings')) {
     function settings($key, $default = [])
     {
-        $value = App\Models\Setting::where('key', $key)->value('value');
+        $value = Setting::where('key', $key)->value('value');
         return $value ? json_decode($value, true) : $default;
     }
 }
 
-if (!function_exists('dateFormat')) {
-    /**
-     * Get the date format from general settings
-     *
-     * @param bool $includeTime Include time format if true
-     * @return string
-     */
-    function dateFormat($includeTime = false)
+/**
+ * Date format from general settings
+ */
+if (! function_exists('dateFormat')) {
+    function dateFormat($includeTime = false): string
     {
         $general = settings('general', []);
-
-        // Date format from settings or fallback
         $dateFormat = $general['date_format'] ?? 'd M Y';
 
         if ($includeTime) {
-            // Time format: 12h or 24h
             $timeFormat = isset($general['time_format']) && $general['time_format'] == '24' ? 'H:i' : 'h:i A';
             return $dateFormat . ' ' . $timeFormat;
         }
@@ -470,52 +498,107 @@ if (!function_exists('dateFormat')) {
     }
 }
 
-
-if (!function_exists('updateEnvValue')) {
-    /**
-     * Update or add a key in the .env file
-     *
-     * @param string $key
-     * @param string $value
-     * @return void
-     */
-    function updateEnvValue(string $key, string $value)
+/**
+ * Update .env value (safe replace or append)
+ */
+if (! function_exists('updateEnvValue')) {
+    function updateEnvValue(string $key, string $value): void
     {
         $path = base_path('.env');
 
-        if (file_exists($path)) {
-            $envContents = file_get_contents($path);
-
-            // Get current value
-            $oldValue = env($key);
-
-            // If key exists, replace it; else, append
-            if (strpos($envContents, $key . '=') !== false) {
-                $envContents = preg_replace(
-                    "/^{$key}=.*/m",
-                    $key . '="' . $value . '"',
-                    $envContents
-                );
-            } else {
-                $envContents .= PHP_EOL . $key . '="' . $value . '"';
-            }
-
-            file_put_contents($path, $envContents);
+        if (! file_exists($path)) {
+            return;
         }
+
+        $envContents = file_get_contents($path);
+
+        $escapedValue = str_replace('"', '\"', $value);
+
+        if (preg_match("/^{$key}=.*$/m", $envContents)) {
+            $envContents = preg_replace(
+                "/^{$key}=.*$/m",
+                $key . '="' . $escapedValue . '"',
+                $envContents
+            );
+        } else {
+            $envContents .= PHP_EOL . $key . '="' . $escapedValue . '"';
+        }
+
+        file_put_contents($path, $envContents);
     }
 }
 
-
-if (!function_exists('human_number')) {
-    /**
-     * Format numbers as human-readable strings
-     * e.g. 1K, 2.5M, 1.2B
-     */
+/**
+ * Human readable number formatting: 1.2K, 2.5M, etc.
+ */
+if (! function_exists('human_number')) {
     function human_number(float $number): string
     {
         if ($number >= 1_000_000_000) return round($number / 1_000_000_000, 1) . 'B';
         if ($number >= 1_000_000)     return round($number / 1_000_000, 1) . 'M';
         if ($number >= 1_000)         return round($number / 1_000, 1) . 'K';
-        return number_format($number, 2, '.', '');
+        return (string) number_format($number, 2, '.', '');
+    }
+}
+
+/**
+ * Mask text for unauthorized users.
+ * Admins and employee managers see full text.
+ */
+if (! function_exists('maskedText')) {
+    function maskedText(
+        string $text,
+        int $startMask = 3,
+        int $endMask = 3,
+        ?int $maskLength = null
+    ): string {
+        $user = Auth::user();
+
+        // Admin can see full text
+        // if ($user && $user->user_type === 'admin') {
+        //     return $text;
+        // }
+
+        // Manager employee can see full text
+        if ($user && $user->user_type === 'employee' && !empty($user->is_manager)) {
+            return $text;
+        }
+
+        $length = Str::length($text);
+
+        if ($length <= ($startMask + $endMask)) {
+            return str_repeat('*', $maskLength ?? $length);
+        }
+
+        $start = Str::substr($text, 0, $startMask);
+        $end   = Str::substr($text, -$endMask);
+
+        // If mask length is provided, use fixed stars
+        $stars = $maskLength !== null
+            ? str_repeat('*', $maskLength)
+            : str_repeat('*', $length - ($startMask + $endMask));
+
+        return $start . $stars . $end;
+    }
+}
+
+if (! function_exists('authorizeFileOrDeny')) {
+    function authorizeFileOrDeny(
+        ?string $path,
+        $fallback = 'Not Allowed'
+    ) {
+        $user = Auth::user();
+
+        // Allow Admin
+        // if ($user && $user->user_type === 'admin') {
+        //     return $path;
+        // }
+
+        // Allow Employee Manager
+        if ($user && $user->user_type === 'employee' && !empty($user->is_manager)) {
+            return $path;
+        }
+
+        return $fallback;
     }
 }

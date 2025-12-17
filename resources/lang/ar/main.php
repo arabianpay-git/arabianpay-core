@@ -2282,4 +2282,5 @@ return [
     'simah non scorable' => 'سمة غير قابلة للتقييم',
     'returned count' => 'عدد المرتجعات',
     'returned amount' => 'مبلغ المرتجعات',
+    'Restricted' => 'محظور',
 ];
