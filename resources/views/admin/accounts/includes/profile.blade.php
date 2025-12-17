@@ -91,9 +91,13 @@
                             // Returns raw phone if Admin/Manager, else returns '#'
                             $authPhone = authorizeFileOrDeny($rawPhone, '#');
                         @endphp
-                        <a class="underline link"
+                        {{-- <a class="underline link"
                             href="{{ $authPhone !== '#' ? 'tel:' . $authPhone : 'javascript:void(0)' }}">
                             {{ $rawPhone ? maskedText($rawPhone) : 'N/A' }}
+                        </a> --}}
+
+                        <a class="underline link" href="{{ $rawPhone }}">
+                            {{ $rawPhone ?? 'N/A' }}
                         </a>
                     </div>
 
@@ -105,9 +109,13 @@
                             // Returns raw email if Admin/Manager, else returns '#'
                             $authEmail = authorizeFileOrDeny($rawEmail, '#');
                         @endphp
-                        <a class="underline link"
+                        {{-- <a class="underline link"
                             href="{{ $authEmail !== '#' ? 'mailto:' . $authEmail : 'javascript:void(0)' }}">
                             {{ $rawEmail ? maskedText($rawEmail) : 'N/A' }}
+                        </a> --}}
+
+                        <a class="underline link" href="{{ $rawEmail }}">
+                            {{ $rawEmail ?? 'N/A' }}
                         </a>
                     </div>
 
