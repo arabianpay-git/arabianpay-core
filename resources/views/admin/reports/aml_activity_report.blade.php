@@ -77,7 +77,7 @@
                                                     </span>
                                                 </td>
 
-                                                <td>{{ \Carbon\Carbon::parse($activity->submission_date)->format('Y-m-d') }}
+                                                <td>{{ \Carbon\Carbon::parse($activity->submission_date)->format(dateFormat()) }}
                                                 </td>
                                             </tr>
                                         @empty

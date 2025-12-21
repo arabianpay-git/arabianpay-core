@@ -109,11 +109,24 @@ class EmployeeController extends Controller
      */
     public function getDepartmentAccess(Department $department)
     {
-        // Load roles with their permissions (only id and name)
+        // Load roles with their permissions and sensitive_permissions
         $roles = $department->roles()
-            ->select('roles.id', 'roles.name')
+            ->select('roles.id', 'roles.name', 'roles.sensitive_permissions') // Explicitly include sensitive_permissions
             ->with(['permissions:id,name'])
-            ->get();
+            ->get()
+            ->map(function ($role) {
+                return [
+                    'id' => $role->id,
+                    'name' => $role->name,
+                    'permissions' => $role->permissions->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->values(),
+                    // Ensure sensitive_permissions is always an array
+                    'sensitive_permissions' => is_array($role->sensitive_permissions)
+                        ? $role->sensitive_permissions
+                        : (is_string($role->sensitive_permissions)
+                            ? json_decode($role->sensitive_permissions, true)
+                            : []),
+                ];
+            });
 
         // Load department's own permissions
         $permissions = $department->permissions()
@@ -125,7 +138,6 @@ class EmployeeController extends Controller
             'permissions' => $permissions,
         ]);
     }
-
 
     /**
      * Validate incoming request for store/update.

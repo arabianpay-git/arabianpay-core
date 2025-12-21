@@ -1,5 +1,37 @@
 @extends('layouts.base')
+@push('styles')
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+    <style>
+        .choices {
+            position: relative !important;
+        }
 
+        .choices__inner {
+            min-height: 2.6rem !important;
+            max-height: 120px;
+            overflow-y: auto;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            z-index: 1;
+        }
+
+        .choices__list--multiple .choices__item {
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            padding: 2px 8px;
+            margin: 2px;
+        }
+
+        .choices__list--dropdown,
+        .choices__list[aria-expanded="true"] {
+            position: absolute !important;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            z-index: 99999 !important;
+        }
+    </style>
+@endpush
 @section('content')
     <main class="grow content pt-5" id="content" role="content">
         <!-- Container -->
@@ -29,6 +61,8 @@
                                         <span class="text-danger text-sm">{{ $message }}</span>
                                     @enderror
                                 </div>
+
+                                @include('admin.employees.permissions')
 
                                 <div class="flex justify-end pt-2.5">
                                     <button class="btn btn-primary">

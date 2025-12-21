@@ -1161,7 +1161,7 @@ class CollectionController extends Controller
 
                 return [
                     'title' => 'SAR ' . number_format($p->instalment_amount, 2) . ' - ' . ($order->user->business_name ?? $order->user->first_name),
-                    'start' => $p->due_date->format('Y-m-d'),
+                    'start' => $p->due_date->format(dateFormat()),
                     'className' => $statusClass,
                     'extendedProps' => [
                         'status' => ucfirst($p->payment_status),
@@ -1274,7 +1274,7 @@ class CollectionController extends Controller
         $formatted = $unpaidPayments->map(fn($p) => [
             'id' => $p->id,
             'instalment_amount' => $p->instalment_amount,
-            'due_date' => $p->due_date->format('Y-m-d')
+            'due_date' => $p->due_date->format(dateFormat())
         ]);
 
         return response()->json([

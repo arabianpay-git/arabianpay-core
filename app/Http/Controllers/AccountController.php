@@ -1011,7 +1011,7 @@ class AccountController extends Controller
             'seller_name'     => trim($wallet->seller->first_name . ' ' . $wallet->seller->last_name),
             'seller_business' => $wallet->seller->business_name,
             'invoice_number'  => strtoupper($wallet->order->invoice_number ?? 'N/A'),
-            'payment_date'    => $wallet->updated_at->format('Y-m-d'),
+            'payment_date'    => $wallet->updated_at->format(dateFormat()),
             'payment_invoice' => $this->calculateTotalOrderAmountWithoutTax(collect([$wallet->order])),
             'tax_number'      => optional($wallet->seller->merchant)->vat_register_number ?? 'N/A',
             'amount_paid'     => $wallet->balance_after,

@@ -173,7 +173,7 @@
                                                         {{ number_format($canceled, 2) }}</small>
                                                 </td>
                                                 <td class="text-center">
-                                                    {{ $seller->created_at->format('Y-m-d') }}
+                                                    {{ $seller->created_at->format(dateFormat()) }}
                                                 </td>
                                                 <td class="text-center">
                                                     @php
@@ -191,7 +191,7 @@
                                                 </td>
 
                                                 <td class="text-center">
-                                                    {{ $seller->created_at->format('Y-m-d') }}
+                                                    {{ $seller->created_at->format(dateFormat()) }}
                                                 </td>
                                                 <td class="text-center">
                                                     <div class="tooltip-container">

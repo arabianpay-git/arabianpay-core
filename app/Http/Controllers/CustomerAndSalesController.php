@@ -64,8 +64,8 @@ class CustomerAndSalesController extends Controller
         $invoiceFrom = $orders->first()?->invoice_number ?? '-';
         $invoiceTo = $orders->last()?->invoice_number ?? '-';
 
-        $orderDateFrom = $orders->first()?->created_at->format('Y-m-d') ?? '-';
-        $orderDateTo = $orders->last()?->created_at->format('Y-m-d') ?? '-';
+        $orderDateFrom = $orders->first()?->created_at->format(dateFormat()) ?? '-';
+        $orderDateTo = $orders->last()?->created_at->format(dateFormat()) ?? '-';
 
         $grandTotal = $shippingTotal = $serviceFee = $taxAmount = $totalInvoice = 0;
 

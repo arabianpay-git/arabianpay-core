@@ -58,12 +58,12 @@ class RiskDashboardService
             'flags' => $this->buildRiskFlags(),
             'date_range' => [
                 'current' => [
-                    'from' => $this->dateRange['from']->format('Y-m-d'),
-                    'to' => $this->dateRange['to']->format('Y-m-d')
+                    'from' => $this->dateRange['from']->format(dateFormat()),
+                    'to' => $this->dateRange['to']->format(dateFormat())
                 ],
                 'previous' => [
-                    'from' => $this->dateRange['previous_from']->format('Y-m-d'),
-                    'to' => $this->dateRange['previous_to']->format('Y-m-d')
+                    'from' => $this->dateRange['previous_from']->format(dateFormat()),
+                    'to' => $this->dateRange['previous_to']->format(dateFormat())
                 ]
             ],
             'user_specific' => !is_null($this->userId),
@@ -210,7 +210,7 @@ class RiskDashboardService
         $currentDate = $startDate->copy();
 
         while ($currentDate <= $endDate) {
-            $dateStr = $currentDate->format('Y-m-d');
+            $dateStr = $currentDate->format(dateFormat());
             $dayData = $trendData->firstWhere('date', $dateStr);
 
             $labels[] = $currentDate->format('M d');

@@ -37,7 +37,8 @@
                             <div class="flex">
                                 <label class="input input-sm">
                                     <i class="ki-filled ki-magnifier"> </i>
-                                    <input id="search_input" type="text" placeholder="{{ translate('Search transactions') }}"
+                                    <input id="search_input" type="text"
+                                        placeholder="{{ translate('Search transactions') }}"
                                         value="{{ request()->input('query', '') }}" />
                                 </label>
                             </div>
@@ -58,7 +59,8 @@
                                     <thead>
                                         <tr>
                                             <th class="w-[60px]">
-                                                <input class="checkbox checkbox-sm" data-datatable-check="true" type="checkbox">
+                                                <input class="checkbox checkbox-sm" data-datatable-check="true"
+                                                    type="checkbox">
                                             </th>
                                             <th class="min-w-[80px]">{{ translate('Date') }}</th>
                                             <th class="min-w-[250px]">{{ translate('Description') }}</th>
@@ -71,63 +73,81 @@
                                         @forelse($transactions as $transaction)
                                             <tr>
                                                 <td>
-                                                    <input class="checkbox checkbox-sm" data-datatable-row-check="true" type="checkbox" value="{{ $transaction->id }}">
+                                                    <input class="checkbox checkbox-sm" data-datatable-row-check="true"
+                                                        type="checkbox" value="{{ $transaction->id }}">
                                                 </td>
                                                 <td>
-                                                    <span class="text-gray-900">{{ $transaction->transaction_date ? \Carbon\Carbon::parse($transaction->transaction_date)->format('Y-m-d') : '-' }}</span>
+                                                    <span
+                                                        class="text-gray-900">{{ $transaction->transaction_date ? \Carbon\Carbon::parse($transaction->transaction_date)->format(dateFormat()) : '-' }}</span>
                                                 </td>
                                                 <td>
-                                                    <span class="text-gray-700 font-mono text-xs">{{ Str::limit($transaction->notes, 200) }}</span>
+                                                    <span
+                                                        class="text-gray-700 font-mono text-xs">{{ Str::limit($transaction->notes, 200) }}</span>
                                                 </td>
-                                                
+
                                                 <td>
-                                                    <span class="text-gray-900 font-medium">{{ number_format($transaction->amount, 2) }} SR</span>
+                                                    <span
+                                                        class="text-gray-900 font-medium">{{ number_format($transaction->amount, 2) }}
+                                                        SR</span>
                                                 </td>
-                                               
-                                               
+
+
                                                 <td>
-                                                    @if($transaction->user)
-                                                        <span class="text-gray-700">{{ $transaction->user->first_name }} {{ $transaction->user->last_name }}</span>
+                                                    @if ($transaction->user)
+                                                        <span class="text-gray-700">{{ $transaction->user->first_name }}
+                                                            {{ $transaction->user->last_name }}</span>
                                                     @else
                                                         <span class="text-gray-400">-</span>
                                                     @endif
                                                 </td>
                                                 <td>
                                                     <div class="menu" data-menu="true">
-                                                        <div class="menu-item" data-menu-item-offset="0, 10px" data-menu-item-placement="bottom-end"
-                                                            data-menu-item-toggle="dropdown" data-menu-item-trigger="click|lg:hover">
-                                                            <button class="menu-toggle btn btn-sm btn-icon btn-light btn-clear">
+                                                        <div class="menu-item" data-menu-item-offset="0, 10px"
+                                                            data-menu-item-placement="bottom-end"
+                                                            data-menu-item-toggle="dropdown"
+                                                            data-menu-item-trigger="click|lg:hover">
+                                                            <button
+                                                                class="menu-toggle btn btn-sm btn-icon btn-light btn-clear">
                                                                 <i class="ki-filled ki-dots-vertical"></i>
                                                             </button>
-                                                            <div class="menu-dropdown menu-default w-full max-w-[175px]" data-menu-dismiss="true">
+                                                            <div class="menu-dropdown menu-default w-full max-w-[175px]"
+                                                                data-menu-dismiss="true">
                                                                 <div class="menu-item">
-                                                                    <button class="menu-link" onclick="showTransactionModal('{{ $transaction->id }}')">
+                                                                    <button class="menu-link"
+                                                                        onclick="showTransactionModal('{{ $transaction->id }}')">
                                                                         <span class="menu-icon">
                                                                             <i class="ki-filled ki-eye"></i>
                                                                         </span>
-                                                                        <span class="menu-title">{{ translate('View') }}</span>
+                                                                        <span
+                                                                            class="menu-title">{{ translate('View') }}</span>
                                                                     </button>
                                                                 </div>
                                                                 @can('financial-transactions.edit')
                                                                     <div class="menu-item">
-                                                                        <a class="menu-link" href="{{ route('financial.transactions.edit', $transaction) }}">
+                                                                        <a class="menu-link"
+                                                                            href="{{ route('financial.transactions.edit', $transaction) }}">
                                                                             <span class="menu-icon">
                                                                                 <i class="ki-filled ki-notepad-edit"></i>
                                                                             </span>
-                                                                            <span class="menu-title">{{ translate('Edit') }}</span>
+                                                                            <span
+                                                                                class="menu-title">{{ translate('Edit') }}</span>
                                                                         </a>
                                                                     </div>
                                                                 @endcan
                                                                 @can('financial-transactions.delete')
                                                                     <div class="menu-item">
-                                                                        <form action="{{ route('financial.transactions.destroy', $transaction) }}" method="POST">
+                                                                        <form
+                                                                            action="{{ route('financial.transactions.destroy', $transaction) }}"
+                                                                            method="POST">
                                                                             @csrf
                                                                             @method('DELETE')
-                                                                            <button type="submit" class="menu-link text-danger" onclick="return confirm('Are you sure you want to delete this transaction?')">
+                                                                            <button type="submit" class="menu-link text-danger"
+                                                                                onclick="return confirm('Are you sure you want to delete this transaction?')">
                                                                                 <span class="menu-icon">
                                                                                     <i class="ki-filled ki-trash"></i>
                                                                                 </span>
-                                                                                <span class="menu-title">{{ translate('Delete') }}</span>
+                                                                                <span
+                                                                                    class="menu-title">{{ translate('Delete') }}</span>
                                                                             </button>
                                                                         </form>
                                                                     </div>
@@ -142,7 +162,8 @@
                                                 <td colspan="9" class="text-center py-10">
                                                     <div class="flex flex-col items-center gap-3">
                                                         <i class="ki-filled ki-file-sheet text-3xl text-gray-400"></i>
-                                                        <span class="text-gray-600">{{ translate('No financial transactions found') }}</span>
+                                                        <span
+                                                            class="text-gray-600">{{ translate('No financial transactions found') }}</span>
                                                     </div>
                                                 </td>
                                             </tr>
@@ -151,11 +172,13 @@
                                 </table>
                             </div>
                         </div>
-                        
-                        @if($transactions->hasPages())
-                            <div class="card-footer justify-center md:justify-between flex-col md:flex-row gap-3 text-gray-600 text-2sm font-medium">
+
+                        @if ($transactions->hasPages())
+                            <div
+                                class="card-footer justify-center md:justify-between flex-col md:flex-row gap-3 text-gray-600 text-2sm font-medium">
                                 <div class="flex items-center gap-2">
-                                    {{ translate('Showing') }} {{ $transactions->firstItem() }} {{ translate('to') }} {{ $transactions->lastItem() }} 
+                                    {{ translate('Showing') }} {{ $transactions->firstItem() }} {{ translate('to') }}
+                                    {{ $transactions->lastItem() }}
                                     {{ translate('of') }} {{ $transactions->total() }} {{ translate('entries') }}
                                 </div>
                                 <div class="flex items-center gap-4">

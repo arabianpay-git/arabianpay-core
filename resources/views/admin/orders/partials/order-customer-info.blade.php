@@ -24,8 +24,13 @@
                             <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                 {{ translate('Email') }}</td>
                             <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
-                                <a href="mailto:{{ $order->user->email }}" class="text-primary hover:underline">
-                                    {{ $order->user->email }}
+                                @php
+                                    $email = $order->user->email ?? '';
+                                    $phone = $order->user->phone_number ?? '';
+                                @endphp
+                                <a href="mailto:{{ hasSensitivePermission('email_address') ? $email : '' }}"
+                                    class="text-primary hover:underline">
+                                    {{ maskedSensitiveText('email_address', $email) }}
                                 </a>
                             </td>
                         </tr>
@@ -34,10 +39,11 @@
                                 <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
                                     {{ translate('Phone Number') }}</td>
                                 <td class="text-sm text-gray-600 min-w-28 pb-4 pe-4">
-                                    <a href="tel:{{ $order->user->phone_number }}"
+                                    <a href="tel:{{ hasSensitivePermission('phone_number') ? $phone : '' }}"
                                         class="text-primary hover:underline">
-                                        {{ $order->user->phone_number }}
+                                        {{ maskedSensitiveText('phone_number', $phone) }}
                                     </a>
+
                                 </td>
                             </tr>
                         @endif

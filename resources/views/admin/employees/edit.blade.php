@@ -124,7 +124,7 @@
                                         @enderror
                                     </div>
 
-                                    <!-- Role select single select -->
+                                    <!-- Role select (plain select) -->
                                     <div class="w-full">
                                         <label class="form-label" for="role_id">{{ translate('Role') }} <span
                                                 class="text-red-600">*</span></label>
@@ -138,10 +138,12 @@
                                     </div>
                                 </div>
 
+                                {{-- Sensitive Permissions --}}
                                 @include('admin.employees.permissions', [
-                                    'selected' => $employee->sensitive_permissions,
+                                    'selected' => old(
+                                        'sensitive_permissions',
+                                        $employee->sensitive_permissions ?? []),
                                 ])
-
 
                                 <div class="w-full">
                                     <label for="is_manager" class="form-label">
@@ -228,59 +230,240 @@
                 eyeSlash.classList.toggle('hidden', isVisible);
             });
         });
+    </script>
 
-        const roleSelect = document.getElementById('role_id'); // plain <select>
-        const departmentSelect = document.getElementById('department_id');
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            console.info('Employee edit form script loaded');
 
-        let rolePermissionsMap = {};
+            // ---------- Elements ----------
+            const departmentSelect = document.getElementById('department_id');
+            const roleSelect = document.getElementById('role_id');
+            const sensitiveSelect = document.getElementById('sensitive_permissions');
 
-        function clearRoles() {
-            roleSelect.innerHTML = '<option value="">-- Select Role --</option>';
-        }
+            // Initialize sensitive choices
+            let sensitiveChoices = null;
+            if (sensitiveSelect) {
+                if (window.sensitiveChoices) {
+                    try {
+                        window.sensitiveChoices.destroy();
+                    } catch (e) {
+                        /* ignore */
+                    }
+                    window.sensitiveChoices = null;
+                }
 
-        function loadDepartmentData(departmentId, selectedRole = null) {
-            if (!departmentId) return;
+                sensitiveChoices = new Choices(sensitiveSelect, {
+                    removeItemButton: true,
+                    shouldSort: false,
+                    duplicateItemsAllowed: false,
+                    searchEnabled: true,
+                    placeholderValue: 'Select Sensitive Permissions',
+                });
+                window.sensitiveChoices = sensitiveChoices;
+            }
 
-            clearRoles();
-            rolePermissionsMap = {};
+            // ---------- Cache for roles ----------
+            let rolesCache = {};
 
-            fetch(`/admin/departments/${departmentId}/access`, {
+            // ---------- Fetch wrapper ----------
+            const doFetchJson = (url) => {
+                console.info('Fetching:', url);
+                return fetch(url, {
                     headers: {
                         'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                }).then(res => {
+                    if (!res.ok) {
+                        const msg = `Fetch failed ${res.status} ${res.statusText} for ${url}`;
+                        console.warn(msg);
+                        throw new Error(msg);
                     }
-                })
-                .then(res => res.ok ? res.json() : Promise.reject('Failed to fetch'))
-                .then(data => {
-                    // Populate roles
-                    data.roles.forEach(role => {
-                        const option = document.createElement('option');
-                        option.value = role.id;
-                        option.textContent = role.name;
-                        if (parseInt(selectedRole) === role.id) {
-                            option.selected = true;
+                    return res.json();
+                });
+            };
+
+            // ---------- Function to update sensitive permissions ----------
+            function updateSensitivePermissions(permissionsArray) {
+                if (!sensitiveChoices || !sensitiveSelect) {
+                    console.warn('Sensitive permissions select not available');
+                    return;
+                }
+
+                // Clear current selections
+                sensitiveChoices.removeActiveItems();
+
+                // Add new selections
+                if (Array.isArray(permissionsArray) && permissionsArray.length > 0) {
+                    permissionsArray.forEach(permission => {
+                        // Find the option by value
+                        const option = Array.from(sensitiveSelect.options).find(opt => opt.value ===
+                            permission);
+                        if (option) {
+                            sensitiveChoices.setChoiceByValue(permission);
                         }
-                        roleSelect.appendChild(option);
-
-                        // Keep rolePermissionsMap if you want for future use (optional)
-                        rolePermissionsMap[role.id] = (role.permissions || []).map(p => p.id);
                     });
-                })
-                .catch(error => console.error('Fetch error:', error));
-        }
+                }
 
-        // On Department Change
-        departmentSelect.addEventListener('change', function() {
-            clearRoles();
-            rolePermissionsMap = {};
-            loadDepartmentData(this.value);
+                console.info('Updated sensitive permissions:', permissionsArray);
+            }
+
+            // ---------- Populate roles ----------
+            function loadDepartmentData(departmentId, selectedRole = null) {
+                if (!departmentId) {
+                    console.info('No departmentId provided — clearing roles');
+                    roleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+                    rolesCache = {};
+                    return;
+                }
+
+                const url = `/admin/departments/${departmentId}/access`;
+
+                doFetchJson(url)
+                    .then(data => {
+                        const roles = data.roles || [];
+                        console.info(`Loaded ${roles.length} roles for department ${departmentId}`);
+
+                        // Clear current options except the first one
+                        roleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+
+                        // Populate roles
+                        roles.forEach(role => {
+                            // Cache role with sensitive permissions
+                            rolesCache[String(role.id)] = {
+                                id: role.id,
+                                name: role.name,
+                                sensitive_permissions: Array.isArray(role.sensitive_permissions) ?
+                                    role.sensitive_permissions : []
+                            };
+
+                            const option = document.createElement('option');
+                            option.value = role.id;
+                            option.textContent = role.name;
+
+                            // Check if this is the selected role
+                            if (selectedRole && String(selectedRole) === String(role.id)) {
+                                option.selected = true;
+                            }
+
+                            roleSelect.appendChild(option);
+                        });
+
+                        // If we have a selected role, update sensitive permissions
+                        if (selectedRole && rolesCache[String(selectedRole)]) {
+                            console.log('Updating sensitive permissions from selected role:', selectedRole);
+                            updateSensitivePermissions(rolesCache[String(selectedRole)].sensitive_permissions);
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error loading department roles:', err);
+                        roleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+                        rolesCache = {};
+                    });
+            }
+
+            // ---------- Role change handler ----------
+            function onRoleChanged(roleId) {
+                if (!roleId) {
+                    console.info('Role cleared, removing sensitive selections');
+                    updateSensitivePermissions([]);
+                    return;
+                }
+
+                // Check cache first
+                if (rolesCache[String(roleId)]) {
+                    console.info('Using cached sensitive_permissions for role', roleId);
+                    // When role changes, ALWAYS override with role's sensitive permissions
+                    updateSensitivePermissions(rolesCache[String(roleId)].sensitive_permissions);
+                    return;
+                }
+
+                // Fallback: fetch the role directly if not in cache
+                const url = `/admin/roles/${roleId}`;
+                doFetchJson(url)
+                    .then(data => {
+                        const perms = Array.isArray(data.sensitive_permissions) ? data.sensitive_permissions :
+                        [];
+
+                        // Cache the role
+                        rolesCache[String(data.id)] = {
+                            id: data.id,
+                            name: data.name || '',
+                            sensitive_permissions: perms
+                        };
+
+                        // When role changes, ALWAYS override with role's sensitive permissions
+                        updateSensitivePermissions(perms);
+                    })
+                    .catch(err => {
+                        console.error('Error fetching single role:', err);
+                        updateSensitivePermissions([]);
+                    });
+            }
+
+            // ---------- Event listeners ----------
+            if (departmentSelect) {
+                departmentSelect.addEventListener('change', function() {
+                    console.info('Department changed:', this.value);
+                    // When department changes, clear role and sensitive permissions
+                    roleSelect.innerHTML = '<option value="">-- Select Role --</option>';
+                    updateSensitivePermissions([]);
+
+                    if (this.value) {
+                        loadDepartmentData(this.value);
+                    }
+                });
+            }
+
+            if (roleSelect) {
+                roleSelect.addEventListener('change', function() {
+                    console.info('Role changed:', this.value);
+                    // When role changes, always override sensitive permissions with role's permissions
+                    onRoleChanged(this.value);
+                });
+            }
+
+            // ---------- Initialize on load ----------
+            (function initOnLoad() {
+                const oldDepartment = @json(old('department_id'));
+                const oldRole = @json(old('role_id'));
+                const oldSensitivePermissions = @json(old('sensitive_permissions', []));
+
+                // Use old input or current employee data for department
+                const departmentValue = oldDepartment || (departmentSelect ? departmentSelect.value : '');
+
+                // For role, check old input first, then employee's current role
+                let roleValue = oldRole;
+                if (!roleValue && @json($employee->roles->isNotEmpty())) {
+                    // Get the employee's current role ID
+                    roleValue = @json($employee->roles->first()->id);
+                    console.log('Using employee current role:', roleValue);
+                }
+
+                // If there are old sensitive permissions (from form validation), use them
+                // Otherwise use employee's current sensitive permissions
+                let initialSensitivePermissions = oldSensitivePermissions;
+                if (!initialSensitivePermissions || initialSensitivePermissions.length === 0) {
+                    initialSensitivePermissions = @json($employee->sensitive_permissions ?? []);
+                }
+
+                // Apply initial sensitive permissions
+                if (sensitiveChoices) {
+                    updateSensitivePermissions(initialSensitivePermissions);
+                }
+
+                if (departmentValue) {
+                    console.info('Initial load: department', departmentValue, 'role', roleValue);
+                    loadDepartmentData(departmentValue, roleValue);
+                } else {
+                    console.info('No department preselected');
+                    // Still load roles if department is already selected in the dropdown
+                    if (departmentSelect.value) {
+                        loadDepartmentData(departmentSelect.value, roleValue);
+                    }
+                }
+            })();
         });
-
-        // On Page Load
-        const selectedDepartment = departmentSelect.value;
-        const existingRole = @json(old('role_id', $employee->roles->first()?->id ?? null));
-
-        if (selectedDepartment) {
-            loadDepartmentData(selectedDepartment, existingRole);
-        }
     </script>
 @endpush

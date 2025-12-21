@@ -53,13 +53,13 @@ class CheckoutController extends Controller
                 case 'pending':
                     $query->whereHas('schedulePayments', function ($q) {
                         $q->whereDoesntHave('payment')
-                          ->where('due_date', '>', Carbon::now());
+                            ->where('due_date', '>', Carbon::now());
                     });
                     break;
                 case 'overdue':
                     $query->whereHas('schedulePayments', function ($q) {
                         $q->whereDoesntHave('payment')
-                          ->where('due_date', '<', Carbon::now());
+                            ->where('due_date', '<', Carbon::now());
                     });
                     break;
             }
@@ -70,10 +70,10 @@ class CheckoutController extends Controller
             $search = $request->search;
             $query->where(function ($q) use ($search) {
                 $q->where('uuid', 'like', "%{$search}%")
-                  ->orWhereHas('user', function ($userQuery) use ($search) {
-                      $userQuery->where('name', 'like', "%{$search}%")
-                               ->orWhere('email', 'like', "%{$search}%");
-                  });
+                    ->orWhereHas('user', function ($userQuery) use ($search) {
+                        $userQuery->where('name', 'like', "%{$search}%")
+                            ->orWhere('email', 'like', "%{$search}%");
+                    });
             });
         }
 
@@ -118,7 +118,7 @@ class CheckoutController extends Controller
         }
 
         return redirect()->route('admin.checkouts.show', $checkout)
-                        ->with('success', 'Checkout created successfully');
+            ->with('success', 'Checkout created successfully');
     }
 
     /**
@@ -134,7 +134,7 @@ class CheckoutController extends Controller
             'schedulePayments',
             'schedulePayments.payment',
             'schedulePayments.claims'
-            
+
         ]);
 
         // Calculate checkout metrics
@@ -145,7 +145,7 @@ class CheckoutController extends Controller
             $entries = $fTransaction->entries()
                 ->with(['account', 'user'])
                 ->orderBy('entry_date', 'desc')
-                 ->paginate(50);
+                ->paginate(50);
         } else {
             $entries = new \Illuminate\Pagination\LengthAwarePaginator([], 0, 10, 1, [
                 'path' => request()->url(),
@@ -187,7 +187,7 @@ class CheckoutController extends Controller
         }
 
         return redirect()->route('admin.checkouts.show', $checkout)
-                        ->with('success', 'Checkout updated successfully');
+            ->with('success', 'Checkout updated successfully');
     }
 
     /**
@@ -234,10 +234,10 @@ class CheckoutController extends Controller
         $timeline = $schedulePayments->map(function ($payment) {
             return [
                 'id' => $payment->id,
-                'due_date' => Carbon::parse($payment->due_date)->format('Y-m-d'),
+                'due_date' => Carbon::parse($payment->due_date)->format(dateFormat()),
                 'amount' => $payment->amount,
                 'status' => $payment->payment ? 'paid' : (Carbon::parse($payment->due_date)->lt(Carbon::now()) ? 'overdue' : 'pending'),
-                'payment_date' => $payment->payment?->created_at?->format('Y-m-d'),
+                'payment_date' => $payment->payment?->created_at?->format(dateFormat()),
                 'claims_count' => $payment->claims->count(),
                 'last_claim' => $payment->claims->first()?->created_at?->format('Y-m-d H:i'),
             ];
@@ -255,21 +255,21 @@ class CheckoutController extends Controller
     private function calculateCheckoutMetrics(Checkout $checkout): array
     {
         $schedulePayments = $checkout->schedulePayments;
-        
+
         $totalAmount = $schedulePayments->sum('amount');
         $paidAmount = $schedulePayments->whereNotNull('payment')->sum('amount');
         $pendingAmount = $totalAmount - $paidAmount;
-        
+
         $overduePayments = $schedulePayments->filter(function ($payment) {
             return !$payment->payment && Carbon::parse($payment->due_date)->lt(Carbon::now());
         });
-        
+
         $overdueAmount = $overduePayments->sum('amount');
-        
+
         $totalClaims = $schedulePayments->sum(function ($payment) {
             return $payment->claims->count();
         });
-        
+
         $resolvedClaims = $schedulePayments->sum(function ($payment) {
             return $payment->claims->where('claim_status', 'resolved')->count();
         });

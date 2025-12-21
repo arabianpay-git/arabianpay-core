@@ -330,7 +330,7 @@
 
                                                         if (empty($gregorian) && !empty($hijri)) {
                                                             $converted = hijriToGregorian($hijri);
-                                                            $gregorian = $converted?->format('Y-m-d');
+                                                            $gregorian = $converted?->format(dateFormat());
                                                         }
 
                                                         $formattedGregorian = $gregorian

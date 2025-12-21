@@ -142,7 +142,7 @@
                                                 <td>{{ $transaction->order?->tracking ?? translate('N/A') }}</td>
 
                                                 <td class="text-center">
-                                                    {{ $transaction->created_at->format('Y-m-d') }}
+                                                    {{ $transaction->created_at->format(dateFormat()) }}
                                                 </td>
 
                                                 <td class="text-center">
@@ -180,7 +180,7 @@
                                                             data-settled="{{ number_format($transaction->calculated['supplierDue'] ?? 0.0, 2) }}"
                                                             data-refund-sum="{{ $transaction->refund_amount }}"
                                                             data-final="{{ number_format(($transaction->calculated['totalSuplierDue'] ?? 0.0) - get_setting('service_fees', 0), 2) }}"
-                                                            data-date="{{ now()->format('Y-m-d') }}"
+                                                            data-date="{{ now()->format(dateFormat()) }}"
                                                             title="{{ translate('Make Payment') }}">
                                                             <i class="ki-filled ki-cheque"> </i>
                                                         </a>
@@ -316,11 +316,11 @@
 
                     // Set values with N/A fallback
                     document.getElementById('modal_transaction_id').value = this.dataset.id ||
-                    'N/A';
+                        'N/A';
                     document.getElementById('modal_seller_id').value = this.dataset.sellerId ||
                         'N/A';
                     document.getElementById('modal_due').textContent = formatValue(this.dataset
-                    .due);
+                        .due);
                     document.getElementById('modal_transfer_fee').textContent = formatValue(this
                         .dataset.transferFee);
                     document.getElementById('modal_final').textContent = formatValue(this.dataset

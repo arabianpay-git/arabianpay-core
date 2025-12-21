@@ -41,11 +41,11 @@ class InvestmentPoolsController extends Controller
         if ($start && $end) {
             $query->where(function ($q) use ($start, $end) {
                 $q->whereBetween('start_date', [$start, $end])
-                  ->orWhereBetween('end_date', [$start, $end])
-                  ->orWhere(function ($q2) use ($start, $end) {
-                      $q2->where('start_date', '<=', $start)
-                         ->where('end_date', '>=', $end);
-                  });
+                    ->orWhereBetween('end_date', [$start, $end])
+                    ->orWhere(function ($q2) use ($start, $end) {
+                        $q2->where('start_date', '<=', $start)
+                            ->where('end_date', '>=', $end);
+                    });
             });
         }
 
@@ -55,12 +55,12 @@ class InvestmentPoolsController extends Controller
             $pool->updateMetrics();
             // Determine color based on performance
             $backgroundColor = $this->getPoolColor($pool);
-            
+
             return [
                 'id' => $pool->id,
                 'title' => $pool->name,
-                'start' => Carbon::parse($pool->start_date)->format('Y-m-d'),
-                'end' => Carbon::parse($pool->end_date)->addDay()->format('Y-m-d'), // FullCalendar end date is exclusive
+                'start' => Carbon::parse($pool->start_date)->format(dateFormat()),
+                'end' => Carbon::parse($pool->end_date)->addDay()->format(dateFormat()), // FullCalendar end date is exclusive
                 'backgroundColor' => $backgroundColor,
                 'borderColor' => $backgroundColor,
                 'textColor' => '#ffffff',
@@ -69,8 +69,8 @@ class InvestmentPoolsController extends Controller
                         'id' => $pool->id,
                         'uuid' => $pool->uuid,
                         'name' => $pool->name,
-                        'start_date' => Carbon::parse($pool->start_date)->format('Y-m-d'),
-                        'end_date' => Carbon::parse($pool->end_date)->format('Y-m-d'),
+                        'start_date' => Carbon::parse($pool->start_date)->format(dateFormat()),
+                        'end_date' => Carbon::parse($pool->end_date)->format(dateFormat()),
                         'status' => $pool->status,
                         'total_disbursed' => $pool->total_disbursed,
                         'total_collected' => $pool->total_collected,
@@ -116,7 +116,6 @@ class InvestmentPoolsController extends Controller
                 'message' => 'Investment pool created successfully',
                 'pool' => $pool
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -132,7 +131,7 @@ class InvestmentPoolsController extends Controller
     {
         // Update pool metrics
         $pool->updateMetrics();
-        
+
         // Get checkouts with pagination
         $checkouts = $pool->checkouts()
             ->with(['user', 'schedulePayments'])
@@ -144,19 +143,19 @@ class InvestmentPoolsController extends Controller
             $totalInstallments = $checkout->schedulePayments->count();
             $paidInstallments = $checkout->schedulePayments->where('payment_status', 'paid')->count();
             $checkout->payment_rate = $totalInstallments > 0 ? ($paidInstallments / $totalInstallments) * 100 : 0;
-            
+
             // Get next payment
             $nextPayment = $checkout->schedulePayments
                 ->where('payment_status', '!=', 'paid')
                 ->where('due_date', '>=', now())
                 ->sortBy('due_date')
                 ->first();
-            
+
             if ($nextPayment) {
                 $checkout->next_payment_date = $nextPayment->due_date;
                 $checkout->next_payment_amount = $nextPayment->instalment_amount;
             }
-            
+
             return $checkout;
         });
 
@@ -193,10 +192,10 @@ class InvestmentPoolsController extends Controller
             $pending = $monthPayments->where('payment_status', 'pending')->count();
             $due = $monthPayments->where('payment_status', 'due')->count();
             $late = $monthPayments->where('payment_status', 'late')->count();
-            
+
             $totalAmount = $monthPayments->sum('instalment_amount');
             $collectedAmount = $monthPayments->where('payment_status', 'paid')->sum('instalment_amount');
-            
+
             return [
                 'month' => Carbon::createFromFormat('Y-m', $month)->format('F Y'),
                 'total_count' => $total,
@@ -217,12 +216,12 @@ class InvestmentPoolsController extends Controller
         // Generate collection trend data (last 30 days)
         $collectionTrend = [];
         $collectionDates = [];
-        
+
         for ($i = 29; $i >= 0; $i--) {
             $date = now()->subDays($i);
-            $dateString = $date->format('Y-m-d');
+            $dateString = $date->format(dateFormat());
             $collectionDates[] = $date->format('M d');
-            
+
             // Get payments collected on this date
             $dailyCollection = $schedulePayments
                 ->where('payment_status', 'paid')
@@ -231,54 +230,53 @@ class InvestmentPoolsController extends Controller
                     return Carbon::parse($payment->updated_at)->isSameDay($date);
                 })
                 ->sum('instalment_amount');
-                
+
             $collectionTrend[] = $dailyCollection;
         }
 
         // Get customers and suppliers participating in this pool
         $checkoutIds = $pool->checkouts->pluck('id');
-        
+
         // Get unique customers from checkouts
         $customers = \App\Models\Customer::whereHas('checkouts', function ($query) use ($checkoutIds) {
             $query->whereIn('id', $checkoutIds)
-             ->with(['payments' => function ($query) use ($checkoutIds) {
-            $query->whereIn('checkout_id', $checkoutIds);
-                  
-        }]);
+                ->with(['payments' => function ($query) use ($checkoutIds) {
+                    $query->whereIn('checkout_id', $checkoutIds);
+                }]);
         })
-        ->with(['user', 'checkouts' => function ($query) use ($checkoutIds) {
-            $query->whereIn('id', $checkoutIds);
-        }])
-       
-        ->get()
-        ->map(function ($customer) {
-            $checkouts = $customer->checkouts;
-            
-            // Get all payments for these checkouts
-            $checkoutIds = $checkouts->pluck('id');
-            $paymentsSum = \App\Models\Payment::whereHas('schedulePayment', function($q) use ($checkoutIds) {
-                $q->whereIn('checkout_id', $checkoutIds);
-            })->sum('amount');
-            
-            $paymentsCount = \App\Models\Payment::whereHas('schedulePayment', function($q) use ($checkoutIds) {
-                $q->whereIn('checkout_id', $checkoutIds);
-            })->count();
-            
-            $totalAmount = $checkouts->sum('total_amount');
-            $collectionsPercent = $totalAmount > 0 ? round($paymentsSum / $totalAmount * 100, 2) : 0;
+            ->with(['user', 'checkouts' => function ($query) use ($checkoutIds) {
+                $query->whereIn('id', $checkoutIds);
+            }])
 
-            return (object)[
-                'id' => $customer->id,
-                'user_id' => $customer->user_id,
-                'user' => $customer->user,
-                'name' => $customer->user->business_name ?? $customer->user->name ?? 'N/A',
-                'orders_count' => $checkouts->count(),
-                'orders_amount' => number_format($totalAmount, 2),
-                'payments_count' => $paymentsCount,
-                'payments_amount' => number_format($paymentsSum, 2),
-                'collection_percent' => number_format($collectionsPercent, 2),
-            ];
-        });
+            ->get()
+            ->map(function ($customer) {
+                $checkouts = $customer->checkouts;
+
+                // Get all payments for these checkouts
+                $checkoutIds = $checkouts->pluck('id');
+                $paymentsSum = \App\Models\Payment::whereHas('schedulePayment', function ($q) use ($checkoutIds) {
+                    $q->whereIn('checkout_id', $checkoutIds);
+                })->sum('amount');
+
+                $paymentsCount = \App\Models\Payment::whereHas('schedulePayment', function ($q) use ($checkoutIds) {
+                    $q->whereIn('checkout_id', $checkoutIds);
+                })->count();
+
+                $totalAmount = $checkouts->sum('total_amount');
+                $collectionsPercent = $totalAmount > 0 ? round($paymentsSum / $totalAmount * 100, 2) : 0;
+
+                return (object)[
+                    'id' => $customer->id,
+                    'user_id' => $customer->user_id,
+                    'user' => $customer->user,
+                    'name' => $customer->user->business_name ?? $customer->user->name ?? 'N/A',
+                    'orders_count' => $checkouts->count(),
+                    'orders_amount' => number_format($totalAmount, 2),
+                    'payments_count' => $paymentsCount,
+                    'payments_amount' => number_format($paymentsSum, 2),
+                    'collection_percent' => number_format($collectionsPercent, 2),
+                ];
+            });
 
         // Get unique suppliers (merchants) from checkouts
         // First, get all unique seller_ids from orders in these checkouts
@@ -286,7 +284,7 @@ class InvestmentPoolsController extends Controller
             ->distinct()
             ->pluck('seller_id')
             ->filter();
-        
+
         $suppliers = \App\Models\Merchant::whereIn('id', $sellerIds)
             ->with('user')
             ->get()
@@ -295,7 +293,7 @@ class InvestmentPoolsController extends Controller
                 $orders = \App\Models\Order::where('seller_id', $merchant->id)
                     ->whereIn('checkout_id', $checkoutIds)
                     ->get();
-                
+
                 return (object)[
                     'id' => $merchant->id,
                     'user_id' => $merchant->user_id,
@@ -334,7 +332,11 @@ class InvestmentPoolsController extends Controller
 
         try {
             $pool->update($request->only([
-                'name', 'start_date', 'end_date', 'total_disbursed', 'status'
+                'name',
+                'start_date',
+                'end_date',
+                'total_disbursed',
+                'status'
             ]));
 
             // Recalculate metrics if needed
@@ -345,7 +347,6 @@ class InvestmentPoolsController extends Controller
                 'message' => 'Investment pool updated successfully',
                 'pool' => $pool->fresh()
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
@@ -374,7 +375,6 @@ class InvestmentPoolsController extends Controller
                 'success' => true,
                 'message' => 'Investment pool deleted successfully'
             ]);
-
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

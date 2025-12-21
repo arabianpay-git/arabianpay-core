@@ -149,78 +149,232 @@
     <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
 
     <script>
-        // Elements
-        const departmentSelect = document.getElementById('department_id');
-        const roleSelect = document.getElementById('role_id');
+        document.addEventListener('DOMContentLoaded', function() {
+            console.info('Employee form script loaded (DOMContentLoaded)');
 
-        // Initialize Choices on selects
-        const roleChoices = new Choices(roleSelect, {
-            removeItemButton: false,
-            maxItemCount: 1,
-            shouldSort: false,
-            searchEnabled: true,
-            placeholderValue: 'Select Role',
-        });
+            // ---------- Elements ----------
+            const departmentSelect = document.getElementById('department_id');
+            const roleSelect = document.getElementById('role_id');
+            const sensitiveSelect = document.getElementById('sensitive_permissions');
 
-        // Load roles for selected department
-        function loadDepartmentData(departmentId, selectedRole = null) {
-            if (!departmentId) {
-                // clear roles if no department
-                roleChoices.clearChoices();
-                return;
+            if (!departmentSelect) {
+                console.error('departmentSelect not found (#department_id). Check your markup.');
             }
 
-            fetch(`/admin/departments/${departmentId}/access`, {
+            if (!roleSelect) {
+                console.error('roleSelect not found (#role_id). Check your markup.');
+            }
+
+            if (!sensitiveSelect) {
+                console.error('sensitiveSelect not found (#sensitive_permissions). Check your markup.');
+            }
+
+            // ---------- Choices instances ----------
+            const roleChoices = new Choices(roleSelect, {
+                removeItemButton: false,
+                maxItemCount: 1,
+                shouldSort: false,
+                searchEnabled: true,
+                placeholderValue: 'Select Role',
+            });
+
+            // Initialize sensitive choices
+            let sensitiveChoices = null;
+            if (sensitiveSelect) {
+                if (window.sensitiveChoices) {
+                    try {
+                        window.sensitiveChoices.destroy();
+                    } catch (e) {
+                        /* ignore */
+                    }
+                    window.sensitiveChoices = null;
+                }
+
+                sensitiveChoices = new Choices(sensitiveSelect, {
+                    removeItemButton: true,
+                    shouldSort: false,
+                    duplicateItemsAllowed: false,
+                    searchEnabled: true,
+                    placeholderValue: 'Select Sensitive Permissions',
+                });
+                window.sensitiveChoices = sensitiveChoices;
+            }
+
+            // ---------- Cache for roles ----------
+            let rolesCache = {};
+
+            // ---------- Fetch wrapper ----------
+            const doFetchJson = (url) => {
+                console.info('Fetching:', url);
+                return fetch(url, {
                     headers: {
                         'Accept': 'application/json'
+                    },
+                    credentials: 'same-origin'
+                }).then(res => {
+                    if (!res.ok) {
+                        const msg = `Fetch failed ${res.status} ${res.statusText} for ${url}`;
+                        console.warn(msg);
+                        throw new Error(msg);
                     }
-                })
-                .then(res => {
-                    if (!res.ok) throw new Error('Network response was not ok');
+                    console.info('Fetched:', res);
                     return res.json();
-                })
-                .then(data => {
-                    // Map roles, ensuring string values and marking selected one
-                    const choices = (data.roles || []).map(role => ({
-                        value: String(role.id),
-                        label: role.name,
-                        selected: selectedRole !== null && String(selectedRole) === String(role.id)
-                    }));
-
-                    // replace choices entirely
-                    roleChoices.setChoices(choices, 'value', 'label', true);
-
-                    // If a selectedRole is provided but Choices didn't pre-select it (fallback), set it explicitly
-                    if (selectedRole !== null && choices.some(c => c.selected)) {
-                        try {
-                            roleChoices.setChoiceByValue(String(selectedRole));
-                        } catch (e) {
-                            // ignore if setChoiceByValue not available in this Choices version
-                        }
-                    }
-                })
-                .catch(err => {
-                    console.error('Error loading roles:', err);
-                    roleChoices.clearChoices();
                 });
-        }
+            };
 
-        // department change handler
-        departmentSelect.addEventListener('change', function() {
-            loadDepartmentData(this.value);
-        });
+            // ---------- Function to update sensitive permissions ----------
+            function updateSensitivePermissions(permissionsArray) {
+                if (!sensitiveChoices || !sensitiveSelect) {
+                    console.warn('Sensitive permissions select not available');
+                    return;
+                }
 
-        // On page load: if there was old input, load roles and select the old role
-        (function initOnLoad() {
-            const oldDepartment = @json(old('department_id'));
-            const oldRole = @json(old('role_id'));
+                // Clear current selections
+                sensitiveChoices.removeActiveItems();
 
-            const departmentValue = (oldDepartment && oldDepartment !== '') ? oldDepartment : (departmentSelect.value ||
-                '');
+                // Add new selections
+                if (Array.isArray(permissionsArray) && permissionsArray.length > 0) {
+                    permissionsArray.forEach(permission => {
+                        // Find the option by value
+                        const option = Array.from(sensitiveSelect.options).find(opt => opt.value ===
+                            permission);
+                        if (option) {
+                            sensitiveChoices.setChoiceByValue(permission);
+                        }
+                    });
+                }
 
-            if (departmentValue) {
-                loadDepartmentData(departmentValue, oldRole ?? null);
+                console.info('Updated sensitive permissions:', permissionsArray);
             }
-        })();
+
+            // ---------- Populate roles ----------
+            function loadDepartmentData(departmentId, selectedRole = null) {
+                if (!departmentId) {
+                    console.info('No departmentId provided — clearing roles & cache');
+                    roleChoices.clearChoices();
+                    rolesCache = {};
+                    return;
+                }
+
+                const url = `/admin/departments/${departmentId}/access`;
+
+                doFetchJson(url)
+                    .then(data => {
+                        const roles = data.roles || [];
+                        console.info(`Loaded ${roles.length} roles for department ${departmentId}`);
+
+                        const choices = roles.map(role => {
+                            // Cache role with sensitive permissions
+                            rolesCache[String(role.id)] = {
+                                id: role.id,
+                                name: role.name,
+                                sensitive_permissions: Array.isArray(role.sensitive_permissions) ?
+                                    role.sensitive_permissions : []
+                            };
+
+                            return {
+                                value: String(role.id),
+                                label: role.name,
+                                selected: selectedRole !== null && String(selectedRole) === String(role
+                                    .id)
+                            };
+                        });
+
+                        roleChoices.setChoices(choices, 'value', 'label', true);
+
+                        if (selectedRole !== null) {
+                            try {
+                                roleChoices.setChoiceByValue(String(selectedRole));
+                            } catch (e) {
+                                console.warn('Could not set role by value:', e);
+                            }
+
+                            // If we have a selected role, update sensitive permissions
+                            if (rolesCache[String(selectedRole)]) {
+                                updateSensitivePermissions(rolesCache[String(selectedRole)]
+                                    .sensitive_permissions);
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error('Error loading department roles:', err);
+                        roleChoices.clearChoices();
+                        rolesCache = {};
+                    });
+            }
+
+            // ---------- Role change handler ----------
+            function onRoleChanged(roleId) {
+                if (!roleId) {
+                    console.info('Role cleared, removing sensitive selections');
+                    updateSensitivePermissions([]);
+                    return;
+                }
+
+                // Check cache first
+                if (rolesCache[String(roleId)]) {
+                    console.info('Using cached sensitive_permissions for role', roleId);
+                    updateSensitivePermissions(rolesCache[String(roleId)].sensitive_permissions);
+                    return;
+                }
+
+                // Fallback: fetch the role directly if not in cache
+                const url = `/admin/roles/${roleId}`;
+                doFetchJson(url)
+                    .then(data => {
+                        const perms = Array.isArray(data.sensitive_permissions) ? data.sensitive_permissions :
+                        [];
+
+                        // Cache the role
+                        rolesCache[String(data.id)] = {
+                            id: data.id,
+                            name: data.name || '',
+                            sensitive_permissions: perms
+                        };
+
+                        updateSensitivePermissions(perms);
+                    })
+                    .catch(err => {
+                        console.error('Error fetching single role:', err);
+                        updateSensitivePermissions([]);
+                    });
+            }
+
+            // ---------- Event listeners ----------
+            if (departmentSelect) {
+                departmentSelect.addEventListener('change', function() {
+                    console.info('Department changed:', this.value);
+                    loadDepartmentData(this.value);
+                });
+            }
+
+            if (roleSelect) {
+                roleSelect.addEventListener('change', function() {
+                    console.info('Role changed:', this.value);
+                    onRoleChanged(this.value);
+                });
+            }
+
+            // ---------- Initialize on load ----------
+            (function initOnLoad() {
+                const oldDepartment = @json(old('department_id'));
+                const oldRole = @json(old('role_id'));
+                const oldSensitivePermissions = @json(old('sensitive_permissions', []));
+
+                const departmentValue = oldDepartment || (departmentSelect ? departmentSelect.value : '');
+
+                // If there are old sensitive permissions (from form validation), use them
+                if (oldSensitivePermissions && oldSensitivePermissions.length > 0 && sensitiveChoices) {
+                    updateSensitivePermissions(oldSensitivePermissions);
+                }
+
+                if (departmentValue) {
+                    console.info('Initial load: department', departmentValue, 'role', oldRole);
+                    loadDepartmentData(departmentValue, oldRole);
+                } else {
+                    console.info('No department preselected');
+                }
+            })();
+        });
     </script>
 @endpush

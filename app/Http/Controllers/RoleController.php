@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Spatie\Permission\Models\Role;
+use App\Models\Role;
 use Illuminate\Support\Str;
 
 class RoleController extends Controller
@@ -20,6 +20,15 @@ class RoleController extends Controller
         return view('admin.roles.create');
     }
 
+    public function show(Role $role)
+    {
+        return response()->json([
+            'id' => $role->id,
+            'name' => $role->name,
+            'sensitive_permissions' => $role->sensitive_permissions ?? [],
+        ]);
+    }
+
     public function store(Request $request)
     {
         $request->validate([
@@ -28,7 +37,8 @@ class RoleController extends Controller
 
         Role::create([
             'name' => $request->name,
-            'guard_name' => 'web'
+            'guard_name' => 'web',
+            'sensitive_permissions' => $request->sensitive_permissions
         ]);
 
         /** @var \App\Models\User $user */
@@ -61,7 +71,8 @@ class RoleController extends Controller
 
         $role->update([
             'name' => $request->name,
-            'guard_name' => 'web'
+            'guard_name' => 'web',
+            'sensitive_permissions' => $request->sensitive_permissions
         ]);
 
         /** @var \App\Models\User $user */

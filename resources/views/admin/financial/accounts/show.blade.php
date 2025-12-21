@@ -18,7 +18,7 @@
                             {{ translate('Financial Accounts') }}
                         </a>
                         <span class="text-gray-400">/</span>
-                        <span class="text-gray-900">{{ $fAccount->id}}</span>
+                        <span class="text-gray-900">{{ $fAccount->id }}</span>
                     </div>
                 </div>
                 <div class="flex items-center gap-2.5">
@@ -49,39 +49,42 @@
                                 <label class="text-gray-600 text-sm">{{ translate('Account Code') }}</label>
                                 <span class="text-gray-900 font-medium">{{ $fAccount->account_code }}</span>
                             </div>
-                            
+
                             <div class="flex flex-col gap-2">
                                 <label class="text-gray-600 text-sm">{{ translate('Account Name') }}</label>
                                 <span class="text-gray-900 font-medium">{{ $fAccount->account_name }}</span>
                             </div>
-                            
+
                             <div class="flex gap-2">
                                 <label class="text-gray-600 text-sm">{{ translate('Account Category') }}</label>
-                                <span class="badge badge-xs text-xs px-2 py-1 w-fit inline-block {{ $fAccount->account_type1 == 1 ? 'badge-primary' : 'badge-secondary' }}">
+                                <span
+                                    class="badge badge-xs text-xs px-2 py-1 w-fit inline-block {{ $fAccount->account_type1 == 1 ? 'badge-primary' : 'badge-secondary' }}">
                                     {{ $fAccount->account_type1 == 1 ? translate('Budget') : translate('Non-Budget') }}
                                 </span>
                             </div>
-                            
+
                             <div class="flex gap-2">
                                 <label class="text-gray-600 text-sm">{{ translate('Account Type') }}</label>
-                                <span class="badge badge-xs text-xs px-2 py-1 w-fit inline-block {{ $fAccount->account_type2 == 1 ? 'badge-success' : 'badge-info' }}">
+                                <span
+                                    class="badge badge-xs text-xs px-2 py-1 w-fit inline-block {{ $fAccount->account_type2 == 1 ? 'badge-success' : 'badge-info' }}">
                                     {{ $fAccount->account_type2 == 1 ? translate('Debit') : translate('Credit') }}
                                 </span>
                             </div>
-                            
+
                             <div class="flex  gap-2">
                                 <label class="text-gray-600 text-sm">{{ translate('Status') }}</label>
                                 <span class="badge {{ $fAccount->status == 'active' ? 'badge-success' : 'badge-danger' }}">
                                     {{ translate(ucfirst($fAccount->status)) }}
                                 </span>
                             </div>
-                            
+
                             <div class="flex flex-col gap-2">
                                 <label class="text-gray-600 text-sm">{{ translate('Created At') }}</label>
-                                <span class="text-gray-900">{{ $fAccount->created_at ? \Carbon\Carbon::parse($fAccount->created_at)->format('Y-m-d H:i:s') : '-' }}</span>
+                                <span
+                                    class="text-gray-900">{{ $fAccount->created_at ? \Carbon\Carbon::parse($fAccount->created_at)->format('Y-m-d H:i:s') : '-' }}</span>
                             </div>
-                            
-                            @if($fAccount->description)
+
+                            @if ($fAccount->description)
                                 <div class="flex flex-col gap-2 lg:col-span-2">
                                     <label class="text-gray-600 text-sm">{{ translate('Description') }}</label>
                                     <span class="text-gray-900">{{ $fAccount->description }}</span>
@@ -100,7 +103,7 @@
                         </div>
                     </div>
                     <div class="card-body">
-                        @if($entries->count() > 0)
+                        @if ($entries->count() > 0)
                             <div class="scrollable-x-auto">
                                 <table class="table table-auto table-border">
                                     <thead>
@@ -119,48 +122,55 @@
                                             $totalDebit = 0;
                                             $totalCredit = 0;
                                         @endphp
-                                        @foreach($entries as $entry)
+                                        @foreach ($entries as $entry)
                                             @php
                                                 $totalDebit += $entry->debit ?? 0;
                                                 $totalCredit += $entry->credit ?? 0;
                                             @endphp
                                             <tr>
-                                                <td>{{ $entry->entry_date ? \Carbon\Carbon::parse($entry->entry_date)->format('Y-m-d') : '-' }}</td>
+                                                <td>{{ $entry->entry_date ? \Carbon\Carbon::parse($entry->entry_date)->format(dateFormat()) : '-' }}
+                                                </td>
                                                 <td>
-                                                    @if($entry->reference_id)
-                                                        <span class="text-sm text-gray-600">#{{ $entry->reference_id }}</span>
+                                                    @if ($entry->reference_id)
+                                                        <span
+                                                            class="text-sm text-gray-600">#{{ $entry->reference_id }}</span>
                                                     @else
                                                         <span class="text-gray-400">-</span>
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if($entry->debit)
-                                                        <span class="text-red-600 font-medium">{{ number_format($entry->debit, 2) }} SR</span>
+                                                    @if ($entry->debit)
+                                                        <span
+                                                            class="text-red-600 font-medium">{{ number_format($entry->debit, 2) }}
+                                                            SR</span>
                                                     @else
                                                         <span class="text-gray-400">-</span>
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if($entry->credit)
-                                                        <span class="text-green-600 font-medium">{{ number_format($entry->credit, 2) }} SR</span>
+                                                    @if ($entry->credit)
+                                                        <span
+                                                            class="text-green-600 font-medium">{{ number_format($entry->credit, 2) }}
+                                                            SR</span>
                                                     @else
                                                         <span class="text-gray-400">-</span>
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    <span class="badge badge-xs {{ $entry->status == 'completed' ? 'badge-success' : ($entry->status == 'pending' ? 'badge-warning' : 'badge-danger') }}">
+                                                    <span
+                                                        class="badge badge-xs {{ $entry->status == 'completed' ? 'badge-success' : ($entry->status == 'pending' ? 'badge-warning' : 'badge-danger') }}">
                                                         {{ translate(ucfirst($entry->status)) }}
                                                     </span>
                                                 </td>
                                                 <td>
-                                                    @if($entry->user)
+                                                    @if ($entry->user)
                                                         <span class="text-sm">{{ $entry->user->name }}</span>
                                                     @else
                                                         <span class="text-gray-400">-</span>
                                                     @endif
                                                 </td>
                                                 <td>
-                                                    @if($entry->notes)
+                                                    @if ($entry->notes)
                                                         <span class="text-sm">{{ Str::limit($entry->notes, 50) }}</span>
                                                     @else
                                                         <span class="text-gray-400">-</span>
@@ -172,11 +182,14 @@
                                     <tfoot>
                                         <tr class="bg-gray-50">
                                             <td colspan="2" class="font-medium">{{ translate('Total') }}</td>
-                                            <td class="font-medium text-red-600">{{ number_format($totalDebit, 2) }} SR</td>
-                                            <td class="font-medium text-green-600">{{ number_format($totalCredit, 2) }} SR</td>
+                                            <td class="font-medium text-red-600">{{ number_format($totalDebit, 2) }} SR
+                                            </td>
+                                            <td class="font-medium text-green-600">{{ number_format($totalCredit, 2) }} SR
+                                            </td>
                                             <td colspan="3" class="font-medium">
-                                                {{ translate('Balance') }}: 
-                                                <span class="{{ $totalDebit - $totalCredit >= 0 ? 'text-red-600' : 'text-green-600' }}">
+                                                {{ translate('Balance') }}:
+                                                <span
+                                                    class="{{ $totalDebit - $totalCredit >= 0 ? 'text-red-600' : 'text-green-600' }}">
                                                     {{ number_format(abs($totalDebit - $totalCredit), 2) }} SR
                                                     {{ $totalDebit - $totalCredit >= 0 ? '(Dr)' : '(Cr)' }}
                                                 </span>
@@ -185,11 +198,13 @@
                                     </tfoot>
                                 </table>
                             </div>
-                            
-                            @if($entries->hasPages())
-                                <div class="card-footer justify-center md:justify-between flex-col md:flex-row gap-3 text-gray-600 text-2sm font-medium">
+
+                            @if ($entries->hasPages())
+                                <div
+                                    class="card-footer justify-center md:justify-between flex-col md:flex-row gap-3 text-gray-600 text-2sm font-medium">
                                     <div class="flex items-center gap-2">
-                                        {{ translate('Showing') }} {{ $entries->firstItem() }} {{ translate('to') }} {{ $entries->lastItem() }} 
+                                        {{ translate('Showing') }} {{ $entries->firstItem() }} {{ translate('to') }}
+                                        {{ $entries->lastItem() }}
                                         {{ translate('of') }} {{ $entries->total() }} {{ translate('entries') }}
                                     </div>
                                     <div class="flex items-center gap-4">

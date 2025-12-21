@@ -38,7 +38,7 @@
                             <option value="{{ $payment->id }}" data-remaining="{{ $remaining }}">
                                 SAR {{ number_format($payment->instalment_amount, 2) }}
                                 — Remaining: SAR {{ number_format($remaining, 2) }}
-                                — Due: {{ $payment->due_date->format('Y-m-d') }}
+                                — Due: {{ $payment->due_date->format(dateFormat()) }}
                             </option>
                         @endforeach
                     </select>

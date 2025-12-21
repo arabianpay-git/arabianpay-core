@@ -507,7 +507,7 @@ class OrderController extends Controller
             $order,
             'schedule_payments_created',
             "3 installment payments created, each for {$installmentAmount} SAR. Due dates at 30, 60, 90 days.",
-            ['instalment_count' => 3, 'first_due_date' => now()->addDays(30)->format('Y-m-d')]
+            ['instalment_count' => 3, 'first_due_date' => now()->addDays(30)->format(dateFormat())]
         );
     }
 
@@ -553,7 +553,7 @@ class OrderController extends Controller
         $sanadItems = [
             [
                 'due_type'     => 'date',
-                'due_date'     => now()->addDays(90)->format('Y-m-d'),
+                'due_date'     => now()->addDays(90)->format(dateFormat()),
                 'total_value'  => $order->grand_total,
                 'reference_id' => 'sanad_' . $order->id,
             ]

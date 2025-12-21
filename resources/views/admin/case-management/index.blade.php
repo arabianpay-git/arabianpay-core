@@ -105,7 +105,7 @@
                                                     <span class="{{ $priorityClass }}">{{ $priorityLabel }}</span>
                                                 </td>
 
-                                                <td>{{ $item->due_date ? \Carbon\Carbon::parse($item->due_date)->format('Y-m-d') : '-' }}
+                                                <td>{{ $item->due_date ? \Carbon\Carbon::parse($item->due_date)->format(dateFormat()) : '-' }}
                                                 </td>
                                                 <td>
                                                     <div class="flex gap-1">

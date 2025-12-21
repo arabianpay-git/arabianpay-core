@@ -97,12 +97,12 @@
                                                     <td>
                                                         {{ $wallet->order->code ?? '-' }} <br>
                                                         <small class="text-gray-500">—
-                                                            {{ $wallet->order->created_at->format('Y-m-d') }}</small>
+                                                            {{ $wallet->order->created_at->format(dateFormat()) }}</small>
                                                     </td>
                                                     <td>
                                                         {{ $wallet->order->invoice_number }} <br>
                                                         <small class="text-gray-500">—
-                                                            {{ $wallet->created_at->format('Y-m-d') }}</small>
+                                                            {{ $wallet->created_at->format(dateFormat()) }}</small>
                                                     </td>
                                                     <td class="text-center">
                                                         <span class="icon-saudi_riyal"></span>

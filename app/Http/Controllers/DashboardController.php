@@ -11,10 +11,12 @@ use App\Models\SchedulePayment;
 use App\Models\RefundRequest;
 use App\Models\CustomerCreditLimit;
 use App\Models\Product;
+use App\Models\SensitiveDataApproval;
 use App\Models\State;
 use App\Models\User;
 use App\Models\Wallet;
 use App\Services\RiskAnalyticsService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
@@ -191,5 +193,57 @@ class DashboardController extends Controller
         $finalUrl = $baseUrl . '?' . http_build_query($params);
 
         return redirect()->away($finalUrl);
+    }
+
+    public function approvalStore(Request $request)
+    {
+        // Validate basic input
+        $validated = $request->validate([
+            'sensitive_permissions' => ['required', 'array', 'min:1'],
+            'sensitive_permissions.*' => ['string'],
+            'request_reason' => ['nullable', 'string', 'max:2000'],
+        ]);
+
+        $userId = Auth::user()->id;
+        $requestedPermissions = $validated['sensitive_permissions'];
+
+        // Get all pending approvals of this user
+        $pendingApprovals = SensitiveDataApproval::where('requested_by', $userId)
+            ->where('status', 'pending')
+            ->get();
+
+        // Flatten all sensitive_permissions from pending approvals
+        $alreadyRequested = [];
+        foreach ($pendingApprovals as $approval) {
+            $alreadyRequested = array_merge($alreadyRequested, $approval->sensitive_permissions ?? []);
+        }
+        $alreadyRequested = array_unique($alreadyRequested);
+
+        // Find intersection with current request
+        $conflictingPermissions = array_intersect($requestedPermissions, $alreadyRequested);
+
+        if (!empty($conflictingPermissions)) {
+            $permissionList = implode(', ', $conflictingPermissions);
+            return response()->json([
+                'success' => false,
+                'message' => "You already have an active request for the following sensitive permissions: $permissionList.",
+            ], 422);
+        }
+
+        // Create new approval record
+        $approval = SensitiveDataApproval::create([
+            'requested_by' => $userId,
+            'sensitive_permissions' => $requestedPermissions,
+            'request_reason' => $validated['request_reason'] ?? null,
+            'status' => 'pending',
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Request submitted successfully.',
+            'data' => [
+                'id' => $approval->id,
+            ],
+        ], 201);
     }
 }

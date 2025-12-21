@@ -57,6 +57,7 @@ use App\Http\Controllers\{
     RolePermissionController,
     SanadController,
     SchedulePaymentController,
+    SensitiveDataApprovalController,
     SimahController,
     SingleViewController,
     StateController,
@@ -154,6 +155,7 @@ Route::group([
                 Route::get('/dashboard', 'index')->name('dashboard');
                 Route::get('/dashboard/data', 'filterData');
                 Route::get('/impersonate-user/{id}', 'redirectToPartner')->name('impersonate.redirect');
+                Route::post('/approvals', 'approvalStore')->name('approvals.store');
             });
 
 
@@ -173,6 +175,9 @@ Route::group([
 
             Route::resource('roles', RoleController::class);
             Route::resource('permissions', PermissionController::class);
+
+            Route::get('/roles/{role}', [RoleController::class, 'show']);
+
             // Route::resource('role-permissions', RolePermissionController::class);
             Route::get('user-roles', [UserRoleController::class, 'index'])->name('user-roles.index');
             Route::get('user-roles/create', [UserRoleController::class, 'create'])->name('user-roles.create');
@@ -200,6 +205,10 @@ Route::group([
             Route::get('/get-category-units/{id}', [CategoryController::class, 'getUnits']);
             Route::get('categories/search', [CategoryController::class, 'search'])->name('categories.search');
             Route::get('brands/search', [BrandController::class, 'search'])->name('brands.search');
+
+            Route::get('approvals', [SensitiveDataApprovalController::class, 'index'])->name('approvals.index');
+            Route::get('approvals/{approval}', [SensitiveDataApprovalController::class, 'show'])->name('approvals.show');
+            Route::post('approvals/{approval}/decision', [SensitiveDataApprovalController::class, 'decision'])->name('approvals.decision');
 
             //
             // Master-data CRUD

@@ -57,8 +57,8 @@
                                         </td>
                                         <td>{{ $ticket->ticket_id ?? '-' }}</td>
                                         <td>{{ $ticket->issue_type ?? '-' }}</td>
-                                        <td>{{ $ticket->open_date ? $ticket->open_date->format('Y-m-d') : '-' }}</td>
-                                        <td>{{ $ticket->resolution_date ? $ticket->resolution_date->format('Y-m-d') : '-' }}
+                                        <td>{{ $ticket->open_date ? $ticket->open_date->format(dateFormat()) : '-' }}</td>
+                                        <td>{{ $ticket->resolution_date ? $ticket->resolution_date->format(dateFormat()) : '-' }}
                                         </td>
                                         <td>
                                             @php

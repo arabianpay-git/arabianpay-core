@@ -106,7 +106,8 @@
                                                     </small>
                                                 </td>
                                                 <td class="text-center">{{ $transaction->id }}</td>
-                                                <td class="text-center">{{ $transaction->created_at->format('Y-m-d') }}
+                                                <td class="text-center">
+                                                    {{ $transaction->created_at->format(dateFormat()) }}
                                                 </td>
                                                 <td class="text-center">
                                                     {{ $transaction->user->customer->tax_number ?? '-' }}</td>

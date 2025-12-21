@@ -128,7 +128,7 @@
                                     @elseif ($status === 'late' || $status === 'due' || $status === 'failed')
                                         <a href="javascript:;" class="btn btn-sm btn-outline btn-warning"
                                             data-modal-toggle="#pay_now_modal" data-id="{{ $payment->id }}"
-                                            data-due="{{ \Carbon\Carbon::parse($payment->due_date)->format('Y-m-d') }}"
+                                            data-due="{{ \Carbon\Carbon::parse($payment->due_date)->format(dateFormat()) }}"
                                             data-amount="{{ number_format($payment->instalment_amount ?? 0, 2) }}"
                                             data-installment="{{ $payment->installment_number ?? $loop->iteration }}">
                                             {{ translate('Pay Now') }}
@@ -136,7 +136,7 @@
 
                                         <a href="javascript:;" class="btn btn-sm btn-outline btn-primary"
                                             data-modal-toggle="#edit_schedule_modal" data-id="{{ $payment->id }}"
-                                            data-due="{{ \Carbon\Carbon::parse($payment->due_date)->format('Y-m-d') }}"
+                                            data-due="{{ \Carbon\Carbon::parse($payment->due_date)->format(dateFormat()) }}"
                                             data-amount="{{ number_format($payment->instalment_amount ?? 0, 2) }}"
                                             data-installment="{{ $payment->installment_number ?? $loop->iteration }}">
                                             {{ translate('Edit') }}
@@ -146,7 +146,7 @@
                                             class="badge badge-sm badge-outline badge-primary">{{ translate('Upcoming') }}</span>
                                         <a href="javascript:;" class="btn btn-sm btn-outline btn-primary"
                                             data-modal-toggle="#edit_schedule_modal" data-id="{{ $payment->id }}"
-                                            data-due="{{ \Carbon\Carbon::parse($payment->due_date)->format('Y-m-d') }}"
+                                            data-due="{{ \Carbon\Carbon::parse($payment->due_date)->format(dateFormat()) }}"
                                             data-amount="{{ number_format($payment->instalment_amount ?? 0, 2) }}"
                                             data-installment="{{ $payment->installment_number ?? $loop->iteration }}"
                                             style="height: 1.455rem;">

@@ -5,6 +5,7 @@ use App\Models\Customer;
 use App\Models\CustomerCreditLimit;
 use App\Models\Notification;
 use App\Models\Product;
+use App\Models\SensitiveDataApproval;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\CreditAssessmentService;
@@ -553,14 +554,13 @@ if (! function_exists('hasSensitivePermission')) {
             return false;
         }
 
-        // Manager employee → full access
+        // Managers automatically have all permissions
         if ($user->user_type === 'employee' && !empty($user->is_manager)) {
             return true;
         }
 
-        // Normalize stored permissions
+        // Normalize stored permissions from user
         $raw = $user->sensitive_permissions ?? [];
-
         if (is_string($raw)) {
             $permissions = json_decode($raw, true) ?: [];
         } elseif (is_array($raw)) {
@@ -571,7 +571,23 @@ if (! function_exists('hasSensitivePermission')) {
             $permissions = [];
         }
 
-        return in_array($permission, $permissions, true);
+        if (in_array($permission, $permissions, true)) {
+            return true;
+        }
+
+        // Check if there is an active approved request in the model
+        $now = Carbon::now();
+
+        $hasApproved = \App\Models\SensitiveDataApproval::where('requested_by', $user->id)
+            ->where('status', 'approved')
+            ->whereJsonContains('sensitive_permissions', $permission)
+            ->where(function ($query) use ($now) {
+                $query->whereNull('end_at')
+                    ->orWhere('end_at', '>=', $now);
+            })
+            ->exists();
+
+        return $hasApproved;
     }
 }
 

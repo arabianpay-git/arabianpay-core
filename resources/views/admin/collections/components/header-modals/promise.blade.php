@@ -33,7 +33,7 @@
                         @foreach ($unpaidPayments as $payment)
                             <option value="{{ $payment->id }}">
                                 SAR {{ number_format($payment->instalment_amount, 2) }} — Due:
-                                {{ $payment->due_date->format('Y-m-d') }}
+                                {{ $payment->due_date->format(dateFormat()) }}
                             </option>
                         @endforeach
                     </select>

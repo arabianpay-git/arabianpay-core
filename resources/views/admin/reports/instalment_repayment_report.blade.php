@@ -82,7 +82,7 @@
                                                             #{{ $orderId }}
                                                         </a><br>
                                                         <span class="text-xs text-secondary">
-                                                            {{ $groupedInstalments->first()->created_at->format('Y-m-d') }}
+                                                            {{ $groupedInstalments->first()->created_at->format(dateFormat()) }}
                                                         </span>
                                                         @if ($groupedInstalments->first()->order && $groupedInstalments->first()->order->products_count ?? false)
                                                             <br>
@@ -103,13 +103,13 @@
                                                                 class="border border-gray-200 rounded-md p-2 bg-white text-xs">
                                                                 <div class="font-semibold text-gray-700">
                                                                     #{{ $instalment->id }} •
-                                                                    {{ $instalment->due_date->format('Y-m-d') }}
+                                                                    {{ $instalment->due_date->format(dateFormat()) }}
                                                                 </div>
                                                                 <div class="text-gray-600">
                                                                     <span class="icon-saudi_riyal"></span>
                                                                     {{ number_format($instalment->instalment_amount, 2) }}
                                                                     •
-                                                                    {{ $instalment->updated_at ? $instalment->updated_at->format('Y-m-d') : '-' }}
+                                                                    {{ $instalment->updated_at ? $instalment->updated_at->format(dateFormat()) : '-' }}
                                                                 </div>
                                                                 <div>
                                                                     @switch($instalment->payment_status)

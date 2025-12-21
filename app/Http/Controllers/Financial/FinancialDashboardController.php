@@ -16,7 +16,7 @@ class FinancialDashboardController extends Controller
 {
     public function index(Request $request)
     {
-        
+
         $data = [
             'kpis' => $this->getKPIs(),
             'chartData' => $this->getChartData(),
@@ -37,89 +37,89 @@ class FinancialDashboardController extends Controller
         $previousMonthEnd = Carbon::now()->subMonth()->endOfMonth();
 
         // Total Assets vs Liabilities
-        $totalAssets = FEntry::whereHas('account', function($query) {
+        $totalAssets = FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 1)->where('account_type2', 1); // 1 for Assets
-        })->sum('debit') - FEntry::whereHas('account', function($query) {
+        })->sum('debit') - FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 1)->where('account_type2', 1);
         })->sum('credit');
 
-        $totalLiabilities = FEntry::whereHas('account', function($query) {
+        $totalLiabilities = FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 1)->where('account_type2', 2); // 1 for Liabilities
-        })->sum('credit') - FEntry::whereHas('account', function($query) {
+        })->sum('credit') - FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 1)->where('account_type2', 2);
         })->sum('debit');
 
         // Previous month net worth for comparison
-        $prevAssets = FEntry::whereHas('account', function($query) {
+        $prevAssets = FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 1)->where('account_type2', 1);
-        })->where('created_at', '<', $currentMonth)->sum('debit') - FEntry::whereHas('account', function($query) {
+        })->where('created_at', '<', $currentMonth)->sum('debit') - FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 1)->where('account_type2', 1);
         })->where('created_at', '<', $currentMonth)->sum('credit');
 
-        $prevLiabilities = FEntry::whereHas('account', function($query) {
+        $prevLiabilities = FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 1)->where('account_type2', 2);
-        })->where('created_at', '<', $currentMonth)->sum('credit') - FEntry::whereHas('account', function($query) {
+        })->where('created_at', '<', $currentMonth)->sum('credit') - FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 1)->where('account_type2', 2);
         })->where('created_at', '<', $currentMonth)->sum('debit');
 
         // Current Month Revenue vs Expenses
-        $monthlyRevenue = FEntry::whereHas('account', function($query) {
+        $monthlyRevenue = FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 2)->where('account_type2', 2);
         })->whereBetween('created_at', [$currentMonth, $currentMonthEnd])
-        ->sum('credit') - FEntry::whereHas('account', function($query) {
-            $query->where('account_type1', 2)->where('account_type2', 2);
-        })->whereBetween('created_at', [$currentMonth, $currentMonthEnd])
-        ->sum('debit');
+            ->sum('credit') - FEntry::whereHas('account', function ($query) {
+                $query->where('account_type1', 2)->where('account_type2', 2);
+            })->whereBetween('created_at', [$currentMonth, $currentMonthEnd])
+            ->sum('debit');
 
-        $monthlyExpenses = FEntry::whereHas('account', function($query) {
+        $monthlyExpenses = FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 2)->where('account_type2', 1);
         })->whereBetween('created_at', [$currentMonth, $currentMonthEnd])
-        ->sum('debit') - FEntry::whereHas('account', function($query) {
-            $query->where('account_type1', 2)->where('account_type2', 1);
-        })->whereBetween('created_at', [$currentMonth, $currentMonthEnd])
-        ->sum('credit');
+            ->sum('debit') - FEntry::whereHas('account', function ($query) {
+                $query->where('account_type1', 2)->where('account_type2', 1);
+            })->whereBetween('created_at', [$currentMonth, $currentMonthEnd])
+            ->sum('credit');
 
         // Previous Month Revenue vs Expenses
-        $prevRevenue = FEntry::whereHas('account', function($query) {
+        $prevRevenue = FEntry::whereHas('account', function ($query) {
             $query->where('account_type1', 2)->where('account_type2', 2);
         })->whereBetween('created_at', [$previousMonth, $previousMonthEnd])
-        ->sum('credit') - FEntry::whereHas('account', function($query) {
-            $query->where('account_type1', 2)->where('account_type2', 2);
-        })->whereBetween('created_at', [$previousMonth, $previousMonthEnd])
-        ->sum('debit');
+            ->sum('credit') - FEntry::whereHas('account', function ($query) {
+                $query->where('account_type1', 2)->where('account_type2', 2);
+            })->whereBetween('created_at', [$previousMonth, $previousMonthEnd])
+            ->sum('debit');
 
         // Cash Flow Status (Assets - Liabilities)
         $cashFlow = $totalAssets - $totalLiabilities;
 
         // Accounts receivable/payable could be added here as well
-        $accountsReceivable = FEntry::whereHas('account', function($query) {
+        $accountsReceivable = FEntry::whereHas('account', function ($query) {
             $query->where('id', 1203); // Assuming 1203 is Accounts Receivable
-        })->sum('debit') - FEntry::whereHas('account', function($query) {
+        })->sum('debit') - FEntry::whereHas('account', function ($query) {
             $query->where('id', 1203);
         })->sum('credit');
 
-        $prevAccountsReceivable = FEntry::whereHas('account', function($query) {
+        $prevAccountsReceivable = FEntry::whereHas('account', function ($query) {
             $query->where('id', 1203);
-        })->where('created_at', '<', $currentMonth)->sum('debit') - FEntry::whereHas('account', function($query) {
+        })->where('created_at', '<', $currentMonth)->sum('debit') - FEntry::whereHas('account', function ($query) {
             $query->where('id', 1203);
         })->where('created_at', '<', $currentMonth)->sum('credit');
 
-        $accountsPayable = FEntry::whereHas('account', function($query) {
-            $query->where('id',2400); // Assuming 2400 is Accounts Payable
-        })->sum('credit') - FEntry::whereHas('account', function($query) {
+        $accountsPayable = FEntry::whereHas('account', function ($query) {
+            $query->where('id', 2400); // Assuming 2400 is Accounts Payable
+        })->sum('credit') - FEntry::whereHas('account', function ($query) {
             $query->where('id', 2400);
         })->sum('debit');
 
-        $prevAccountsPayable = FEntry::whereHas('account', function($query) {
-            $query->where('id',2400);
-        })->where('created_at', '<', $currentMonth)->sum('credit') - FEntry::whereHas('account', function($query) {
+        $prevAccountsPayable = FEntry::whereHas('account', function ($query) {
+            $query->where('id', 2400);
+        })->where('created_at', '<', $currentMonth)->sum('credit') - FEntry::whereHas('account', function ($query) {
             $query->where('id', 2400);
         })->where('created_at', '<', $currentMonth)->sum('debit');
 
-        $liquidity = FEntry::whereHas('account', function($query) {
-            $query->where('id',1201); // Assuming 1201 is cash on the bank and wallet
-        })->sum('credit') - FEntry::whereHas('account', function($query) {
-            $query->where('id',1201);
+        $liquidity = FEntry::whereHas('account', function ($query) {
+            $query->where('id', 1201); // Assuming 1201 is cash on the bank and wallet
+        })->sum('credit') - FEntry::whereHas('account', function ($query) {
+            $query->where('id', 1201);
         })->sum('debit');
 
         // Calculate trends
@@ -165,16 +165,16 @@ class FinancialDashboardController extends Controller
         for ($i = 5; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
             $monthEnd = $month->copy()->endOfMonth();
-            
-            $assets = FEntry::whereHas('account', function($query) {
+
+            $assets = FEntry::whereHas('account', function ($query) {
                 $query->where('account_type1', 1)->where('account_type2', 1);
-            })->where('created_at', '<=', $monthEnd)->sum('debit') - FEntry::whereHas('account', function($query) {
+            })->where('created_at', '<=', $monthEnd)->sum('debit') - FEntry::whereHas('account', function ($query) {
                 $query->where('account_type1', 1)->where('account_type2', 1);
             })->where('created_at', '<=', $monthEnd)->sum('credit');
 
-            $liabilities = FEntry::whereHas('account', function($query) {
+            $liabilities = FEntry::whereHas('account', function ($query) {
                 $query->where('account_type1', 1)->where('account_type2', 2);
-            })->where('created_at', '<=', $monthEnd)->sum('credit') - FEntry::whereHas('account', function($query) {
+            })->where('created_at', '<=', $monthEnd)->sum('credit') - FEntry::whereHas('account', function ($query) {
                 $query->where('account_type1', 1)->where('account_type2', 2);
             })->where('created_at', '<=', $monthEnd)->sum('debit');
 
@@ -191,21 +191,21 @@ class FinancialDashboardController extends Controller
             $monthStart = $month->copy()->startOfMonth();
             $monthEnd = $month->copy()->endOfMonth();
 
-            $revenue = FEntry::whereHas('account', function($query) {
+            $revenue = FEntry::whereHas('account', function ($query) {
                 $query->where('account_type1', 2)->where('account_type2', 2);
             })->whereBetween('created_at', [$monthStart, $monthEnd])
-            ->sum('credit') - FEntry::whereHas('account', function($query) {
-                $query->where('account_type1', 2)->where('account_type2', 2);
-            })->whereBetween('created_at', [$monthStart, $monthEnd])
-            ->sum('debit');
+                ->sum('credit') - FEntry::whereHas('account', function ($query) {
+                    $query->where('account_type1', 2)->where('account_type2', 2);
+                })->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->sum('debit');
 
-            $expenses = FEntry::whereHas('account', function($query) {
+            $expenses = FEntry::whereHas('account', function ($query) {
                 $query->where('account_type1', 2)->where('account_type2', 1);
             })->whereBetween('created_at', [$monthStart, $monthEnd])
-            ->sum('debit') - FEntry::whereHas('account', function($query) {
-                $query->where('account_type1', 2)->where('account_type2', 1);
-            })->whereBetween('created_at', [$monthStart, $monthEnd])
-            ->sum('credit');
+                ->sum('debit') - FEntry::whereHas('account', function ($query) {
+                    $query->where('account_type1', 2)->where('account_type2', 1);
+                })->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->sum('credit');
 
             $data[] = $revenue - $expenses;
         }
@@ -218,10 +218,10 @@ class FinancialDashboardController extends Controller
         for ($i = 5; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
             $monthEnd = $month->copy()->endOfMonth();
-            
-            $value = FEntry::whereHas('account', function($query) {
+
+            $value = FEntry::whereHas('account', function ($query) {
                 $query->where('id', 1203);
-            })->where('created_at', '<=', $monthEnd)->sum('debit') - FEntry::whereHas('account', function($query) {
+            })->where('created_at', '<=', $monthEnd)->sum('debit') - FEntry::whereHas('account', function ($query) {
                 $query->where('id', 1203);
             })->where('created_at', '<=', $monthEnd)->sum('credit');
 
@@ -236,10 +236,10 @@ class FinancialDashboardController extends Controller
         for ($i = 5; $i >= 0; $i--) {
             $month = Carbon::now()->subMonths($i);
             $monthEnd = $month->copy()->endOfMonth();
-            
-            $value = FEntry::whereHas('account', function($query) {
+
+            $value = FEntry::whereHas('account', function ($query) {
                 $query->where('id', 2400);
-            })->where('created_at', '<=', $monthEnd)->sum('credit') - FEntry::whereHas('account', function($query) {
+            })->where('created_at', '<=', $monthEnd)->sum('credit') - FEntry::whereHas('account', function ($query) {
                 $query->where('id', 2400);
             })->where('created_at', '<=', $monthEnd)->sum('debit');
 
@@ -257,21 +257,21 @@ class FinancialDashboardController extends Controller
             $monthStart = $month->copy()->startOfMonth();
             $monthEnd = $month->copy()->endOfMonth();
 
-            $revenue = FEntry::whereHas('account', function($query) {
+            $revenue = FEntry::whereHas('account', function ($query) {
                 $query->where('account_type1', 2)->where('account_type2', 2);
             })->whereBetween('created_at', [$monthStart, $monthEnd])
-            ->sum('credit') - FEntry::whereHas('account', function($query) {
-                $query->where('account_type1', 2)->where('account_type2', 2);
-            })->whereBetween('created_at', [$monthStart, $monthEnd])
-            ->sum('debit');
+                ->sum('credit') - FEntry::whereHas('account', function ($query) {
+                    $query->where('account_type1', 2)->where('account_type2', 2);
+                })->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->sum('debit');
 
-            $expenses = FEntry::whereHas('account', function($query) {
+            $expenses = FEntry::whereHas('account', function ($query) {
                 $query->where('account_type1', 2)->where('account_type2', 1);
             })->whereBetween('created_at', [$monthStart, $monthEnd])
-            ->sum('debit') - FEntry::whereHas('account', function($query) {
-                $query->where('account_type1', 2)->where('account_type2', 1);
-            })->whereBetween('created_at', [$monthStart, $monthEnd])
-            ->sum('credit');
+                ->sum('debit') - FEntry::whereHas('account', function ($query) {
+                    $query->where('account_type1', 2)->where('account_type2', 1);
+                })->whereBetween('created_at', [$monthStart, $monthEnd])
+                ->sum('credit');
 
             $monthlyData[] = [
                 'month' => $month->format('M Y'),
@@ -302,7 +302,8 @@ class FinancialDashboardController extends Controller
 
     private function getAccountsSummary()
     {
-        return FAccounts::select('account_type1', 
+        return FAccounts::select(
+            'account_type1',
             DB::raw('count(*) as count'),
             DB::raw('SUM(CASE WHEN account_type1 IN ("Assets", "Expenses") THEN 
                 (SELECT COALESCE(SUM(debit) - SUM(credit), 0) FROM f_entries WHERE account_id = f_accounts.id)
@@ -310,14 +311,14 @@ class FinancialDashboardController extends Controller
                 (SELECT COALESCE(SUM(credit) - SUM(debit), 0) FROM f_entries WHERE account_id = f_accounts.id)
                 END) as total_balance')
         )
-        ->groupBy('account_type1')
-        ->get();
+            ->groupBy('account_type1')
+            ->get();
     }
 
     public function getChartDataJson(Request $request)
     {
         $type = $request->get('type', 'monthly');
-        
+
         switch ($type) {
             case 'monthly':
                 return response()->json($this->getChartData()['monthly_data']);
@@ -332,7 +333,7 @@ class FinancialDashboardController extends Controller
     {
         $data = [
             'trialBalance' => $this->getTrialBalance($request),
-            'balanceDate' => $request->get('date', Carbon::now()->format('Y-m-d')),
+            'balanceDate' => $request->get('date', Carbon::now()->format(dateFormat())),
             'totalDebits' => 0,
             'totalCredits' => 0
         ];
@@ -347,8 +348,8 @@ class FinancialDashboardController extends Controller
 
     private function getTrialBalance($request = null)
     {
-        $date = $request ? $request->get('date', Carbon::now()->format('Y-m-d')) : Carbon::now()->format('Y-m-d');
-        
+        $date = $request ? $request->get('date', Carbon::now()->format(dateFormat())) : Carbon::now()->format(dateFormat());
+
         // Get all accounts with their balances up to the specified date
         $accounts = FAccounts::select([
             'f_accounts.id',
@@ -362,20 +363,20 @@ class FinancialDashboardController extends Controller
                 ELSE COALESCE(SUM(f_entries.credit), 0) - COALESCE(SUM(f_entries.debit), 0)
                 END as balance')
         ])
-        ->leftJoin('f_entries', 'f_accounts.id', '=', 'f_entries.account_id')
-      //  ->where(function($query) use ($date) {
-      //      $query->where('f_entries.entry_date', '<=', $date)
-       //           ->orWhereNull('f_entries.entry_date');
-      //  })
-        ->where('f_accounts.status', 'active')
-        ->groupBy([
-            'f_accounts.id',  
-            'f_accounts.account_name', 
-            'f_accounts.account_type1', 
-            'f_accounts.account_type2'
-        ])
-        ->orderBy('f_accounts.id')
-        ->get();
+            ->leftJoin('f_entries', 'f_accounts.id', '=', 'f_entries.account_id')
+            //  ->where(function($query) use ($date) {
+            //      $query->where('f_entries.entry_date', '<=', $date)
+            //           ->orWhereNull('f_entries.entry_date');
+            //  })
+            ->where('f_accounts.status', 'active')
+            ->groupBy([
+                'f_accounts.id',
+                'f_accounts.account_name',
+                'f_accounts.account_type1',
+                'f_accounts.account_type2'
+            ])
+            ->orderBy('f_accounts.id')
+            ->get();
 
         return $accounts;
     }
@@ -383,30 +384,30 @@ class FinancialDashboardController extends Controller
     public function exportTrialBalance(Request $request)
     {
         $trialBalance = $this->getTrialBalance($request);
-        $date = $request->get('date', Carbon::now()->format('Y-m-d'));
-        
+        $date = $request->get('date', Carbon::now()->format(dateFormat()));
+
         $filename = 'trial_balance_' . $date . '.csv';
-        
+
         $headers = [
             'Content-Type' => 'text/csv',
             'Content-Disposition' => 'attachment; filename="' . $filename . '"',
         ];
 
-        $callback = function() use ($trialBalance, $date) {
+        $callback = function () use ($trialBalance, $date) {
             $file = fopen('php://output', 'w');
-            
+
             // Add headers
             fputcsv($file, ['Trial Balance as of ' . Carbon::parse($date)->format('F d, Y')]);
             fputcsv($file, []);
             fputcsv($file, ['Account Code', 'Account Name', 'Account Type', 'Debit', 'Credit', 'Balance']);
-            
+
             $totalDebits = 0;
             $totalCredits = 0;
-            
+
             foreach ($trialBalance as $account) {
                 $accountType = $account->account_type1 == 1 ? 'Budget' : 'Non-Budget';
                 $accountType .= ' - ' . ($account->account_type2 == 1 ? 'Debit' : 'Credit');
-                
+
                 fputcsv($file, [
                     $account->account_code,
                     $account->account_name,
@@ -415,15 +416,15 @@ class FinancialDashboardController extends Controller
                     number_format($account->total_credit, 2),
                     number_format($account->balance, 2)
                 ]);
-                
+
                 $totalDebits += $account->total_debit;
                 $totalCredits += $account->total_credit;
             }
-            
+
             // Add totals
             fputcsv($file, []);
             fputcsv($file, ['TOTAL', '', '', number_format($totalDebits, 2), number_format($totalCredits, 2), '']);
-            
+
             fclose($file);
         };
 

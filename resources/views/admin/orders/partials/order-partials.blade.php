@@ -95,7 +95,7 @@
                             <button class="btn btn-sm btn-outline btn-warning edit-partial-btn"
                                 data-modal-toggle="#edit_partial_modal_{{ $partial->id }}"
                                 data-partial-id="{{ $partial->id }}"
-                                data-due="{{ \Carbon\Carbon::parse($partial->partial_due_date)->format('Y-m-d') }}"
+                                data-due="{{ \Carbon\Carbon::parse($partial->partial_due_date)->format(dateFormat()) }}"
                                 data-details="{{ e(optional($partial->details)['text'] ?? '') }}"
                                 data-amount="{{ $partial->partial_amount }}">
                                 {{ translate('Edit') }}

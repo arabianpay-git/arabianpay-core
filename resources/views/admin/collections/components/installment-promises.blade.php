@@ -107,7 +107,7 @@
                                         <option value="{{ $payment->id }}"
                                             {{ $payment->id == $promise->schedule_payment_id ? 'selected' : '' }}>
                                             SAR {{ number_format($payment->instalment_amount, 2) }} - Due:
-                                            {{ $payment->due_date->format('Y-m-d') }}
+                                            {{ $payment->due_date->format(dateFormat()) }}
                                         </option>
                                     @endforeach
                                 </select>
@@ -163,7 +163,7 @@
                         @foreach ($unpaidPayments as $payment)
                             <option value="{{ $payment->id }}">
                                 SAR {{ number_format($payment->instalment_amount, 2) }} - Due:
-                                {{ $payment->due_date->format('Y-m-d') }}
+                                {{ $payment->due_date->format(dateFormat()) }}
                             </option>
                         @endforeach
                     </select>

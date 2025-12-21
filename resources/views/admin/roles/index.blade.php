@@ -60,6 +60,15 @@
                                             <th class="">
                                                 <span class="sort asc">
                                                     <span class="sort-label font-normal text-gray-700">
+                                                        {{ translate('Sensitive Permissions') }}
+                                                    </span>
+                                                    <span class="sort-icon"> </span>
+                                                </span>
+                                            </th>
+
+                                            <th class="">
+                                                <span class="sort asc">
+                                                    <span class="sort-label font-normal text-gray-700">
                                                         {{ translate('Guard') }}
                                                     </span>
                                                     <span class="sort-icon"> </span>
@@ -89,6 +98,20 @@
                                             <tr>
                                                 <td class="text-center">{{ $index + 1 }}</td>
                                                 <td>{{ $role->name }}</td>
+                                                <td>
+                                                    @if (!empty($role->sensitive_permissions) && is_array($role->sensitive_permissions))
+                                                        @foreach ($role->sensitive_permissions as $sPermission)
+                                                            <button class="badge badge-sm badge-outline badge-success">
+                                                                {{ Str::headline($sPermission) }}
+                                                            </button>
+                                                        @endforeach
+                                                    @else
+                                                        <span class="text-gray-400 text-sm">
+                                                            {{ translate('N/A') }}
+                                                        </span>
+                                                    @endif
+                                                </td>
+
                                                 <td>{{ $role->guard_name }}</td>
                                                 <td>{{ $role->created_at->format(dateFormat()) }}</td>
                                                 <td>
