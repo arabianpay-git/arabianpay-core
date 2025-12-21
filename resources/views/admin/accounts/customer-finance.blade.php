@@ -232,7 +232,7 @@
                         <select name="package_id" class="input" required>
                             @foreach ($packages as $package)
                                 <option value="{{ $package->id }}"
-                                    {{ $customer->package->id == $package->id ? 'selected' : '' }}>{{ $package->name }}
+                                    {{ $customer->package?->id == $package->id ? 'selected' : '' }}>{{ $package->name }}
                                 </option>
                             @endforeach
                         </select>

@@ -18,6 +18,7 @@ return new class extends Migration
             $table->enum('user_type', ['admin', 'employee', 'merchant', 'user'])->default('merchant');
             $table->string('email')->unique();
             $table->string('role')->nullable();
+            $table->json('sensitive_permissions')->nullable();
             $table->string('business_name')->unique();
             $table->string('iqama')->nullable()->unique();
             $table->string('phone_number')->unique();

@@ -134,6 +134,10 @@ class AccountController extends Controller
     {
         $customer = Customer::with('user')->where('user_id', $id)->firstOrFail();
 
+        if (!hasSensitivePermission('credit_data_simah_bureau')) {
+            return back()->with('error', translate('Access Restricted'));
+        }
+
         return view('admin.accounts.customer-simah', compact('customer'));
     }
 
@@ -176,6 +180,10 @@ class AccountController extends Controller
 
     public function customerFinance($id, CreditAssessmentService $creditService, RiskAnalyticsService $riskService)
     {
+        if (!hasSensitivePermission('transaction_references')) {
+            return back()->with('error', translate('Access Restricted'));
+        }
+
         $customer = Customer::with('user', 'package')
             ->where('user_id', $id)
             ->firstOrFail();
@@ -402,6 +410,10 @@ class AccountController extends Controller
 
     public function transactions($id)
     {
+        if (!hasSensitivePermission('transaction_references')) {
+            return back()->with('error', translate('Access Restricted'));
+        }
+
         $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
 
         $transactions = Transaction::select($this->selectFields)
@@ -437,6 +449,10 @@ class AccountController extends Controller
 
     public function payments($id)
     {
+        if (!hasSensitivePermission('transaction_references')) {
+            return back()->with('error', translate('Access Restricted'));
+        }
+
         $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
 
         $wallets = Wallet::select(['id', 'order_id', 'amount', 'balance_after', 'transaction_type', 'status', 'created_at'])
@@ -939,6 +955,10 @@ class AccountController extends Controller
 
     public function supplierTransactions($id)
     {
+        if (!hasSensitivePermission('transaction_references')) {
+            return back()->with('error', translate('Access Restricted'));
+        }
+
         $merchant = Merchant::where('user_id', $id)->with('user', 'businessType')->firstOrFail();
 
         $transactions = Transaction::select($this->selectFields)
@@ -974,6 +994,10 @@ class AccountController extends Controller
 
     public function supplierPayments($id)
     {
+        if (!hasSensitivePermission('transaction_references')) {
+            return back()->with('error', translate('Access Restricted'));
+        }
+
         $merchant = Merchant::where('user_id', $id)->with('user', 'businessType')->firstOrFail();
 
         $paginator = Wallet::where('transaction_type', 'seller_payment')
@@ -1054,6 +1078,10 @@ class AccountController extends Controller
 
     public function customerCreditAssessment($id, CreditAssessmentService $service)
     {
+        if (!hasSensitivePermission('credit_decision_output')) {
+            return back()->with('error', translate('Access Restricted'));
+        }
+
         // 1) Fetch merchant (with its user and businessType)
         $customer = Customer::with('user')
             ->where('user_id', $id)

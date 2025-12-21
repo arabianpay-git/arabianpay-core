@@ -46,6 +46,7 @@ class User extends Authenticatable implements HasPasskeys
         'password',
         'current_team_id',
         'profile_photo_path',
+        'sensitive_permissions',
     ];
 
     protected $encryptableAttributes = [
@@ -87,6 +88,7 @@ class User extends Authenticatable implements HasPasskeys
         return [
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
+            'sensitive_permissions' => 'array',
         ];
     }
 

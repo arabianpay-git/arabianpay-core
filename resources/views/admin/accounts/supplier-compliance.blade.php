@@ -50,10 +50,14 @@
                                 $compliance = [];
 
                                 $approvals = App\Models\Approval::where('user_id', $merchant->user_id)->get();
+                                // Make first approval available as $contract (if any) for start/end dates display
+                                $contract = $approvals->first();
+
                                 foreach ($approvals as $approval) {
                                     $compliance[] = [
                                         'title' => translate('Supplier Contract'),
                                         'file' => $approval->contract,
+                                        'permission' => 'documents_id_cr_contracts',
                                     ];
                                 }
 
@@ -61,30 +65,37 @@
                                     [
                                         'title' => translate('CR File'),
                                         'file' => supplierMedia($merchant->registration_number_form),
+                                        'permission' => 'documents_id_cr_contracts',
                                     ],
                                     [
                                         'title' => translate('VAT Register File'),
                                         'file' => supplierMedia($merchant->vat_register_file),
+                                        'permission' => 'documents_id_cr_contracts',
                                     ],
                                     [
                                         'title' => translate('Return Policy File'),
                                         'file' => supplierMedia($merchant->return_policy_file),
+                                        'permission' => 'documents_id_cr_contracts',
                                     ],
                                     [
                                         'title' => translate('Delivery Policy File'),
                                         'file' => supplierMedia($merchant->exchange_policy_file),
+                                        'permission' => 'documents_id_cr_contracts',
                                     ],
                                     [
                                         'title' => translate('Cancel Policy File'),
                                         'file' => supplierMedia($merchant->cancel_policy_file),
+                                        'permission' => 'documents_id_cr_contracts',
                                     ],
                                     [
                                         'title' => translate('ID Image'),
                                         'file' => supplierMedia($merchant->owner_iqama_image),
+                                        'permission' => 'national_id_iqama',
                                     ],
                                     [
                                         'title' => translate('Balady Certificate'),
                                         'file' => supplierMedia($merchant->balady_certificate),
+                                        'permission' => 'documents_id_cr_contracts',
                                     ],
                                 ];
 
@@ -94,6 +105,7 @@
                                     $compliance[] = [
                                         'title' => translate('Company Approval Letter for Manager'),
                                         'file' => supplierMedia($merchant->manager_approval),
+                                        'permission' => 'documents_id_cr_contracts',
                                     ];
                                 }
 
@@ -128,35 +140,52 @@
                                             <div>
                                                 <h4 class="text-lg font-medium text-gray-800 dark:text-white">
                                                     {{ $item['title'] }}</h4>
+
                                                 @if ($item['title'] === translate('Supplier Contract'))
                                                     @php
-                                                        $startDate =
-                                                            $contract && $contract->created_at
-                                                                ? Carbon\Carbon::parse($contract->created_at)->format(
-                                                                    'F j, Y, h:i A',
-                                                                )
-                                                                : null;
-                                                        $endDate =
-                                                            $contract && $contract->contract_end_date
-                                                                ? Carbon\Carbon::parse(
-                                                                    $contract->contract_end_date,
-                                                                )->format('F j, Y, h:i A')
-                                                                : null;
+                                                        $startDate = null;
+                                                        $endDate = null;
+
+                                                        if ($contract && $contract->created_at) {
+                                                            $startDate = \Carbon\Carbon::parse(
+                                                                $contract->created_at,
+                                                            )->format('F j, Y, h:i A');
+                                                        }
+
+                                                        if ($contract && $contract->contract_end_date) {
+                                                            $endDate = \Carbon\Carbon::parse(
+                                                                $contract->contract_end_date,
+                                                            )->format('F j, Y, h:i A');
+                                                        }
                                                     @endphp
+
                                                     @if ($startDate)
                                                         <p class="text-sm text-gray-600 dark:text-gray-300">Contract Start
-                                                            Date: {{ $startDate }}</p>
+                                                            Date:
+                                                            {{ maskedSensitiveText('documents_id_cr_contracts', $startDate, 3, 5, 4) }}
+                                                        </p>
                                                     @endif
                                                     @if ($endDate)
                                                         <p class="text-sm text-gray-600 dark:text-gray-300">Contract End
-                                                            Date: {{ $endDate }}</p>
+                                                            Date:
+                                                            {{ maskedSensitiveText('documents_id_cr_contracts', $endDate, 3, 5, 4) }}
+                                                        </p>
                                                     @endif
                                                 @endif
                                             </div>
                                         </div>
 
                                         @if ($item['file'])
-                                            @php $authorizedPath = authorizeFileOrDeny($item['file'], null); @endphp
+                                            {{-- Use authorizeSensitiveFileOrDeny with actual file path.
+                                                 Pass null as fallback so we can show 'Access Restricted' UI. --}}
+                                            @php
+                                                // $item['file'] should already be a path (supplierMedia() or raw column)
+                                                $authorizedPath = authorizeSensitiveFileOrDeny(
+                                                    $item['permission'],
+                                                    $item['file'],
+                                                    null,
+                                                );
+                                            @endphp
 
                                             @if ($authorizedPath)
                                                 <a href="{{ asset($authorizedPath) }}" target="_blank"
@@ -208,7 +237,8 @@
                                                 </div>
 
                                                 <h5 class="text-md font-semibold text-gray-800 dark:text-white mb-2">
-                                                    {{ $user->first_name }} {{ $user->last_name }}
+                                                    {{-- If you want the user name masked by permission, use maskedSensitiveText --}}
+                                                    {{ maskedSensitiveText('authorized_person_name', trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''))) }}
                                                     ({{ $user->business_name ?? translate('N/A') }})
                                                 </h5>
 
@@ -218,10 +248,19 @@
                                                             class="flex justify-between items-center p-2 border rounded-md bg-gray-50 dark:bg-gray-700">
                                                             <span class="font-medium text-gray-800 dark:text-white">
                                                                 {{ translate('IBAN') }}:
-                                                                {{ $bank->iban ? maskedText($bank->iban) : 'N/A' }}
+                                                                {{ $bank->iban ? maskedSensitiveText('iban_bank_account', $bank->iban, 5, 3) : 'N/A' }}
                                                             </span>
                                                             @if ($bank->iban_certificate)
-                                                                @php $authorizedIbanPath = authorizeFileOrDeny(supplierMedia($bank->iban_certificate), null); @endphp
+                                                                @php
+                                                                    $ibanCertificatePath = supplierMedia(
+                                                                        $bank->iban_certificate,
+                                                                    );
+                                                                    $authorizedIbanPath = authorizeSensitiveFileOrDeny(
+                                                                        'iban_bank_account',
+                                                                        $ibanCertificatePath,
+                                                                        null,
+                                                                    );
+                                                                @endphp
 
                                                                 @if ($authorizedIbanPath)
                                                                     <a href="{{ asset($authorizedIbanPath) }}"
@@ -231,7 +270,7 @@
                                                                     </a>
                                                                 @else
                                                                     <span
-                                                                        class="text-amber-600 text-sm italic">{{ translate('Restricted') }}</span>
+                                                                        class="text-amber-600 text-sm italic">{{ translate('Access Restricted') }}</span>
                                                                 @endif
                                                             @else
                                                                 <span

@@ -2401,4 +2401,22 @@ return [
     'returned amount' => 'Returned Amount',
     'Restricted' => 'Restricted',
 
+
+    'Create New Employee' => 'Create New Employee',
+    'Is Manager' => 'Is Manager',
+    'Phone' => 'Phone',
+    'Search employees' => 'Search employees',
+    'Edit Employee' => 'Edit Employee',
+    'Last Name' => 'Last Name',
+    'Password' => 'Password',
+    'Confirm Password' => 'Confirm Password',
+    'Enter Password' => 'Enter Password',
+    '-- Select Department --' => '-- Select Department --',
+    'Enter Password (leave blank to keep)' => 'Enter Password (leave blank to keep)',
+    'Re-enter Password' => 'Re-enter Password',
+    'Update Employee' => 'Update Employee',
+    'Sensitive Permissions' => 'Sensitive Permissions',
+    'Sensitive' => 'Sensitive',
+    'Not Allowed' => 'Not Allowed',
+    'Access Restricted' => 'Access Restricted',
 ];

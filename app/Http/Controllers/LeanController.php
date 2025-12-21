@@ -22,6 +22,10 @@ class LeanController extends Controller
      */
     public function index($id)
     {
+        if (!hasSensitivePermission('transaction_references')) {
+            return back()->with('error', translate('Access Restricted'));
+        }
+
         // Get customer by user ID
         $customer = Customer::with('user')
             ->where('user_id', $id)

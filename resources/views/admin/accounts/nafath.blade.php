@@ -96,10 +96,11 @@
                                                                 ? (string) $nafathData['id']
                                                                 : null;
                                                     @endphp
-                                                    {{ $idValue ? maskedText($idValue) : '--' }}
+                                                    {{ $idValue ? maskedSensitiveText('national_id_iqama', $idValue) : '--' }}
                                                 </td>
 
-                                                <td>{{ $item->phone_number ? maskedText($item->phone_number) : '--' }}</td>
+                                                <td>{{ $item->phone_number ? maskedSensitiveText('phone_number', $item->phone_number) : '--' }}
+                                                </td>
 
                                                 <td>
                                                     <span
@@ -112,7 +113,7 @@
                                                 </td>
                                                 <td>
                                                     {{-- Only show Nafath button if authorized --}}
-                                                    @if (authorizeFileOrDeny('allow', null) === 'allow')
+                                                    @if (hasSensitivePermission('national_id_iqama') && !empty($item->nafath_response))
                                                         <button type="button"
                                                             class="btn btn-sm btn-primary btn-show-nafath"
                                                             data-modal-toggle="#nafathModal"
@@ -121,22 +122,23 @@
                                                         </button>
                                                     @else
                                                         <span
-                                                            class="text-xs text-gray-400 italic">{{ translate('Restricted') }}</span>
+                                                            class="text-xs text-gray-400 italic">{{ translate('Access Restricted') }}</span>
                                                     @endif
                                                 </td>
+
                                                 <td>
                                                     <span
                                                         class="badge badge-sm badge-outline 
-                    @if ($item->wathiq_status == 'approved') badge-success
-                    @elseif($item->wathiq_status == 'rejected') badge-danger
-                    @else badge-warning @endif">
+                                                        @if ($item->wathiq_status == 'approved') badge-success
+                                                        @elseif($item->wathiq_status == 'rejected') badge-danger
+                                                        @else badge-warning @endif">
                                                         {{ ucfirst($item->wathiq_status ?? 'N/A') }}
                                                     </span>
                                                 </td>
                                                 <td>{{ $item->reject_reason ?? '—' }}</td>
                                                 <td>
                                                     {{-- Only show Wathiq button if authorized --}}
-                                                    @if (authorizeFileOrDeny('allow', null) === 'allow')
+                                                    @if (hasSensitivePermission('business_identity') && !empty($item->cr_data))
                                                         <button type="button"
                                                             class="btn btn-sm btn-primary btn-show-wathiq"
                                                             data-modal-toggle="#wathiqModal"
@@ -145,7 +147,7 @@
                                                         </button>
                                                     @else
                                                         <span
-                                                            class="text-xs text-gray-400 italic">{{ translate('Restricted') }}</span>
+                                                            class="text-xs text-gray-400 italic">{{ translate('Access Restricted') }}</span>
                                                     @endif
                                                 </td>
                                                 <td>{{ $item->created_at->format(dateFormat()) }}</td>

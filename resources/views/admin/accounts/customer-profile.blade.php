@@ -29,7 +29,7 @@
                 <h1 class="text-2xl font-bold text-gray-800 dark:text-white">{{ translate('Customer Profile') }}</h1>
                 @php
                     // Authorization check for financial data
-                    $isAuthorized = authorizeFileOrDeny('allow', null) === 'allow';
+                    $isAuthorized = hasSensitivePermission('credit_data_simah_bureau');
 
                     // Calculations
                     $creditScoreVal = $data['creditScore']['compositeScore'] ?? 0;
@@ -176,13 +176,14 @@
                                                     {{ translate('CR National Number') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ maskedText($g['crNationalNumber'] ?? '-') }}
+                                                    {{ !empty($g['crNationalNumber']) ? maskedSensitiveText('business_identity', $g['crNationalNumber']) : '-' }}
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('CR Number') }}</td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ maskedText($g['crNumber'] ?? '-') }}</td>
+                                                    {{ maskedSensitiveText('business_identity', $g['crNumber'] ?? '-') }}
+                                                </td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Version') }}</td>
@@ -238,7 +239,8 @@
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Headquarter City') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ maskedText($g['headquarterCityName'] ?? '-') }}</td>
+                                                    {{ !empty($g['headquarterCityName']) ? maskedSensitiveText('business_identity', $g['headquarterCityName']) : '-' }}
+                                                </td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('License Based?') }}
@@ -301,7 +303,8 @@
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Issue Date (G)') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ maskedText(
+                                                    {{ maskedSensitiveText(
+                                                        'business_identity',
                                                         !empty($g['issueDateGregorian']) ? \Carbon\Carbon::parse($g['issueDateGregorian'])->format(dateFormat()) : '-',
                                                     ) }}
                                                 </td>
@@ -311,7 +314,7 @@
                                                     {{ translate('Issue Date (H)') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ maskedText($g['issueDateHijri'] ?? '-') }}
+                                                    {{ maskedSensitiveText('business_identity', $g['issueDateHijri'] ?? '-') }}
                                                 </td>
                                             </tr>
 
@@ -336,10 +339,10 @@
                                                     @endphp
 
                                                     @if ($formattedGregorian)
-                                                        {{ maskedText($formattedGregorian) }}<br>
-                                                        {{ maskedText($hijri) }}
+                                                        {{ maskedSensitiveText('business_identity', $formattedGregorian) }}<br>
+                                                        {{ maskedSensitiveText('business_identity', $hijri) }}
                                                     @elseif ($hijri)
-                                                        {{ maskedText($hijri) }}
+                                                        {{ maskedSensitiveText('business_identity', $hijri) }}
                                                     @else
                                                         -
                                                     @endif
@@ -475,7 +478,7 @@
                                                     <h3 class="text-base font-semibold text-gray-800">
                                                         {{ translate('Partner') }}
                                                         #{{ $loop->parent->index * 2 + $index + 1 }} —
-                                                        {{ maskedText($party['name'], 3, 3, 7) }}
+                                                        {{ maskedSensitiveText('authorized_person_name', $party['name'], 3, 3, 7) }}
                                                     </h3>
                                                 </div>
                                                 <div class="overflow-x-auto">
@@ -485,14 +488,15 @@
                                                                 <td class="text-gray-600 py-2 px-4">
                                                                     {{ translate('Name') }}</td>
                                                                 <td class="text-gray-900 py-2 px-4">
-                                                                    {{ maskedText($party['name'], 3, 3, 7) }}
+                                                                    {{ maskedSensitiveText('authorized_person_name', $party['name'], 3, 3, 7) }}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <td class="text-gray-600 py-2 px-4">
                                                                     {{ translate('Identity ID') }}</td>
                                                                 <td class="text-gray-900 py-2 px-4">
-                                                                    {{ maskedText($party['identity']['id'] ?? '-') }}</td>
+                                                                    {{ maskedSensitiveText('national_id_iqama', $party['identity']['id'] ?? '-') }}
+                                                                </td>
                                                             </tr>
                                                             <tr>
                                                                 <td class="text-gray-600 py-2 px-4">
@@ -567,7 +571,7 @@
                                                         <h3 class="text-base font-semibold text-gray-800">
                                                             {{ translate('Manager') }}
                                                             #{{ $loop->parent->index * 2 + $index + 1 }} —
-                                                            {{ maskedText($manager['name'] ?? '-', 3, 3, 7) }}
+                                                            {{ maskedSensitiveText('authorized_person_name', $manager['name'] ?? '-', 3, 3, 7) }}
                                                         </h3>
                                                     </div>
                                                     <div class="overflow-x-auto">
@@ -577,14 +581,14 @@
                                                                     <td class="text-gray-600 py-2 px-4">
                                                                         {{ translate('Name') }}</td>
                                                                     <td class="text-gray-900 py-2 px-4">
-                                                                        {{ maskedText($manager['name'] ?? '-', 3, 3, 7) }}
+                                                                        {{ maskedSensitiveText('authorized_person_name', $manager['name'] ?? '-', 3, 3, 7) }}
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
                                                                     <td class="text-gray-600 py-2 px-4">
                                                                         {{ translate('Identity ID') }}</td>
                                                                     <td class="text-gray-900 py-2 px-4">
-                                                                        {{ maskedText($manager['identity']['id'] ?? '-') }}
+                                                                        {{ maskedSensitiveText('national_id_iqama', $manager['identity']['id'] ?? '-') }}
                                                                     </td>
                                                                 </tr>
                                                                 <tr>

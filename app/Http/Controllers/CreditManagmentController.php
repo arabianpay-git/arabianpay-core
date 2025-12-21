@@ -117,6 +117,10 @@ class CreditManagmentController extends Controller
 
     public function creditProfile(Request $request)
     {
+        if (!hasSensitivePermission('credit_decision_output')) {
+            return back()->with('error', translate('Access Restricted'));
+        }
+
         $search = $request->input('search');
         $customers = $this->getCustomersWithCreditData($search, 10);
         return view('admin.credit-managment.profiles', compact('customers'));

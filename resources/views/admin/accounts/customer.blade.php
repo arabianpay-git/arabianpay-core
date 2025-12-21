@@ -121,12 +121,12 @@
                                                         <br>
                                                         <small class="text-gray-500">
                                                             —
-                                                            {{ $item->user?->phone_number ? maskedText($item->user->phone_number) : '—' }}
+                                                            {{ $item->user?->phone_number ? maskedSensitiveText('phone_number', $item->user->phone_number) : '—' }}
                                                         </small>
                                                         <br />
                                                         <small class="text-gray-500">
                                                             —
-                                                            {{ $item->user?->email ? maskedText($item->user->email) : '—' }}
+                                                            {{ $item->user?->email ? maskedSensitiveText('email_address', $item->user->email) : '—' }}
                                                         </small>
                                                     </div>
                                                 </td>
@@ -137,11 +137,12 @@
                                                         <br>
                                                         <small class="text-gray-500">
                                                             — {{ translate('CR Number') }}:
-                                                            {{ $item->cr_number ? maskedText($item->cr_number) : '—' }}
+                                                            {{ $item->cr_number ? maskedSensitiveText('business_identity', $item->cr_number) : '—' }}
                                                         </small>
                                                         <br />
                                                         <small class="text-gray-500">
-                                                            — {{ $item->address ? maskedText($item->address, 5, 5) : '—' }}
+                                                            —
+                                                            {{ $item->address ? maskedSensitiveText('full_address', $item->address, 5, 5) : '—' }}
                                                         </small>
                                                     </div>
                                                 </td>
@@ -155,7 +156,9 @@
                                                     $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
 
                                                     // Check authorization for financial data
-                                                    $isAuthorized = authorizeFileOrDeny('allow', null) === 'allow';
+                                                    $isAuthorized =
+                                                        authorizeSensitiveFileOrDeny('transaction_references', null) ===
+                                                        'allow';
                                                 @endphp
                                                 <td>
                                                     <div class="whitespace-nowrap">

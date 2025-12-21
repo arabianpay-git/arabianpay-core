@@ -305,6 +305,7 @@ Route::group([
             Route::get('product-reviews',       [ProductController::class, 'productReviews'])->name('productReviews');
 
             // coupon → merchant products
+
             Route::get('products/{userId}',     [CouponController::class, 'getProductsForMerchant']);
 
             //

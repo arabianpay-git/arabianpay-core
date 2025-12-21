@@ -15,7 +15,9 @@
                         {{ translate('Risk Analysis Details') }}
                     </h1>
                     <p class="text-gray-600">
-                        {{ translate('Comprehensive risk assessment for') }} {{ $user->first_name }} {{ $user->last_name }}
+                        {{ translate('Comprehensive risk assessment for') }}
+                        {{ maskedSensitiveText('authorized_person_name', trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? ''))) }}
+
                     </p>
                 </div>
             </div>

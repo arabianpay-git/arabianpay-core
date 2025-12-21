@@ -79,7 +79,7 @@
                     <div class="flex gap-1.25 items-center separator">
                         <i class="ki-filled ki-geolocation text-gray-500 text-sm"> </i>
                         <span class="text-gray-600 font-medium">
-                            {{ $sellerShop?->address ? maskedText($sellerShop->address) : 'N/A' }}
+                            {{ $sellerShop?->address ? maskedSensitiveText('full_address', $sellerShop->address) : 'N/A' }}
                         </span>
                     </div>
 
@@ -89,15 +89,11 @@
                         @php
                             $rawPhone = $merchant->user->phone_number;
                             // Returns raw phone if Admin/Manager, else returns '#'
-                            $authPhone = authorizeFileOrDeny($rawPhone, '#');
+                            $authPhone = authorizeSensitiveFileOrDeny('phone_number', $rawPhone, '#');
                         @endphp
-                        {{-- <a class="underline link"
+                        <a class="underline link"
                             href="{{ $authPhone !== '#' ? 'tel:' . $authPhone : 'javascript:void(0)' }}">
-                            {{ $rawPhone ? maskedText($rawPhone) : 'N/A' }}
-                        </a> --}}
-
-                        <a class="underline link" href="{{ $rawPhone }}">
-                            {{ $rawPhone ?? 'N/A' }}
+                            {{ $rawPhone ? maskedSensitiveText('phone_number', $rawPhone) : 'N/A' }}
                         </a>
                     </div>
 
@@ -107,15 +103,11 @@
                         @php
                             $rawEmail = $merchant->user->email;
                             // Returns raw email if Admin/Manager, else returns '#'
-                            $authEmail = authorizeFileOrDeny($rawEmail, '#');
+                            $authEmail = authorizeSensitiveFileOrDeny('email_address', $rawEmail, '#');
                         @endphp
-                        {{-- <a class="underline link"
+                        <a class="underline link"
                             href="{{ $authEmail !== '#' ? 'mailto:' . $authEmail : 'javascript:void(0)' }}">
-                            {{ $rawEmail ? maskedText($rawEmail) : 'N/A' }}
-                        </a> --}}
-
-                        <a class="underline link" href="{{ $rawEmail }}">
-                            {{ $rawEmail ?? 'N/A' }}
+                            {{ $rawEmail ? maskedSensitiveText('email_address', $rawEmail) : 'N/A' }}
                         </a>
                     </div>
 

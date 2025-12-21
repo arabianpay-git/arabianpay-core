@@ -175,6 +175,7 @@ class EmployeeController extends Controller
             'city_id'       => City::first()?->id,
             'department_id' => $request->department_id,
             'is_manager'    => $request->boolean('is_manager'),
+            'sensitive_permissions' => $request->has('sensitive_permissions') ? $request->sensitive_permissions : false
         ];
 
         if ($request->filled('password')) {

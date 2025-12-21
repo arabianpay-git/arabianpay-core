@@ -542,25 +542,57 @@ if (! function_exists('human_number')) {
 }
 
 /**
- * Mask text for unauthorized users.
- * Admins and employee managers see full text.
+ * Check if user has sensitive permission
  */
-if (! function_exists('maskedText')) {
-    function maskedText(
-        string $text,
-        int $startMask = 3,
-        int $endMask = 3,
-        ?int $maskLength = null
-    ): string {
+if (! function_exists('hasSensitivePermission')) {
+    function hasSensitivePermission(string $permission): bool
+    {
         $user = Auth::user();
 
-        // Admin can see full text
-        // if ($user && $user->user_type === 'admin') {
-        //     return $text;
-        // }
+        if (! $user) {
+            return false;
+        }
 
-        // Manager employee can see full text
-        if ($user && $user->user_type === 'employee' && !empty($user->is_manager)) {
+        // Manager employee → full access
+        if ($user->user_type === 'employee' && !empty($user->is_manager)) {
+            return true;
+        }
+
+        // Normalize stored permissions
+        $raw = $user->sensitive_permissions ?? [];
+
+        if (is_string($raw)) {
+            $permissions = json_decode($raw, true) ?: [];
+        } elseif (is_array($raw)) {
+            $permissions = $raw;
+        } elseif ($raw instanceof \Illuminate\Support\Collection) {
+            $permissions = $raw->toArray();
+        } else {
+            $permissions = [];
+        }
+
+        return in_array($permission, $permissions, true);
+    }
+}
+
+/**
+ * Mask sensitive text
+ */
+if (! function_exists('maskedSensitiveText')) {
+    function maskedSensitiveText(
+        string $permission,
+        ?string $text,
+        int $startMask = 3,
+        int $endMask = 3,
+        ?int $maskLength = null,
+        string $fallback = '***'
+    ): string {
+        if ($text === null || $text === '') {
+            return $fallback;
+        }
+
+        // Permission allowed → return full text
+        if (hasSensitivePermission($permission)) {
             return $text;
         }
 
@@ -573,7 +605,6 @@ if (! function_exists('maskedText')) {
         $start = Str::substr($text, 0, $startMask);
         $end   = Str::substr($text, -$endMask);
 
-        // If mask length is provided, use fixed stars
         $stars = $maskLength !== null
             ? str_repeat('*', $maskLength)
             : str_repeat('*', $length - ($startMask + $endMask));
@@ -582,20 +613,21 @@ if (! function_exists('maskedText')) {
     }
 }
 
-if (! function_exists('authorizeFileOrDeny')) {
-    function authorizeFileOrDeny(
+/**
+ * Authorize sensitive file or deny
+ */
+if (! function_exists('authorizeSensitiveFileOrDeny')) {
+    function authorizeSensitiveFileOrDeny(
+        string $permission,
         ?string $path,
-        $fallback = 'Not Allowed'
+        $fallback = 'Access Restricted'
     ) {
-        $user = Auth::user();
+        if (! $path) {
+            return $fallback;
+        }
 
-        // Allow Admin
-        // if ($user && $user->user_type === 'admin') {
-        //     return $path;
-        // }
-
-        // Allow Employee Manager
-        if ($user && $user->user_type === 'employee' && !empty($user->is_manager)) {
+        // Permission allowed → return file path
+        if (hasSensitivePermission($permission)) {
             return $path;
         }
 

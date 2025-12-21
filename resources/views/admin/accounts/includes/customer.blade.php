@@ -88,11 +88,11 @@
                         <i class="ki-filled ki-phone text-gray-500 text-sm"> </i>
                         @php
                             $rawPhone = $customer->user->phone_number;
-                            $authPhone = authorizeFileOrDeny($rawPhone, '#');
+                            $authPhone = authorizeSensitiveFileOrDeny('phone_number', $rawPhone, '#');
                         @endphp
                         <a class="underline link"
                             href="{{ $authPhone !== '#' ? 'tel:' . $authPhone : 'javascript:void(0)' }}">
-                            {{ $rawPhone ? maskedText($rawPhone) : 'N/A' }}
+                            {{ $rawPhone ? maskedSensitiveText('phone_number', $rawPhone) : 'N/A' }}
                         </a>
                     </div>
 
@@ -101,11 +101,11 @@
                         <i class="ki-filled ki-sms text-gray-500 text-sm"> </i>
                         @php
                             $rawEmail = $customer->user->email;
-                            $authEmail = authorizeFileOrDeny($rawEmail, '#');
+                            $authEmail = authorizeSensitiveFileOrDeny('email_address', $rawEmail, '#');
                         @endphp
                         <a class="underline link"
                             href="{{ $authEmail !== '#' ? 'mailto:' . $authEmail : 'javascript:void(0)' }}">
-                            {{ $rawEmail ? maskedText($rawEmail) : 'N/A' }}
+                            {{ $rawEmail ? maskedSensitiveText('email_address', $rawEmail) : 'N/A' }}
                         </a>
                     </div>
 

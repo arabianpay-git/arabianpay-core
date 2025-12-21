@@ -2,33 +2,33 @@
 @push('styles')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
     <style>
-        /* Add your custom styles */
-        .choices__inner {
-            min-height: 2.4rem !important;
-            height: 2.4rem !important;
-            padding-top: 0.25rem;
-            padding-bottom: 0.25rem;
-            border-radius: 0.375rem;
+        .choices {
+            position: relative !important;
         }
 
-        .choices__input {
-            height: auto !important;
-            margin: 0 !important;
+        .choices__inner {
+            min-height: 2.6rem !important;
+            max-height: 120px;
+            overflow-y: auto;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            z-index: 1;
         }
 
         .choices__list--multiple .choices__item {
             border-radius: 0.375rem;
             font-size: 0.875rem;
-            padding: 0 7px;
+            padding: 2px 8px;
+            margin: 2px;
         }
 
-        .choices__list {
-            position: relative !important;
-            z-index: 9999 !important;
-        }
-
-        .choices {
-            position: relative !important;
+        .choices__list--dropdown,
+        .choices__list[aria-expanded="true"] {
+            position: absolute !important;
+            top: 100%;
+            left: 0;
+            width: 100%;
+            z-index: 99999 !important;
         }
     </style>
 @endpush
@@ -75,30 +75,33 @@
                                     </div>
                                 </div>
 
-                                <!-- Email -->
-                                <div class="w-full">
-                                    <label class="form-label flex items-center gap-1 max-w-56" for="email">
-                                        {{ translate('Email') }} <span class="text-red-600">*</span>
-                                    </label>
-                                    <input id="email" class="input @error('email') border-red-500 @enderror"
-                                        name="email" type="email" value="{{ old('email', $employee->email) }}"
-                                        required />
-                                    @error('email')
-                                        <span class="text-danger text-sm">{{ $message }}</span>
-                                    @enderror
-                                </div>
+                                <div class="flex gap-4">
+                                    <!-- Email -->
+                                    <div class="w-full">
+                                        <label class="form-label flex items-center gap-1 max-w-56" for="email">
+                                            {{ translate('Email') }} <span class="text-red-600">*</span>
+                                        </label>
+                                        <input id="email" class="input @error('email') border-red-500 @enderror"
+                                            name="email" type="email" value="{{ old('email', $employee->email) }}"
+                                            required />
+                                        @error('email')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
 
-                                <!-- Phone Number -->
-                                <div class="w-full">
-                                    <label class="form-label flex items-center gap-1 max-w-56" for="phone_number">
-                                        {{ translate('Phone Number') }}
-                                    </label>
-                                    <input id="phone_number" class="input @error('phone_number') border-red-500 @enderror"
-                                        name="phone_number" type="text"
-                                        value="{{ old('phone_number', $employee->phone_number) }}" />
-                                    @error('phone_number')
-                                        <span class="text-danger text-sm">{{ $message }}</span>
-                                    @enderror
+                                    <!-- Phone Number -->
+                                    <div class="w-full">
+                                        <label class="form-label flex items-center gap-1 max-w-56" for="phone_number">
+                                            {{ translate('Phone Number') }}
+                                        </label>
+                                        <input id="phone_number"
+                                            class="input @error('phone_number') border-red-500 @enderror"
+                                            name="phone_number" type="text"
+                                            value="{{ old('phone_number', $employee->phone_number) }}" />
+                                        @error('phone_number')
+                                            <span class="text-danger text-sm">{{ $message }}</span>
+                                        @enderror
+                                    </div>
                                 </div>
 
                                 <div class="flex gap-4">
@@ -134,6 +137,11 @@
                                         @enderror
                                     </div>
                                 </div>
+
+                                @include('admin.employees.permissions', [
+                                    'selected' => $employee->sensitive_permissions,
+                                ])
+
 
                                 <div class="w-full">
                                     <label for="is_manager" class="form-label">
@@ -171,7 +179,8 @@
                                     </div>
 
                                     <div class="flex flex-col gap-1">
-                                        <label class="form-label text-gray-900">{{ translate('Confirm Password') }}</label>
+                                        <label
+                                            class="form-label text-gray-900">{{ translate('Confirm Password') }}</label>
                                         <div class="input flex items-center gap-2" data-toggle-password="true">
                                             <input name="password_confirmation"
                                                 placeholder="{{ translate('Re-enter Password') }}" type="password"

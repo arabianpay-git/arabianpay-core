@@ -318,6 +318,10 @@ class RiskAnalyticsController extends Controller
      */
     public function show($userId, $type = 'customer')
     {
+        if (!hasSensitivePermission('risk_drivers_aggregated')) {
+            return back()->with('error', translate('Access Restricted'));
+        }
+
         try {
             $user = User::findOrFail($userId);
 

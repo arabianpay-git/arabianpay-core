@@ -305,14 +305,14 @@ class OrderController extends Controller
             );
 
             // Nafith SANAD
-            $nafithError = $this->createNafithSanad($order);
-            if ($nafithError) {
-                DB::rollBack();
-                return response()->json([
-                    'status' => 'error',
-                    'message' => translate('Order updated, but SANAD creation failed: ') . $nafithError
-                ], 422);
-            }
+            // $nafithError = $this->createNafithSanad($order);
+            // if ($nafithError) {
+            //     DB::rollBack();
+            //     return response()->json([
+            //         'status' => 'error',
+            //         'message' => translate('Order updated, but SANAD creation failed: ') . $nafithError
+            //     ], 422);
+            // }
 
             $this->createSchedulePayments($order);
 

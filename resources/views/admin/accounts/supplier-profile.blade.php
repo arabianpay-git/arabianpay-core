@@ -98,13 +98,14 @@
                                                     {{ translate('CR National Number') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ maskedText($g['crNationalNumber'] ?? '-') }}
+                                                    {{ maskedSensitiveText('business_identity', $g['crNationalNumber'] ?? '-') }}
                                                 </td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('CR Number') }}</td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ maskedText($g['crNumber'] ?? '-') }}</td>
+                                                    {{ maskedSensitiveText('business_identity', $g['crNumber'] ?? '-') }}
+                                                </td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Version') }}</td>
@@ -160,7 +161,8 @@
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Headquarter City') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ maskedText($g['headquarterCityName'] ?? '-') }}</td>
+                                                    {{ maskedSensitiveText('business_identity', $g['headquarterCityName'] ?? '-') }}
+                                                </td>
                                             </tr>
                                             <tr>
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('License Based?') }}
@@ -221,7 +223,8 @@
                                                 <td class="text-sm text-gray-600 py-2">{{ translate('Issue Date (G)') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ maskedText(
+                                                    {{ maskedSensitiveText(
+                                                        'business_identity',
                                                         !empty($g['issueDateGregorian']) ? \Carbon\Carbon::parse($g['issueDateGregorian'])->format(dateFormat()) : '-',
                                                     ) }}
                                                 </td>
@@ -231,7 +234,7 @@
                                                     {{ translate('Issue Date (H)') }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 py-2">
-                                                    {{ maskedText($g['issueDateHijri'] ?? '-') }}
+                                                    {{ maskedSensitiveText('business_identity', $g['issueDateHijri'] ?? '-') }}
                                                 </td>
                                             </tr>
 
@@ -256,10 +259,10 @@
                                                     @endphp
 
                                                     @if ($formattedGregorian)
-                                                        {{ maskedText($formattedGregorian) }}<br>
-                                                        {{ maskedText($hijri) }}
+                                                        {{ maskedSensitiveText('business_identity', $formattedGregorian) }}<br>
+                                                        {{ maskedSensitiveText('business_identity', $hijri) }}
                                                     @elseif ($hijri)
-                                                        {{ maskedText($hijri) }}
+                                                        {{ maskedSensitiveText('business_identity', $hijri) }}
                                                     @else
                                                         -
                                                     @endif
@@ -394,7 +397,7 @@
                                                     <h3 class="text-base font-semibold text-gray-800">
                                                         {{ translate('Partner') }}
                                                         #{{ $loop->parent->index * 2 + $index + 1 }} —
-                                                        {{ maskedText($party['name'], 3, 3, 7) }}
+                                                        {{ maskedSensitiveText('authorized_person_name', $party['name'], 3, 3, 7) }}
                                                     </h3>
                                                 </div>
                                                 <div class="overflow-x-auto">
@@ -404,14 +407,15 @@
                                                                 <td class="text-gray-600 py-2 px-4">
                                                                     {{ translate('Name') }}</td>
                                                                 <td class="text-gray-900 py-2 px-4">
-                                                                    {{ maskedText($party['name'], 3, 3, 7) }}
+                                                                    {{ maskedSensitiveText('authorized_person_name', $party['name'], 3, 3, 7) }}
                                                                 </td>
                                                             </tr>
                                                             <tr>
                                                                 <td class="text-gray-600 py-2 px-4">
                                                                     {{ translate('Identity ID') }}</td>
                                                                 <td class="text-gray-900 py-2 px-4">
-                                                                    {{ maskedText($party['identity']['id'] ?? '-') }}</td>
+                                                                    {{ maskedSensitiveText('national_id_iqama', $party['identity']['id'] ?? '-') }}
+                                                                </td>
                                                             </tr>
                                                             <tr>
                                                                 <td class="text-gray-600 py-2 px-4">
@@ -486,7 +490,7 @@
                                                         <h3 class="text-base font-semibold text-gray-800">
                                                             {{ translate('Manager') }}
                                                             #{{ $loop->parent->index * 2 + $index + 1 }} —
-                                                            {{ maskedText($manager['name'] ?? '-', 3, 3, 7) }}
+                                                            {{ maskedSensitiveText('authorized_person_name', $manager['name'] ?? '-', 3, 3, 7) }}
                                                         </h3>
                                                     </div>
                                                     <div class="overflow-x-auto">
@@ -496,14 +500,14 @@
                                                                     <td class="text-gray-600 py-2 px-4">
                                                                         {{ translate('Name') }}</td>
                                                                     <td class="text-gray-900 py-2 px-4">
-                                                                        {{ maskedText($manager['name'] ?? '-', 3, 3, 7) }}
+                                                                        {{ maskedSensitiveText('authorized_person_name', $manager['name'] ?? '-', 3, 3, 7) }}
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
                                                                     <td class="text-gray-600 py-2 px-4">
                                                                         {{ translate('Identity ID') }}</td>
                                                                     <td class="text-gray-900 py-2 px-4">
-                                                                        {{ maskedText($manager['identity']['id'] ?? '-') }}
+                                                                        {{ maskedSensitiveText('national_id_iqama', $manager['identity']['id'] ?? '-') }}
                                                                     </td>
                                                                 </tr>
                                                                 <tr>
@@ -582,6 +586,11 @@
                                                         $merchant->registration_number_form,
                                                         PATHINFO_EXTENSION,
                                                     );
+
+                                                    $filePath = authorizeSensitiveFileOrDeny(
+                                                        'documents_id_cr_contracts',
+                                                        $merchant->registration_number_form,
+                                                    );
                                                 @endphp
 
                                                 <img src="{{ asset('assets/media/images/default-pdf.png') }}"
@@ -589,10 +598,17 @@
 
 
                                                 <div class="flex flex-col">
-                                                    <a href="{{ supplierMedia($merchant->registration_number_form) }}"
-                                                        target="_blank" class="underline">
-                                                        {{ translate('Registration Form') }}
-                                                    </a>
+                                                    @if ($filePath !== 'Not Allowed')
+                                                        <a href="{{ supplierMedia($filePath) }}" target="_blank"
+                                                            class="underline">
+                                                            {{ translate('Registration Form') }}
+                                                        </a>
+                                                    @else
+                                                        <span
+                                                            class="text-sm text-red-500">{{ translate('Registration Form') }}
+                                                            ({{ translate($filePath) }})</span>
+                                                    @endif
+
                                                     <span class="text-xs text-gray-700">
                                                         {{ Carbon\Carbon::parse($merchant->created_at)->format('d M Y h:i A') }}
                                                     </span>
@@ -607,17 +623,28 @@
                                             <div class="flex items-center grow gap-2.5">
                                                 @php
                                                     $ext = pathinfo($merchant->vat_register_file, PATHINFO_EXTENSION);
+                                                    $filePath = authorizeSensitiveFileOrDeny(
+                                                        'documents_id_cr_contracts',
+                                                        $merchant->vat_register_file,
+                                                    );
                                                 @endphp
 
                                                 <img src="{{ asset('assets/media/images/default-pdf.png') }}"
                                                     class="h-10" />
 
-
                                                 <div class="flex flex-col">
-                                                    <a href="{{ supplierMedia($merchant->vat_register_file) }}"
-                                                        target="_blank" class="underline">
-                                                        {{ translate('VAT Register File') }}
-                                                    </a>
+
+                                                    @if ($filePath !== 'Not Allowed')
+                                                        <a href="{{ supplierMedia($filePath) }}" target="_blank"
+                                                            class="underline">
+                                                            {{ translate('VAT Register File') }}
+                                                        </a>
+                                                    @else
+                                                        <span class="text-sm text-red-500">
+                                                            {{ translate('VAT Register File') }}
+                                                            ({{ translate($filePath) }})</span>
+                                                    @endif
+
                                                     <span class="text-xs text-gray-700">
                                                         {{ Carbon\Carbon::parse($merchant->created_at)->format('d M Y h:i A') }}
                                                     </span>
@@ -708,16 +735,29 @@
                                             <div class="flex items-center grow gap-2.5">
                                                 @php
                                                     $ext = pathinfo($merchant->owner_iqama_image, PATHINFO_EXTENSION);
+
+                                                    $filePath = authorizeSensitiveFileOrDeny(
+                                                        'national_id_iqama',
+                                                        $merchant->owner_iqama_image,
+                                                    );
                                                 @endphp
 
                                                 <img src="{{ asset('assets/media/images/default-pdf.png') }}"
                                                     class="h-10" />
 
                                                 <div class="flex flex-col">
-                                                    <a href="{{ supplierMedia($merchant->owner_iqama_image) }}"
-                                                        target="_blank" class="underline">
-                                                        {{ translate('Owner ID') }}
-                                                    </a>
+
+                                                    @if ($filePath !== 'Not Allowed')
+                                                        <a href="{{ supplierMedia($filePath) }}" target="_blank"
+                                                            class="underline">
+                                                            {{ translate('Owner ID') }}
+                                                        </a>
+                                                    @else
+                                                        <span class="text-sm text-red-500">
+                                                            {{ translate('Owner ID') }}
+                                                            ({{ translate($filePath) }})</span>
+                                                    @endif
+
                                                     <span class="text-xs text-gray-700">
                                                         {{ Carbon\Carbon::parse($merchant->created_at)->format('d M Y h:i A') }}
                                                     </span>
@@ -755,7 +795,8 @@
                                                                         $bank->iban_certificate,
                                                                         PATHINFO_EXTENSION,
                                                                     );
-                                                                    $filePath = authorizeFileOrDeny(
+                                                                    $filePath = authorizeSensitiveFileOrDeny(
+                                                                        'iban_bank_account',
                                                                         $bank->iban_certificate,
                                                                     );
                                                                 @endphp
@@ -770,8 +811,10 @@
                                                                             {{ translate('IBAN Certificate') }}
                                                                         </a>
                                                                     @else
-                                                                        <span
-                                                                            class="text-sm text-red-500">{{ $filePath }}</span>
+                                                                        <span class="text-sm text-red-500">
+                                                                            {{ translate('IBAN Certificate') }}
+                                                                            ({{ translate($filePath) }})
+                                                                        </span>
                                                                     @endif
                                                                     <span class="text-xs text-gray-700 dark:text-gray-300">
                                                                         {{ Carbon\Carbon::parse($bank->created_at)->format('d M Y h:i A') }}
@@ -822,17 +865,20 @@
                                         @forelse($supplierBanks as $supplierBank)
                                             <tr class="border-b">
                                                 <td class="text-sm text-gray-900 pb-3 pe-4 lg:pe-10">
-                                                    {{ $supplierBank->user->first_name ?? '-' }}
-                                                    {{ $supplierBank->user->last_name ?? '' }}
+                                                    {{ maskedSensitiveText(
+                                                        'authorized_person_name',
+                                                        trim(($supplierBank->user->first_name ?? '') . ' ' . ($supplierBank->user->last_name ?? '')),
+                                                    ) }}
+                                                </td>
+
+                                                <td class="text-sm text-gray-900 pb-3 pe-4 lg:pe-10">
+                                                    {{ maskedSensitiveText('iban_bank_account', $supplierBank->bank_name ?? '-', 5, 3, 6) }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 pb-3 pe-4 lg:pe-10">
-                                                    {{ maskedText($supplierBank->bank_name ?? '-', 5, 3, 6) }}
-                                                </td>
-                                                <td class="text-sm text-gray-900 pb-3 pe-4 lg:pe-10">
-                                                    {{ maskedText($supplierBank->account_name ?? '-', 5, 3, 6) }}
+                                                    {{ maskedSensitiveText('iban_bank_account', $supplierBank->account_name ?? '-', 5, 3, 6) }}
                                                 </td>
                                                 <td class="text-sm text-gray-900 pb-3">
-                                                    {{ maskedText($supplierBank->iban ?? '-', 5, 3, 6) }}
+                                                    {{ maskedSensitiveText('iban_bank_account', $supplierBank->iban ?? '-', 5, 3, 6) }}
                                                 </td>
                                             </tr>
                                         @empty
@@ -874,7 +920,7 @@
                                                 {{ translate('CR Number') }}
                                             </td>
                                             <td class="text-sm text-gray-900 pb-3">
-                                                {{ maskedText($merchant->cr_number ?? '-') }}
+                                                {{ maskedSensitiveText('business_identity', $merchant->cr_number ?? '-') }}
                                             </td>
                                         </tr>
 
