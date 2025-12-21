@@ -135,12 +135,12 @@
                             <div class="flex flex-col gap-1">
                                 <label class="form-label">{{ translate('Access Start') }}</label>
                                 <input id="modal_start_at" type="text" class="input" placeholder="Select date">
-                                <span class="text-red-500 text-xs mt-1 hidden" id="error_start_at"></span>
+                                <span class="text-danger text-xs mt-1 hidden" id="error_start_at"></span>
                             </div>
                             <div class="flex flex-col gap-1">
                                 <label class="form-label">{{ translate('Access End') }}</label>
                                 <input id="modal_end_at" type="text" class="input" placeholder="Select date">
-                                <span class="text-red-500 text-xs mt-1 hidden" id="error_end_at"></span>
+                                <span class="text-danger text-xs mt-1 hidden" id="error_end_at"></span>
                             </div>
                         </div>
 
@@ -151,14 +151,14 @@
                                 <option value="rejected">{{ translate('Reject') }}</option>
                                 <option value="revoked">{{ translate('Revoke') }}</option>
                             </select>
-                            <span class="text-red-500 text-xs mt-1 hidden" id="error_status"></span>
+                            <span class="text-danger text-xs mt-1 hidden" id="error_status"></span>
                         </div>
 
                         <div class="flex flex-col gap-1">
                             <label class="form-label">{{ translate('Notes for Employee') }}</label>
                             <textarea id="modal_decision_notes" rows="3" class="textarea"
                                 placeholder="{{ translate('Provide a reason for this decision...') }}"></textarea>
-                            <span class="text-red-500 text-xs mt-1 hidden" id="error_decision_notes"></span>
+                            <span class="text-danger text-xs mt-1 hidden" id="error_decision_notes"></span>
                         </div>
                     </div>
 
