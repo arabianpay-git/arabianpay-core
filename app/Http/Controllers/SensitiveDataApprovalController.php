@@ -45,9 +45,9 @@ class SensitiveDataApprovalController extends Controller
     {
         $validated = $request->validate([
             'status' => ['required', 'in:approved,rejected,revoked'],
-            'start_at' => ['nullable', 'date'],
-            'end_at' => ['nullable', 'date', 'after_or_equal:start_at'],
-            'decision_notes' => ['nullable', 'string', 'max:2000'],
+            'start_at' => ['required', 'date'],
+            'end_at' => ['required', 'date', 'after_or_equal:start_at'],
+            'decision_notes' => ['required', 'string', 'max:2000'],
         ]);
 
         // apply updates

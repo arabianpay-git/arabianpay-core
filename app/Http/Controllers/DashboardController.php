@@ -201,7 +201,7 @@ class DashboardController extends Controller
         $validated = $request->validate([
             'sensitive_permissions' => ['required', 'array', 'min:1'],
             'sensitive_permissions.*' => ['string'],
-            'request_reason' => ['nullable', 'string', 'max:2000'],
+            'request_reason' => ['required', 'string', 'max:2000'],
         ]);
 
         $userId = Auth::user()->id;
