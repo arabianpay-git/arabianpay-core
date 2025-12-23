@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\AuditLogsExport;
+use App\Exports\AuditTrailsExport;
 use App\Models\AuditLog;
 use App\Models\AuditTrail;
 use App\Models\User;
@@ -10,6 +12,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
 
 class AuditController extends Controller
 {
@@ -816,5 +819,208 @@ class AuditController extends Controller
 
         // For now, return empty. You can implement geoIP lookup here
         return null;
+    }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    /**
+     * Export audit logs to Excel
+     */
+    public function exportLogs(Request $request)
+    {
+        try {
+            // Get filter parameters
+            $filters = [
+                'log_category' => $request->get('log_category'),
+                'event_type' => $request->get('event_type'),
+                'severity' => $request->get('severity'),
+                'status' => $request->get('status'),
+                'subject_type' => $request->get('subject_type'),
+                'resource' => $request->get('resource'),
+                'pdpl_category' => $request->get('pdpl_category'),
+                'date_from' => $request->get('date_from'),
+                'date_to' => $request->get('date_to'),
+                'search' => $request->get('search'),
+                'idp_provider' => $request->get('idp_provider'),
+            ];
+
+            // Build query with filters
+            $query = AuditLog::query()->latest('timestamp');
+
+            // Apply filters
+            if ($filters['log_category']) {
+                $query->where('log_category', $filters['log_category']);
+            }
+
+            if ($filters['event_type']) {
+                $query->where('event_type', $filters['event_type']);
+            }
+
+            if ($filters['severity']) {
+                $query->where('severity', $filters['severity']);
+            }
+
+            if ($filters['status']) {
+                $query->where('status', $filters['status']);
+            }
+
+            if ($filters['subject_type']) {
+                $query->where('subject_type', $filters['subject_type']);
+            }
+
+            if ($filters['resource']) {
+                $query->where('resource', $filters['resource']);
+            }
+
+            if ($filters['pdpl_category']) {
+                $query->where('pdpl_category', $filters['pdpl_category']);
+            }
+
+            if ($filters['date_from']) {
+                $query->whereDate('timestamp', '>=', $filters['date_from']);
+            }
+
+            if ($filters['date_to']) {
+                $query->whereDate('timestamp', '<=', $filters['date_to']);
+            }
+
+            if ($filters['idp_provider']) {
+                if ($filters['idp_provider'] === '__null__') {
+                    $query->whereNull('idp_provider');
+                } else {
+                    $query->where('idp_provider', $filters['idp_provider']);
+                }
+            }
+
+            if ($filters['search']) {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('subject_identifier', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('endpoint', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('failure_reason', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('request_id', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('description', 'like', '%' . $filters['search'] . '%');
+                });
+            }
+
+            // Get total count
+            $totalLogs = $query->count();
+
+            if ($totalLogs === 0) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No logs found to export with the current filters.'
+                    ], 404);
+                }
+
+                return back()->with('error', 'No logs found to export with the current filters.');
+            }
+
+            // Generate filename
+            $timestamp = Carbon::now()->format('Y-m-d_His');
+            $filename = "audit_logs_export_{$timestamp}.xlsx";
+
+            // Export using Laravel Excel
+            return Excel::download(new AuditLogsExport($query), $filename);
+        } catch (\Exception $e) {
+            Log::error('Audit logs export failed: ' . $e->getMessage());
+
+            if ($request->ajax()) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Export failed: ' . $e->getMessage()
+                ], 500);
+            }
+
+            return back()->with('error', 'Export failed: ' . $e->getMessage());
+        }
+    }
+    public function exportTrails(Request $request)
+    {
+        try {
+            // Get filter parameters (same as showAuditTrails method)
+            $filters = [
+                'event_category' => $request->get('event_category'),
+                'entity_type' => $request->get('entity_type'),
+                'pdpl_category' => $request->get('pdpl_category'),
+                'actor_email' => $request->get('actor_email'),
+                'search' => $request->get('search'),
+                'date_from' => $request->get('date_from'),
+                'date_to' => $request->get('date_to'),
+            ];
+
+            // Build query with filters (reuse the same logic as showAuditTrails)
+            $query = AuditTrail::query()
+                ->with(['actorUser' => function ($q) {
+                    $q->select('id', 'email', 'first_name', 'last_name');
+                }])
+                ->latest('timestamp');
+
+            // Apply filters
+            if ($filters['event_category']) {
+                $query->where('event_category', $filters['event_category']);
+            }
+
+            if ($filters['entity_type']) {
+                $query->where('entity_type', $filters['entity_type']);
+            }
+
+            if ($filters['pdpl_category']) {
+                $query->where('pdpl_category', $filters['pdpl_category']);
+            }
+
+            if ($filters['actor_email']) {
+                $query->where('actor_email', 'like', '%' . $filters['actor_email'] . '%');
+            }
+
+            if ($filters['date_from']) {
+                $query->whereDate('timestamp', '>=', $filters['date_from']);
+            }
+
+            if ($filters['date_to']) {
+                $query->whereDate('timestamp', '<=', $filters['date_to']);
+            }
+
+            if ($filters['search']) {
+                $query->where(function ($q) use ($filters) {
+                    $q->where('action_summary', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('event_type', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('entity_type', 'like', '%' . $filters['search'] . '%')
+                        ->orWhere('justification', 'like', '%' . $filters['search'] . '%');
+                });
+            }
+
+            // Get the audit trails
+            $auditTrails = $query->get();
+
+            if ($auditTrails->isEmpty()) {
+                return back()->with('error', 'No audit trails found to export with the current filters.');
+            }
+
+            // Generate filename
+            $timestamp = Carbon::now()->format('Y-m-d_His');
+            $filename = "audit_trails_export_{$timestamp}.csv";
+
+            return Excel::download(new AuditTrailsExport($query), $filename);
+        } catch (\Exception $e) {
+            Log::error('Audit trails export failed: ' . $e->getMessage(), [
+                'exception' => $e,
+                'trace' => $e->getTraceAsString()
+            ]);
+
+            return back()->with('error', 'Export failed: ' . $e->getMessage());
+        }
     }
 }

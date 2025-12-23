@@ -117,6 +117,10 @@
                         <i class="ki-filled ki-briefcase mr-2"></i>
                         {{ translate('Audit Logs') }}
                     </a>
+                    <button id="exportTrailsBtn" class="btn btn-outline btn-success">
+                        <i class="ki-filled ki-exit-down mr-2"></i>
+                        {{ translate('Export Excel') }}
+                    </button>
                 </div>
             </div>
 
@@ -1085,5 +1089,111 @@
                 alert('{{ translate('Copy failed') }}');
             });
         }
+    </script>
+
+    <script>
+        // ==================== TRAILS EXPORT FUNCTIONS ====================
+        async function exportTrailsToExcel() {
+            try {
+                // Show progress dialog
+                const progressSwal = Swal.fire({
+                    title: '{{ translate('Preparing Export') }}',
+                    html: `
+                <div class="text-left">
+                    <div class="mb-2">{{ translate('Collecting and formatting audit trail data...') }}</div>
+                    <div class="progress-bar-container">
+                        <div class="w-full bg-gray-200 rounded-full h-2.5 mb-2">
+                            <div id="exportProgressBar" class="bg-green-600 h-2.5 rounded-full" style="width: 0%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-600">
+                            <span id="exportProgressText">0%</span>
+                            <span id="exportStatusText">{{ translate('Initializing') }}</span>
+                        </div>
+                    </div>
+                </div>
+            `,
+                    allowOutsideClick: false,
+                    showCancelButton: false,
+                    showConfirmButton: false,
+                    willOpen: () => {
+                        Swal.showLoading();
+                    }
+                });
+
+                // Update progress bar
+                const updateProgress = (percent, status) => {
+                    const progressBar = document.getElementById('exportProgressBar');
+                    const progressText = document.getElementById('exportProgressText');
+                    const statusText = document.getElementById('exportStatusText');
+
+                    if (progressBar) progressBar.style.width = `${percent}%`;
+                    if (progressText) progressText.textContent = `${percent}%`;
+                    if (statusText) statusText.textContent = status;
+                };
+
+                // Build export URL with current filters
+                const currentParams = new URLSearchParams(window.location.search);
+                const exportUrl = `{{ route('audit.trails.export') }}?${currentParams.toString()}`;
+
+                // Create hidden iframe for download
+                const iframe = document.createElement('iframe');
+                iframe.style.display = 'none';
+                document.body.appendChild(iframe);
+
+                // Simulate progress updates
+                updateProgress(10, '{{ translate('Processing filters') }}');
+                await new Promise(resolve => setTimeout(resolve, 500));
+
+                updateProgress(30, '{{ translate('Fetching audit data') }}');
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                updateProgress(60, '{{ translate('Generating Excel file') }}');
+                await new Promise(resolve => setTimeout(resolve, 1000));
+
+                updateProgress(90, '{{ translate('Finalizing export') }}');
+
+                // Set iframe source to trigger download
+                iframe.src = exportUrl;
+
+                updateProgress(100, '{{ translate('Starting download') }}');
+
+                // Wait for download to start
+                setTimeout(() => {
+                    Swal.close();
+
+                    Swal.fire({
+                        title: '{{ translate('Export Complete') }}',
+                        text: '{{ translate('Your Excel file should start downloading shortly.') }}',
+                        icon: 'success',
+                        showCancelButton: false,
+                        confirmButtonColor: '#3085d6',
+                        confirmButtonText: '{{ translate('OK') }}',
+                        timer: 3000,
+                        timerProgressBar: true,
+                        didClose: () => {
+                            // Remove iframe
+                            if (iframe.parentNode) {
+                                iframe.parentNode.removeChild(iframe);
+                            }
+                        }
+                    });
+                }, 1500);
+
+            } catch (error) {
+                console.error('Export error:', error);
+
+                Swal.close();
+
+                Swal.fire({
+                    title: '{{ translate('Export Failed') }}',
+                    text: '{{ translate('An error occurred while exporting. Please try again.') }}',
+                    icon: 'error',
+                    confirmButtonText: '{{ translate('OK') }}'
+                });
+            }
+        }
+
+        // Add event listener to export button
+        document.getElementById('exportTrailsBtn')?.addEventListener('click', exportTrailsToExcel);
     </script>
 @endpush

@@ -697,6 +697,8 @@ Route::group([
 
             Route::get('/audit/{id}/details', [AuditController::class, 'getAuditDetails'])->name('audit.details');
             Route::get('/audit/logs/{id}/details', [AuditController::class, 'showAuditLogDetails'])->name('audit.logs.details');
+            Route::get('/logs/export', [AuditController::class, 'exportLogs'])->name('audit.logs.export');
+            Route::get('/trails/export', [AuditController::class, 'exportTrails'])->name('audit.trails.export');
         });
 
     // Third party api control
