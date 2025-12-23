@@ -3,7 +3,6 @@
 namespace App\Exports;
 
 use App\Models\AuditTrail;
-use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
@@ -12,7 +11,6 @@ use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithTitle;
 use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Border;
 
 class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle
@@ -58,29 +56,24 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
 
     public function map($trail): array
     {
-        // Get actor name
         $actorName = $trail->actorUser
             ? $trail->actorUser->first_name . ' ' . $trail->actorUser->last_name
             : 'System';
 
-        // Format PII fields
         $piiFields = '';
         if ($trail->pii_fields_involved) {
-            if (is_array($trail->pii_fields_involved)) {
-                $piiFields = implode(', ', $trail->pii_fields_involved);
-            } else {
-                $decoded = json_decode($trail->pii_fields_involved, true);
-                if (is_array($decoded)) {
-                    $piiFields = implode(', ', $decoded);
-                } else {
-                    $piiFields = $trail->pii_fields_involved;
-                }
-            }
+            $decoded = is_array($trail->pii_fields_involved)
+                ? $trail->pii_fields_involved
+                : json_decode($trail->pii_fields_involved, true);
+
+            $piiFields = is_array($decoded)
+                ? implode(', ', $decoded)
+                : (string) $trail->pii_fields_involved;
         }
 
         return [
             $trail->id,
-            $trail->timestamp ? $trail->timestamp->format('Y-m-d H:i:s') : '',
+            $trail->timestamp ? "'" . $trail->timestamp->format('Y-m-d H:i:s') : '',
             strtoupper($trail->environment),
             $trail->event_category,
             $trail->event_type,
@@ -98,8 +91,8 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
             $trail->masking_state,
             $trail->request_id,
             $trail->correlation_id,
-            $trail->created_at->format('Y-m-d H:i:s'),
-            $trail->updated_at->format('Y-m-d H:i:s')
+            "'" . $trail->created_at->format('Y-m-d H:i:s'),
+            "'" . $trail->updated_at->format('Y-m-d H:i:s'),
         ];
     }
 
@@ -111,33 +104,32 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
     public function columnWidths(): array
     {
         return [
-            'A' => 10,  // Record ID
-            'B' => 20,  // Timestamp
-            'C' => 15,  // Environment
-            'D' => 20,  // Event Category
-            'E' => 20,  // Event Type
-            'F' => 15,  // Entity Type
-            'G' => 15,  // Entity ID
-            'H' => 25,  // Actor Name
-            'I' => 25,  // Actor Email
-            'J' => 15,  // Actor Role
-            'K' => 15,  // IP Address
-            'L' => 25,  // Device Fingerprint
-            'M' => 50,  // Action Summary
-            'N' => 40,  // Justification
-            'O' => 15,  // PDPL Category
-            'P' => 30,  // PII Fields
-            'Q' => 15,  // Masking State
-            'R' => 30,  // Request ID
-            'S' => 30,  // Correlation ID
-            'T' => 20,  // Created At
-            'U' => 20,  // Updated At
+            'A' => 10,
+            'B' => 22,
+            'C' => 15,
+            'D' => 20,
+            'E' => 20,
+            'F' => 15,
+            'G' => 15,
+            'H' => 25,
+            'I' => 25,
+            'J' => 15,
+            'K' => 18,
+            'L' => 30,
+            'M' => 50,
+            'N' => 40,
+            'O' => 18,
+            'P' => 30,
+            'Q' => 15,
+            'R' => 30,
+            'S' => 30,
+            'T' => 22,
+            'U' => 22,
         ];
     }
 
     public function styles(Worksheet $sheet)
     {
-        // Style for header row
         $sheet->getStyle('A1:U1')->applyFromArray([
             'font' => [
                 'bold' => true,
@@ -150,22 +142,15 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
             'borders' => [
                 'allBorders' => [
                     'borderStyle' => Border::BORDER_THIN,
-                    'color' => ['rgb' => '000000'],
                 ],
             ],
         ]);
 
-        // Auto-size columns based on content
-        foreach (range('A', 'U') as $column) {
-            $sheet->getColumnDimension($column)->setAutoSize(true);
-        }
-
-        // Add freeze pane for headers
         $sheet->freezePane('A2');
 
-        // Apply borders to all cells
         $lastRow = $sheet->getHighestRow();
         $lastColumn = $sheet->getHighestColumn();
+
         $sheet->getStyle("A1:{$lastColumn}{$lastRow}")->applyFromArray([
             'borders' => [
                 'allBorders' => [
@@ -175,7 +160,6 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
             ],
         ]);
 
-        // Style PDPL Category cells with colors
         $pdplColumn = 'O';
         for ($row = 2; $row <= $lastRow; $row++) {
             $category = $sheet->getCell($pdplColumn . $row)->getValue();
@@ -190,12 +174,7 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
                 default => '000000'
             };
 
-            $sheet->getStyle($pdplColumn . $row)->applyFromArray([
-                'font' => [
-                    'bold' => true,
-                    'color' => ['rgb' => $color],
-                ],
-            ]);
+            $sheet->getStyle($pdplColumn . $row)->getFont()->setBold(true)->getColor()->setRGB($color);
         }
 
         return [];
@@ -223,10 +202,6 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
 
     private function maskFingerprint(?string $fp): ?string
     {
-        if (!$fp) {
-            return null;
-        }
-
-        return 'fp-****' . substr($fp, -3);
+        return $fp ? 'fp-****' . substr($fp, -3) : null;
     }
 }
