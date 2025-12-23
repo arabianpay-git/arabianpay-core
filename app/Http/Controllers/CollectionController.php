@@ -9,6 +9,7 @@ use App\Models\Promise;
 use App\Models\RefundRequest;
 use App\Models\SchedulePayment;
 use App\Models\User;
+use App\Services\AuditTrailService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -17,11 +18,34 @@ use Illuminate\Support\Facades\DB;
 
 class CollectionController extends Controller
 {
+    protected $auditTrailService;
+
+    public function __construct(AuditTrailService $auditTrailService)
+    {
+        $this->auditTrailService = $auditTrailService;
+    }
+
     /**
      * Display the main collections dashboard.
      */
     public function index(Request $request)
     {
+        // Log view collections dashboard
+        $this->auditTrailService->logViewOperation(
+            'view_dashboard',
+            'Collections',
+            'Viewed collections dashboard',
+            [
+                'date_from' => $request->query('date_from'),
+                'date_to' => $request->query('date_to'),
+                'collection_range' => $request->query('collection_range'),
+                'dpd_period' => $request->query('dpd_period'),
+                'status' => $request->query('status'),
+                'dpd_filter' => $request->query('dpd'),
+                'channel' => $request->query('channel'),
+            ]
+        );
+
         // Read optional date filters (these are global date filters from header)
         $startDate = $request->query('date_from') ? Carbon::parse($request->query('date_from'))->startOfDay() : null;
         $endDate   = $request->query('date_to')   ? Carbon::parse($request->query('date_to'))->endOfDay()   : null;
@@ -347,6 +371,17 @@ class CollectionController extends Controller
      */
     public function viewAlerts(Request $request)
     {
+        // Log view alerts
+        $this->auditTrailService->logViewOperation(
+            'view_alerts_list',
+            'Collections',
+            'Viewed collections alerts',
+            [
+                'date_from' => $request->query('date_from'),
+                'date_to' => $request->query('date_to'),
+            ]
+        );
+
         $start = $request->query('date_from') ? Carbon::parse($request->query('date_from'))->startOfDay() : null;
         $end   = $request->query('date_to')   ? Carbon::parse($request->query('date_to'))->endOfDay()   : null;
 
@@ -366,6 +401,17 @@ class CollectionController extends Controller
      */
     public function viewFlags(Request $request)
     {
+        // Log view flags
+        $this->auditTrailService->logViewOperation(
+            'view_flags_list',
+            'Collections',
+            'Viewed collections flags',
+            [
+                'date_from' => $request->query('date_from'),
+                'date_to' => $request->query('date_to'),
+            ]
+        );
+
         $start = $request->query('date_from') ? Carbon::parse($request->query('date_from'))->startOfDay() : null;
         $end   = $request->query('date_to')   ? Carbon::parse($request->query('date_to'))->endOfDay()   : null;
 
@@ -1043,6 +1089,19 @@ class CollectionController extends Controller
      */
     public function installments(Request $request)
     {
+        // Log view installments page
+        $this->auditTrailService->logViewOperation(
+            'view_installments',
+            'Collections',
+            'Viewed installments list',
+            [
+                'status' => $request->query('status'),
+                'search' => $request->query('search'),
+                'from' => $request->query('from'),
+                'to' => $request->query('to'),
+            ]
+        );
+
         $status = $request->query('status');
         $search = $request->query('search');
         $from   = $request->query('from');
@@ -1110,6 +1169,19 @@ class CollectionController extends Controller
 
     public function installmentsCalander(Request $request)
     {
+        // Log view installment calendar
+        $this->auditTrailService->logViewOperation(
+            'view_installment_calendar',
+            'Collections',
+            'Viewed installment calendar',
+            [
+                'status' => $request->query('status'),
+                'search' => $request->query('search'),
+                'from' => $request->query('from'),
+                'to' => $request->query('to'),
+            ]
+        );
+
         $status = $request->query('status'); // can be null or 'all'
         $search = $request->query('search');
         $from = $request->query('from');
@@ -1183,7 +1255,6 @@ class CollectionController extends Controller
         return view('admin.collections.installment-calander');
     }
 
-
     public function installmentDetails($id)
     {
         $user = Auth::user();
@@ -1197,6 +1268,21 @@ class CollectionController extends Controller
         ])
             ->when($user->user_type !== 'admin', fn($q) => $q->where('assigned_to', $user->id))
             ->findOrFail($id);
+
+        // Log view installment details
+        $this->auditTrailService->log([
+            'event_category' => 'view_operations',
+            'event_type' => 'view_installment_details',
+            'entity_type' => 'Order',
+            'entity_id' => $order->id,
+            'action_summary' => "Viewed installment details for order #{$order->tracking}",
+            'properties' => [
+                'order_id' => $order->id,
+                'tracking_number' => $order->tracking,
+                'merchant_name' => $order->user->business_name ?? $order->user->name,
+                'total_amount' => $order->grand_total,
+            ],
+        ]);
 
         $productDetails = $this->mapProductDetails($order);
         $refundRequest = RefundRequest::where('order_id', $id)->first();
@@ -1225,6 +1311,13 @@ class CollectionController extends Controller
      */
     public function dunning()
     {
+        // Log view dunning page
+        $this->auditTrailService->logViewOperation(
+            'view_dunning',
+            'Collections',
+            'Viewed dunning page'
+        );
+
         return view('admin.collections.dunning');
     }
 
@@ -1233,6 +1326,18 @@ class CollectionController extends Controller
      */
     public function promisetopay()
     {
+        // Log view promise-to-pay page
+        $this->auditTrailService->logViewOperation(
+            'view_promise_to_pay',
+            'Collections',
+            'Viewed promise-to-pay page',
+            [
+                'status' => request('status'),
+                'method' => request('method'),
+                'search' => request('search'),
+            ]
+        );
+
         $query = Promise::with(['user', 'schedulePayment']);
 
         // Filter by schedule payment status
@@ -1259,6 +1364,20 @@ class CollectionController extends Controller
 
     public function getUnpaidInstallments(User $user)
     {
+        // Log retrieval of unpaid installments
+        $this->auditTrailService->log([
+            'event_category' => 'data_operations',
+            'event_type' => 'get_unpaid_installments',
+            'entity_type' => 'User',
+            'entity_id' => $user->id,
+            'action_summary' => "Retrieved unpaid installments for user '{$user->name}'",
+            'properties' => [
+                'user_id' => $user->id,
+                'user_name' => $user->name,
+                'user_email' => $user->email,
+            ],
+        ]);
+
         $unpaidPayments = SchedulePayment::where('user_id', $user->id)
             ->where('payment_status', '!=', 'paid')
             ->orderBy('due_date', 'asc')
@@ -1288,6 +1407,16 @@ class CollectionController extends Controller
      */
     public function allocations(Request $request)
     {
+        // Log view allocations page
+        $this->auditTrailService->logViewOperation(
+            'view_allocations',
+            'Collections',
+            'Viewed allocations page',
+            [
+                'search' => $request->get('q'),
+            ]
+        );
+
         $query = $request->get('q');
 
         $schedulePayments = SchedulePayment::with(['order.customer'])
@@ -1329,6 +1458,13 @@ class CollectionController extends Controller
      */
     public function penalties()
     {
+        // Log view penalties page
+        $this->auditTrailService->logViewOperation(
+            'view_penalties',
+            'Collections',
+            'Viewed penalties and fees page'
+        );
+
         return view('admin.collections.penalties');
     }
 
@@ -1356,6 +1492,17 @@ class CollectionController extends Controller
 
     public function partialPayments(Request $request)
     {
+        // Log view partial payments page
+        $this->auditTrailService->logViewOperation(
+            'view_partial_payments',
+            'Collections',
+            'Viewed partial payments page',
+            [
+                'status' => $request->query('status'),
+                'search' => $request->query('search'),
+            ]
+        );
+
         $status = $request->query('status');
         $search = $request->query('search');
 
@@ -1374,7 +1521,7 @@ class CollectionController extends Controller
 
         // If search provided, filter using the custom function
         if (!empty($search)) {
-            $paymentsCollection = $this->filterMerchants($paymentsCollection, $search);
+            $paymentsCollection = $this->filterPartialPaymentMerchants($paymentsCollection, $search);
         }
 
         // Manual pagination (preserve query string)
@@ -1401,14 +1548,9 @@ class CollectionController extends Controller
     }
 
     /**
-     * Use your provided filtering logic (adapted to PartialPayment collection).
-     * Keeps the same name you gave: filterMerchants
-     *
-     * @param \Illuminate\Support\Collection $payments
-     * @param string $search
-     * @return \Illuminate\Support\Collection
+     * Filter partial payments collection.
      */
-    private function filterMerchants($payments, $search)
+    private function filterPartialPaymentMerchants($payments, $search)
     {
         $search = strtolower(trim($search));
         $searchTerms = explode(' ', $search);
@@ -1449,21 +1591,74 @@ class CollectionController extends Controller
             'action' => 'required|in:approve,reject',
         ]);
 
+        DB::beginTransaction();
+
         try {
             $payment = PartialPayment::findOrFail($request->id);
 
             if ($payment->approval_status !== 'pending') {
+                // Log attempt to process already processed payment
+                $this->auditTrailService->log([
+                    'event_category' => 'validation_events',
+                    'event_type' => 'partial_payment_already_processed',
+                    'entity_type' => 'PartialPayment',
+                    'entity_id' => $payment->id,
+                    'action_summary' => "Attempted to process already processed partial payment",
+                    'properties' => [
+                        'payment_id' => $payment->id,
+                        'current_status' => $payment->approval_status,
+                        'requested_action' => $request->action,
+                    ],
+                ]);
+
                 return response()->json(['status' => 'error', 'message' => 'This payment is already processed.']);
             }
 
+            $oldStatus = $payment->approval_status;
             $payment->approval_status = $request->action === 'approve' ? 'approved' : 'rejected';
             $payment->save();
+
+            // Log partial payment status update with justification
+            $justification = $request->action === 'approve'
+                ? 'Partial payment approved for collection allocation'
+                : 'Partial payment rejected due to validation issues';
+
+            $justificationData = $this->auditTrailService->withJustification(
+                $justification,
+                'financial_operation',
+                ['amount', 'payment_method']
+            );
+
+            $this->auditTrailService->logUpdated(
+                $payment,
+                ['approval_status' => $oldStatus],
+                "Updated partial payment status from '{$oldStatus}' to '{$payment->approval_status}'",
+                $justificationData
+            );
+
+            DB::commit();
 
             return response()->json([
                 'status' => 'success',
                 'message' => 'Partial payment ' . $payment->approval_status . ' successfully.',
             ]);
         } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed partial payment update
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'partial_payment_update_failed',
+                'entity_type' => 'PartialPayment',
+                'entity_id' => $request->id ?? null,
+                'action_summary' => "Failed to update partial payment status",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'payment_id' => $request->id,
+                    'action' => $request->action,
+                ],
+            ]);
+
             return response()->json([
                 'status' => 'error',
                 'message' => 'Error: ' . $e->getMessage(),

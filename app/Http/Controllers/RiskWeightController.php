@@ -4,13 +4,20 @@ namespace App\Http\Controllers;
 
 use App\Models\RiskWeight;
 use App\Models\Setting;
-use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use App\Services\AuditTrailService;
 
 class RiskWeightController extends Controller
 {
+    protected $auditTrailService;
+
+    public function __construct(AuditTrailService $auditTrailService)
+    {
+        $this->auditTrailService = $auditTrailService;
+    }
+
     /**
      * Store or update risk weights for a user
      */
@@ -59,6 +66,20 @@ class RiskWeightController extends Controller
             'caf_weight'
         ]);
         if (abs($mainWeights->sum() - 100) > 0.01) {
+            // Log validation failure
+            $this->auditTrailService->log([
+                'event_category' => 'validation',
+                'event_type' => 'weight_sum_invalid',
+                'entity_type' => 'RiskWeight',
+                'entity_id' => $validated['user_id'],
+                'action_summary' => "Failed to save risk weights - main weights sum invalid",
+                'properties' => [
+                    'user_id' => $validated['user_id'],
+                    'actual_sum' => $mainWeights->sum(),
+                    'expected_sum' => 100,
+                ],
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => "The sum of all main weights must equal 100%. Current sum: {$mainWeights->sum()}%",
@@ -76,6 +97,21 @@ class RiskWeightController extends Controller
         foreach ($subWeightsGroups as $groupName => $fields) {
             $sum = collect($validated)->only($fields)->sum();
             if (abs($sum - 100) > 0.01) {
+                // Log validation failure for sub-weights
+                $this->auditTrailService->log([
+                    'event_category' => 'validation',
+                    'event_type' => 'subweight_sum_invalid',
+                    'entity_type' => 'RiskWeight',
+                    'entity_id' => $validated['user_id'],
+                    'action_summary' => "Failed to save risk weights - {$groupName} sub-weights sum invalid",
+                    'properties' => [
+                        'user_id' => $validated['user_id'],
+                        'group' => $groupName,
+                        'actual_sum' => $sum,
+                        'expected_sum' => 100,
+                    ],
+                ]);
+
                 return response()->json([
                     'success' => false,
                     'message' => "The sum of {$groupName} sub-weights must equal 100%. Current sum: {$sum}%",
@@ -136,10 +172,42 @@ class RiskWeightController extends Controller
             ]);
 
             if ($existingWeight) {
+                // Get old data for audit trail
+                $oldData = $existingWeight->toArray();
+
                 $existingWeight->update($data);
                 $riskWeight = $existingWeight;
+
+                // Log weight update
+                $this->auditTrailService->log([
+                    'event_category' => 'risk_management',
+                    'event_type' => 'weights_updated',
+                    'entity_type' => 'RiskWeight',
+                    'entity_id' => $riskWeight->id,
+                    'action_summary' => "Updated risk weights for user ID {$userId}",
+                    'properties' => [
+                        'user_id' => $userId,
+                        'main_weights' => $mainWeights->toArray(),
+                        'history_count' => count($history),
+                        'updated_by' => Auth::id(),
+                    ],
+                ]);
             } else {
                 $riskWeight = RiskWeight::create($data);
+
+                // Log weight creation
+                $this->auditTrailService->log([
+                    'event_category' => 'risk_management',
+                    'event_type' => 'weights_created',
+                    'entity_type' => 'RiskWeight',
+                    'entity_id' => $riskWeight->id,
+                    'action_summary' => "Created risk weights for user ID {$userId}",
+                    'properties' => [
+                        'user_id' => $userId,
+                        'main_weights' => $mainWeights->toArray(),
+                        'created_by' => Auth::id(),
+                    ],
+                ]);
             }
 
             DB::commit();
@@ -151,6 +219,21 @@ class RiskWeightController extends Controller
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // Log error
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'weights_save_failed',
+                'entity_type' => 'RiskWeight',
+                'entity_id' => $validated['user_id'] ?? null,
+                'action_summary' => "Failed to save risk weights",
+                'properties' => [
+                    'user_id' => $validated['user_id'] ?? null,
+                    'error_message' => $e->getMessage(),
+                    'request_data' => array_keys($validated),
+                ],
+            ]);
+
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to save risk weights: ' . $e->getMessage(),
@@ -174,6 +257,20 @@ class RiskWeightController extends Controller
             // User has custom weights, return them
             $weights = $userWeights->toArray();
 
+            // Log weights retrieval
+            $this->auditTrailService->log([
+                'event_category' => 'risk_management',
+                'event_type' => 'weights_retrieved',
+                'entity_type' => 'RiskWeight',
+                'entity_id' => $userWeights->id,
+                'action_summary' => "Retrieved custom risk weights for user ID {$request->user_id}",
+                'properties' => [
+                    'user_id' => $request->user_id,
+                    'source' => 'database',
+                    'has_custom_weights' => true,
+                ],
+            ]);
+
             return response()->json([
                 'success' => true,
                 'weights' => $weights,
@@ -193,6 +290,20 @@ class RiskWeightController extends Controller
             // Merge settings weights with hardcoded defaults (settings take precedence)
             $finalWeights = array_merge($hardcodedDefaults, $settingWeights);
 
+            // Log default weights retrieval
+            $this->auditTrailService->log([
+                'event_category' => 'risk_management',
+                'event_type' => 'default_weights_retrieved',
+                'entity_type' => 'RiskWeight',
+                'entity_id' => $request->user_id,
+                'action_summary' => "Retrieved default risk weights for user ID {$request->user_id}",
+                'properties' => [
+                    'user_id' => $request->user_id,
+                    'source' => 'settings',
+                    'has_custom_weights' => false,
+                ],
+            ]);
+
             return response()->json([
                 'success' => true,
                 'weights' => $finalWeights,
@@ -203,6 +314,20 @@ class RiskWeightController extends Controller
         }
 
         // If no settings found, use hardcoded defaults
+        // Log fallback weights retrieval
+        $this->auditTrailService->log([
+            'event_category' => 'risk_management',
+            'event_type' => 'fallback_weights_retrieved',
+            'entity_type' => 'RiskWeight',
+            'entity_id' => $request->user_id,
+            'action_summary' => "Retrieved fallback risk weights for user ID {$request->user_id}",
+            'properties' => [
+                'user_id' => $request->user_id,
+                'source' => 'fallback',
+                'has_custom_weights' => false,
+            ],
+        ]);
+
         return response()->json([
             'success' => true,
             'weights' => $hardcodedDefaults,
@@ -224,7 +349,35 @@ class RiskWeightController extends Controller
         $existing = RiskWeight::where('user_id', $request->user_id)->first();
 
         if ($existing) {
+            // Log before deletion
+            $this->auditTrailService->log([
+                'event_category' => 'risk_management',
+                'event_type' => 'weights_reset',
+                'entity_type' => 'RiskWeight',
+                'entity_id' => $existing->id,
+                'action_summary' => "Reset risk weights to default for user ID {$request->user_id}",
+                'properties' => [
+                    'user_id' => $request->user_id,
+                    'reset_by' => Auth::id(),
+                    'previous_weight_id' => $existing->id,
+                ],
+            ]);
+
             $existing->delete();
+        } else {
+            // Log attempt to reset non-existent weights
+            $this->auditTrailService->log([
+                'event_category' => 'risk_management',
+                'event_type' => 'weights_reset_attempt',
+                'entity_type' => 'RiskWeight',
+                'entity_id' => $request->user_id,
+                'action_summary' => "Attempted to reset non-existent risk weights for user ID {$request->user_id}",
+                'properties' => [
+                    'user_id' => $request->user_id,
+                    'reset_by' => Auth::id(),
+                    'had_custom_weights' => false,
+                ],
+            ]);
         }
 
         return response()->json([
@@ -247,6 +400,20 @@ class RiskWeightController extends Controller
             ->where('user_id', $request->user_id)
             ->orderBy('created_at', 'desc')
             ->get();
+
+        // Log history view
+        $this->auditTrailService->log([
+            'event_category' => 'risk_management',
+            'event_type' => 'history_viewed',
+            'entity_type' => 'RiskWeight',
+            'entity_id' => $request->user_id,
+            'action_summary' => "Viewed risk weight history for user ID {$request->user_id}",
+            'properties' => [
+                'user_id' => $request->user_id,
+                'history_count' => $history->count(),
+                'viewed_by' => Auth::id(),
+            ],
+        ]);
 
         return response()->json([
             'success' => true,

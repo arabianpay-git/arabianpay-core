@@ -137,14 +137,13 @@
         </div>
         <!-- End of Container -->
     </main>
+@endsection
 
+@push('scripts')
     <script>
         function toggleDetails(id) {
             const el = document.getElementById('details-' + id);
             el.classList.toggle('hidden');
         }
     </script>
-@endsection
-
-@push('scripts')
 @endpush

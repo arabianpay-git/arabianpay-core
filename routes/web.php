@@ -29,6 +29,7 @@ use App\Http\Controllers\{
     Financial\FinancialDashboardController,
     Financial\ExpenseSettingController,
     Admin\InvestmentPoolsController,
+    AuditController,
     ChatController,
     InstalmentPlanController,
     LeanController,
@@ -688,6 +689,14 @@ Route::group([
 
             Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
             Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
+
+
+            // Audit logs and audit trails
+            Route::get('/audit/trails', [AuditController::class, 'showAuditTrails'])->name('audit.trails');
+            Route::get('/audit/logs', [AuditController::class, 'showAuditLogs'])->name('audit.logs');
+
+            Route::get('/audit/{id}/details', [AuditController::class, 'getAuditDetails'])->name('audit.details');
+            Route::get('/audit/logs/{id}/details', [AuditController::class, 'showAuditLogDetails'])->name('audit.logs.details');
         });
 
     // Third party api control

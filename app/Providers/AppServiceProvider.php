@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Models\Setting;
+use App\Services\AuditTrailService;
 use App\Services\TokenEncryptionService;
 use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\RateLimiter;
@@ -22,7 +23,9 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->singleton('audit-trail', function ($app) {
+            return new AuditTrailService($app['request']);
+        });
     }
 
     /**
@@ -53,7 +56,7 @@ class AppServiceProvider extends ServiceProvider
             $identifier = optional($request->user())->id ?: $request->ip();
 
             // Sliding window: 100 requests per minute
-            $sliding = Limit::perMinute(25)
+            $sliding = Limit::perMinute(60)
                 ->by($identifier)
                 ->response(fn() => response()->json([
                     'message' => 'Too many requests. Slow down and try again later.'

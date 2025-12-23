@@ -650,3 +650,15 @@ if (! function_exists('authorizeSensitiveFileOrDeny')) {
         return $fallback;
     }
 }
+
+if (!function_exists('audit')) {
+    /**
+     * Helper function to access audit trail service
+     *
+     * @return mixed
+     */
+    function audit()
+    {
+        return app('audit-trail');
+    }
+}

@@ -3,18 +3,36 @@
 namespace App\Http\Controllers;
 
 use App\Models\Brand;
+use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Str;
 
 class BrandController extends Controller
 {
+    protected $auditTrailService;
+
+    public function __construct(AuditTrailService $auditTrailService)
+    {
+        $this->auditTrailService = $auditTrailService;
+    }
+
     public function index(Request $request)
     {
         $brands = Brand::select('brands.*')->paginate(10);
+
+        // Log view event using the new method
+        $this->auditTrailService->logViewOperation(
+            'view_list',
+            'Brand',
+            'Viewed brands list',
+            [
+                'page' => $request->get('page', 1),
+                'per_page' => 10,
+            ]
+        );
+
         return view('admin.brands.index', compact('brands'));
     }
 
@@ -41,6 +59,19 @@ class BrandController extends Controller
             ['path' => url()->current(), 'query' => $request->query()]
         );
 
+        // Log search event
+        $this->auditTrailService->logSearch(
+            'Brand',
+            $query,
+            $brands->count(),
+            [
+                'properties' => [
+                    'search_type' => 'manual_filter',
+                    'page' => $page,
+                ],
+            ]
+        );
+
         if ($request->ajax()) {
             return view('admin.brands.partials.table', ['brands' => $paginated])->render();
         }
@@ -48,20 +79,26 @@ class BrandController extends Controller
         return view('admin.brands.index', ['brands' => $paginated]);
     }
 
-
     public function create()
     {
+        // Log view create form using the new method
+        $this->auditTrailService->logViewOperation(
+            'view_create_form',
+            'Brand',
+            'Viewed brand creation form'
+        );
+
         return view('admin.brands.create');
     }
 
     public function store(Request $request)
     {
         $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:brands,name'], // remove 'regex:/^[a-zA-Z\s]*$/'
+            'name' => ['required', 'string', 'max:255', 'unique:brands,name'],
             'logo' => ['required'],
             'order_level' => ['required', 'numeric'],
-            'meta_title' => ['nullable', 'string', 'min:5', 'max:100',], // remove 'regex:/^[a-zA-Z\s]*$/'
-            'meta_description' => ['nullable', 'string', 'min:10', 'max:255',], // remove 'regex:/^[a-zA-Z\s]*$/'
+            'meta_title' => ['nullable', 'string', 'min:5', 'max:100'],
+            'meta_description' => ['nullable', 'string', 'min:10', 'max:255'],
         ]);
 
         DB::beginTransaction();
@@ -76,28 +113,52 @@ class BrandController extends Controller
                 'meta_description' => $request->meta_description,
             ]);
 
-            DB::commit();
-
-            // Log the creation of the brand
-            $batchUuid = (string) Str::uuid();
-            $brand->logModelAction(
-                event: 'create',
-                description: Auth::user()->first_name . " " . Auth::user()->last_name . " created brand: {$brand->name} [{$brand->id}]",
-                properties: [
-                    'ip' => request()->ip(),
-                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
-                ],
+            // Log brand creation with justification
+            $justificationData = $this->auditTrailService->withJustification(
+                'New brand created for business expansion',
+                'business_operation',
+                ['name', 'logo']
             );
+
+            $this->auditTrailService->logCreated(
+                $brand,
+                "Created new brand '{$brand->name}'",
+                $justificationData
+            );
+
+            DB::commit();
 
             return redirect()->route('brands.index')->with('success', 'Brand created successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // Log failed creation attempt
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'creation_failed',
+                'entity_type' => 'Brand',
+                'action_summary' => 'Failed to create brand',
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'input_data' => $request->except(['_token', 'logo']),
+                ],
+            ]);
+
             return back()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
 
     public function edit(Brand $brand)
     {
+        // Log view edit form - this has an entity_id
+        $this->auditTrailService->log([
+            'event_category' => 'view_operations',
+            'event_type' => 'view_edit_form',
+            'entity_type' => 'Brand',
+            'entity_id' => $brand->id,
+            'action_summary' => "Viewed edit form for brand '{$brand->name}'",
+        ]);
+
         return view('admin.brands.edit', compact('brand'));
     }
 
@@ -109,60 +170,106 @@ class BrandController extends Controller
                 'string',
                 'max:255',
                 Rule::unique('brands', 'name')->ignore($brand->id),
-            ], // remove 'regex:/^[a-zA-Z\s]*$/',
+            ],
             'logo' => ['required'],
             'order_level' => ['required', 'numeric'],
-            // 'meta_title.en' => ['nullable', 'string', 'min:5', 'max:100', 'regex:/^[a-zA-Z\s]*$/'],
-            // 'meta_description.en' => ['nullable', 'string', 'min:10', 'max:255', 'regex:/^[a-zA-Z\s]*$/'],
         ]);
 
         DB::beginTransaction();
 
         try {
+            // Get old data for audit trail
+            $oldData = $brand->toArray();
+
             $brand->update([
                 'name' => $request->name['en'],
                 'logo' => $request->logo,
                 'order_level' => $request->order_level,
                 'featured' => $request->boolean('featured'),
-                'meta_title' => $request->meta_title['en'],
-                'meta_description' => $request->meta_description['en'],
+                'meta_title' => $request->meta_title['en'] ?? null,
+                'meta_description' => $request->meta_description['en'] ?? null,
             ]);
 
             $this->storeOrUpdateTranslations($brand, $request);
 
-            DB::commit();
-            //Log the update of the brand
-            $batchUuid = (string) Str::uuid();
-            $brand->logModelAction(
-                event: 'update',
-                description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated brand: {$brand->name} [$brand->id]",
-                properties: [
-                    'ip' => request()->ip(),
-                    'batch_uuid' => $batchUuid, // Add batch UUID for consistency
-                ],
+            // Log brand update with justification
+            $justificationData = $this->auditTrailService->withJustification(
+                'Brand information updated to reflect current business requirements',
+                'data_correction',
+                ['name', 'order_level', 'logo']
             );
 
+            $this->auditTrailService->logUpdated(
+                $brand,
+                $oldData,
+                "Updated brand '{$brand->name}'",
+                $justificationData
+            );
+
+            DB::commit();
             return redirect()->route('brands.index')->with('success', 'Brand updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // Log failed update attempt
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'update_failed',
+                'entity_type' => 'Brand',
+                'entity_id' => $brand->id,
+                'action_summary' => "Failed to update brand '{$brand->name}'",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'input_data' => $request->except(['_token', '_method', 'logo']),
+                ],
+            ]);
+
             return back()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
 
     public function destroy(Brand $brand)
     {
-        // log the deletion of the brand
-        $batchUuid = (string) Str::uuid();
-        $brand->logModelAction(
-            event: 'delete',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted brand: {$brand->name} [{$brand->id}]",
-            properties: [
-                'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid, // Add batch UUID for consistency
-            ],
-        );
-        $brand->delete();
-        return redirect()->route('brands.index')->with('success', 'Brand deleted successfully.');
+        DB::beginTransaction();
+
+        try {
+            // Get data before deletion for audit trail
+            $brandData = $brand->toArray();
+
+            // Log before deletion
+            $justificationData = $this->auditTrailService->withJustification(
+                'Brand removed due to business restructuring',
+                'data_cleanup',
+                ['name', 'logo']
+            );
+
+            $this->auditTrailService->logDeleted(
+                $brand,
+                "Deleted brand '{$brand->name}'",
+                $justificationData
+            );
+
+            $brand->delete();
+
+            DB::commit();
+            return redirect()->route('brands.index')->with('success', 'Brand deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed deletion attempt
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'deletion_failed',
+                'entity_type' => 'Brand',
+                'entity_id' => $brand->id,
+                'action_summary' => "Failed to delete brand '{$brand->name}'",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                ],
+            ]);
+
+            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
     }
 
     private function storeOrUpdateTranslations(Brand $brand, Request $request)
@@ -176,6 +283,19 @@ class BrandController extends Controller
                     'meta_description' => $request->meta_description['ar'] ?? null,
                 ]
             );
+
+            // Log translation update
+            $this->auditTrailService->log([
+                'event_category' => 'localization',
+                'event_type' => 'translation_update',
+                'entity_type' => 'Brand',
+                'entity_id' => $brand->id,
+                'action_summary' => "Updated Arabic translation for brand '{$brand->name}'",
+                'properties' => [
+                    'locale' => 'ar',
+                    'translated_fields' => ['name', 'meta_title', 'meta_description'],
+                ],
+            ]);
         }
     }
 }

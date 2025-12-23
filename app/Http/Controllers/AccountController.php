@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\{Approval, BusinessCategory, CrValidation, Customer, CustomerCreditLimit, Merchant, NafathVerification, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, SupplierPayout, Transaction, User, Wallet};
 use App\Rules\NoHtml;
+use App\Services\AuditTrailService;
 use App\Services\CreditAssessmentService;
 use App\Services\FirebaseService;
 use App\Services\RiskAnalyticsService;
@@ -26,11 +27,13 @@ class AccountController extends Controller
 
     protected $wathqService;
     protected $firebase;
+    protected $auditTrailService;
 
-    public function __construct(WathqService $wathqService, FirebaseService $firebase)
+    public function __construct(WathqService $wathqService, FirebaseService $firebase, AuditTrailService $auditTrailService)
     {
         $this->wathqService = $wathqService;
         $this->firebase = $firebase;
+        $this->auditTrailService = $auditTrailService;
     }
 
     private function calculateTotalOrderAmount($orders): float
@@ -75,9 +78,22 @@ class AccountController extends Controller
         return $base;
     }
 
-    public function customers()
+    public function customers(Request $request)
     {
         $user = currentUser();
+
+        // Log view customers list
+        $this->auditTrailService->logViewOperation(
+            'view_list',
+            'Customer',
+            'Viewed customers list',
+            [
+                'page' => $request->get('page', 1),
+                'per_page' => 10,
+                'user_type' => $user->user_type,
+                'is_manager' => $user->is_manager ?? false,
+            ]
+        );
 
         $customers = Customer::with([
             'assigned',
@@ -112,10 +128,22 @@ class AccountController extends Controller
         return view('admin.accounts.customer', compact('customers', 'totalOrderAmount'));
     }
 
-
     public function log($id)
     {
         $customer = Customer::with('user')->where('user_id', $id)->firstOrFail();
+
+        // Log view customer activity logs
+        $this->auditTrailService->log([
+            'event_category' => 'audit_operations',
+            'event_type' => 'view_activity_logs',
+            'entity_type' => 'Customer',
+            'entity_id' => $customer->id,
+            'action_summary' => "Viewed activity logs for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+            'properties' => [
+                'customer_id' => $customer->id,
+                'user_id' => $customer->user_id,
+            ],
+        ]);
 
         $logs = Activity::where('subject_type', Customer::class)
             ->where('subject_id', $customer->id)
@@ -127,6 +155,13 @@ class AccountController extends Controller
 
     public function customerBusiness()
     {
+        // Log view customer business
+        $this->auditTrailService->logViewOperation(
+            'view_customer_business',
+            'Customer',
+            'Accessed customer business section'
+        );
+
         dd('Remaning');
     }
 
@@ -135,8 +170,36 @@ class AccountController extends Controller
         $customer = Customer::with('user')->where('user_id', $id)->firstOrFail();
 
         if (!hasSensitivePermission('credit_data_simah_bureau')) {
+            // Log unauthorized access attempt
+            $this->auditTrailService->log([
+                'event_category' => 'security_events',
+                'event_type' => 'unauthorized_access_attempt',
+                'entity_type' => 'Customer',
+                'entity_id' => $customer->id,
+                'action_summary' => "Attempted to access SIMAH data without permission for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+                'properties' => [
+                    'permission_required' => 'credit_data_simah_bureau',
+                    'customer_id' => $customer->id,
+                ],
+            ]);
+
             return back()->with('error', translate('Access Restricted'));
         }
+
+        // Log access to SIMAH data
+        $this->auditTrailService->log([
+            'event_category' => 'sensitive_access',
+            'event_type' => 'view_simah_data',
+            'entity_type' => 'Customer',
+            'entity_id' => $customer->id,
+            'action_summary' => "Accessed SIMAH data for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+            'pdpl_category' => 'legal_obligation',
+            'pii_fields_involved' => ['cr_number', 'credit_data'],
+            'properties' => [
+                'customer_id' => $customer->id,
+                'has_permission' => true,
+            ],
+        ]);
 
         return view('admin.accounts.customer-simah', compact('customer'));
     }
@@ -158,12 +221,39 @@ class AccountController extends Controller
             ->first();
 
         if (!$customer) {
+            // Log failed access attempt
+            $this->auditTrailService->log([
+                'event_category' => 'access_control',
+                'event_type' => 'customer_access_denied',
+                'entity_type' => 'Customer',
+                'action_summary' => "Attempted to access customer profile without proper assignment or permissions",
+                'properties' => [
+                    'attempted_user_id' => $id,
+                    'current_user_id' => $user->id,
+                    'user_type' => $user->user_type,
+                    'is_manager' => $user->is_manager ?? false,
+                ],
+            ]);
+
             return redirect()->route('customers')->with('error', __('Customer not found or not assigned to you.'));
         }
 
+        // Log view customer profile
+        $this->auditTrailService->log([
+            'event_category' => 'view_operations',
+            'event_type' => 'view_customer_profile',
+            'entity_type' => 'Customer',
+            'entity_id' => $customer->id,
+            'action_summary' => "Viewed profile for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+            'properties' => [
+                'customer_id' => $customer->id,
+                'customer_status' => $customer->status,
+                'risk_assessment_performed' => true,
+            ],
+        ]);
+
         $data = $creditService->assess($id);
         $riskScore = $riskService->calculateForUser($customer->user);
-
 
         if (empty($customer->cr_data) && $customer->cr_number) {
             $wathqData = $this->wathqService->fetchCrData($customer->cr_number);
@@ -171,22 +261,65 @@ class AccountController extends Controller
             if ($wathqData) {
                 $customer->cr_data = $wathqData;
                 $customer->save();
+
+                // Log CR data fetch
+                $this->auditTrailService->log([
+                    'event_category' => 'data_sync',
+                    'event_type' => 'cr_data_fetch',
+                    'entity_type' => 'Customer',
+                    'entity_id' => $customer->id,
+                    'action_summary' => "Fetched CR data from Wathq for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+                    'properties' => [
+                        'cr_number' => $customer->cr_number,
+                        'data_source' => 'wathq',
+                        'success' => true,
+                    ],
+                ]);
             }
         }
 
         return view('admin.accounts.customer-profile', compact('customer', 'data', 'riskScore'));
     }
 
-
     public function customerFinance($id, CreditAssessmentService $creditService, RiskAnalyticsService $riskService)
     {
         if (!hasSensitivePermission('transaction_references')) {
+            // Log unauthorized access attempt
+            $this->auditTrailService->log([
+                'event_category' => 'security_events',
+                'event_type' => 'unauthorized_finance_access',
+                'entity_type' => 'Customer',
+                'entity_id' => $id,
+                'action_summary' => "Attempted to access customer finance data without permission",
+                'properties' => [
+                    'permission_required' => 'transaction_references',
+                    'customer_id' => $id,
+                ],
+            ]);
+
             return back()->with('error', translate('Access Restricted'));
         }
 
         $customer = Customer::with('user', 'package')
             ->where('user_id', $id)
             ->firstOrFail();
+
+        // Log view customer finance
+        $this->auditTrailService->log([
+            'event_category' => 'financial_operations',
+            'event_type' => 'view_customer_finance',
+            'entity_type' => 'Customer',
+            'entity_id' => $customer->id,
+            'action_summary' => "Viewed finance details for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+            'pdpl_category' => 'legal_obligation',
+            'pii_fields_involved' => ['financial_data'],
+            'properties' => [
+                'customer_id' => $customer->id,
+                'credit_assessment_performed' => true,
+                'risk_calculation_performed' => true,
+            ],
+        ]);
+
         $data = $creditService->assess($id);
         $riskScore = $riskService->calculateForUser($customer->user);
 
@@ -224,47 +357,49 @@ class AccountController extends Controller
 
         $oldPackage = $customer->package->name;
 
-        $customer->update(['package_id' => $request->package_id]);
+        DB::beginTransaction();
 
-        // Generate unique batch ID
-        $batchUuid = (string) Str::uuid();
+        try {
+            $oldData = $customer->toArray();
 
-        // Sanitize dynamic values
-        $userFirst = e(Auth::user()->first_name);
-        $userLast = e(Auth::user()->last_name);
-        $customerFirst = e($customer->user->first_name);
-        $customerLast = e($customer->user->last_name);
-        $customerId = (int) $customer->id;
-        $oldPackage = e($oldPackage);
-        $newPackage = e($customer->package->name);
-        $reason = isset($reason) ? e($reason) : null;
+            $customer->update(['package_id' => $request->package_id]);
 
-        // Build safe, scanner-friendly description
-        $description = sprintf(
-            '%s %s upgraded Customer: %s %s [%d] package from %s to %s',
-            $userFirst,
-            $userLast,
-            $customerFirst,
-            $customerLast,
-            $customerId,
-            $oldPackage,
-            $newPackage
-        );
+            // Log package upgrade with justification
+            $justificationData = $this->auditTrailService->withJustification(
+                'Package upgraded to meet customer business needs',
+                'business_operation',
+                []
+            );
 
-        // Log the activity safely
-        $customer->logModelAction(
-            event: 'update',
-            description: $description,
-            properties: [
-                'old_status' => $oldPackage,
-                'new_status' => $newPackage,
-                'reason' => $reason,
-                'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid,
-            ],
-        );
+            $this->auditTrailService->logUpdated(
+                $customer,
+                $oldData,
+                "Upgraded customer package from '{$oldPackage}' to '{$customer->package->name}'",
+                $justificationData
+            );
 
-        return back()->with('success', 'User package upgraded successfully.');
+            DB::commit();
+
+            return back()->with('success', 'User package upgraded successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed upgrade attempt
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'package_upgrade_failed',
+                'entity_type' => 'Customer',
+                'entity_id' => $customer->id,
+                'action_summary' => "Failed to upgrade package for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'old_package' => $oldPackage,
+                    'new_package_id' => $request->package_id,
+                ],
+            ]);
+
+            return back()->with('error', 'Failed to upgrade package: ' . $e->getMessage());
+        }
     }
 
     public function upgradeLimit(Request $request)
@@ -276,14 +411,53 @@ class AccountController extends Controller
             'comission'                  => 'nullable|numeric',
         ]);
 
-        CustomerCreditLimit::findOrFail($data['credit_limit_id'])
-            ->update([
+        DB::beginTransaction();
+
+        try {
+            $creditLimit = CustomerCreditLimit::findOrFail($data['credit_limit_id']);
+            $oldData = $creditLimit->toArray();
+
+            $creditLimit->update([
                 'limit_arabianpay_before' => $data['limit_arabianpay_before'],
                 'limit_arabianpay_after'  => $data['limit_arabianpay_after'],
                 'comission'               => $data['comission'] ?? 0,
             ]);
 
-        return back()->with('success', 'Customer credit limit updated successfully.');
+            // Log credit limit update with justification
+            $justificationData = $this->auditTrailService->withJustification(
+                'Credit limit adjusted based on customer performance and risk assessment',
+                'risk_management',
+                ['credit_limit']
+            );
+
+            $this->auditTrailService->logUpdated(
+                $creditLimit,
+                $oldData,
+                "Updated credit limit for customer ID: {$creditLimit->user_id}",
+                $justificationData
+            );
+
+            DB::commit();
+
+            return back()->with('success', 'Customer credit limit updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed update
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'credit_limit_update_failed',
+                'entity_type' => 'CustomerCreditLimit',
+                'entity_id' => $data['credit_limit_id'] ?? null,
+                'action_summary' => "Failed to update credit limit",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'input_data' => $data,
+                ],
+            ]);
+
+            return back()->with('error', 'Failed to update credit limit: ' . $e->getMessage());
+        }
     }
 
     public function createCreditLimit(Request $request)
@@ -296,9 +470,44 @@ class AccountController extends Controller
             'comission'                  => 'nullable|numeric',
         ]);
 
-        CustomerCreditLimit::create($data);
+        DB::beginTransaction();
 
-        return back()->with('success', 'Credit limit created successfully.');
+        try {
+            $creditLimit = CustomerCreditLimit::create($data);
+
+            // Log credit limit creation with justification
+            $justificationData = $this->auditTrailService->withJustification(
+                'New credit limit created for customer onboarding',
+                'business_operation',
+                ['credit_limit', 'commission']
+            );
+
+            $this->auditTrailService->logCreated(
+                $creditLimit,
+                "Created credit limit for customer ID: {$creditLimit->user_id}",
+                $justificationData
+            );
+
+            DB::commit();
+
+            return back()->with('success', 'Credit limit created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed creation
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'credit_limit_creation_failed',
+                'entity_type' => 'CustomerCreditLimit',
+                'action_summary' => "Failed to create credit limit",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'input_data' => $data,
+                ],
+            ]);
+
+            return back()->with('error', 'Failed to create credit limit: ' . $e->getMessage());
+        }
     }
 
     public function updateCustomerStatus(Request $request, $id)
@@ -309,112 +518,171 @@ class AccountController extends Controller
 
         $customer = Customer::findOrFail($id);
         $oldStatus = $customer->status;
-        $customer->update(['status' => $status]);
 
-        // Log the activity
-        $batchUuid = (string) Str::uuid();
+        DB::beginTransaction();
 
-        $firstName = e(Auth::user()->first_name);
-        $lastName = e(Auth::user()->last_name);
-        $customerFirst = e($customer->user->first_name);
-        $customerLast = e($customer->user->last_name);
-        $oldStatusEscaped = e($oldStatus);
-        $newStatusEscaped = e($customer->status);
-
-        $description = sprintf(
-            '%s %s updated Customer: %s %s [%d] status from %s to %s',
-            $firstName,
-            $lastName,
-            $customerFirst,
-            $customerLast,
-            $customer->id,
-            $oldStatusEscaped,
-            $newStatusEscaped
-        );
-
-        $customer->logModelAction(
-            event: 'update',
-            description: $description,
-            properties: [
-                'old_status' => $oldStatusEscaped,
-                'new_status' => $newStatusEscaped,
-                'reason' => $reason ?? null,
-                'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid,
-            ],
-        );
-
-        // Send email & SMS if approved
-        if ($status === 'active') {
-            $this->sendEmail(
-                'emails.welcome_account_approved',
-                $customer->user->email,
-                'Account Approved',
-                [
-                    'name' => $customer->user->first_name . " " . $customer->user->last_name,
-                ]
-            );
-
-            $this->sendSms(
-                $customer->user->phone_number,
-                'Welcome to ArabianPay! Your account has been approved.'
-            );
-        }
-
-        // ===== Send Firebase Notification ======
         try {
-            $firebaseService = app(FirebaseService::class);
+            $oldData = $customer->toArray();
+            $customer->update(['status' => $status]);
 
-            $statusMessages = [
-                'approved' => "Congratulations! Your account has been approved.",
-                'pending' => "Your account status is now pending. We will notify you once approved.",
-                'suspended' => "Your account has been suspended. Please contact support for more info.",
-                'blacklisted' => "Your account has been blacklisted. Please contact support."
-            ];
-
-            $notificationTitle = "Account Status Updated";
-            $notificationBody = $statusMessages[$status] ?? "Your account status has been updated.";
-
-            $firebaseService->sendCustomNotification(
-                $customer->user_id,
-                $notificationTitle,
-                $notificationBody,
-                [
-                    'customer_id' => $customer->id,
-                    'old_status' => $oldStatus,
-                    'new_status' => $status,
-                ]
+            // Log status update with justification
+            $justificationData = $this->auditTrailService->withJustification(
+                "Customer status updated based on compliance review",
+                'compliance_obligation',
+                []
             );
-        } catch (\Throwable $e) {
-            Log::error("Failed to send customer status notification: " . $e->getMessage(), ['customer_id' => $customer->id]);
+
+            $this->auditTrailService->logUpdated(
+                $customer,
+                $oldData,
+                "Updated customer status from '{$oldStatus}' to '{$status}'",
+                $justificationData
+            );
+
+            // Send email & SMS if approved
+            if ($status === 'active') {
+                $this->sendEmail(
+                    'emails.welcome_account_approved',
+                    $customer->user->email,
+                    'Account Approved',
+                    [
+                        'name' => $customer->user->first_name . " " . $customer->user->last_name,
+                    ]
+                );
+
+                $this->sendSms(
+                    $customer->user->phone_number,
+                    'Welcome to ArabianPay! Your account has been approved.'
+                );
+
+                // Log notification sent
+                $this->auditTrailService->log([
+                    'event_category' => 'notification_events',
+                    'event_type' => 'account_approved_notification',
+                    'entity_type' => 'Customer',
+                    'entity_id' => $customer->id,
+                    'action_summary' => "Sent approval notifications to customer",
+                    'properties' => [
+                        'email_sent' => true,
+                        'sms_sent' => true,
+                        'customer_email' => $customer->user->email,
+                        'customer_phone' => $customer->user->phone_number,
+                    ],
+                ]);
+            }
+
+            // Send Firebase Notification
+            try {
+                $statusMessages = [
+                    'approved' => "Congratulations! Your account has been approved.",
+                    'pending' => "Your account status is now pending. We will notify you once approved.",
+                    'suspended' => "Your account has been suspended. Please contact support for more info.",
+                    'blacklisted' => "Your account has been blacklisted. Please contact support."
+                ];
+
+                $notificationTitle = "Account Status Updated";
+                $notificationBody = $statusMessages[$status] ?? "Your account status has been updated.";
+
+                $this->firebase->sendCustomNotification(
+                    $customer->user_id,
+                    $notificationTitle,
+                    $notificationBody,
+                    [
+                        'customer_id' => $customer->id,
+                        'old_status' => $oldStatus,
+                        'new_status' => $status,
+                    ]
+                );
+
+                // Log Firebase notification
+                $this->auditTrailService->log([
+                    'event_category' => 'notification_events',
+                    'event_type' => 'firebase_notification_sent',
+                    'entity_type' => 'Customer',
+                    'entity_id' => $customer->id,
+                    'action_summary' => "Sent Firebase notification for status update",
+                    'properties' => [
+                        'notification_title' => $notificationTitle,
+                        'notification_body' => $notificationBody,
+                        'status_change' => $status,
+                    ],
+                ]);
+            } catch (\Throwable $e) {
+                Log::error("Failed to send customer status notification: " . $e->getMessage(), ['customer_id' => $customer->id]);
+
+                // Log Firebase failure
+                $this->auditTrailService->log([
+                    'event_category' => 'error_events',
+                    'event_type' => 'firebase_notification_failed',
+                    'entity_type' => 'Customer',
+                    'entity_id' => $customer->id,
+                    'action_summary' => "Failed to send Firebase notification for status update",
+                    'properties' => [
+                        'error_message' => $e->getMessage(),
+                        'status_change' => $status,
+                    ],
+                ]);
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'Status updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed status update
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'customer_status_update_failed',
+                'entity_type' => 'Customer',
+                'entity_id' => $customer->id,
+                'action_summary' => "Failed to update customer status",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'old_status' => $oldStatus,
+                    'attempted_status' => $status,
+                ],
+            ]);
+
+            return back()->with('error', 'Failed to update status: ' . $e->getMessage());
         }
-        // ========================================
-
-        return back()->with('success', 'Status updated successfully!');
     }
-
-    protected $selectFields = [
-        'id',
-        'uuid',
-        'refrence_payment',
-        'user_id',
-        'seller_id',
-        'order_id',
-        'loan_amount',
-        'loan_start_date',
-        'loan_end_date',
-        'payment_status',
-        'settlement_status',
-        'created_at',
-    ];
 
     public function transactions($id)
     {
         if (!hasSensitivePermission('transaction_references')) {
+            // Log unauthorized access attempt
+            $this->auditTrailService->log([
+                'event_category' => 'security_events',
+                'event_type' => 'unauthorized_transaction_access',
+                'entity_type' => 'Customer',
+                'entity_id' => $id,
+                'action_summary' => "Attempted to access customer transactions without permission",
+                'properties' => [
+                    'permission_required' => 'transaction_references',
+                    'customer_id' => $id,
+                ],
+            ]);
+
             return back()->with('error', translate('Access Restricted'));
         }
 
         $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
+
+        // Log view transactions
+        $this->auditTrailService->log([
+            'event_category' => 'financial_operations',
+            'event_type' => 'view_customer_transactions',
+            'entity_type' => 'Customer',
+            'entity_id' => $customer->id,
+            'action_summary' => "Viewed transactions for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+            'pdpl_category' => 'legal_obligation',
+            'pii_fields_involved' => ['transaction_data'],
+            'properties' => [
+                'customer_id' => $customer->id,
+                'has_permission' => true,
+            ],
+        ]);
 
         $transactions = Transaction::select($this->selectFields)
             ->with(['order:id,grand_total,shipping_city,general_status', 'user'])
@@ -427,6 +695,19 @@ class AccountController extends Controller
     public function orders($id)
     {
         $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
+
+        // Log view customer orders
+        $this->auditTrailService->log([
+            'event_category' => 'view_operations',
+            'event_type' => 'view_customer_orders',
+            'entity_type' => 'Customer',
+            'entity_id' => $customer->id,
+            'action_summary' => "Viewed orders for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+            'properties' => [
+                'customer_id' => $customer->id,
+                'order_count' => $customer->user->orders()->count(),
+            ],
+        ]);
 
         $orders = Order::select([
             'id',
@@ -450,10 +731,38 @@ class AccountController extends Controller
     public function payments($id)
     {
         if (!hasSensitivePermission('transaction_references')) {
+            // Log unauthorized access attempt
+            $this->auditTrailService->log([
+                'event_category' => 'security_events',
+                'event_type' => 'unauthorized_payment_access',
+                'entity_type' => 'Customer',
+                'entity_id' => $id,
+                'action_summary' => "Attempted to access customer payments without permission",
+                'properties' => [
+                    'permission_required' => 'transaction_references',
+                    'customer_id' => $id,
+                ],
+            ]);
+
             return back()->with('error', translate('Access Restricted'));
         }
 
         $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
+
+        // Log view customer payments
+        $this->auditTrailService->log([
+            'event_category' => 'financial_operations',
+            'event_type' => 'view_customer_payments',
+            'entity_type' => 'Customer',
+            'entity_id' => $customer->id,
+            'action_summary' => "Viewed payment history for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+            'pdpl_category' => 'legal_obligation',
+            'pii_fields_involved' => ['payment_data'],
+            'properties' => [
+                'customer_id' => $customer->id,
+                'has_permission' => true,
+            ],
+        ]);
 
         $wallets = Wallet::select(['id', 'order_id', 'amount', 'balance_after', 'transaction_type', 'status', 'created_at'])
             ->where('user_id', $id)
@@ -467,10 +776,23 @@ class AccountController extends Controller
     public function customerCompliance($id)
     {
         $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
+
+        // Log view customer compliance
+        $this->auditTrailService->log([
+            'event_category' => 'compliance_operations',
+            'event_type' => 'view_customer_compliance',
+            'entity_type' => 'Customer',
+            'entity_id' => $customer->id,
+            'action_summary' => "Viewed compliance information for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+            'pdpl_category' => 'legal_obligation',
+            'properties' => [
+                'customer_id' => $customer->id,
+                'customer_status' => $customer->status,
+            ],
+        ]);
+
         return view('admin.accounts.customer-compliance', compact('customer'));
     }
-
-    // ---- Supplier Methods (similarly optimized) ----
 
     public function suppliers(Request $request)
     {
@@ -478,6 +800,22 @@ class AccountController extends Controller
         $search = $request->input('search');
         $status = $request->input('status');
         $employee = $request->input('employee');
+
+        // Log view suppliers list
+        $this->auditTrailService->logViewOperation(
+            'view_list',
+            'Supplier',
+            'Viewed suppliers list',
+            [
+                'page' => $request->get('page', 1),
+                'per_page' => 10,
+                'search_query' => $search,
+                'status_filter' => $status,
+                'employee_filter' => $employee,
+                'user_type' => $user->user_type,
+                'is_manager' => $user->is_manager ?? false,
+            ]
+        );
 
         $merchantsQuery = Merchant::with(['user', 'businessType', 'assigned', 'approval'])
             ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to', 'created_at')
@@ -495,6 +833,20 @@ class AccountController extends Controller
 
         // Apply search filter
         if ($search) {
+            // Log search operation
+            $this->auditTrailService->logSearch(
+                'Supplier',
+                $search,
+                $merchants->count(),
+                [
+                    'properties' => [
+                        'search_type' => 'manual_filter',
+                        'status_filter' => $status,
+                        'employee_filter' => $employee,
+                    ],
+                ]
+            );
+
             $merchants = $this->filterMerchants($merchants, $search);
         }
 
@@ -517,7 +869,6 @@ class AccountController extends Controller
         return view('admin.accounts.suppliers', ['merchants' => $paginated]);
     }
 
-
     public function updateCommission(Request $request)
     {
         $request->validate([
@@ -525,45 +876,50 @@ class AccountController extends Controller
             'commission' => 'required'
         ]);
 
-        $approval = Approval::firstOrNew(['user_id' => $request->user_id]);
-        $approval->commission = $request->commission;
-        $approval->save();
+        DB::beginTransaction();
 
-        return response()->json(['success' => true]);
-    }
+        try {
+            $approval = Approval::firstOrNew(['user_id' => $request->user_id]);
+            $oldCommission = $approval->commission;
 
+            $approval->commission = $request->commission;
+            $approval->save();
 
-    /**
-     * Private function to filter merchants collection based on search input
-     */
-    private function filterMerchants($merchants, $search)
-    {
-        $search = strtolower(trim($search));
-        $searchTerms = explode(' ', $search);
+            // Log commission update
+            $this->auditTrailService->log([
+                'event_category' => 'financial_operations',
+                'event_type' => 'update_supplier_commission',
+                'entity_type' => 'Approval',
+                'entity_id' => $approval->id,
+                'action_summary' => "Updated commission for supplier ID: {$request->user_id} from {$oldCommission} to {$request->commission}",
+                'properties' => [
+                    'user_id' => $request->user_id,
+                    'old_commission' => $oldCommission,
+                    'new_commission' => $request->commission,
+                ],
+            ]);
 
-        return $merchants->filter(function ($merchant) use ($search, $searchTerms) {
-            $user = $merchant->user;
+            DB::commit();
 
-            // Check full email and business_name
-            if (
-                str_contains(strtolower($user->email), $search) ||
-                str_contains(strtolower($user->business_name), $search)
-            ) {
-                return true;
-            }
+            return response()->json(['success' => true]);
+        } catch (\Exception $e) {
+            DB::rollBack();
 
-            // Check first_name and last_name for each search term
-            foreach ($searchTerms as $term) {
-                if (
-                    str_contains(strtolower($user->first_name), $term) ||
-                    str_contains(strtolower($user->last_name), $term)
-                ) {
-                    return true;
-                }
-            }
+            // Log failed commission update
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'commission_update_failed',
+                'entity_type' => 'Approval',
+                'action_summary' => "Failed to update commission for supplier ID: {$request->user_id}",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'user_id' => $request->user_id,
+                    'commission_value' => $request->commission,
+                ],
+            ]);
 
-            return false;
-        });
+            return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
+        }
     }
 
     public function supplierShop($id)
@@ -571,6 +927,20 @@ class AccountController extends Controller
         $merchant = Merchant::where('user_id', $id)
             ->with('user', 'businessType')
             ->firstOrFail();
+
+        // Log view supplier shop
+        $this->auditTrailService->log([
+            'event_category' => 'view_operations',
+            'event_type' => 'view_supplier_shop',
+            'entity_type' => 'Supplier',
+            'entity_id' => $merchant->id,
+            'action_summary' => "Viewed shop settings for supplier '{$merchant->user->business_name}'",
+            'properties' => [
+                'supplier_id' => $merchant->id,
+                'business_name' => $merchant->user->business_name,
+            ],
+        ]);
+
         $supplierShop = ShopSetting::where('user_id', $id)->first();
         return view('admin.accounts.supplier-shop', compact('merchant', 'supplierShop'));
     }
@@ -587,12 +957,50 @@ class AccountController extends Controller
             'address' => ['required', 'string', 'max:255', new NoHtml],
         ]);
 
-        $shopSetting = ShopSetting::updateOrCreate(
-            ['user_id' => $request->user_id],
-            $validated
-        );
+        DB::beginTransaction();
 
-        return redirect()->back()->with('success', 'Shop settings saved successfully!');
+        try {
+            $shopSetting = ShopSetting::updateOrCreate(
+                ['user_id' => $request->user_id],
+                $validated
+            );
+
+            // Log shop settings update
+            $action = $shopSetting->wasRecentlyCreated ? 'create' : 'update';
+
+            if ($action === 'create') {
+                $this->auditTrailService->logCreated(
+                    $shopSetting,
+                    "Created shop settings for supplier ID: {$request->user_id}"
+                );
+            } else {
+                $this->auditTrailService->logUpdated(
+                    $shopSetting,
+                    $shopSetting->getOriginal(),
+                    "Updated shop settings for supplier ID: {$request->user_id}"
+                );
+            }
+
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Shop settings saved successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed shop settings update
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'shop_settings_update_failed',
+                'entity_type' => 'ShopSetting',
+                'action_summary' => "Failed to update shop settings for supplier ID: {$request->user_id}",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'user_id' => $request->user_id,
+                ],
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to save shop settings: ' . $e->getMessage());
+        }
     }
 
     public function supplierProducts($id)
@@ -600,6 +1008,19 @@ class AccountController extends Controller
         $merchant = Merchant::where('user_id', $id)
             ->with('user', 'businessType')
             ->firstOrFail();
+
+        // Log view supplier products
+        $this->auditTrailService->log([
+            'event_category' => 'view_operations',
+            'event_type' => 'view_supplier_products',
+            'entity_type' => 'Supplier',
+            'entity_id' => $merchant->id,
+            'action_summary' => "Viewed products for supplier '{$merchant->user->business_name}'",
+            'properties' => [
+                'supplier_id' => $merchant->id,
+                'business_name' => $merchant->user->business_name,
+            ],
+        ]);
 
         $products = Product::where('user_id', $id)
             ->with(['category:id,name', 'brand:id,name'])
@@ -627,8 +1048,37 @@ class AccountController extends Controller
             ->first();
 
         if (!$merchant) {
+            // Log failed access attempt
+            $this->auditTrailService->log([
+                'event_category' => 'access_control',
+                'event_type' => 'supplier_access_denied',
+                'entity_type' => 'Supplier',
+                'action_summary' => "Attempted to access supplier profile without proper assignment or permissions",
+                'properties' => [
+                    'attempted_supplier_id' => $id,
+                    'current_user_id' => $user->id,
+                    'user_type' => $user->user_type,
+                    'is_manager' => $user->is_manager ?? false,
+                ],
+            ]);
+
             return redirect()->route('suppliers')->with('error', __('Supplier not found or not assigned to you.'));
         }
+
+        // Log view supplier profile
+        $this->auditTrailService->log([
+            'event_category' => 'view_operations',
+            'event_type' => 'view_supplier_profile',
+            'entity_type' => 'Supplier',
+            'entity_id' => $merchant->id,
+            'action_summary' => "Viewed profile for supplier '{$merchant->user->business_name}'",
+            'properties' => [
+                'supplier_id' => $merchant->id,
+                'business_name' => $merchant->user->business_name,
+                'cr_number' => $merchant->cr_number,
+                'status' => $merchant->status,
+            ],
+        ]);
 
         $businessCategory = [];
         if ($merchant->business_category_id) {
@@ -651,12 +1101,24 @@ class AccountController extends Controller
             if ($wathqData) {
                 $merchant->goverment_data = $wathqData;
                 $merchant->save();
+
+                // Log CR data fetch
+                $this->auditTrailService->log([
+                    'event_category' => 'data_sync',
+                    'event_type' => 'supplier_cr_data_fetch',
+                    'entity_type' => 'Supplier',
+                    'entity_id' => $merchant->id,
+                    'action_summary' => "Fetched CR data from Wathq for supplier '{$merchant->user->business_name}'",
+                    'properties' => [
+                        'cr_number' => $merchant->cr_number,
+                        'data_source' => 'wathq',
+                        'success' => true,
+                    ],
+                ]);
             }
         }
 
-        // ------------------------------
         // Get all IBANs for main user + sub-users
-        // ------------------------------
         $mainUserId = $merchant->user->main_user_id ?: $merchant->user_id;
 
         $relatedUserIds = \App\Models\User::where(function ($q) use ($mainUserId) {
@@ -680,6 +1142,20 @@ class AccountController extends Controller
             ->with('user', 'businessType')
             ->firstOrFail();
 
+        // Log view supplier finance
+        $this->auditTrailService->log([
+            'event_category' => 'financial_operations',
+            'event_type' => 'view_supplier_finance',
+            'entity_type' => 'Supplier',
+            'entity_id' => $merchant->id,
+            'action_summary' => "Viewed finance details for supplier '{$merchant->user->business_name}'",
+            'properties' => [
+                'supplier_id' => $merchant->id,
+                'business_name' => $merchant->user->business_name,
+                'cr_number' => $merchant->cr_number,
+            ],
+        ]);
+
         $creditLimitLogs = CustomerCreditLimit::where('user_id', $id)->paginate(10);
 
         // Total orders supplied
@@ -696,7 +1172,7 @@ class AccountController extends Controller
                 return $carry;
             }, 0);
 
-        // Average delivery time (days between created_at and updated_at for delivered orders)
+        // Average delivery time
         $avgDeliveryTime = Order::where('seller_id', $id)
             ->where('delivery_status', 'delivered')
             ->get()
@@ -758,7 +1234,6 @@ class AccountController extends Controller
         $totalCommissionPercentage = get_seller_commission($merchant->user_id);
         $totalCommission = round(($totalEntitlement * $totalCommissionPercentage) / 100, 2);
 
-
         $stockCount = Product::where('user_id', $merchant->user_id)
             ->sum('current_stock');
 
@@ -794,6 +1269,22 @@ class AccountController extends Controller
     public function supplierCompliance($id)
     {
         $merchant = Merchant::where('user_id', $id)->with('user')->firstOrFail();
+
+        // Log view supplier compliance
+        $this->auditTrailService->log([
+            'event_category' => 'compliance_operations',
+            'event_type' => 'view_supplier_compliance',
+            'entity_type' => 'Supplier',
+            'entity_id' => $merchant->id,
+            'action_summary' => "Viewed compliance information for supplier '{$merchant->user->business_name}'",
+            'pdpl_category' => 'legal_obligation',
+            'properties' => [
+                'supplier_id' => $merchant->id,
+                'business_name' => $merchant->user->business_name,
+                'supplier_status' => $merchant->status,
+            ],
+        ]);
+
         $contract = Approval::where('user_id', $id)->select('contract', 'contract_end_date', 'created_at')->first();
         $supplierBank = SupplierBank::where('user_id', $id)->select('iban_certificate')->first();
         return view('admin.accounts.supplier-compliance', compact('merchant', 'contract', 'supplierBank'));
@@ -811,29 +1302,55 @@ class AccountController extends Controller
             'contract_end_date' => 'nullable|date_format:Y-m-d H:i:s',
         ]);
 
-        DB::transaction(function () use ($request, $id) {
+        DB::beginTransaction();
+
+        try {
             $contractPath = null;
             if ($request->hasFile('contract')) {
                 $path = $request->file('contract')->store('contracts', 'public');
                 $contractPath = Storage::url($path);
             }
 
-            Approval::create([
+            $approvalData = [
                 'user_id' => $id,
                 'employee_id' => Auth::id(),
                 'commission' => $request->commission,
                 'reason' => $request->reason,
                 'contract' => $contractPath,
-                'fahman_score' => $request->fahman_score,
                 'payment_schedule' => $request->payment_schedule,
                 'contract_end_date' => $request->contract_end_date,
-            ]);
+            ];
 
-            $merchant = Merchant::where('user_id', $id)->firstOrFail();
+            if ($request->has('fahman_score')) {
+                $approvalData['fahman_score'] = $request->fahman_score;
+            }
+
+            $approval = Approval::create($approvalData);
 
             $oldStatus = $merchant->status;
             $merchant->status = $request->status ?? 'approved';
             $merchant->save();
+
+            // Log approval creation
+            $justificationData = $this->auditTrailService->withJustification(
+                "Supplier approval with contract and commission terms",
+                'contractual_obligation',
+                ['commission', 'contract', 'payment_schedule']
+            );
+
+            $this->auditTrailService->logCreated(
+                $approval,
+                "Created approval for supplier '{$merchant->user->business_name}' with {$request->commission}% commission",
+                $justificationData
+            );
+
+            // Log status update
+            $this->auditTrailService->logUpdated(
+                $merchant,
+                ['status' => $oldStatus],
+                "Updated supplier status from '{$oldStatus}' to '{$merchant->status}' after approval",
+                $justificationData
+            );
 
             // Send email & SMS notifications
             $this->sendEmail(
@@ -850,44 +1367,44 @@ class AccountController extends Controller
                 'Welcome to ArabianPay! Your account has been approved.'
             );
 
-            // Log the activity with batch UUID
-            $batchUuid = (string) Str::uuid();
-
-            // Sanitize all variables to prevent injection or unsafe content
-            $userFirst = e(Auth::user()->first_name);
-            $userLast = e(Auth::user()->last_name);
-            $supplierFirst = e($merchant->user->first_name);
-            $supplierLast = e($merchant->user->last_name);
-            $merchantId = (int) $merchant->id;
-            $oldStatus = e($oldStatus);
-            $newStatus = e($merchant->status);
-            $reason = isset($request->reason) ? e($request->reason) : null;
-
-            $description = sprintf(
-                '%s %s updated Supplier: %s %s [%d] status from %s to %s',
-                $userFirst,
-                $userLast,
-                $supplierFirst,
-                $supplierLast,
-                $merchantId,
-                $oldStatus,
-                $newStatus
-            );
-
-            $merchant->logModelAction(
-                event: 'update',
-                description: $description,
-                properties: [
-                    'old_status' => $oldStatus,
-                    'new_status' => $newStatus,
-                    'reason' => $reason,
-                    'ip' => request()->ip(),
-                    'batch_uuid' => $batchUuid,
+            // Log notifications
+            $this->auditTrailService->log([
+                'event_category' => 'notification_events',
+                'event_type' => 'supplier_approval_notifications',
+                'entity_type' => 'Supplier',
+                'entity_id' => $merchant->id,
+                'action_summary' => "Sent approval notifications to supplier",
+                'properties' => [
+                    'email_sent' => true,
+                    'sms_sent' => true,
+                    'supplier_email' => $merchant->user->email,
+                    'supplier_phone' => $merchant->user->phone_number,
+                    'commission_rate' => $request->commission,
                 ],
-            );
-        });
+            ]);
 
-        return redirect()->back()->with('success', 'Approval submitted successfully.');
+            DB::commit();
+
+            return redirect()->back()->with('success', 'Approval submitted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed approval
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'supplier_approval_failed',
+                'entity_type' => 'Supplier',
+                'entity_id' => $merchant->id,
+                'action_summary' => "Failed to approve supplier '{$merchant->user->business_name}'",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'commission' => $request->commission ?? null,
+                    'contract_uploaded' => $request->hasFile('contract'),
+                ],
+            ]);
+
+            return redirect()->back()->with('error', 'Failed to submit approval: ' . $e->getMessage());
+        }
     }
 
     public function updateSupplierStatus(Request $request, $id)
@@ -898,68 +1415,117 @@ class AccountController extends Controller
 
         $merchant = Merchant::where('user_id', $id)->firstOrFail();
         $oldStatus = $merchant->status;
-        $merchant->status = $status;
-        $merchant->save();
 
-        $merchant->update(['status' => $status]);
+        DB::beginTransaction();
 
-        // Generate unique batch ID
-        $batchUuid = (string) Str::uuid();
+        try {
+            $oldData = $merchant->toArray();
+            $merchant->status = $status;
+            $merchant->save();
 
-        // Sanitize all dynamic values
-        $userFirst = e(Auth::user()->first_name);
-        $userLast = e(Auth::user()->last_name);
-        $supplierFirst = e($merchant->user->first_name);
-        $supplierLast = e($merchant->user->last_name);
-        $merchantId = (int) $merchant->id;
-        $oldStatus = e($oldStatus);
-        $newStatus = e($merchant->status);
-        $reason = isset($reason) ? e($reason) : null;
+            // Log status update with justification
+            $justificationData = $this->auditTrailService->withJustification(
+                "Supplier status updated as part of routine review",
+                'business_operation',
+                []
+            );
 
-        // Safe, formatted description
-        $description = sprintf(
-            '%s %s updated Supplier: %s %s [%d] status from %s to %s',
-            $userFirst,
-            $userLast,
-            $supplierFirst,
-            $supplierLast,
-            $merchantId,
-            $oldStatus,
-            $newStatus
-        );
+            $this->auditTrailService->logUpdated(
+                $merchant,
+                $oldData,
+                "Updated supplier status from '{$oldStatus}' to '{$status}'",
+                $justificationData
+            );
 
-        // Log the activity safely
-        $merchant->logModelAction(
-            event: 'update',
-            description: $description,
-            properties: [
-                'old_status' => $oldStatus,
-                'new_status' => $newStatus,
-                'reason' => $reason,
-                'ip' => request()->ip(),
-                'batch_uuid' => $batchUuid,
-            ],
-        );
+            // Send Firebase notification
+            try {
+                $description = "Supplier '{$merchant->user->business_name}' status updated from {$oldStatus} to {$status}";
 
-        $this->firebase->sendCustomNotification(
-            Auth::user()->id,
-            'Customer Status Update',
-            $description,
-            [
-                'click_action' => route('suppliers'),
-            ]
-        );
+                $this->firebase->sendCustomNotification(
+                    Auth::user()->id,
+                    'Supplier Status Update',
+                    $description,
+                    [
+                        'click_action' => route('suppliers'),
+                    ]
+                );
 
-        return back()->with('success', 'Status updated successfully!');
+                // Log Firebase notification
+                $this->auditTrailService->log([
+                    'event_category' => 'notification_events',
+                    'event_type' => 'firebase_supplier_status_update',
+                    'entity_type' => 'Supplier',
+                    'entity_id' => $merchant->id,
+                    'action_summary' => "Sent Firebase notification for supplier status update",
+                    'properties' => [
+                        'notification_title' => 'Supplier Status Update',
+                        'notification_body' => $description,
+                        'status_change' => "{$oldStatus} to {$status}",
+                    ],
+                ]);
+            } catch (\Throwable $e) {
+                Log::error("Failed to send supplier status notification: " . $e->getMessage(), ['supplier_id' => $merchant->id]);
+            }
+
+            DB::commit();
+
+            return back()->with('success', 'Status updated successfully!');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed status update
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'supplier_status_update_failed',
+                'entity_type' => 'Supplier',
+                'entity_id' => $merchant->id,
+                'action_summary' => "Failed to update supplier status",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'old_status' => $oldStatus,
+                    'attempted_status' => $status,
+                ],
+            ]);
+
+            return back()->with('error', 'Failed to update status: ' . $e->getMessage());
+        }
     }
 
     public function supplierTransactions($id)
     {
         if (!hasSensitivePermission('transaction_references')) {
+            // Log unauthorized access attempt
+            $this->auditTrailService->log([
+                'event_category' => 'security_events',
+                'event_type' => 'unauthorized_supplier_transaction_access',
+                'entity_type' => 'Supplier',
+                'entity_id' => $id,
+                'action_summary' => "Attempted to access supplier transactions without permission",
+                'properties' => [
+                    'permission_required' => 'transaction_references',
+                    'supplier_id' => $id,
+                ],
+            ]);
+
             return back()->with('error', translate('Access Restricted'));
         }
 
         $merchant = Merchant::where('user_id', $id)->with('user', 'businessType')->firstOrFail();
+
+        // Log view supplier transactions
+        $this->auditTrailService->log([
+            'event_category' => 'financial_operations',
+            'event_type' => 'view_supplier_transactions',
+            'entity_type' => 'Supplier',
+            'entity_id' => $merchant->id,
+            'action_summary' => "Viewed transactions for supplier '{$merchant->user->business_name}'",
+            'pdpl_category' => 'legal_obligation',
+            'pii_fields_involved' => ['transaction_data'],
+            'properties' => [
+                'supplier_id' => $merchant->id,
+                'has_permission' => true,
+            ],
+        ]);
 
         $transactions = Transaction::select($this->selectFields)
             ->with(['order:id,grand_total,shipping_city,general_status', 'user'])
@@ -972,6 +1538,19 @@ class AccountController extends Controller
     public function supplierOrders($id)
     {
         $merchant = Merchant::where('user_id', $id)->with('user', 'businessType')->firstOrFail();
+
+        // Log view supplier orders
+        $this->auditTrailService->log([
+            'event_category' => 'view_operations',
+            'event_type' => 'view_supplier_orders',
+            'entity_type' => 'Supplier',
+            'entity_id' => $merchant->id,
+            'action_summary' => "Viewed orders for supplier '{$merchant->user->business_name}'",
+            'properties' => [
+                'supplier_id' => $merchant->id,
+                'business_name' => $merchant->user->business_name,
+            ],
+        ]);
 
         $orders = Order::select([
             'id',
@@ -995,10 +1574,38 @@ class AccountController extends Controller
     public function supplierPayments($id)
     {
         if (!hasSensitivePermission('transaction_references')) {
+            // Log unauthorized access attempt
+            $this->auditTrailService->log([
+                'event_category' => 'security_events',
+                'event_type' => 'unauthorized_supplier_payment_access',
+                'entity_type' => 'Supplier',
+                'entity_id' => $id,
+                'action_summary' => "Attempted to access supplier payments without permission",
+                'properties' => [
+                    'permission_required' => 'transaction_references',
+                    'supplier_id' => $id,
+                ],
+            ]);
+
             return back()->with('error', translate('Access Restricted'));
         }
 
         $merchant = Merchant::where('user_id', $id)->with('user', 'businessType')->firstOrFail();
+
+        // Log view supplier payments
+        $this->auditTrailService->log([
+            'event_category' => 'financial_operations',
+            'event_type' => 'view_supplier_payments',
+            'entity_type' => 'Supplier',
+            'entity_id' => $merchant->id,
+            'action_summary' => "Viewed payment history for supplier '{$merchant->user->business_name}'",
+            'pdpl_category' => 'legal_obligation',
+            'pii_fields_involved' => ['payment_data'],
+            'properties' => [
+                'supplier_id' => $merchant->id,
+                'has_permission' => true,
+            ],
+        ]);
 
         $paginator = Wallet::where('transaction_type', 'seller_payment')
             ->where('seller_id', $id)
@@ -1006,7 +1613,6 @@ class AccountController extends Controller
             ->latest()
             ->paginate(10);
 
-        // CHANGED: reuse calculateTotalOrderAmount for each wallet's order
         $summary = $paginator->getCollection()->map(fn($wallet) => [
             'seller_name'     => trim($wallet->seller->first_name . ' ' . $wallet->seller->last_name),
             'seller_business' => $wallet->seller->business_name,
@@ -1027,6 +1633,19 @@ class AccountController extends Controller
         $merchant = Merchant::with('user', 'businessType')
             ->where('user_id', $id)
             ->firstOrFail();
+
+        // Log view supplier sales
+        $this->auditTrailService->log([
+            'event_category' => 'financial_operations',
+            'event_type' => 'view_supplier_sales',
+            'entity_type' => 'Supplier',
+            'entity_id' => $merchant->id,
+            'action_summary' => "Viewed sales report for supplier '{$merchant->user->business_name}'",
+            'properties' => [
+                'supplier_id' => $merchant->id,
+                'business_name' => $merchant->user->business_name,
+            ],
+        ]);
 
         $orders = Order::where('seller_id', $id)->latest()->paginate(10);
 
@@ -1079,6 +1698,19 @@ class AccountController extends Controller
     public function customerCreditAssessment($id, CreditAssessmentService $service)
     {
         if (!hasSensitivePermission('credit_decision_output')) {
+            // Log unauthorized access attempt
+            $this->auditTrailService->log([
+                'event_category' => 'security_events',
+                'event_type' => 'unauthorized_credit_assessment_access',
+                'entity_type' => 'Customer',
+                'entity_id' => $id,
+                'action_summary' => "Attempted to access credit assessment without permission",
+                'properties' => [
+                    'permission_required' => 'credit_decision_output',
+                    'customer_id' => $id,
+                ],
+            ]);
+
             return back()->with('error', translate('Access Restricted'));
         }
 
@@ -1086,6 +1718,22 @@ class AccountController extends Controller
         $customer = Customer::with('user')
             ->where('user_id', $id)
             ->firstOrFail();
+
+        // Log credit assessment access
+        $this->auditTrailService->log([
+            'event_category' => 'risk_management',
+            'event_type' => 'view_credit_assessment',
+            'entity_type' => 'Customer',
+            'entity_id' => $customer->id,
+            'action_summary' => "Accessed credit assessment for customer '{$customer->user->first_name} {$customer->user->last_name}'",
+            'pdpl_category' => 'legal_obligation',
+            'pii_fields_involved' => ['credit_score', 'financial_data', 'cr_data'],
+            'properties' => [
+                'customer_id' => $customer->id,
+                'has_permission' => true,
+                'assessment_type' => 'credit_risk',
+            ],
+        ]);
 
         // 2) Fetch all orders for that merchant
         $orders = Order::where('user_id', $customer->id)
@@ -1110,7 +1758,6 @@ class AccountController extends Controller
         $creditScore = $service->assess($id);
 
         // 5) Determine risk level based on score
-        //    TODO: Adjust thresholds to your requirements
         if ($creditScore['creditScore']['compositeScore'] >= 80) {
             $riskLevel = 'Low';
         } elseif ($creditScore['creditScore']['compositeScore'] >= 50) {
@@ -1119,8 +1766,7 @@ class AccountController extends Controller
             $riskLevel = 'High';
         }
 
-        // 6) Score components breakdown (labels => percentages)
-        //    TODO: Build this array from your scoring logic
+        // 6) Score components breakdown
         $scoreComponents = [
             'POS Revenue'       => $creditScore['creditScore']['monthlyPOSScore'],
             'Industry Risk'     => $creditScore['creditScore']['industryRiskScore'],
@@ -1131,8 +1777,7 @@ class AccountController extends Controller
             'Supplier Ratings'  => $creditScore['creditScore']['supplierScore'],
         ];
 
-        // 7) Payment history timeline (e.g., payments per month)
-        //    TODO: Build real data series and categories
+        // 7) Payment history timeline
         $monthlyData = Wallet::selectRaw("MONTH(created_at) as month, SUM(amount) as total")
             ->where('user_id', $customer->user_id)
             ->where('transaction_type', 'user_repayment')
@@ -1153,10 +1798,7 @@ class AccountController extends Controller
             'data'       => $data,
         ];
 
-
         // 8) Flagged risk factors
-        //    Each item: ['label' => '', 'value' => '', 'class' => 'text-red-600' etc.]
-        //    TODO: Generate from real risk checks
         $riskFactors = [
             ['label' => 'Industry Volatility',    'value' => 'High Risk', 'class' => 'text-red-600'],
             ['label' => 'Debt-to-Revenue Ratio',  'value' => '1.2:1',       'class' => 'text-yellow-600'],
@@ -1164,8 +1806,6 @@ class AccountController extends Controller
         ];
 
         // 9) Compliance statuses
-        //    Each item: ['name' => '', 'status' => '', 'badge' => 'badge-success' etc.]
-        //    TODO: Fetch real flags from your KYC/SIMAH/CR services
         $statusBadgeMap = [
             'approved'     => 'badge-success',
             'pending'      => 'badge-warning',
@@ -1236,21 +1876,15 @@ class AccountController extends Controller
 
     private function calculateCreditScore($orders, $customer = null)
     {
-        // dd($customer->user_id);
-        // 1) Monthly POS Revenue (weight 25%)
-        // Sum total revenue from orders, assume 'total_amount' column or similar
+        // Same calculation logic as before...
         $monthlyRevenue = Wallet::where('user_id', $customer->user_id)
             ->where('transaction_type', 'user_repayment')
             ->whereMonth('created_at', now()->month)
             ->whereYear('created_at', now()->year)
             ->sum('amount');
 
-        // Normalize monthlyRevenue by 50,000 as per formula in PDF
         $monthlyPOSScore = min($monthlyRevenue / 50000, 1) * 25;
 
-        // 2) Business Age & Stability (weight 10%)
-        // Use businessAge string from formatBusinessAge - convert to years approx
-        // Assume businessAge format like '2.4 Year', '3 Month', or '20 Days'
         $businessAge = 0;
         if ($customer) {
             $issueDateStr = Arr::get(is_array($customer->goverment_data) ? $customer->goverment_data : json_decode($customer->goverment_data, true), 'issueDateGregorian');
@@ -1266,17 +1900,12 @@ class AccountController extends Controller
         } else {
             $businessAgeScore = 5;
         }
-        $businessAgeScore *= 1; // 10% weight = max 10 points, so already correct.
-
-        // 3) Industry/Market Risk (weight 15%)
-        // Placeholder: Assume merchant has a riskLevel attribute or default to Medium
+        $businessAgeScore *= 1;
 
         $industryRisk = $customer && isset($customer->businessType->risk_level) ? $customer->businessType->risk_level : 'Medium';
         $industryRiskScores = ['low' => 15, 'medium' => 10, 'high' => 5];
         $industryRiskScore = $industryRiskScores[$industryRisk] ?? 10;
 
-        // 4) Existing Financial Obligations (weight 10%)
-        // Placeholder: Assume $existingDebt in local variable, for now set to 0 (no debt)
         $totalPurchases   = Order::where('user_id', $customer->user_id)->where('delivery_status', 'delivered')
             ->get()
             ->reduce(function ($carry, $order) {
@@ -1285,15 +1914,12 @@ class AccountController extends Controller
         $totalPayments    = Wallet::where('transaction_type', 'user_repayment')->sum('amount');
 
         $existingDebt = $totalPurchases - $totalPayments;
-        // Formula: 10 - min(Monthly Revenue / Existing Debt, 10), if debt=0, max score 10
         if ($existingDebt > 0) {
             $obligationsScore = 10 - min($monthlyRevenue / $existingDebt, 10);
         } else {
             $obligationsScore = 10;
         }
 
-        // 5) Repayment Behavior (weight 20%)
-        // Placeholder: Assume repaymentDelays count from SIMAH or history, default 1 delay
         $repaymentDelays = Transaction::where('user_id', $customer->user_id)->count('payment_status');
         if ($repaymentDelays == 0) {
             $repaymentScore = 20;
@@ -1303,19 +1929,13 @@ class AccountController extends Controller
             $repaymentScore = 5;
         }
 
-
-        // 6) Bank Balance & Liquidity Trend (weight 10%)
-        // Placeholder: Assume positive trend, flat, or negative
-        $liquidityTrend = 'positive'; // options: positive, flat, negative
+        $liquidityTrend = 'positive';
         $liquidityScores = ['positive' => 10, 'flat' => 5, 'negative' => 0];
         $liquidityScore = $liquidityScores[$liquidityTrend] ?? 5;
 
-        // 7) Supplier Feedback & External Ratings (weight 10%)
-        // Placeholder: Assume rating out of 10, default 7
         $supplierRating = Product::where('user_id', $customer->user_id)->sum('rating');
-        $supplierScore = $supplierRating * 2; // directly out of 10 // I add *2 because we are working with out of 5 not out of 10
+        $supplierScore = $supplierRating * 2;
 
-        // Calculate final composite score (sum of weighted scores)
         $compositeScore = $monthlyPOSScore
             + $businessAgeScore
             + $industryRiskScore
@@ -1345,6 +1965,17 @@ class AccountController extends Controller
 
     public function nafath()
     {
+        // Log view Nafath verifications
+        $this->auditTrailService->logViewOperation(
+            'view_nafath_verifications',
+            'NafathVerification',
+            'Viewed Nafath identity verification records',
+            [
+                'page' => request()->get('page', 1),
+                'per_page' => 10,
+            ]
+        );
+
         $nafathRecords = NafathVerification::orderBy('id', 'desc')->paginate(10);
 
         $phoneNumbers = $nafathRecords->pluck('phone_number')->filter()->unique()->toArray();
@@ -1386,5 +2017,38 @@ class AccountController extends Controller
         });
 
         return view('admin.accounts.nafath', ['nafath' => $nafathRecords]);
+    }
+
+    /**
+     * Private function to filter merchants collection based on search input
+     */
+    private function filterMerchants($merchants, $search)
+    {
+        $search = strtolower(trim($search));
+        $searchTerms = explode(' ', $search);
+
+        return $merchants->filter(function ($merchant) use ($search, $searchTerms) {
+            $user = $merchant->user;
+
+            // Check full email and business_name
+            if (
+                str_contains(strtolower($user->email), $search) ||
+                str_contains(strtolower($user->business_name), $search)
+            ) {
+                return true;
+            }
+
+            // Check first_name and last_name for each search term
+            foreach ($searchTerms as $term) {
+                if (
+                    str_contains(strtolower($user->first_name), $term) ||
+                    str_contains(strtolower($user->last_name), $term)
+                ) {
+                    return true;
+                }
+            }
+
+            return false;
+        });
     }
 }

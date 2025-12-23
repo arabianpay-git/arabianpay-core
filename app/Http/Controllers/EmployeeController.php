@@ -7,6 +7,7 @@ use App\Models\Country;
 use App\Models\Department;
 use App\Models\State;
 use App\Models\User;
+use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -17,14 +18,39 @@ use Spatie\Permission\Models\Role;
 
 class EmployeeController extends Controller
 {
+    protected $auditTrailService;
+
+    public function __construct(AuditTrailService $auditTrailService)
+    {
+        $this->auditTrailService = $auditTrailService;
+    }
+
     public function index()
     {
+        // Log view operation for employee list
+        $this->auditTrailService->logViewOperation(
+            'view_list',
+            'Employee',
+            'Viewed employees list',
+            [
+                'page' => request()->get('page', 1),
+                'per_page' => 10,
+            ]
+        );
+
         $employees = User::where('user_type', 'employee')->latest()->paginate(10);
         return view('admin.employees.index', compact('employees'));
     }
 
     public function create()
     {
+        // Log view create form
+        $this->auditTrailService->logViewOperation(
+            'view_create_form',
+            'Employee',
+            'Viewed employee creation form'
+        );
+
         $departments = Department::orderBy('name')->get();
         return view('admin.employees.create', compact('departments'));
     }
@@ -36,25 +62,72 @@ class EmployeeController extends Controller
     {
         $this->validateRequest($request);
 
-        $user = $this->createUser($request);
+        DB::beginTransaction();
 
-        $role = Role::findOrFail($request->role_id);
-        $user->syncRoles([$role->name]);
+        try {
+            $user = $this->createUser($request);
 
-        $finalPermissions = $this->getValidPermissions(
-            $request->department_id,
-            $role,
-            $request->permission_ids ?? []
-        );
-        $user->syncPermissions($finalPermissions);
+            $role = Role::findOrFail($request->role_id);
+            $user->syncRoles([$role->name]);
 
-        $this->logAction('create', $user, $request);
+            $finalPermissions = $this->getValidPermissions(
+                $request->department_id,
+                $role,
+                $request->permission_ids ?? []
+            );
+            $user->syncPermissions($finalPermissions);
 
-        return redirect()->route('employees.index')->with('success', 'Employee created successfully.');
+            // Log employee creation with justification
+            $justificationData = $this->auditTrailService->withJustification(
+                'New employee created for organizational needs',
+                'business_operation',
+                ['email', 'phone_number']
+            );
+
+            $this->auditTrailService->logCreated(
+                $user,
+                "Created new employee: {$user->first_name} {$user->last_name} with role: {$role->name}",
+                array_merge([
+                    'permissions_assigned' => $finalPermissions,
+                    'role_assigned' => $role->name,
+                    'department_id' => $request->department_id,
+                    'is_manager' => $request->boolean('is_manager'),
+                ], $justificationData)
+            );
+
+            DB::commit();
+
+            return redirect()->route('employees.index')->with('success', 'Employee created successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed creation attempt
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'employee_creation_failed',
+                'entity_type' => 'Employee',
+                'action_summary' => 'Failed to create employee',
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'input_data' => $request->except(['_token', 'password', 'password_confirmation']),
+                ],
+            ]);
+
+            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
     }
 
     public function edit(User $employee)
     {
+        // Log view edit form with entity_id
+        $this->auditTrailService->log([
+            'event_category' => 'view_operations',
+            'event_type' => 'view_edit_form',
+            'entity_type' => 'Employee',
+            'entity_id' => $employee->id,
+            'action_summary' => "Viewed edit form for employee: {$employee->first_name} {$employee->last_name}",
+        ]);
+
         $departments = Department::orderBy('name')->get();
         return view('admin.employees.edit', compact('employee', 'departments'));
     }
@@ -75,21 +148,71 @@ class EmployeeController extends Controller
             }
         }
 
-        $employee->update($this->getUserDataFromRequest($request));
+        DB::beginTransaction();
 
-        $role = Role::findOrFail($request->role_id);
-        $employee->syncRoles([$role->name]);
+        try {
+            // Get old data for audit trail
+            $oldData = $employee->toArray();
 
-        $finalPermissions = $this->getValidPermissions(
-            $request->department_id,
-            $role,
-            $request->permission_ids ?? []
-        );
-        $employee->syncPermissions($finalPermissions);
+            // Get old permissions and role
+            $oldPermissions = $employee->getPermissionNames()->toArray();
+            $oldRole = $employee->roles->first()?->name;
 
-        $this->logAction('update', $employee, $request);
+            $employee->update($this->getUserDataFromRequest($request));
 
-        return redirect()->route('employees.index')->with('success', 'Employee updated successfully.');
+            $role = Role::findOrFail($request->role_id);
+            $employee->syncRoles([$role->name]);
+
+            $finalPermissions = $this->getValidPermissions(
+                $request->department_id,
+                $role,
+                $request->permission_ids ?? []
+            );
+            $employee->syncPermissions($finalPermissions);
+
+            // Log employee update with justification
+            $justificationData = $this->auditTrailService->withJustification(
+                'Employee information updated for operational requirements',
+                'data_correction',
+                ['email', 'phone_number']
+            );
+
+            $this->auditTrailService->logUpdated(
+                $employee,
+                $oldData,
+                "Updated employee: {$employee->first_name} {$employee->last_name}",
+                array_merge([
+                    'old_permissions' => $oldPermissions,
+                    'new_permissions' => $finalPermissions,
+                    'old_role' => $oldRole,
+                    'new_role' => $role->name,
+                    'department_id' => $request->department_id,
+                    'is_manager' => $request->boolean('is_manager'),
+                    'password_changed' => $request->filled('password'),
+                ], $justificationData)
+            );
+
+            DB::commit();
+
+            return redirect()->route('employees.index')->with('success', 'Employee updated successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed update attempt
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'employee_update_failed',
+                'entity_type' => 'Employee',
+                'entity_id' => $employee->id,
+                'action_summary' => "Failed to update employee: {$employee->first_name} {$employee->last_name}",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'input_data' => $request->except(['_token', '_method', 'password', 'password_confirmation']),
+                ],
+            ]);
+
+            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -97,11 +220,53 @@ class EmployeeController extends Controller
      */
     public function destroy(User $employee)
     {
-        $this->logAction('delete', $employee, request());
+        DB::beginTransaction();
 
-        $employee->delete();
+        try {
+            // Get data before deletion for audit trail
+            $employeeData = $employee->toArray();
+            $employeePermissions = $employee->getPermissionNames()->toArray();
+            $employeeRole = $employee->roles->first()?->name;
 
-        return back()->with('success', 'Employee deleted successfully.');
+            // Log employee deletion with justification
+            $justificationData = $this->auditTrailService->withJustification(
+                'Employee removed due to organizational changes',
+                'data_cleanup',
+                ['email', 'phone_number']
+            );
+
+            $this->auditTrailService->logDeleted(
+                $employee,
+                "Deleted employee: {$employee->first_name} {$employee->last_name}",
+                array_merge([
+                    'permissions_at_deletion' => $employeePermissions,
+                    'role_at_deletion' => $employeeRole,
+                    'department_id' => $employee->department_id,
+                ], $justificationData)
+            );
+
+            $employee->delete();
+
+            DB::commit();
+
+            return back()->with('success', 'Employee deleted successfully.');
+        } catch (\Exception $e) {
+            DB::rollBack();
+
+            // Log failed deletion attempt
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'employee_deletion_failed',
+                'entity_type' => 'Employee',
+                'entity_id' => $employee->id,
+                'action_summary' => "Failed to delete employee: {$employee->first_name} {$employee->last_name}",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                ],
+            ]);
+
+            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+        }
     }
 
     /**
@@ -109,9 +274,18 @@ class EmployeeController extends Controller
      */
     public function getDepartmentAccess(Department $department)
     {
+        // Log department access view
+        $this->auditTrailService->log([
+            'event_category' => 'access_management',
+            'event_type' => 'view_department_access',
+            'entity_type' => 'Department',
+            'entity_id' => $department->id,
+            'action_summary' => "Viewed access permissions for department: {$department->name}",
+        ]);
+
         // Load roles with their permissions and sensitive_permissions
         $roles = $department->roles()
-            ->select('roles.id', 'roles.name', 'roles.sensitive_permissions') // Explicitly include sensitive_permissions
+            ->select('roles.id', 'roles.name', 'roles.sensitive_permissions')
             ->with(['permissions:id,name'])
             ->get()
             ->map(function ($role) {
@@ -119,7 +293,6 @@ class EmployeeController extends Controller
                     'id' => $role->id,
                     'name' => $role->name,
                     'permissions' => $role->permissions->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->values(),
-                    // Ensure sensitive_permissions is always an array
                     'sensitive_permissions' => is_array($role->sensitive_permissions)
                         ? $role->sensitive_permissions
                         : (is_string($role->sensitive_permissions)
@@ -243,34 +416,5 @@ class EmployeeController extends Controller
         $finalPermissionIds = array_unique(array_merge($validRolePermissions, $validManualPermissions));
 
         return Permission::whereIn('id', $finalPermissionIds)->pluck('name')->toArray();
-    }
-
-    /**
-     * Log employee actions.
-     *
-     * @param string $event
-     * @param User $employee
-     * @param Request $request
-     */
-    private function logAction(string $event, User $employee, Request $request): void
-    {
-        /** @var \App\Models\User $authUser */
-        $authUser = Auth::user();
-
-        $desc = match ($event) {
-            'create' => "{$authUser->first_name} {$authUser->last_name} created a new employee: {$employee->first_name} {$employee->last_name}",
-            'update' => "{$authUser->first_name} {$authUser->last_name} updated employee: {$employee->first_name} {$employee->last_name}",
-            'delete' => "{$authUser->first_name} {$authUser->last_name} deleted employee: {$employee->first_name} {$employee->last_name}",
-            default => '',
-        };
-
-        $authUser->logModelAction(
-            event: $event,
-            description: $desc,
-            properties: [
-                'ip' => $request->ip(),
-                'batch_uuid' => (string) Str::uuid(),
-            ],
-        );
     }
 }

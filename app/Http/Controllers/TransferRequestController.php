@@ -8,14 +8,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
+use App\Services\AuditTrailService;
 
 class TransferRequestController extends Controller
 {
     protected $firebase;
+    protected $auditTrailService;
 
-    public function __construct(FirebaseService $firebase)
+    public function __construct(FirebaseService $firebase, AuditTrailService $auditTrailService)
     {
         $this->firebase = $firebase;
+        $this->auditTrailService = $auditTrailService;
     }
 
     public function index()
@@ -25,6 +28,18 @@ class TransferRequestController extends Controller
             ->when($user->user_type !== 'admin', fn($query) => $query->where('to_user_id', $user->id))
             ->latest()
             ->paginate(10);
+
+        // Log view of transfer requests
+        $this->auditTrailService->log([
+            'event_category' => 'transfer_requests',
+            'event_type' => 'view_list',
+            'entity_type' => 'TransferRequest',
+            'action_summary' => "Viewed transfer requests list",
+            'properties' => [
+                'user_type' => $user->user_type,
+                'viewed_by' => Auth::id(),
+            ],
+        ]);
 
         return view('admin.transfer_requests.index', compact('transferRequests'));
     }
@@ -69,11 +84,42 @@ class TransferRequestController extends Controller
                 $data['description']
             );
 
+            // Add audit trail for single transfer request creation
+            $this->auditTrailService->log([
+                'event_category' => 'transfer_requests',
+                'event_type' => 'single_transfer_created',
+                'entity_type' => 'TransferRequest',
+                'entity_id' => $transferRequest->id,
+                'action_summary' => "Created single transfer request",
+                'properties' => [
+                    'from_user_id' => Auth::id(),
+                    'to_user_id' => $data['to_user_id'],
+                    'model_type' => $data['model_type'],
+                    'model_id' => $data['model_id'],
+                    'description_length' => strlen($data['description'] ?? ''),
+                ],
+            ]);
+
             DB::commit();
 
             return redirect()->back()->with('success', 'Transfer request sent successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
+
+            // Log failed transfer request creation
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'single_transfer_failed',
+                'entity_type' => 'TransferRequest',
+                'action_summary' => "Failed to create single transfer request",
+                'properties' => [
+                    'error_message' => $e->getMessage(),
+                    'model_type' => $data['model_type'] ?? null,
+                    'model_id' => $data['model_id'] ?? null,
+                    'to_user_id' => $data['to_user_id'] ?? null,
+                ],
+            ]);
+
             return redirect()->back()->with('error', 'Something went wrong: ' . $e->getMessage());
         }
     }
@@ -92,43 +138,138 @@ class TransferRequestController extends Controller
 
         try {
             $batch_uuid = (string) Str::uuid();
+            $createdRequests = [];
+            $failedRequests = [];
+
+            // Log bulk transfer initiation
+            $this->auditTrailService->log([
+                'event_category' => 'transfer_requests',
+                'event_type' => 'bulk_transfer_initiated',
+                'entity_type' => 'TransferRequest',
+                'action_summary' => "Initiated bulk transfer of {$data['model_type']}",
+                'properties' => [
+                    'from_user_id' => Auth::id(),
+                    'to_user_id' => $data['to_user_id'],
+                    'model_type' => $data['model_type'],
+                    'total_models' => count($data['model_ids']),
+                    'batch_uuid' => $batch_uuid,
+                    'description_length' => strlen($data['description'] ?? ''),
+                ],
+            ]);
 
             foreach ($data['model_ids'] as $modelId) {
-                $transferRequest = TransferRequest::create([
-                    'from_user_id' => Auth::id(),
-                    'to_user_id'   => $data['to_user_id'],
-                    'model_type'   => $data['model_type'],
-                    'model_id'     => $modelId,
-                    'description'  => $data['description'],
-                    'status'       => 'pending',
-                ]);
+                try {
+                    $transferRequest = TransferRequest::create([
+                        'from_user_id' => Auth::id(),
+                        'to_user_id'   => $data['to_user_id'],
+                        'model_type'   => $data['model_type'],
+                        'model_id'     => $modelId,
+                        'description'  => $data['description'],
+                        'status'       => 'pending',
+                    ]);
 
-                $this->updateModelAssignedTo($data['model_type'], $modelId, $data['to_user_id']);
+                    $this->updateModelAssignedTo($data['model_type'], $modelId, $data['to_user_id']);
 
-                $this->createNotificationAndSendFirebase(
-                    $data['to_user_id'],
-                    $data['model_type'],
-                    $modelId,
-                    $data['description'],
-                    $transferRequest->id
-                );
+                    $this->createNotificationAndSendFirebase(
+                        $data['to_user_id'],
+                        $data['model_type'],
+                        $modelId,
+                        $data['description'],
+                        $transferRequest->id
+                    );
 
-                $this->logTransferRequestCreation(
-                    Auth::user(),
-                    $transferRequest->id,
-                    $data['model_type'],
-                    $modelId,
-                    $data['to_user_id'],
-                    $data['description'],
-                    $batch_uuid
-                );
+                    $this->logTransferRequestCreation(
+                        Auth::user(),
+                        $transferRequest->id,
+                        $data['model_type'],
+                        $modelId,
+                        $data['to_user_id'],
+                        $data['description'],
+                        $batch_uuid
+                    );
+
+                    // Add audit trail for each successful transfer in bulk
+                    $this->auditTrailService->log([
+                        'event_category' => 'transfer_requests',
+                        'event_type' => 'bulk_item_transferred',
+                        'entity_type' => 'TransferRequest',
+                        'entity_id' => $transferRequest->id,
+                        'action_summary' => "Transferred item in bulk operation",
+                        'properties' => [
+                            'from_user_id' => Auth::id(),
+                            'to_user_id' => $data['to_user_id'],
+                            'model_type' => $data['model_type'],
+                            'model_id' => $modelId,
+                            'batch_uuid' => $batch_uuid,
+                            'transfer_request_id' => $transferRequest->id,
+                        ],
+                    ]);
+
+                    $createdRequests[] = $transferRequest->id;
+                } catch (\Exception $itemException) {
+                    $failedRequests[] = [
+                        'model_id' => $modelId,
+                        'error' => $itemException->getMessage(),
+                    ];
+
+                    // Log individual item failure in bulk
+                    $this->auditTrailService->log([
+                        'event_category' => 'error_events',
+                        'event_type' => 'bulk_item_failed',
+                        'entity_type' => 'TransferRequest',
+                        'action_summary' => "Failed to transfer item in bulk operation",
+                        'properties' => [
+                            'model_type' => $data['model_type'],
+                            'model_id' => $modelId,
+                            'to_user_id' => $data['to_user_id'],
+                            'error_message' => $itemException->getMessage(),
+                            'batch_uuid' => $batch_uuid,
+                        ],
+                    ]);
+                }
             }
 
+            // Log bulk transfer completion
+            $this->auditTrailService->log([
+                'event_category' => 'transfer_requests',
+                'event_type' => 'bulk_transfer_completed',
+                'entity_type' => 'TransferRequest',
+                'action_summary' => "Completed bulk transfer operation",
+                'properties' => [
+                    'from_user_id' => Auth::id(),
+                    'to_user_id' => $data['to_user_id'],
+                    'model_type' => $data['model_type'],
+                    'batch_uuid' => $batch_uuid,
+                    'successful_transfers' => count($createdRequests),
+                    'failed_transfers' => count($failedRequests),
+                    'total_attempted' => count($data['model_ids']),
+                ],
+            ]);
+
             DB::commit();
+
+            if (count($failedRequests) > 0) {
+                return back()->with('warning', __('Bulk transfer completed with some failures. Successful: ') . count($createdRequests) . ', Failed: ' . count($failedRequests));
+            }
 
             return back()->with('success', __('Bulk transfer successful.'));
         } catch (\Throwable $e) {
             DB::rollBack();
+
+            // Log bulk transfer failure
+            $this->auditTrailService->log([
+                'event_category' => 'error_events',
+                'event_type' => 'bulk_transfer_failed',
+                'entity_type' => 'TransferRequest',
+                'action_summary' => "Bulk transfer failed",
+                'properties' => [
+                    'model_type' => $data['model_type'] ?? null,
+                    'to_user_id' => $data['to_user_id'] ?? null,
+                    'total_models' => count($data['model_ids'] ?? []),
+                    'error_message' => $e->getMessage(),
+                ],
+            ]);
+
             return back()->with('error', __('Bulk transfer failed: ') . $e->getMessage());
         }
     }
@@ -146,6 +287,20 @@ class TransferRequestController extends Controller
             ->latest()
             ->get();
 
+        // Log fetch of transfer requests
+        $this->auditTrailService->log([
+            'event_category' => 'transfer_requests',
+            'event_type' => 'fetch_transfers',
+            'entity_type' => 'TransferRequest',
+            'action_summary' => "Fetched transfer requests for model",
+            'properties' => [
+                'model_type' => $data['model_type'],
+                'model_id' => $data['model_id'],
+                'fetched_by' => Auth::id(),
+                'results_count' => $requests->count(),
+            ],
+        ]);
+
         return response()->json(['data' => $requests->toArray()]);
     }
 
@@ -158,6 +313,21 @@ class TransferRequestController extends Controller
             if ($modelInstance && in_array('assigned_to', $modelInstance->getFillable())) {
                 $modelInstance->assigned_to = $toUserId;
                 $modelInstance->save();
+
+                // Log model assignment update
+                $this->auditTrailService->log([
+                    'event_category' => 'model_assignment',
+                    'event_type' => 'assigned_to_updated',
+                    'entity_type' => $modelType,
+                    'entity_id' => $modelId,
+                    'action_summary' => "Updated assigned_to field for model",
+                    'properties' => [
+                        'model_type' => $modelType,
+                        'model_id' => $modelId,
+                        'assigned_to' => $toUserId,
+                        'updated_by' => Auth::id(),
+                    ],
+                ]);
             }
         }
     }
@@ -201,6 +371,22 @@ class TransferRequestController extends Controller
             $desc,
             ['click_action' => $clickAction]
         );
+
+        // Log notification creation
+        $this->auditTrailService->log([
+            'event_category' => 'notifications',
+            'event_type' => 'transfer_notification_sent',
+            'entity_type' => 'TransferRequest',
+            'entity_id' => $transferRequestId,
+            'action_summary' => "Sent notification for transfer request",
+            'properties' => [
+                'transfer_request_id' => $transferRequestId,
+                'to_user_id' => $toUserId,
+                'notification_title' => $title,
+                'notification_type' => $modelType === \App\Models\Merchant::class ? 'supplier_assignment' : 'general_assignment',
+                'firebase_sent' => true,
+            ],
+        ]);
     }
 
     private function logTransferRequestCreation(
@@ -212,6 +398,7 @@ class TransferRequestController extends Controller
         ?string $description,
         ?string $batchUuid = null
     ): void {
+        // Original logging method (keep as is)
         $user->logModelAction(
             event: 'create_transfer_request',
             description: $user->first_name . " " . $user->last_name . " created a transfer request for model: {$modelType} with ID: {$modelId}",
