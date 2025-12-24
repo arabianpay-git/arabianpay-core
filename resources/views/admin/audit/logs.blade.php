@@ -291,6 +291,7 @@
                     ];
                 @endphp
 
+                {{-- @dd($statCards); --}}
                 @foreach ($statCards as $card)
                     <div class="card hover:shadow-md transition-shadow duration-200">
                         <div class="card-body">

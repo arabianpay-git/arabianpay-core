@@ -65,51 +65,40 @@ class AuditLogMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        // Skip CLI/env
         if (app()->runningInConsole()) {
             return $next($request);
         }
 
         $path = ltrim($request->path(), '/');
 
-        // Skip if path matches any skip prefix
         foreach ($this->skipPrefixes as $prefix) {
             if (Str::startsWith($path, trim($prefix, '/'))) {
                 return $next($request);
             }
         }
 
-        // Generate or use existing request id
         $requestId = $request->headers->get('X-Request-Id') ?? (string) Str::uuid();
-        // Attach to request for downstream usage
         $request->headers->set('X-Request-Id', $requestId);
 
-        // Let the request proceed and capture response
         /** @var Response $response */
         $response = $next($request);
 
-        // Always set X-Request-Id on response (safe for redirects)
         try {
             $response->headers->set('X-Request-Id', $requestId);
         } catch (\Throwable $e) {
-            // ignore header set failures
         }
 
-        // Build audit data in try/catch so logging never breaks the request flow
         try {
             $status = $response->getStatusCode();
 
-            // Determine severity (title-case to match UI)
             $severity = $this->determineSeverity($status);
 
-            // Determine subject
             $user = Auth::user();
             $subjectType = $user ? (class_basename(get_class($user))) : 'Guest';
             $subjectIdentifier = $user
                 ? (string) ($user->getAuthIdentifier() ?? $user->id ?? $user->uuid ?? '')
                 : $request->ip();
 
-            // Resource / endpoint / route
             $route = $request->route();
             $routeName = null;
             if ($route) {
@@ -120,17 +109,14 @@ class AuditLogMiddleware
                 }
             }
 
-            // Save the endpoint as the full request URI (includes query string)
-            $endpoint = $request->getRequestUri(); // e.g. /api/v1/users?page=2
+            $endpoint = $request->getRequestUri();
 
-            // Detect PII in request payload and mask
             $rawPayload = $request->all();
             [$piiFields, $maskedPayload] = $this->maskPii($rawPayload);
 
             $pdplCategory = count($piiFields) ? 'PII' : 'Non-PII';
             $maskingState = count($piiFields) ? 'Masked' : 'None';
 
-            // Safe headers only
             $safeHeaders = [
                 'accept' => $request->header('accept'),
                 'accept_language' => $request->header('accept-language'),
@@ -140,22 +126,17 @@ class AuditLogMiddleware
                 'sec_ch_ua_mobile' => $request->header('sec-ch-ua-mobile'),
             ];
 
-            // device_fingerprint heuristics: header or cookie
             $deviceFingerprint = $request->header('X-Device-Fingerprint') ?? $request->cookie('device_fp') ?? null;
 
-            // idp_provider and conditional_access_result: capture headers if present,
-            // also allow properties to provide a fallback
             $idpProvider = $request->header('X-IdP-Provider') ?? $request->header('X-Idp-Provider') ?? null;
             $conditionalAccess = $request->header('X-Conditional-Access-Result') ?? $request->header('X-Conditional-Access') ?? null;
 
-            // Truncate long response content (for failure_reason)
             $failureReason = null;
             if ($status >= 400) {
                 $content = (string) $response->getContent();
                 $failureReason = Str::limit($this->stripBinary($content), 1000);
             }
 
-            // Build properties: include masked payload, safe headers, route params (masked), query, route name
             $properties = [
                 'request_id' => $requestId,
                 'method' => $request->method(),
@@ -171,7 +152,6 @@ class AuditLogMiddleware
                 'user_agent' => $request->userAgent(),
             ];
 
-            // If header did not provide idp/conditional, try to fetch from properties payload
             if (!$idpProvider && isset($properties['body']['idp_provider'])) {
                 $idpProvider = $properties['body']['idp_provider'];
             }
@@ -179,17 +159,18 @@ class AuditLogMiddleware
                 $conditionalAccess = $properties['body']['conditional_access_result'];
             }
 
-            // Prepare audit payload for DB
+            $logCategory = $this->detectLogCategory($request);
+
             $auditData = [
                 'timestamp' => now(),
                 'environment' => config('app.env', 'production'),
-                'log_category' => 'http',
-                'event_type' => strtoupper($request->method()), // e.g. GET/POST
+                'log_category' => $logCategory,
+                'event_type' => strtoupper($request->method()),
                 'severity' => $severity,
                 'subject_type' => $subjectType,
                 'subject_identifier' => $subjectIdentifier,
                 'resource' => $routeName ?? $request->path(),
-                'endpoint' => $endpoint, // reliably store request URI including query
+                'endpoint' => $endpoint,
                 'method' => $request->method(),
                 'status' => (string)$status,
                 'failure_reason' => $failureReason,
@@ -204,10 +185,8 @@ class AuditLogMiddleware
                 'properties' => $properties,
             ];
 
-            // Create audit record (wrapped in try/catch to avoid breaking app)
             AuditLog::create($auditData);
         } catch (\Throwable $e) {
-            // Never throw from middleware; log locally only
             Log::warning('AuditLogMiddleware failed to persist audit log: ' . $e->getMessage(), [
                 'request_id' => $requestId,
                 'path' => $request->path(),
@@ -215,6 +194,33 @@ class AuditLogMiddleware
         }
 
         return $response;
+    }
+
+    protected function detectLogCategory(Request $request): string
+    {
+        if ($request->is('api/*')) {
+            return 'api';
+        }
+
+        if ($request->is('login', 'logout', 'register', 'password/*', 'otp/*')) {
+            return 'auth';
+        }
+
+        if ($request->expectsJson()) {
+            return 'ajax';
+        }
+
+        // HTTPS
+        if ($request->isSecure()) {
+            return 'https';
+        }
+
+        // HTTP (explicit)
+        if ($request->getScheme() === 'http') {
+            return 'http';
+        }
+
+        return 'web';
     }
 
     /**
@@ -283,7 +289,6 @@ class AuditLogMiddleware
                 $piiFound[] = $k;
                 $masked[$k] = $this->maskValue((string)$v);
             } else {
-                // keep short values only to avoid huge storage
                 if (is_string($v) && Str::length($v) > 2000) {
                     $masked[$k] = Str::limit($v, 2000);
                 } else {
@@ -323,7 +328,6 @@ class AuditLogMiddleware
      */
     protected function stripBinary(string $s): string
     {
-        // remove binary / non-printable characters
         return preg_replace('/[^\P{C}\n\r\t]+/u', '', $s) ?? $s;
     }
 }
