@@ -3,6 +3,7 @@
 namespace App\Exports;
 
 use App\Models\AuditLog;
+use App\Models\User;
 use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromQuery;
 use Maatwebsite\Excel\Concerns\WithHeadings;
@@ -18,6 +19,7 @@ use PhpOffice\PhpSpreadsheet\Style\Border;
 class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle
 {
     protected $query;
+    protected $users = [];
 
     public function __construct($query)
     {
@@ -67,6 +69,9 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
      */
     public function map($log): array
     {
+        // Get user information
+        $userDisplay = $this->getUserDisplay($log->subject_identifier, $log->subject_type);
+
         return [
             $log->id,
             $log->timestamp ? $log->timestamp->format('Y-m-d H:i:s') : '',
@@ -74,8 +79,8 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
             $log->log_category,
             $log->severity,
             $log->status,
-            $this->maskEmail($log->subject_identifier),
-            $log->subject_type,
+            $userDisplay['name'], // User display name
+            $userDisplay['type'], // User type
             $log->resource,
             $log->endpoint,
             $log->method,
@@ -93,6 +98,52 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
             $log->failure_reason,
             strtoupper($log->environment ?? 'PRODUCTION'),
             $log->created_at->format('Y-m-d H:i:s'),
+        ];
+    }
+
+    /**
+     * Get user display information
+     */
+    private function getUserDisplay(?string $subjectIdentifier, ?string $subjectType): array
+    {
+        if (!$subjectIdentifier || $subjectType !== 'App\\Models\\User') {
+            return [
+                'name' => $this->maskEmail($subjectIdentifier),
+                'type' => $subjectType ? class_basename($subjectType) : 'System'
+            ];
+        }
+
+        // Check if user is already loaded to avoid N+1 queries
+        if (!isset($this->users[$subjectIdentifier])) {
+            $this->users[$subjectIdentifier] = User::find($subjectIdentifier);
+        }
+
+        $user = $this->users[$subjectIdentifier];
+
+        if (!$user) {
+            return [
+                'name' => $this->maskEmail($subjectIdentifier),
+                'type' => 'Unknown User'
+            ];
+        }
+
+        // Build user name
+        $name = trim($user->first_name . ' ' . $user->last_name);
+        if (empty($name)) {
+            $name = $this->maskEmail($user->email ?? $subjectIdentifier);
+        }
+
+        // Determine user type
+        $userType = $user->user_type ?? 'User';
+
+        // If employee and manager, show as Manager
+        if ($userType === 'employee' && $user->is_manager) {
+            $userType = 'Manager';
+        }
+
+        return [
+            'name' => $name,
+            'type' => $userType
         ];
     }
 
@@ -223,7 +274,7 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
     }
 
     /**
-     * Mask email for privacy
+     * Mask email for privacy (used as fallback)
      */
     private function maskEmail(?string $email): ?string
     {

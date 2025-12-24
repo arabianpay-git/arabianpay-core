@@ -2676,4 +2676,8 @@ return [
     'Starting download' => 'Starting download',
     'Your Excel file should start downloading shortly.' => 'Your Excel file should start downloading shortly.',
     'An error occurred while exporting. Please try again.' => 'An error occurred while exporting. Please try again.',
+
+
+    'Failure Reason' => 'Failure Reason',
+    'Create Alert' => 'Create Alert',
 ];
