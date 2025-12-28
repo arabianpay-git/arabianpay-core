@@ -107,6 +107,12 @@ class Merchant extends Model
     }
     public function checkouts()
     {
-        return $this->hasMany(\App\Models\Checkout::class, 'seller_id', 'id');
+        return $this->hasMany(\App\Models\Checkout::class, 'user_id', 'id');
+    }
+
+    // In Merchant.php model
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'seller_id', 'user_id');
     }
 }

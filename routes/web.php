@@ -31,6 +31,7 @@ use App\Http\Controllers\{
     Admin\InvestmentPoolsController,
     AuditController,
     ChatController,
+    ComplianceController,
     InstalmentPlanController,
     LeanController,
     MediaController,
@@ -365,6 +366,9 @@ Route::group([
 
                 Route::get('nafath', 'nafath')->name('nafath');
             });
+
+            Route::post('/supplier/{id}/update-document', [ComplianceController::class, 'updateDocument'])->name('supplier.update-document');
+            Route::get('/supplier/{id}/contract-data', [ComplianceController::class, 'getContractData'])->name('supplier.contract-data');
 
             //
             // LEAN routes

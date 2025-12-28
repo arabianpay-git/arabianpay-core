@@ -684,8 +684,7 @@ class AccountController extends Controller
             ],
         ]);
 
-        $transactions = Transaction::select($this->selectFields)
-            ->with(['order:id,grand_total,shipping_city,general_status', 'user'])
+        $transactions = Transaction::with(['order:id,grand_total,shipping_city,general_status', 'user'])
             ->where('user_id', $id)
             ->paginate(10);
 
@@ -1035,8 +1034,10 @@ class AccountController extends Controller
     {
         $user = currentUser();
 
+        $riskScore = get_risk_score($id);
+
         $merchant = Merchant::where('user_id', $id)
-            ->with('user', 'businessType')
+            ->with('user', 'businessType', 'riskManagement', 'approval')
             ->when(
                 !(
                     ($user->user_type === 'employee' && $user->is_manager) || $user->user_type === 'admin'
@@ -1088,12 +1089,106 @@ class AccountController extends Controller
             )->get();
         }
 
-        $stats = [
-            'totalProducts' => Product::where('user_id', $merchant->user_id)->count(),
-            'totalOrders'   => Order::where('seller_id', $merchant->user_id)->count(),
-            'revenue'       => Payment::where('seller_id', $merchant->user_id)->sum('amount'),
-            'walletBalance' => Wallet::where('seller_id', $merchant->user_id)->sum('balance_after'),
-        ];
+        // Calculate supplier performance metrics
+        $supplierUserId = $merchant->user_id;
+
+        // Total Products
+        $totalProducts = Product::where('user_id', $supplierUserId)->count();
+
+        // Total Orders
+        $totalOrders = Order::where('seller_id', $supplierUserId)->count();
+
+        // Total Revenue (from completed orders)
+        $totalRevenue = Order::where('seller_id', $supplierUserId)
+            ->where('general_status', 'accepted')
+            ->where('delivery_status', 'delivered')
+            ->get()
+            ->sum(function ($order) {
+                return (float) $order->grand_total;
+            });
+
+        // Average Order Value
+        $avgOrderValue = $totalOrders > 0 ? $totalRevenue / $totalOrders : 0;
+
+        $sixMonthsAgo = Carbon::now()->subMonths(6)->startOfMonth();
+
+        // Fetch all relevant orders for the seller
+        $orders = Order::where('seller_id', $supplierUserId)
+            ->where('general_status', 'accepted')
+            ->where('delivery_status', 'delivered')
+            ->where('created_at', '>=', $sixMonthsAgo)
+            ->get();
+
+        // Group orders by month
+        $monthlyRevenueData = $orders
+            ->groupBy(function ($order) {
+                return $order->created_at->format('M Y');
+            })
+            ->map(function ($monthOrders, $month) {
+                $revenue = $monthOrders->sum(function ($order) {
+                    return (float) $order->grand_total;
+                });
+
+                return [
+                    'month' => $month,
+                    'revenue' => $revenue,
+                    'orders_count' => $monthOrders->count(),
+                ];
+            })
+            ->sortKeys()
+            ->values();
+
+        $monthLabels = [];
+        $monthlyRevenue = [];
+        $monthlyOrders = [];
+
+        foreach ($monthlyRevenueData as $data) {
+            $monthLabels[] = $data['month'];
+            $monthlyRevenue[] = (float) $data['revenue'];
+            $monthlyOrders[] = (int) $data['orders_count'];
+        }
+
+        // If no recent data, create sample data for the last 6 months
+        if (empty($monthlyRevenue)) {
+            $monthLabels = [];
+            for ($i = 5; $i >= 0; $i--) {
+                $monthLabels[] = now()->subMonths($i)->format('M Y');
+            }
+            $monthlyRevenue = [0, 0, 0, 0, 0, 0];
+            $monthlyOrders = [0, 0, 0, 0, 0, 0];
+        }
+
+        // Wallet Balance
+        $walletBalance = Wallet::where('seller_id', $supplierUserId)->sum('balance_after');
+
+        // Pending Payouts
+        $pendingPayouts = SupplierPayout::where('supplier_id', $supplierUserId)
+            ->where('status', 'pending')
+            ->sum('amount');
+
+        // Completed Payouts
+        $completedPayouts = SupplierPayout::where('supplier_id', $supplierUserId)
+            ->where('status', 'completed')
+            ->sum('amount');
+
+        // Order Status Distribution
+        $orderStatuses = Order::where('seller_id', $supplierUserId)
+            ->selectRaw('delivery_status, COUNT(*) as count')
+            ->groupBy('delivery_status')
+            ->pluck('count', 'delivery_status')
+            ->toArray();
+
+        $completedOrders = $orderStatuses['delivered'] ?? 0;
+        $pendingOrders = $orderStatuses['pending'] ?? 0;
+        $cancelledOrders = $orderStatuses['cancelled'] ?? 0;
+
+        $completionRate = $totalOrders > 0 ? round(($completedOrders / $totalOrders) * 100, 1) : 0;
+
+        // Recent Orders for the Recent Activity component
+        $recentOrders = Order::where('seller_id', $supplierUserId)
+            ->orderBy('created_at', 'desc')
+            ->take(5)
+            ->get();
 
         if (empty($merchant->goverment_data) && $merchant->cr_number) {
             $wathqData = $this->wathqService->fetchCrData($merchant->cr_number);
@@ -1118,7 +1213,6 @@ class AccountController extends Controller
             }
         }
 
-        // Get all IBANs for main user + sub-users
         $mainUserId = $merchant->user->main_user_id ?: $merchant->user_id;
 
         $relatedUserIds = \App\Models\User::where(function ($q) use ($mainUserId) {
@@ -1130,10 +1224,28 @@ class AccountController extends Controller
             ->get();
 
         return view('admin.accounts.supplier-profile', array_merge([
-            'merchant'         => $merchant,
+            'merchant' => $merchant,
             'businessCategory' => $businessCategory,
-            'supplierBanks'    => $supplierBanks,
-        ], $stats));
+            'supplierBanks' => $supplierBanks,
+            'riskScore' => $riskScore,
+            // Performance metrics
+            'totalProducts' => $totalProducts,
+            'totalOrders' => $totalOrders,
+            'totalRevenue' => $totalRevenue,
+            'avgOrderValue' => $avgOrderValue,
+            'monthlyRevenue' => $monthlyRevenue,
+            'monthlyOrders' => $monthlyOrders,
+            'monthLabels' => $monthLabels,
+            'walletBalance' => $walletBalance,
+            'pendingPayouts' => $pendingPayouts,
+            'completedPayouts' => $completedPayouts,
+            'completedOrders' => $completedOrders,
+            'pendingOrders' => $pendingOrders,
+            'cancelledOrders' => $cancelledOrders,
+            'completionRate' => $completionRate,
+            // Recent orders for the Recent Activity component
+            'recentOrders' => $recentOrders,
+        ]));
     }
 
     public function supplierFinance($id)
@@ -1527,8 +1639,7 @@ class AccountController extends Controller
             ],
         ]);
 
-        $transactions = Transaction::select($this->selectFields)
-            ->with(['order:id,grand_total,shipping_city,general_status', 'user'])
+        $transactions = Transaction::with(['order:id,grand_total,shipping_city,general_status', 'user'])
             ->where('seller_id', $id)
             ->paginate(10);
 

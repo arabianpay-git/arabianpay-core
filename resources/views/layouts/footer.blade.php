@@ -1,5 +1,5 @@
 <!-- Footer -->
-<footer class="footer">
+<footer class="footer bg-white">
     <!-- Container -->
     <div class="container-fixed">
         <div class="flex flex-col md:flex-row justify-center md:justify-between items-center gap-3 py-5">
