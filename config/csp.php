@@ -14,6 +14,7 @@ return [
             'https://code.jquery.com',
             'https://cdn.jsdelivr.net',
             'https://www.gstatic.com',
+            'https://cdn.tailwindcss.com',
             'https://www.googleapis.com',
             'https://js.pusher.com',
             env('VITE_DEV_SERVER', 'http://localhost:5174'),
