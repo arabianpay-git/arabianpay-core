@@ -28,16 +28,9 @@
     <div class="sidebar-header hidden lg:flex items-center relative justify-between px-3 lg:px-6 shrink-0"
         id="sidebar_header">
 
-        <a class="dark:hidden" href="{{ route('dashboard') }}">
+        <a href="{{ route('dashboard') }}">
             <img class="default-logo min-h-[22px] max-w-none"
                 src="{{ $logo ? asset($logo) : asset('assets/media/images/default-logo.svg') }}" />
-            <img class="small-logo min-h-[22px] max-w-none"
-                src="{{ $logo ? asset($logo) : asset('assets/media/images/default-logo.svg') }}" />
-        </a>
-
-        <a class="hidden dark:block" href="{{ route('dashboard') }}">
-            <img class="default-logo min-h-[22px] max-w-none"
-                src="{{ $logo ? asset($logo) : asset('assets/media/images/default-logo-dark.svg') }}" />
             <img class="small-logo min-h-[22px] max-w-none"
                 src="{{ $logo ? asset($logo) : asset('assets/media/images/default-logo.svg') }}" />
         </a>

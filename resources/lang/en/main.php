@@ -2674,8 +2674,6 @@ return [
     'Starting download' => 'Starting download',
     'Your Excel file should start downloading shortly.' => 'Your Excel file should start downloading shortly.',
     'An error occurred while exporting. Please try again.' => 'An error occurred while exporting. Please try again.',
-
-
     'Failure Reason' => 'Failure Reason',
     'Create Alert' => 'Create Alert',
     'CR Data' => 'CR Data',
@@ -2835,4 +2833,6 @@ return [
     'Please select a file to upload.' => 'Please select a file to upload.',
     'An error occurred. Please try again.' => 'An error occurred. Please try again.',
     'Existing file' => 'Existing file',
+
+    'No recent orders found.' => 'No recent orders found.',
 ];
