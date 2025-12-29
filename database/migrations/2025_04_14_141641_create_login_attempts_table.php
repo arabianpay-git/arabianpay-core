@@ -6,24 +6,31 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('login_attempts', function (Blueprint $table) {
             $table->id();
-            $table->string('ip_address');
-            $table->integer('attempts')->default(0);
-            $table->timestamp('last_attempt_at')->useCurrent();
-            $table->timestamp('locked_until')->nullable();
+
+            // User relation (nullable for failed attempts)
+            $table->foreignId('user_id')
+                ->nullable()
+                ->constrained()
+                ->nullOnDelete();
+
+            $table->string('email')->nullable();
+            $table->string('ip_address', 45)->nullable();
+            $table->text('user_agent')->nullable();
+
+            // success / failed
+            $table->boolean('is_success')->default(false);
+
+            // optional reason for failure
+            $table->string('failure_reason')->nullable();
+
             $table->timestamps();
         });
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('login_attempts');

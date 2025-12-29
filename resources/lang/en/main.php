@@ -2835,4 +2835,5 @@ return [
     'Existing file' => 'Existing file',
 
     'No recent orders found.' => 'No recent orders found.',
+    'All Onboarding Steps' => 'All Onboarding Steps',
 ];

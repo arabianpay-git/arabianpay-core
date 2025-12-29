@@ -100,11 +100,13 @@
             const dateInput = document.querySelector("#contract_end_date_picker");
             if (dateInput) {
                 flatpickr(dateInput, {
-                    dateFormat: "Y-m-d",
-                    minDate: "today", // Prevents picking past dates
-                    disableMobile: "true",
-                    // If using Metronic's specific modal container, you can append the calendar there:
-                    // static: true 
+                    enableTime: true,
+                    time_24hr: true,
+                    dateFormat: "Y-m-d H:i:s",
+                    minDate: "today",
+                    disableMobile: true,
+                    defaultDate: new Date(),
+                    minuteIncrement: 5,
                 });
             }
 

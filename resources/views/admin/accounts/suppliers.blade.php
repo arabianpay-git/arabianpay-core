@@ -53,12 +53,30 @@
                                     @endforeach
                                 </select>
 
+                                <select id="filter-onboarding-step" class="select select-sm" style="width: 14rem;">
+                                    <option value="">{{ translate('All Onboarding Steps') }}</option>
+                                    @foreach ([
+            'basic-info' => '1. Basic Info',
+            'business-revenue' => '2. Business Revenue',
+            'business-verification' => '3. Business Verification',
+            'personal-details' => '4. Personal Details',
+            'bank-details' => '5. Bank Details',
+            'additional-details' => '6. Additional Details',
+        ] as $key => $label)
+                                        <option value="{{ $key }}"
+                                            {{ request('onboarding_step') == $key ? 'selected' : '' }}>
+                                            {{ $label }}
+                                        </option>
+                                    @endforeach
+                                </select>
+
                                 <a href="{{ route('suppliers') }}" class="btn btn-sm btn-light" id="clear-filters-btn"
                                     type="button">
-                                    <i class="ki-filled ki-arrows-circle"> </i>
+                                    <i class="ki-filled ki-arrows-circle"></i>
                                     {{ translate('Clear') }}
                                 </a>
                             </div>
+
 
                             <div class="flex justify-end">
                                 <button id="bulk-transfer-btn" class="btn btn-sm btn-primary hidden"
@@ -92,22 +110,32 @@
 @push('scripts')
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-
             const searchInput = document.getElementById('supplier-search-input');
             const statusFilter = document.getElementById('filter-status');
             const employeeFilter = document.getElementById('filter-employee');
+            const onboardingFilter = document.getElementById('filter-onboarding-step');
             const tableContainer = document.getElementById('suppliers-table-container');
             const bulkBtn = document.getElementById('bulk-transfer-btn');
             let timeout = null;
 
             function updateUrl() {
                 const url = new URL(window.location.href);
-                url.searchParams.set('search', searchInput.value.trim());
-                url.searchParams.set('status', statusFilter.value);
-                url.searchParams.set('employee', employeeFilter.value);
 
-                // 🔥 UPDATE URL WITHOUT RELOAD
-                window.history.replaceState({}, '', url);
+                // Helper to set or delete params if empty
+                const setParam = (key, value) => {
+                    if (value && value.trim() !== '') {
+                        url.searchParams.set(key, value);
+                    } else {
+                        url.searchParams.delete(key);
+                    }
+                };
+
+                setParam('search', searchInput.value);
+                setParam('status', statusFilter.value);
+                setParam('employee', employeeFilter.value);
+                setParam('onboarding_step', onboardingFilter.value);
+
+                window.history.pushState({}, '', url);
                 return url.toString();
             }
 
@@ -123,7 +151,8 @@
                     .then(html => {
                         tableContainer.innerHTML = html;
                         initCheckboxes();
-                    });
+                    })
+                    .catch(err => console.error('Error fetching suppliers:', err));
             }
 
             function initCheckboxes() {
@@ -131,15 +160,15 @@
                 const selectAll = document.querySelector('input[data-datatable-check="true"]');
 
                 function toggleBtn() {
-                    const anyChecked = [...checkboxes].some(cb => cb.checked);
-                    bulkBtn.classList.toggle('hidden', !anyChecked);
+                    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+                    if (bulkBtn) bulkBtn.classList.toggle('hidden', !anyChecked);
                 }
 
                 checkboxes.forEach(cb =>
                     cb.addEventListener('change', () => {
                         toggleBtn();
                         if (selectAll) {
-                            selectAll.checked = [...checkboxes].every(c => c.checked);
+                            selectAll.checked = Array.from(checkboxes).every(c => c.checked);
                         }
                     })
                 );
@@ -153,14 +182,17 @@
                 }
             }
 
+            // Listeners
             searchInput.addEventListener('input', function() {
                 clearTimeout(timeout);
                 timeout = setTimeout(fetchSuppliers, 400);
             });
 
-            statusFilter.addEventListener('change', fetchSuppliers);
-            employeeFilter.addEventListener('change', fetchSuppliers);
+            [statusFilter, employeeFilter, onboardingFilter].forEach(el => {
+                if (el) el.addEventListener('change', fetchSuppliers);
+            });
 
+            // Initial checkbox run
             initCheckboxes();
         });
     </script>

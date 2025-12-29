@@ -1411,7 +1411,7 @@ class AccountController extends Controller
             'reason' => 'nullable|string|max:1000',
             'contract' => 'required|file|mimes:pdf,jpg,jpeg,png',
             'payment_schedule' => 'required|integer|min:0|max:100',
-            'contract_end_date' => 'nullable|date_format:Y-m-d H:i:s',
+            'contract_end_date' => 'required|date',
         ]);
 
         DB::beginTransaction();

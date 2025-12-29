@@ -9,9 +9,21 @@ class LoginAttempt extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['ip_address', 'attempts', 'last_attempt_at', 'locked_until'];
+    protected $fillable = [
+        'user_id',
+        'email',
+        'ip_address',
+        'user_agent',
+        'is_success',
+        'failure_reason',
+    ];
 
     protected $casts = [
-        'last_attempt_at' => 'datetime',
+        'is_success' => 'boolean',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }
