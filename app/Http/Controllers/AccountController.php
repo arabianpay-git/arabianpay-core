@@ -987,7 +987,7 @@ class AccountController extends Controller
                 foreach ($merchants as $merchant) {
                     // Check if merchant has cr_number (cr_data)
                     if (!empty($merchant->cr_number)) {
-                        $hasNafathVerification = NafathVerification::where('user_id', $merchant->user_id)->exists();
+                        $hasNafathVerification = NafathVerification::where('phone_number', $merchant->user->phone_number)->exists();
 
                         // If doesn't exist in NafathVerification, include it
                         if (!$hasNafathVerification) {
