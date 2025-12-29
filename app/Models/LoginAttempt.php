@@ -11,7 +11,7 @@ class LoginAttempt extends Model
 
     protected $fillable = [
         'user_id',
-        'email',
+        'phone_number',
         'ip_address',
         'user_agent',
         'is_success',

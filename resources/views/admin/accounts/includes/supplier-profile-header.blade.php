@@ -26,6 +26,17 @@
 
     $currentStatus = $statusStyles[$status] ?? ['color' => 'secondary', 'label' => ucfirst($status)];
     $sellerShop = App\Models\ShopSetting::where('user_id', $merchant->user_id)->select('address')->first();
+
+    $lastLoginAttempts = App\Models\LoginAttempt::where('user_id', $merchant->user_id)
+        ->orWhere('phone_number', $merchant->user->phone_number)
+        ->orderBy('created_at', 'desc')
+        ->take(10)
+        ->get();
+
+    $lastSuccessfulLogin = App\Models\LoginAttempt::where('user_id', $merchant->user_id)
+        ->where('is_success', true)
+        ->orderBy('created_at', 'desc')
+        ->first();
 @endphp
 
 
@@ -110,26 +121,33 @@
 
                 <div class="flex flex-wrap items-center gap-x-4 gap-y-2 text-xs font-medium">
                     <a type="button" onclick="showRiskScoreModal()" data-modal-toggle="#risk-score-modal"
-                        class="flex items-center gap-1 text-{{ $riskConfig['color'] }}-600 hover:opacity-75 transition cursor-pointer underline decoration-dotted">
+                        class="flex items-center gap-1 text-{{ $riskConfig['color'] }}-600 hover:opacity-75 transition cursor-pointer underline">
                         <i class="ki-filled ki-{{ $riskConfig['icon'] }} text-sm"></i>
                         {{ $riskConfig['label'] }} ({{ $overallScore }})
                     </a>
 
                     <div class="flex items-center gap-4 text-slate-500 border-l border-slate-200 pl-4">
-                        @if ($merchant->cr_number)
-                            <span class="flex items-center gap-1"><i class="ki-filled ki-document text-sm"></i>
-                                {{ translate('CR Number') }}:
-                                {{ maskedSensitiveText('business_identity', $merchant->cr_number) }}</span>
-                        @endif
                         <span class="flex items-center gap-1"><i class="ki-filled ki-calendar text-sm"></i>
                             {{ translate('Joined') }}:
                             {{ $merchant->created_at?->format('M Y') ?? 'N/A' }}</span>
+
+                        @if ($lastSuccessfulLogin)
+                            <span
+                                class="flex items-center gap-1 cursor-pointer transition-colors underline link text-black"
+                                data-modal-toggle="#login_attempts_modal">
+                                <i class="ki-filled ki-calendar text-sm"></i>
+                                {{ translate('Last Login') }}:
+                                {{ $lastSuccessfulLogin->created_at?->format('M d, Y H:i') ?? 'N/A' }}
+                                <i class="ki-solid ki-information text-xs text-blue-400"></i>
+                            </span>
+                        @endif
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+
             <button class="btn btn-sm btn-light border-slate-300 flex items-center gap-2"
                 data-modal-toggle="#transfer_request">
                 <i class="ki-filled ki-arrows-loop"></i> {{ translate('Transfer Request') }}
@@ -144,7 +162,6 @@
 
 @include('admin.accounts.components.merchant-approve-modal', ['merchant' => $merchant])
 
-{{-- Other Modals --}}
 @include('admin.components.transfer-request', [
     'employees' => getEmployees(),
     'model_type' => 'App\Models\Merchant',
@@ -156,3 +173,5 @@
     'overallScore' => $overallScore,
     'riskLevel' => $riskConfig,
 ])
+
+@include('admin.accounts.components.login-attempts-modal', ['lastLoginAttempts' => $lastLoginAttempts])

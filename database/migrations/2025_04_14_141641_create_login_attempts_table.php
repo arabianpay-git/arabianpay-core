@@ -17,7 +17,7 @@ return new class extends Migration
                 ->constrained()
                 ->nullOnDelete();
 
-            $table->string('email')->nullable();
+            $table->string('phone_number')->nullable();
             $table->string('ip_address', 45)->nullable();
             $table->text('user_agent')->nullable();
 

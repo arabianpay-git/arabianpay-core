@@ -2836,4 +2836,14 @@ return [
 
     'No recent orders found.' => 'No recent orders found.',
     'All Onboarding Steps' => 'All Onboarding Steps',
+    'Last Login' => 'Last Login',
+    'Last 10 Login Attempts' => 'Last 10 Login Attempts',
+    'Successful Login' => 'Successful Login',
+    'LATEST' => 'LATEST',
+    'Show User Agent' => 'Show User Agent',
+    'Failed Login' => 'Failed Login',
+    'Successful' => 'Successful',
+    'Showing last' => 'Showing last',
+    'attempts' => 'attempts',
+    'Login Activity' => 'Login Activity',
 ];
