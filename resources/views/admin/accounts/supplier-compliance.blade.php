@@ -226,7 +226,7 @@
                                         {{ translate('No IBAN Certificates have been uploaded yet.') }}</p>
                                 </div>
                             @else
-                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="grid grid-cols-1 md:grid-cols-1 gap-4">
                                     @foreach ($relatedUserIds as $userId)
                                         @php
                                             $user = \App\Models\User::find($userId);
@@ -257,9 +257,13 @@
                                                         class="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-100">
                                                         <div class="overflow-hidden">
                                                             <p class="text-[10px] text-slate-400 font-bold uppercase">
-                                                                {{ translate('IBAN') }}</p>
+                                                                {{ translate('IBAN') }}
+                                                            </p>
                                                             <p class="text-xs font-mono font-bold text-slate-700">
-                                                                {{ $bank->iban ? maskedSensitiveText('iban_bank_account', $bank->iban, 5, 3) : 'N/A' }}
+                                                                <span
+                                                                    id="iban-text">{{ $bank->iban ? maskedSensitiveText('iban_bank_account', $bank->iban, 5, 3) : 'N/A' }}</span>
+                                                                <i id="iban-copy-icon"
+                                                                    class="ki-filled ki-copy cursor-pointer text-lg"></i>
                                                             </p>
                                                         </div>
 
@@ -277,13 +281,14 @@
 
                                                             @if ($authIban)
                                                                 <a href="{{ asset($authIban) }}" target="_blank"
-                                                                    class="p-2 bg-white rounded-lg shadow-sm text-slate-900 hover:text-blue-600 border border-slate-200 transition-all">
-                                                                    <i class="ki-outline ki-cloud-download text-lg"></i>
+                                                                    class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-slate-900 rounded-xl hover:bg-blue-600 transition-colors shadow-sm">
+                                                                    <i class="ki-outline ki-eye"></i>
+                                                                    {{ translate('View') }}
                                                                 </a>
                                                             @endif
 
                                                             <button type="button"
-                                                                class="p-2 bg-blue-50 rounded-lg text-blue-600 hover:bg-blue-100 border border-blue-200 transition-all update-document-btn"
+                                                                class="inline-flex items-center gap-2 px-4 py-2 text-sm font-bold text-white bg-blue-900 rounded-xl hover:bg-blue-600 transition-colors shadow-sm update-document-btn"
                                                                 data-modal-toggle="#documentUpdateModal"
                                                                 data-document-type="iban_certificate"
                                                                 data-merchant-id="{{ $merchant->id }}"
@@ -292,7 +297,8 @@
                                                                 data-bank-name="{{ $bank->bank_name }}"
                                                                 data-account-name="{{ $bank->account_name }}"
                                                                 data-iban="{{ $bank->iban }}">
-                                                                <i class="ki-outline ki-exit-up text-lg"></i>
+                                                                <i class="ki-outline ki-exit-up"></i>
+                                                                {{ translate('Update') }}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -1010,6 +1016,29 @@
                     e.target.value = formatted;
                 });
             }
+        });
+    </script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const copyIcon = document.getElementById('iban-copy-icon');
+            const ibanText = document.getElementById('iban-text').innerText;
+
+            copyIcon.addEventListener('click', async function() {
+                try {
+                    await navigator.clipboard.writeText(ibanText); // Copy IBAN to clipboard
+                    copyIcon.classList.remove('ki-copy');
+                    copyIcon.classList.add('ki-check');
+
+                    // Optionally revert back to original icon after 2 seconds
+                    setTimeout(() => {
+                        copyIcon.classList.remove('ki-check');
+                        copyIcon.classList.add('ki-copy');
+                    }, 2000);
+                } catch (err) {
+                    console.error('Failed to copy IBAN:', err);
+                }
+            });
         });
     </script>
 @endpush
