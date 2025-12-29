@@ -13,6 +13,7 @@ use App\Traits\EmailSender;
 use App\Traits\SmsSender;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -799,6 +800,7 @@ class AccountController extends Controller
         $search = $request->input('search');
         $status = $request->input('status');
         $employee = $request->input('employee');
+        $onboardingStep = $request->input('onboarding_step');
 
         // Log view suppliers list
         $this->auditTrailService->logViewOperation(
@@ -811,6 +813,7 @@ class AccountController extends Controller
                 'search_query' => $search,
                 'status_filter' => $status,
                 'employee_filter' => $employee,
+                'onboarding_step_filter' => $onboardingStep,
                 'user_type' => $user->user_type,
                 'is_manager' => $user->is_manager ?? false,
             ]
@@ -830,6 +833,11 @@ class AccountController extends Controller
 
         $merchants = $merchantsQuery->get();
 
+        // Apply onboarding step filter if provided
+        if ($onboardingStep) {
+            $merchants = $this->filterByOnboardingStep($merchants, $onboardingStep);
+        }
+
         // Apply search filter
         if ($search) {
             // Log search operation
@@ -842,6 +850,7 @@ class AccountController extends Controller
                         'search_type' => 'manual_filter',
                         'status_filter' => $status,
                         'employee_filter' => $employee,
+                        'onboarding_step' => $onboardingStep,
                     ],
                 ]
             );
@@ -862,10 +871,190 @@ class AccountController extends Controller
         );
 
         if ($request->ajax()) {
-            return view('admin.accounts.partials.suppliers-table', ['merchants' => $paginated])->render();
+            return view('admin.accounts.partials.suppliers-table', [
+                'merchants' => $paginated,
+                'onboardingStep' => $onboardingStep
+            ])->render();
         }
 
-        return view('admin.accounts.suppliers', ['merchants' => $paginated]);
+        return view('admin.accounts.suppliers', [
+            'merchants' => $paginated,
+            'onboardingStep' => $onboardingStep
+        ]);
+    }
+
+    /**
+     * Filter merchants by onboarding step
+     *
+     * @param \Illuminate\Database\Eloquent\Collection $merchants
+     * @param string $onboardingStep
+     * @return \Illuminate\Support\Collection
+     */
+    private function filterByOnboardingStep($merchants, $onboardingStep)
+    {
+        $filtered = collect();
+
+        switch ($onboardingStep) {
+            case 'basic-info':
+                // Get users without merchant records and without business_name
+                $users = User::where('user_type', 'merchant')
+                    ->whereNull('business_name')
+                    ->get();
+
+                foreach ($users as $user) {
+                    $filtered->push((object) [
+                        'id' => null,
+                        'user_id' => $user->id,
+                        'user' => (object) [
+                            'id' => $user->id,
+                            'first_name' => 'N/A',
+                            'last_name' => 'N/A',
+                            'phone_number' => $user->phone_number,
+                            'business_name' => null,
+                        ],
+                        'cr_number' => 'N/A',
+                        'businessType' => null,
+                        'assigned' => null,
+                        'status' => 'pending',
+                        'approval' => null,
+                        'created_at' => $user->created_at,
+                        'is_user_only' => true,
+                    ]);
+                }
+                break;
+
+            case 'business-revenue':
+                // Get users without merchant records, with business_name but without revenue
+                $users = User::where('user_type', 'merchant')
+                    ->whereNotNull('business_name')
+                    ->whereNull('revenue')
+                    ->get();
+
+                foreach ($users as $user) {
+                    $filtered->push((object) [
+                        'id' => null,
+                        'user_id' => $user->id,
+                        'user' => (object) [
+                            'id' => $user->id,
+                            'first_name' => 'N/A',
+                            'last_name' => 'N/A',
+                            'phone_number' => $user->phone_number,
+                            'business_name' => $user->business_name,
+                        ],
+                        'cr_number' => 'N/A',
+                        'businessType' => null,
+                        'assigned' => null,
+                        'status' => 'pending',
+                        'approval' => null,
+                        'created_at' => $user->created_at,
+                        'is_user_only' => true,
+                    ]);
+                }
+                break;
+
+            case 'business-verification':
+                // Get users with business_name and revenue but without merchant record
+                $users = User::where('user_type', 'merchant')
+                    ->whereNotNull('business_name')
+                    ->whereNotNull('revenue')
+                    ->whereDoesntHave('merchant')
+                    ->get();
+
+                foreach ($users as $user) {
+                    $filtered->push((object) [
+                        'id' => null,
+                        'user_id' => $user->id,
+                        'user' => (object) [
+                            'id' => $user->id,
+                            'first_name' => 'N/A',
+                            'last_name' => 'N/A',
+                            'phone_number' => $user->phone_number,
+                            'business_name' => $user->business_name,
+                        ],
+                        'cr_number' => 'N/A',
+                        'businessType' => null,
+                        'assigned' => null,
+                        'status' => 'pending',
+                        'approval' => null,
+                        'created_at' => $user->created_at,
+                        'is_user_only' => true,
+                    ]);
+                }
+                break;
+
+            case 'personal-details':
+                // Get merchants with cr_number (cr_data) but without nafath verification
+                foreach ($merchants as $merchant) {
+                    // Check if merchant has cr_number (cr_data)
+                    if (!empty($merchant->cr_number)) {
+                        $hasNafathVerification = NafathVerification::where('user_id', $merchant->user_id)->exists();
+
+                        // If doesn't exist in NafathVerification, include it
+                        if (!$hasNafathVerification) {
+                            $filtered->push($merchant);
+                        }
+                    }
+                }
+                break;
+
+            case 'bank-details':
+                // Get merchants that exist in NafathVerification with status approved 
+                // but don't exist in SupplierBank
+                foreach ($merchants as $merchant) {
+                    // Check if merchant has approved NafathVerification
+                    $hasApprovedNafath = NafathVerification::where('user_id', $merchant->user_id)
+                        ->where('status', 'approved')
+                        ->exists();
+
+                    // Check if merchant has SupplierBank
+                    $hasSupplierBank = SupplierBank::where('user_id', $merchant->user_id)->exists();
+
+                    // If has approved Nafath but no SupplierBank, include it
+                    if ($hasApprovedNafath && !$hasSupplierBank) {
+                        $filtered->push($merchant);
+                    }
+                }
+                break;
+
+            case 'additional-details':
+                // Get merchants that exist in SupplierBank but missing any of the files
+                foreach ($merchants as $merchant) {
+                    // Check if merchant has SupplierBank
+                    $hasSupplierBank = SupplierBank::where('user_id', $merchant->user_id)->exists();
+
+                    // If has SupplierBank, check for missing files
+                    if ($hasSupplierBank) {
+                        // Check if any of the required files are missing
+                        $missingFiles = false;
+
+                        // Check each required file field
+                        $requiredFiles = [
+                            'registration_number_form',
+                            'vat_register_file',
+                            'owner_iqama_image',
+                            'balady_certificate'
+                        ];
+
+                        foreach ($requiredFiles as $fileField) {
+                            if (empty($merchant->{$fileField})) {
+                                $missingFiles = true;
+                                break;
+                            }
+                        }
+
+                        // If any files are missing, include the merchant
+                        if ($missingFiles) {
+                            $filtered->push($merchant);
+                        }
+                    }
+                }
+                break;
+
+            default:
+                return $merchants;
+        }
+
+        return $filtered;
     }
 
     public function updateCommission(Request $request)

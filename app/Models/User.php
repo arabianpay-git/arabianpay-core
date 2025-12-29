@@ -260,9 +260,13 @@ class User extends Authenticatable implements HasPasskeys
         return $this->email ?? 'user@example.com';
     }
 
-    // In App\Models\User.php
     public function supplierBanks()
     {
         return $this->hasMany(\App\Models\SupplierBank::class, 'user_id', 'id');
+    }
+
+    public function nafathVerification()
+    {
+        return $this->hasOne(NafathVerification::class, 'user_id', 'id');
     }
 }
