@@ -288,7 +288,10 @@
                                                                 data-document-type="iban_certificate"
                                                                 data-merchant-id="{{ $merchant->id }}"
                                                                 data-bank-id="{{ $bank->id }}"
-                                                                data-existing-file="{{ $authIban ? asset($authIban) : '' }}">
+                                                                data-existing-file="{{ $authIban ? asset($authIban) : '' }}"
+                                                                data-bank-name="{{ $bank->bank_name }}"
+                                                                data-account-name="{{ $bank->account_name }}"
+                                                                data-iban="{{ $bank->iban }}">
                                                                 <i class="ki-outline ki-exit-up text-lg"></i>
                                                             </button>
                                                         </div>
@@ -324,6 +327,65 @@
                         <input type="hidden" name="merchant_id" id="merchant_id">
                         <input type="hidden" name="document_type" id="document_type">
                         <input type="hidden" name="bank_id" id="bank_id">
+
+                        <!-- IBAN Bank Fields -->
+                        <div id="ibanFields" class="space-y-4 hidden">
+                            <!-- Bank Name -->
+                            <div class="flex flex-col gap-2.5">
+                                <label class="form-label flex items-center gap-1">
+                                    {{ translate('Bank Name') }}
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <select name="bank_name" id="bank_name_select" class="input">
+                                    <option value="">{{ translate('Select Bank') }}</option>
+                                    @php
+                                        $saudiBanks = [
+                                            'Al Rajhi Bank',
+                                            'National Commercial Bank (NCB)',
+                                            'Samba Financial Group',
+                                            'Riyad Bank',
+                                            'Banque Saudi Fransi',
+                                            'Alinma Bank',
+                                            'Arab National Bank',
+                                            'The Saudi British Bank (SABB)',
+                                            'Gulf International Bank',
+                                            'Bank Aljazira',
+                                            'Saudi Investment Bank',
+                                            'Alawwal Bank',
+                                            'Bank Albilad',
+                                            'Eastern Province Bank',
+                                        ];
+                                    @endphp
+                                    @foreach ($saudiBanks as $bank)
+                                        <option value="{{ $bank }}">{{ translate($bank) }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+
+                            <!-- Account Name -->
+                            <div class="flex flex-col gap-2.5">
+                                <label class="form-label flex items-center gap-1">
+                                    {{ translate('Account Name') }}
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="account_name" id="account_name_input" class="input"
+                                    required>
+                            </div>
+
+                            <!-- IBAN -->
+                            <div class="flex flex-col gap-2.5">
+                                <label class="form-label flex items-center gap-1">
+                                    {{ translate('IBAN') }}
+                                    <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" name="iban" id="iban_input" class="input"
+                                    placeholder="{{ translate('Enter a valid IBAN, e.g. SA03 8000 0000 6080 1016 7519') }}"
+                                    maxlength="34" required pattern="[A-Za-z]{2}[0-9]{2}([ ]?[A-Za-z0-9]{4}){1,7}">
+                                <p class="text-xs text-slate-500 mt-1">
+                                    {{ translate('Format: SAXX XXXX XXXX XXXX XXXX XXXX (Saudi IBAN)') }}
+                                </p>
+                            </div>
+                        </div>
 
                         <!-- File Upload -->
                         <div class="mb-4">
@@ -437,6 +499,7 @@
         </div>
     </div>
 @endsection
+
 @push('styles')
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
@@ -574,12 +637,19 @@
                     const bankId = this.getAttribute('data-bank-id') || null;
                     const existingFileUrl = this.getAttribute('data-existing-file') || null;
 
+                    // IBAN specific data
+                    const bankName = this.getAttribute('data-bank-name') || '';
+                    const accountName = this.getAttribute('data-account-name') || '';
+                    const iban = this.getAttribute('data-iban') || '';
+
                     // Reset form
                     const form = document.getElementById('documentUpdateForm');
                     form.reset();
                     clearFileSelection();
 
+                    // Hide all field groups
                     document.getElementById('contractFields').classList.add('hidden');
+                    document.getElementById('ibanFields').classList.add('hidden');
                     document.getElementById('currentContractInfo').classList.add('hidden');
                     document.getElementById('loadingIndicator').classList.add('hidden');
 
@@ -596,7 +666,7 @@
                     form.action = '{{ route('supplier.update-document', ['id' => ':id']) }}'
                         .replace(':id', currentMerchantId);
 
-                    // Update modal title based on document type
+                    // Update modal title and show appropriate fields based on document type
                     let modalTitle = '';
                     switch (currentDocumentType) {
                         case 'contract':
@@ -612,6 +682,29 @@
                                 currentExistingFile = existingFileUrl;
                             }
                             break;
+
+                        case 'iban_certificate':
+                            modalTitle = '{{ translate('Update IBAN Certificate') }}';
+                            document.getElementById('ibanFields').classList.remove('hidden');
+
+                            // Pre-fill IBAN fields
+                            if (bankName) {
+                                document.getElementById('bank_name_select').value = bankName;
+                            }
+                            if (accountName) {
+                                document.getElementById('account_name_input').value = accountName;
+                            }
+                            if (iban) {
+                                document.getElementById('iban_input').value = iban;
+                            }
+
+                            // Show existing file preview if exists
+                            if (existingFileUrl) {
+                                showExistingFilePreview(existingFileUrl);
+                                currentExistingFile = existingFileUrl;
+                            }
+                            break;
+
                         default:
                             modalTitle = '{{ translate('Update Document') }}';
                             // For non-contracts, if a file exists show preview (no fetch needed)
@@ -717,11 +810,13 @@
                 // Validate file only if needed:
                 // - For non-contract docs file is required
                 // - For contract: file required only if there is NO existing contract
+                // - For IBAN certificate: file is required
                 const fileInput = document.getElementById('file_input');
                 const hasFile = fileInput.files && fileInput.files.length > 0;
                 const isContract = currentDocumentType === 'contract';
+                const isIbanCertificate = currentDocumentType === 'iban_certificate';
 
-                if (!isContract && !hasFile) {
+                if (!isContract && !hasFile && !isIbanCertificate) {
                     Swal.fire({
                         icon: 'error',
                         title: '{{ translate('Error') }}',
@@ -740,6 +835,66 @@
                         confirmButtonColor: '#3b82f6',
                     });
                     return;
+                }
+
+                if (isIbanCertificate && !hasFile) {
+                    // IBAN certificate requires a file
+                    Swal.fire({
+                        icon: 'error',
+                        title: '{{ translate('Error') }}',
+                        text: '{{ translate('Please select an IBAN certificate file to upload.') }}',
+                        confirmButtonColor: '#3b82f6',
+                    });
+                    return;
+                }
+
+                // Validate IBAN fields if this is an IBAN certificate
+                if (isIbanCertificate) {
+                    const bankName = document.getElementById('bank_name_select').value;
+                    const accountName = document.getElementById('account_name_input').value;
+                    const iban = document.getElementById('iban_input').value;
+
+                    if (!bankName) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ translate('Error') }}',
+                            text: '{{ translate('Please select a bank name.') }}',
+                            confirmButtonColor: '#3b82f6',
+                        });
+                        return;
+                    }
+
+                    if (!accountName) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ translate('Error') }}',
+                            text: '{{ translate('Please enter an account name.') }}',
+                            confirmButtonColor: '#3b82f6',
+                        });
+                        return;
+                    }
+
+                    if (!iban) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ translate('Error') }}',
+                            text: '{{ translate('Please enter an IBAN number.') }}',
+                            confirmButtonColor: '#3b82f6',
+                        });
+                        return;
+                    }
+
+                    // Validate IBAN format
+                    const ibanPattern = /^[A-Za-z]{2}[0-9]{2}([ ]?[A-Za-z0-9]{4}){1,7}$/;
+                    if (!ibanPattern.test(iban.replace(/\s/g, ''))) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: '{{ translate('Error') }}',
+                            text: '{{ translate('Please enter a valid IBAN number.') }}',
+                            confirmButtonColor: '#3b82f6',
+                        });
+                        return;
+                    }
                 }
 
                 // Validate file size if a file was selected
@@ -821,6 +976,39 @@
             // Initialize flatpickr on page load for any existing date inputs
             if (document.querySelector('.flatpickr')) {
                 initFlatpickr();
+            }
+        });
+    </script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const ibanInput = document.getElementById('iban_input');
+
+            if (ibanInput) {
+                ibanInput.addEventListener('input', function(e) {
+                    let value = e.target.value;
+
+                    // Remove all non-alphanumeric characters and spaces
+                    value = value.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+
+                    // Limit to max 34 characters
+                    if (value.length > 34) {
+                        value = value.slice(0, 34);
+                    }
+
+                    // Add space every 4 characters for readability
+                    const formatted = value.match(/.{1,4}/g)?.join(' ') || '';
+
+                    e.target.value = formatted;
+                });
+
+                // Optional: prevent pasting invalid chars
+                ibanInput.addEventListener('paste', function(e) {
+                    e.preventDefault();
+                    const paste = (e.clipboardData || window.clipboardData).getData('text');
+                    const clean = paste.replace(/[^A-Za-z0-9]/g, '').toUpperCase().slice(0, 34);
+                    const formatted = clean.match(/.{1,4}/g)?.join(' ') || '';
+                    e.target.value = formatted;
+                });
             }
         });
     </script>

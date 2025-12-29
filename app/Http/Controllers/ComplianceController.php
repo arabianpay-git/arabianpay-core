@@ -47,6 +47,14 @@ class ComplianceController extends Controller
             'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120',
         ]);
 
+        if ($request->document_type === 'iban_certificate') {
+            $validationRules['bank_name'] = 'required|string|max:255';
+            $validationRules['account_name'] = 'required|string|max:255';
+            $validationRules['iban'] = 'required|string|max:34';
+            $validationRules['bank_id'] = 'required';
+            $validationRules['file'] = 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120';
+        }
+
         try {
             $filePath = null;
             $fileName = null;
@@ -212,10 +220,6 @@ class ComplianceController extends Controller
                     break;
 
                 case 'iban_certificate':
-                    $request->validate([
-                        'bank_id' => 'required|exists:supplier_banks,id',
-                    ]);
-
                     $bank = SupplierBank::find($request->bank_id);
                     if ($bank) {
                         // Check if bank belongs to this merchant or related users
@@ -226,7 +230,17 @@ class ComplianceController extends Controller
 
                         if ($relatedUserIds->contains($bank->user_id)) {
                             $oldData = $bank->toArray();
-                            $bank->iban_certificate = $fileName; // Store just filename
+
+                            // Update bank details
+                            $bank->bank_name = $request->bank_name;
+                            $bank->account_name = $request->account_name;
+                            $bank->iban = $request->iban;
+
+                            // Update certificate file if provided
+                            if ($fileName) {
+                                $bank->iban_certificate = $fileName; // Store just filename
+                            }
+
                             $bank->save();
 
                             $entityType = 'SupplierBank';
