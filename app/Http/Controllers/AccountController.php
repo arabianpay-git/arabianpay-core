@@ -2330,10 +2330,11 @@ class AccountController extends Controller
         return $merchants->filter(function ($merchant) use ($search, $searchTerms) {
             $user = $merchant->user;
 
-            // Check full email and business_name
+            // Check full email, business_name, and phone_number
             if (
                 str_contains(strtolower($user->email), $search) ||
-                str_contains(strtolower($user->business_name), $search)
+                str_contains(strtolower($user->business_name), $search) ||
+                str_contains(strtolower($user->phone_number), $search)
             ) {
                 return true;
             }
@@ -2344,6 +2345,13 @@ class AccountController extends Controller
                     str_contains(strtolower($user->first_name), $term) ||
                     str_contains(strtolower($user->last_name), $term)
                 ) {
+                    return true;
+                }
+            }
+
+            // Also check phone number for each search term (in case of partial phone number search)
+            foreach ($searchTerms as $term) {
+                if (str_contains(strtolower($user->phone_number), $term)) {
                     return true;
                 }
             }
