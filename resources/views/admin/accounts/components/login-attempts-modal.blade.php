@@ -15,26 +15,16 @@
         $device = 'Desktop';
         $icon = 'ki-outline ki-screen';
 
-        // 1. Detect Browser & Icons
-        if (strpos($userAgent, 'Chrome') !== false && strpos($userAgent, 'Edge') === false) {
-            $browser = 'Chrome';
-            $icon = 'ki-outline ki-chrome text-primary';
-        } elseif (strpos($userAgent, 'Firefox') !== false) {
-            $browser = 'Firefox';
-            $icon = 'ki-outline ki-status text-orange-500';
-        } elseif (strpos($userAgent, 'Safari') !== false && strpos($userAgent, 'Chrome') === false) {
-            $browser = 'Safari';
-            $icon = 'ki-outline ki-compass text-info';
-        } elseif (strpos($userAgent, 'Edge') !== false || strpos($userAgent, 'Edg') !== false) {
-            $browser = 'Edge';
-            $icon = 'ki-outline ki-microsoft text-blue-600';
-        } elseif (strpos($userAgent, 'Opera') !== false || strpos($userAgent, 'OPR') !== false) {
-            $browser = 'Opera';
-            $icon = 'ki-outline ki-status text-danger';
-        }
-
-        // 2. Detect OS & Icons (Overwrites browser icon if OS is more specific for your UI)
-        if (strpos($userAgent, 'Windows') !== false) {
+        // 1. Detect OS FIRST (more specific to less specific)
+        if (strpos($userAgent, 'Android') !== false) {
+            $os = 'Android';
+            $device = 'Mobile';
+            $icon = 'ki-outline ki-android text-success';
+        } elseif (strpos($userAgent, 'iPhone') !== false || strpos($userAgent, 'iPad') !== false) {
+            $os = strpos($userAgent, 'iPad') !== false ? 'iPadOS' : 'iOS';
+            $device = strpos($userAgent, 'iPad') !== false ? 'Tablet' : 'Mobile';
+            $icon = 'ki-outline ki-apple text-gray-900';
+        } elseif (strpos($userAgent, 'Windows') !== false) {
             $os = 'Windows';
             $icon = 'ki-outline ki-microsoft text-info';
         } elseif (strpos($userAgent, 'Macintosh') !== false || strpos($userAgent, 'Mac OS') !== false) {
@@ -43,21 +33,57 @@
         } elseif (strpos($userAgent, 'Linux') !== false) {
             $os = 'Linux';
             $icon = 'ki-outline ki-setting-2 text-gray-700';
-        } elseif (strpos($userAgent, 'Android') !== false) {
-            $os = 'Android';
-            $device = 'Mobile';
-            $icon = 'ki-outline ki-android text-success';
-        } elseif (strpos($userAgent, 'iPhone') !== false || strpos($userAgent, 'iPad') !== false) {
-            $os = 'iOS';
-            $device = strpos($userAgent, 'iPad') !== false ? 'Tablet' : 'Mobile';
-            $icon = 'ki-outline ki-apple text-gray-900';
         }
 
-        // 3. Adjust Device Icon if not specific OS
-        if ($device === 'Mobile' && $os === 'Unknown') {
-            $icon = 'ki-outline ki-phone text-gray-500';
-        } elseif ($device === 'Tablet') {
-            $icon = 'ki-outline ki-tablet text-gray-500';
+        // 2. Detect Browser (check for mobile indicators)
+        $isMobile =
+            strpos($userAgent, 'Mobile') !== false ||
+            strpos($userAgent, 'Android') !== false ||
+            strpos($userAgent, 'iPhone') !== false ||
+            strpos($userAgent, 'iPad') !== false;
+
+        if ($isMobile && $device === 'Desktop') {
+            $device = 'Mobile';
+        }
+
+        if (
+            strpos($userAgent, 'Chrome') !== false &&
+            strpos($userAgent, 'Edge') === false &&
+            strpos($userAgent, 'Edg') === false
+        ) {
+            $browser = 'Chrome';
+            // Keep OS icon if already set, otherwise use browser icon
+            if ($os === 'Unknown') {
+                $icon = 'ki-outline ki-chrome text-primary';
+            }
+        } elseif (strpos($userAgent, 'Firefox') !== false) {
+            $browser = 'Firefox';
+            if ($os === 'Unknown') {
+                $icon = 'ki-outline ki-status text-orange-500';
+            }
+        } elseif (strpos($userAgent, 'Safari') !== false && strpos($userAgent, 'Chrome') === false) {
+            $browser = 'Safari';
+            if ($os === 'Unknown') {
+                $icon = 'ki-outline ki-compass text-info';
+            }
+        } elseif (strpos($userAgent, 'Edge') !== false || strpos($userAgent, 'Edg') !== false) {
+            $browser = 'Edge';
+            if ($os === 'Unknown') {
+                $icon = 'ki-outline ki-microsoft text-blue-600';
+            }
+        } elseif (strpos($userAgent, 'Opera') !== false || strpos($userAgent, 'OPR') !== false) {
+            $browser = 'Opera';
+            if ($os === 'Unknown') {
+                $icon = 'ki-outline ki-status text-danger';
+            }
+        }
+
+        // 3. If still desktop but has mobile indicator, adjust device
+        if ($device === 'Desktop' && $isMobile) {
+            $device = 'Mobile';
+            if ($icon === 'ki-outline ki-screen') {
+                $icon = 'ki-outline ki-phone text-gray-500';
+            }
         }
 
         return [
@@ -134,7 +160,15 @@
                                     <div class="flex items-center gap-1.5">
                                         <i class="{{ $parsedAgent['icon'] }} text-base"></i>
                                         <span class="text-xs font-medium text-slate-700">
-                                            {{ $parsedAgent['browser'] }} • {{ $parsedAgent['os'] }}
+                                            @if ($parsedAgent['browser'] !== 'Unknown' && $parsedAgent['os'] !== 'Unknown')
+                                                {{ $parsedAgent['browser'] }} on {{ $parsedAgent['os'] }}
+                                            @elseif($parsedAgent['browser'] !== 'Unknown')
+                                                {{ $parsedAgent['browser'] }}
+                                            @elseif($parsedAgent['os'] !== 'Unknown')
+                                                {{ $parsedAgent['os'] }}
+                                            @else
+                                                {{ translate('Unknown Device') }}
+                                            @endif
                                         </span>
                                         <span class="badge badge-xs badge-outline badge-light">
                                             {{ $parsedAgent['device'] }}
@@ -142,9 +176,9 @@
                                     </div>
 
                                     <div class="flex items-center gap-1.5">
-                                        <i class="ki-solid ki-earth text-slate-400 text-sm"></i>
+                                        <i class="ki-outline ki-globe text-slate-400 text-sm"></i>
                                         <span class="text-xs font-medium text-slate-700">
-                                            {{ maskedSensitiveText('phone_number', $attempt->ip_address) }}
+                                            {{ $attempt->ip_address }}
                                         </span>
                                     </div>
                                 </div>
