@@ -385,10 +385,8 @@
                                     <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" name="iban" id="iban_input" class="input"
-                                    placeholder="{{ translate('Enter a valid IBAN, e.g. SA03 8000 0000 6080 1016 7519') }}"
+                                    placeholder="{{ translate('Enter a valid IBAN, e.g. SA00 0000 0000 0000 0000 0000') }}"
                                     maxlength="34" required pattern="[A-Za-z]{2}[0-9]{2}([ ]?[A-Za-z0-9]{4}){1,7}">
-                                <p class="text-xs text-slate-500 mt-1">
-                                    {{ translate('Format: SAXX XXXX XXXX XXXX XXXX XXXX (Saudi IBAN)') }}
                                 </p>
                             </div>
                         </div>

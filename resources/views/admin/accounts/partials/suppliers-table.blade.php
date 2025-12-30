@@ -140,14 +140,12 @@
                     <td>
                         <div class="flex gap-1">
                             @if ($isUserOnly)
-                                {{-- Limited actions for user-only records --}}
                                 <a class="btn btn-sm btn-icon btn-clear btn-primary"
                                     title="{{ translate('View User Profile') }}"
                                     href="{{ route('supplierProfile', ['id' => $item->user_id]) }}">
                                     <i class="ki-filled ki-notepad-edit"></i>
                                 </a>
                             @else
-                                {{-- Full actions for merchant records --}}
                                 <a class="btn btn-sm btn-icon btn-clear btn-primary"
                                     title="{{ translate('View Supplier Profile') }}"
                                     href="{{ route('supplierProfile', ['id' => $item->user_id]) }}">
@@ -169,6 +167,40 @@
                                         <i class="ki-filled ki-wrench"></i>
                                     </a>
                                 @endif
+
+                                @if (Auth::user()->user_type === 'admin' || (Auth::user()->user_type === 'employee' && Auth::user()->is_manager))
+                                    @if ($item->trashed())
+                                        {{-- Force delete --}}
+                                        <button type="button" class="btn btn-sm btn-icon btn-clear btn-danger"
+                                            title="{{ translate('Permanently Delete') }}"
+                                            onclick="forceDeleteMerchant(
+                                                {{ $item->id }},
+                                                '{{ addslashes($item->user?->business_name ?? 'N/A') }}'
+                                            )">
+                                            <i class="ki-filled ki-trash"></i>
+                                        </button>
+
+                                        {{-- Restore --}}
+                                        <button type="button" class="btn btn-sm btn-icon btn-clear btn-success"
+                                            title="{{ translate('Restore') }}"
+                                            onclick="restoreMerchant(
+                                                {{ $item->id }},
+                                                '{{ addslashes($item->user?->business_name ?? 'N/A') }}'
+                                            )">
+                                            <i class="ki-filled ki-arrow-right"></i>
+                                        </button>
+                                    @else
+                                        {{-- Soft delete --}}
+                                        <button type="button" class="btn btn-sm btn-icon btn-clear btn-danger"
+                                            title="{{ translate('Move to Trash') }}"
+                                            onclick="softDeleteMerchant(
+                                                    {{ $item->id }},
+                                                    '{{ addslashes($item->user?->business_name ?? 'N/A') }}'
+                                                )">
+                                            <i class="ki-filled ki-trash"></i>
+                                        </button>
+                                    @endif
+                                @endif
                             @endif
                         </div>
                     </td>
@@ -189,3 +221,57 @@
 </div>
 
 @include('layouts.includes.table-pagination', ['paginator' => $merchants])
+@push('scripts')
+    <script>
+        // Ensure CSRF token available for fetch requests
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || '';
+
+        // SweetAlert confirmation functions for main suppliers page
+        function softDeleteMerchant(merchantId, merchantName) {
+            Swal.fire({
+                title: 'Move to Trash?',
+                text: `Move "${merchantName}" to trash? You can restore it later.`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#3085d6',
+                cancelButtonColor: '#d33',
+                confirmButtonText: 'Yes, move to trash',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    fetch(`/admin/merchants/${merchantId}/soft-delete`, {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'X-CSRF-TOKEN': csrfToken,
+                                'X-Requested-With': 'XMLHttpRequest'
+                            },
+                            body: JSON.stringify({})
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                Swal.fire({
+                                    title: 'Moved to Trash!',
+                                    text: data.message,
+                                    icon: 'success',
+                                    timer: 2000,
+                                    showConfirmButton: false
+                                }).then(() => {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire('Error!', data.message || 'Unexpected response', 'error');
+                            }
+                        })
+                        .catch(error => {
+                            console.error(error);
+                            Swal.fire('Error!', 'Something went wrong.', 'error');
+                        });
+                }
+            });
+        }
+
+        window.softDeleteMerchant = softDeleteMerchant;
+    </script>
+@endpush

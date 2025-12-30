@@ -8,13 +8,23 @@
     <main class="grow content pt-5 bg-white" id="content" role="content">
         <!-- Header Container -->
         <div class="container-fixed">
-            <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
-                <div class="flex flex-col justify-center gap-2">
-                    <h1 class="text-xl font-medium leading-none text-gray-900">
-                        {{ translate('Suppliers') }}
-                    </h1>
-                </div>
+            <div class="flex items-center justify-between gap-5 pb-7.5">
+                <h1 class="text-xl font-medium leading-none text-gray-900">
+                    {{ translate('Suppliers') }}
+                </h1>
+
+                <a href="{{ route('merchants.trashed') }}" class="btn btn-sm btn-outline btn-warning">
+                    <i class="ki-filled ki-trash"></i>
+                    {{ translate('View Trash') }}
+                    @php
+                        $trashCount = \App\Models\Merchant::onlyTrashed()->count();
+                    @endphp
+                    @if ($trashCount > 0)
+                        <span class="ml-1 badge badge-sm badge-danger">{{ $trashCount }}</span>
+                    @endif
+                </a>
             </div>
+
         </div>
 
         <!-- Search + Controls Container -->
@@ -170,114 +180,11 @@
             const searchInput = document.getElementById('supplier-search-input');
             const statusFilter = document.getElementById('filter-status');
             const employeeFilter = document.getElementById('filter-employee');
-            const onboardingInput = document.getElementById('filter-onboarding-step');
             const tableContainer = document.getElementById('suppliers-table-container');
             const bulkBtn = document.getElementById('bulk-transfer-btn');
 
-            // Custom dropdown elements
-            const dropdownToggle = document.getElementById('onboarding-dropdown-toggle');
-            const dropdownMenu = document.getElementById('onboarding-dropdown-menu');
-            const selectedText = document.getElementById('onboarding-selected-text');
-            const dropdownOptions = document.querySelectorAll('.dropdown-option');
-
             let timeout = null;
             let currentFetchAbortController = null;
-
-            // Initialize custom dropdown
-            function initCustomDropdown() {
-                // Toggle dropdown menu
-                dropdownToggle.addEventListener('click', function(e) {
-                    e.stopPropagation();
-                    const isHidden = dropdownMenu.classList.contains('hidden');
-
-                    // Close other dropdowns if any
-                    document.querySelectorAll('.absolute.bg-white.border.rounded-lg.shadow-lg').forEach(
-                        menu => {
-                            if (menu !== dropdownMenu) {
-                                menu.classList.add('hidden');
-                            }
-                        });
-
-                    // Toggle current dropdown
-                    dropdownMenu.classList.toggle('hidden');
-
-                    // Position dropdown
-                    if (!isHidden) {
-                        const rect = dropdownToggle.getBoundingClientRect();
-                        dropdownMenu.style.left = '0';
-                        dropdownMenu.style.top = rect.height + 4 + 'px';
-                        dropdownMenu.style.width = rect.width + 'px';
-                    }
-
-                    // Rotate arrow icon
-                    const arrowIcon = this.querySelector('i');
-                    if (arrowIcon) {
-                        arrowIcon.style.transform = isHidden ? 'rotate(180deg)' : 'rotate(0deg)';
-                    }
-                });
-
-                // Handle option selection
-                dropdownOptions.forEach(option => {
-                    // Click to select
-                    option.addEventListener('click', function(e) {
-                        e.stopPropagation();
-                        const value = this.getAttribute('data-value');
-                        const label = this.querySelector('.font-medium').textContent;
-
-                        // Update hidden input
-                        onboardingInput.value = value;
-
-                        // Update selected text
-                        selectedText.textContent = value ? label : 'All Onboarding Steps';
-
-                        // Update selected state
-                        dropdownOptions.forEach(opt => opt.classList.remove('selected'));
-                        this.classList.add('selected');
-
-                        // Close dropdown
-                        dropdownMenu.classList.add('hidden');
-                        dropdownToggle.querySelector('i').style.transform = 'rotate(0deg)';
-
-                        // Trigger filter
-                        triggerFilter(true);
-                    });
-                });
-
-                // Close dropdown when clicking outside
-                document.addEventListener('click', function(e) {
-                    if (!dropdownToggle.contains(e.target) && !dropdownMenu.contains(e.target)) {
-                        dropdownMenu.classList.add('hidden');
-                        dropdownToggle.querySelector('i').style.transform = 'rotate(0deg)';
-                    }
-                });
-
-                // Close dropdown on escape key
-                document.addEventListener('keydown', function(e) {
-                    if (e.key === 'Escape' && !dropdownMenu.classList.contains('hidden')) {
-                        dropdownMenu.classList.add('hidden');
-                        dropdownToggle.querySelector('i').style.transform = 'rotate(0deg)';
-                    }
-                });
-
-                // Initialize selected option
-                const currentValue = onboardingInput.value;
-                if (currentValue) {
-                    const selectedOption = Array.from(dropdownOptions).find(opt =>
-                        opt.getAttribute('data-value') === currentValue
-                    );
-                    if (selectedOption) {
-                        selectedOption.classList.add('selected');
-                    }
-                } else {
-                    // Select "All" option
-                    const allOption = Array.from(dropdownOptions).find(opt =>
-                        opt.getAttribute('data-value') === ''
-                    );
-                    if (allOption) {
-                        allOption.classList.add('selected');
-                    }
-                }
-            }
 
             /**
              * Build final URL with proper parameter handling
@@ -285,7 +192,6 @@
             function buildFinalUrl(resetPage = false) {
                 const url = new URL(window.location.href);
 
-                // Helper function to add parameter if it has a value
                 const addParam = (key, value) => {
                     if (value && value.toString().trim() !== '') {
                         url.searchParams.set(key, value.toString());
@@ -294,13 +200,10 @@
                     }
                 };
 
-                // Add all parameters
                 addParam('search', searchInput.value);
                 addParam('status', statusFilter.value);
                 addParam('employee', employeeFilter.value);
-                addParam('onboarding_step', onboardingInput.value);
 
-                // Handle page parameter
                 if (resetPage) {
                     url.searchParams.set('page', '1');
                 }
@@ -313,21 +216,16 @@
             }
 
             function fetchSuppliers(resetPage = false) {
-                // Abort previous request if still pending
                 if (currentFetchAbortController) {
                     currentFetchAbortController.abort();
                 }
 
-                // Create new AbortController for this request
                 currentFetchAbortController = new AbortController();
                 const signal = currentFetchAbortController.signal;
 
                 const finalUrl = buildFinalUrl(resetPage);
-
-                // Update URL in browser without page reload
                 updateBrowserUrl(finalUrl);
 
-                // Add loading indicator
                 tableContainer.classList.add('opacity-50', 'pointer-events-none');
 
                 fetch(finalUrl.toString(), {
@@ -349,34 +247,30 @@
                     })
                     .catch(err => {
                         if (err.name !== 'AbortError') {
-                            console.error('Error fetching suppliers:', err);
+                            console.error(err);
                             tableContainer.classList.remove('opacity-50', 'pointer-events-none');
                             tableContainer.innerHTML = `
-                            <div class="text-center py-8 text-gray-500">
-                                <i class="ki-filled ki-information text-2xl mb-2"></i>
-                                <p>Error loading suppliers. Please try again.</p>
-                                <button onclick="fetchSuppliers(false)" class="btn btn-sm btn-primary mt-2">
-                                    Retry
-                                </button>
-                            </div>
-                        `;
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="ki-filled ki-information text-2xl mb-2"></i>
+                        <p>Error loading suppliers. Please try again.</p>
+                        <button onclick="fetchSuppliers(false)" class="btn btn-sm btn-primary mt-2">
+                            Retry
+                        </button>
+                    </div>
+                `;
                         }
                     });
             }
 
-            // Trigger filter with debouncing
             function triggerFilter(resetPage = false) {
                 clearTimeout(timeout);
                 timeout = setTimeout(() => fetchSuppliers(resetPage), 300);
             }
 
-            // Handle pagination clicks
             tableContainer.addEventListener('click', function(e) {
                 const paginationLink = e.target.closest('.pagination a');
                 if (paginationLink) {
                     e.preventDefault();
-
-                    // Update URL with page parameter
                     const url = new URL(paginationLink.href);
                     window.history.pushState({}, '', url.toString());
                     fetchSuppliers(false);
@@ -411,67 +305,26 @@
                     });
                 }
 
-                // Initialize bulk button state
                 toggleBtn();
             }
 
-            // Event Listeners for other filters
             searchInput.addEventListener('input', () => triggerFilter(true));
             statusFilter.addEventListener('change', () => triggerFilter(true));
             employeeFilter.addEventListener('change', () => triggerFilter(true));
 
-            // Handle browser back/forward navigation
             window.addEventListener('popstate', function() {
-                // Update filter values from URL
                 const urlParams = new URLSearchParams(window.location.search);
                 searchInput.value = urlParams.get('search') || '';
                 statusFilter.value = urlParams.get('status') || '';
                 employeeFilter.value = urlParams.get('employee') || '';
-                const onboardingStep = urlParams.get('onboarding_step') || '';
-
-                // Update custom dropdown
-                onboardingInput.value = onboardingStep;
-
-                // Update selected text
-                const onboardingSteps = {
-                    'basic-info': '1. Basic Info',
-                    'business-revenue': '2. Business Revenue',
-                    'business-verification': '3. Business Verification',
-                    'personal-details': '4. Personal Details',
-                    'bank-details': '5. Bank Details',
-                    'additional-details': '6. Additional Details',
-                };
-                selectedText.textContent = onboardingStep && onboardingSteps[onboardingStep] ?
-                    onboardingSteps[onboardingStep] :
-                    'All Onboarding Steps';
-
-                // Update selected option in dropdown
-                dropdownOptions.forEach(opt => opt.classList.remove('selected'));
-                const selectedOption = Array.from(dropdownOptions).find(opt =>
-                    opt.getAttribute('data-value') === onboardingStep
-                );
-                if (selectedOption) {
-                    selectedOption.classList.add('selected');
-                } else {
-                    // Select "All" option
-                    const allOption = Array.from(dropdownOptions).find(opt =>
-                        opt.getAttribute('data-value') === ''
-                    );
-                    if (allOption) allOption.classList.add('selected');
-                }
-
-                // Fetch with current URL
                 fetchSuppliers(false);
             });
 
-            // Clear filters button
             document.getElementById('clear-filters-btn').addEventListener('click', function(e) {
                 e.preventDefault();
                 window.location.href = "{{ route('suppliers') }}";
             });
 
-            // Initialize
-            initCustomDropdown();
             initCheckboxes();
         });
     </script>

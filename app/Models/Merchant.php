@@ -5,11 +5,12 @@ namespace App\Models;
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Merchant extends Model
 {
-    use LogsModelActions, EncryptsAttributes;
+    use LogsModelActions, EncryptsAttributes, SoftDeletes;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
     protected static $logOnlyDirty = true;
@@ -56,6 +57,8 @@ class Merchant extends Model
         'owner_name',
         'owner_iqama_number',
     ];
+
+    protected $dates = ['deleted_at'];
 
     protected $casts = [
         'payment_history' => 'array',

@@ -65,6 +65,7 @@ use App\Http\Controllers\{
     StateController,
     StaticsController,
     SupplierAndSalesController,
+    SupplierController,
     SupplierRoleController,
     SupportTicketController,
     ThirdPatryController,
@@ -346,10 +347,23 @@ Route::group([
                 Route::post('customer/create-limit', 'createCreditLimit')->name('createCreditLimit');
                 Route::get('custoemr-transactions', 'transactions')->name('transactions');
 
-                Route::get('suppliers',            'suppliers')->name('suppliers');
-                Route::post('update-commission',            'updateCommission')->name('updateCommission');
-                Route::get('supplier/{id}',        'supplierProfile')->name('supplierProfile');
-                Route::get('supplier-shop-settings/{id}',        'supplierShop')->name('supplierShop');
+
+
+                Route::get('customers-statics',    'customersStatics')->name('customers.statics');
+
+                Route::get('nafath', 'nafath')->name('nafath');
+            });
+
+            //
+            // Supplier Accounts
+            //
+
+            Route::controller(SupplierController::class)->group(function () {
+                // Supplier management routes
+                Route::get('suppliers', 'suppliers')->name('suppliers');
+                Route::post('update-commission', 'updateCommission')->name('updateCommission');
+                Route::get('supplier/{id}', 'supplierProfile')->name('supplierProfile');
+                Route::get('supplier-shop-settings/{id}', 'supplierShop')->name('supplierShop');
                 Route::post('shop-settings', 'supplierShopSubmit')->name('supplierShopSubmit');
                 Route::get('supplier-transactions/{id}', 'supplierTransactions')->name('supplierTransactions');
                 Route::get('supplier-finance/{id}', 'supplierFinance')->name('supplierFinance');
@@ -360,11 +374,14 @@ Route::group([
                 Route::put('supplier-status/{id}', 'updateSupplierStatus')->name('updateSupplierStatus');
                 Route::put('supplier-status/approve/{id}', 'updateSupplierStatusApprove')->name('updateSupplierStatusApprove');
                 Route::get('supplier-compliance/{id}', 'supplierCompliance')->name('supplierCompliance');
+                Route::get('suppliers-statics', 'suppliersStatics')->name('suppliers.statics');
 
-                Route::get('customers-statics',    'customersStatics')->name('customers.statics');
-                Route::get('suppliers-statics',    'suppliersStatics')->name('suppliers.statics');
-
-                Route::get('nafath', 'nafath')->name('nafath');
+                // Trash management routes
+                Route::get('suppliers/trashed', 'trashed')->name('merchants.trashed');
+                Route::post('merchants/{id}/soft-delete', 'softDelete')->name('merchants.softDelete');
+                Route::post('merchants/{id}/force-delete', 'forceDelete')->name('merchants.forceDelete');
+                Route::post('merchants/{id}/restore', 'restore')->name('merchants.restore');
+                Route::post('merchants/empty-trash', 'emptyTrash')->name('merchants.emptyTrash');
             });
 
             Route::post('/supplier/{id}/update-document', [ComplianceController::class, 'updateDocument'])->name('supplier.update-document');

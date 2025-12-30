@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
@@ -17,7 +18,17 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements HasPasskeys
 {
-    use HasApiTokens, HasRoles, HasFactory, HasProfilePhoto, HasTeams, Notifiable, TwoFactorAuthenticatable, LogsModelActions, EncryptsAttributes, InteractsWithPasskeys;
+    use HasApiTokens,
+        HasRoles,
+        HasFactory,
+        HasProfilePhoto,
+        HasTeams,
+        Notifiable,
+        TwoFactorAuthenticatable,
+        LogsModelActions,
+        EncryptsAttributes,
+        InteractsWithPasskeys,
+        SoftDeletes;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
     protected static $logOnlyDirty = true;
@@ -68,6 +79,8 @@ class User extends Authenticatable implements HasPasskeys
         'two_factor_recovery_codes',
         'two_factor_secret',
     ];
+
+    protected $dates = ['deleted_at'];
 
     /**
      * The accessors to append to the model's array form.

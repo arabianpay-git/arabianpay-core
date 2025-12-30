@@ -2727,7 +2727,8 @@ return [
     'Bank Albilad' => 'بنك البلاد',
     'Eastern Province Bank' => 'بنك الخليج الدولي',
     'Account Name' => 'اسم الحساب',
-    'Format: SAXX XXXX XXXX XXXX XXXX XXXX (Saudi IBAN)' => 'تنسيق: SAXX XXXX XXXX XXXX XXXX XXXX (السعودية البنكية)',
-    'Update IBAN Certificate' => 'تحديث شهادة IBAN',
+    'Update IBAN Certificate' => 'تحديث شهادة الأيبان',
     'Select Bank' => 'حدد البنك',
+    'weight' => 'وزن',
+    'Enter a valid IBAN, e.g. SA00 0000 0000 0000 0000 0000' => 'ادخل الأيبان صالح، مثل SA00 0000 0000 0000 0000 0000',
 ];
