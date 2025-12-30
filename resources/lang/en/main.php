@@ -2878,7 +2878,6 @@ return [
     'Select Bank' => 'Select Bank',
     'weight' => 'weight',
     'Enter a valid IBAN, e.g. SA00 0000 0000 0000 0000 0000' => 'Enter a valid IBAN, e.g. SA00 0000 0000 0000 0000 0000',
-
     'View Trash' => 'View Trash',
     'Move to Trash' => 'Move to Trash',
     'Name & Business' => 'Name & Business',
