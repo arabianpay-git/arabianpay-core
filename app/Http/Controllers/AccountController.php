@@ -1073,4 +1073,47 @@ class AccountController extends Controller
 
         return view('admin.accounts.nafath', ['nafath' => $nafathRecords]);
     }
+
+
+    private function calculateTotalOrderAmountWithoutTax($orders): float
+    {
+        $total = 0;
+
+        foreach ($orders as $order) {
+            $items    = map_product_details($order->product_details);
+            $subTotal = $items->sum('total');
+            $shipping = $order->shipping_cost ?? 0;
+            $discount = $order->coupon_discount ?? 0;
+            $tax      = calculate_order_tax($order);
+
+            $base = $subTotal + $tax + $shipping - $discount;
+        }
+
+        return $base;
+    }
+
+    private function calculateTotalOrderAmount($orders): float
+    {
+        $total = 0;
+
+        foreach ($orders as $order) {
+            $items    = map_product_details($order->product_details);
+            $subTotal = $items->sum('total');
+            $shipping = $order->shipping_cost ?? 0;
+            $discount = $order->coupon_discount ?? 0;
+            $tax      = calculate_order_tax($order);
+
+            $base = $subTotal + $tax + $shipping - $discount;
+
+            $commissionPct    = get_system_commission();
+            $commissionAmount = $base * ($commissionPct / 100);
+
+            $commissionTaxPct  = get_commission_tax();
+            $commissionTaxAmt  = $commissionAmount * ($commissionTaxPct / 100);
+
+            $total += $base + $commissionAmount + $commissionTaxAmt;
+        }
+
+        return $total;
+    }
 }
