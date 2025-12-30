@@ -119,13 +119,11 @@ class SupplierController extends Controller
         if ($request->ajax()) {
             return view('admin.accounts.partials.suppliers-table', [
                 'merchants' => $paginated,
-                'onboardingStep' => $onboardingStep
             ])->render();
         }
 
         return view('admin.accounts.suppliers', [
             'merchants' => $paginated,
-            'onboardingStep' => $onboardingStep
         ]);
     }
 
