@@ -621,8 +621,6 @@ class SchedulePaymentController extends Controller
                 $payment->payment_method = $request->payment_method;
                 $payment->deducted_amount += $remainingAmount;
                 $payment->payment_status = 'paid';
-                $payment->paid_at = now();
-                $payment->payment_processed_by = $user->id;
 
                 // Handle receipt upload
                 $receiptPath = null;
