@@ -6,9 +6,10 @@
         <div class="container-fixed" id="content_container"></div>
 
         <div class="container-fixed">
-            @if ($order->general_status === 'completed')
-                @include('admin.orders.partials.order-completed-alert')
+            @if (in_array($order->general_status, ['completed', 'cancelled', 'rejected']) || $order->delivery_status === 'returned')
+                @include('admin.orders.partials.order-alert')
             @endif
+
             <div class="flex flex-wrap items-center lg:items-end justify-between gap-5 pb-7.5">
                 <div class="flex flex-col justify-center gap-2">
                     <h1 class="text-xl font-medium leading-none text-gray-900">

@@ -1,5 +1,7 @@
 @php
-    $isDisabled = in_array($order->general_status, ['completed', 'accepted', 'rejected']);
+    $isDisabled =
+        in_array($order->general_status, ['completed', 'accepted', 'rejected', 'cancelled', 'failed']) ||
+        $order->delivery_status === 'returned';
     // try to find local Sanad model for this order
     $orderSanad = \App\Models\Sanad::where('order_id', $order->id)->first();
 @endphp

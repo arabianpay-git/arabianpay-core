@@ -909,19 +909,35 @@ class ProductController extends Controller
     // Private Helpers
     private function validateBusinessRules(array $data): ?array
     {
+        // Purchase price check
         if (!empty($data['purchase_price']) && $data['purchase_price'] > $data['unit_price']) {
             return ['purchase_price' => 'Cost per item cannot be greater than the unit price.'];
         }
-        if (!empty($data['discount']) && $data['discount'] > $data['unit_price']) {
-            return ['discount' => 'Discount cannot be greater than the unit price.'];
-        }
-        if (!empty($data['discount_start_date']) && !empty($data['discount_end_date'])) {
-            $start = Carbon::parse($data['discount_start_date']);
-            $end = Carbon::parse($data['discount_end_date']);
-            if ($start->greaterThan($end)) {
-                return ['discount_end_date' => 'Discount end date must be after start date.'];
+
+        // Discount validation
+        if (!empty($data['discount'])) {
+
+            if ($data['discount_type'] === 'percent') {
+
+                // percentage must not exceed 100
+                if ($data['discount'] > 100) {
+                    return ['discount' => 'Discount percentage cannot be greater than 100%.'];
+                }
+
+                // calculate discount amount from percentage
+                $discountAmount = ($data['unit_price'] * $data['discount']) / 100;
+
+                if ($discountAmount > $data['unit_price']) {
+                    return ['discount' => 'Discount amount cannot be greater than the unit price.'];
+                }
+            } else {
+                // fixed discount
+                if ($data['discount'] > $data['unit_price']) {
+                    return ['discount' => 'Discount cannot be greater than the unit price.'];
+                }
             }
         }
+
         // Validate against credit limit
         //$creditLimit = get_credit_limit($data['user_id']);
         //if (!is_null($creditLimit) && !empty($data['unit_price']) && $data['unit_price'] > $creditLimit) {

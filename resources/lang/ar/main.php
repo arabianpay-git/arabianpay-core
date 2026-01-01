@@ -2742,4 +2742,12 @@ return [
     'Trash is Empty' => 'سلة المهملات فارغة',
     'No deleted suppliers found in trash.' => 'لم يتم العثور على موردين محذوفين في سلة المهملات.',
     'Back to Suppliers' => 'العودة إلى الموردين',
+    'Cancelled!' => 'تم الإلغاء!',
+    'This order has been cancelled. No further action can be taken.' => 'تم إلغاء هذا الطلب. لا يمكن اتخاذ أي إجراء آخر.',
+    'This order has been cancelled.' => 'تم إلغاء هذا الطلب.',
+    'Rejected!' => 'تم رفض',
+    'This order has been rejected.' => 'تم رفض هذا الطلب.',
+    'Returned!' => 'تم استرجاع',
+    'This order has been returned.' => 'تم استرجاع هذا الطلب.',
+
 ];

@@ -2889,4 +2889,11 @@ return [
     'Trash is Empty' => 'Trash is Empty',
     'No deleted suppliers found in trash.' => 'No deleted suppliers found in trash.',
     'Back to Suppliers' => 'Back to Suppliers',
+    'Cancelled!' => 'Cancelled!',
+    'This order has been cancelled. No further action can be taken.' => 'This order has been cancelled. No further action can be taken.',
+    'This order has been cancelled.' => 'This order has been cancelled.',
+    'Rejected!' => 'Rejected!',
+    'This order has been rejected.' => 'This order has been rejected.',
+    'Returned!' => 'Returned!',
+    'This order has been returned.' => 'This order has been returned.',
 ];

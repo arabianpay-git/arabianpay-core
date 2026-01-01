@@ -52,11 +52,22 @@
     </div>
 
     <div class="card-body pt-4 pb-3">
-        @if (in_array($order->general_status, ['rejected', 'completed']))
-            <div class="text-center py-6 text-red-600 font-medium">
+        @if (in_array($order->general_status, ['rejected', 'completed', 'cancelled']) || $order->delivery_status === 'returned')
+            <div
+                class="text-center py-6 font-medium
+            @if ($order->general_status === 'completed') text-green-600
+            @elseif ($order->delivery_status === 'returned')
+                text-yellow-600
+            @else
+                text-red-600 @endif
+        ">
                 @if ($order->general_status === 'rejected')
                     {{ translate('You have already rejected this order.') }}
-                @else
+                @elseif ($order->delivery_status === 'returned')
+                    {{ translate('This order has been returned.') }}
+                @elseif ($order->general_status === 'cancelled')
+                    {{ translate('This order has been cancelled.') }}
+                @elseif ($order->general_status === 'completed')
                     {{ translate('This order has been completed.') }}
                 @endif
             </div>
@@ -94,8 +105,8 @@
                                 {{ translate('Processing') }}</option>
                             <option value="cancelled" {{ $order->general_status === 'cancelled' ? 'selected' : '' }}>
                                 {{ translate('Cancelled') }}</option>
-                            <option value="failed" {{ $order->general_status === 'failed' ? 'selected' : '' }}>
-                                {{ translate('Failed') }}</option>
+                            {{-- <option value="failed" {{ $order->general_status === 'failed' ? 'selected' : '' }}>
+                                {{ translate('Failed') }}</option> --}}
                         </select>
                     </div>
                 @endif
