@@ -35,6 +35,7 @@ class SchedulePayment extends Model
         'failure_reason',
         'receipt',
         'payment_method',
+        'paid_at',
     ];
 
     protected $casts = [
