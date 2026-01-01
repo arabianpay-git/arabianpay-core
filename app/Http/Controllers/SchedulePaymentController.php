@@ -526,7 +526,7 @@ class SchedulePaymentController extends Controller
 
             $validator = Validator::make($request->all(), [
                 'schedule_id'    => 'required|exists:schedule_payments,id',
-                'payment_method' => 'required|string|in:bank_transfer,cash,card,wallet,other',
+                'payment_method' => 'required',
                 'receipt'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
             ]);
 

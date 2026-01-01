@@ -1067,16 +1067,6 @@ class SupplierController extends Controller
 
 
 
-
-
-
-
-
-
-
-
-
-
     /**
      * Display trashed suppliers
      */
@@ -1568,43 +1558,6 @@ class SupplierController extends Controller
             throw $e;
         }
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /**
      * Private function to filter merchants collection based on search input
