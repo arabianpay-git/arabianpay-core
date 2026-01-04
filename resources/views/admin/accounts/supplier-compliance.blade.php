@@ -342,7 +342,7 @@
                                     {{ translate('Bank Name') }}
                                     <span class="text-red-500">*</span>
                                 </label>
-                                <select name="bank_name" id="bank_name_select" class="input">
+                                <select name="bank_name" id="bank_name_select" class="input" disabled>
                                     <option value="">{{ translate('Select Bank') }}</option>
                                     @php
                                         $saudiBanks = [
@@ -375,7 +375,7 @@
                                     <span class="text-red-500">*</span>
                                 </label>
                                 <input type="text" name="account_name" id="account_name_input" class="input"
-                                    required>
+                                    disabled>
                             </div>
 
                             <!-- IBAN -->
@@ -386,8 +386,7 @@
                                 </label>
                                 <input type="text" name="iban" id="iban_input" class="input"
                                     placeholder="{{ translate('Enter a valid IBAN, e.g. SA00 0000 0000 0000 0000 0000') }}"
-                                    maxlength="34" required pattern="[A-Za-z]{2}[0-9]{2}([ ]?[A-Za-z0-9]{4}){1,7}">
-                                </p>
+                                    maxlength="34" disabled pattern="[A-Za-z]{2}[0-9]{2}([ ]?[A-Za-z0-9]{4}){1,7}">
                             </div>
                         </div>
 
@@ -452,7 +451,7 @@
                                         {{ translate('Commission %') }}
                                     </label>
                                     <input type="number" name="commission" id="commission" class="input"
-                                        step="0.01" min="0" max="100" placeholder="e.g., 15.5">
+                                        step="0.01" min="0" max="100" placeholder="e.g., 15.5" disabled>
                                 </div>
                                 <div>
                                     <label for="contract_end_date" class="block text-sm font-medium text-slate-700 mb-2">
@@ -460,7 +459,7 @@
                                     </label>
                                     <input type="text" name="contract_end_date" id="contract_end_date"
                                         class="input flatpickr" placeholder="{{ translate('Select date...') }}"
-                                        data-input>
+                                        data-input disabled>
                                 </div>
                             </div>
 
@@ -550,6 +549,28 @@
             let flatpickrInstance = null;
             let hasExistingContract = false; // tracks if there's already a contract
             let currentExistingFile = null; // tracks any existing file URL for preview (all docs)
+            let hasFile = false; // tracks if a new file is selected by user
+
+            // DOM refs
+            const fileInput = document.getElementById('file_input');
+            const fileNameDisplay = document.getElementById('file_name_display');
+            const fileInfoDisplay = document.getElementById('file_info_display');
+            const selectedFileName = document.getElementById('selected_file_name');
+            const selectedFileSize = document.getElementById('selected_file_size');
+            const selectFileBtn = document.getElementById('selectFileBtn');
+            const clearFileBtn = document.getElementById('clear_file_btn');
+            const currentFileViewLink = document.getElementById('currentFileViewLink');
+
+            // IBAN & contract fields
+            const bankNameSelect = document.getElementById('bank_name_select');
+            const accountNameInput = document.getElementById('account_name_input');
+            const ibanInput = document.getElementById('iban_input');
+            const commissionInput = document.getElementById('commission');
+            const contractEndDateInput = document.getElementById('contract_end_date');
+
+            function updateHasFile() {
+                hasFile = !!(fileInput && fileInput.files && fileInput.files.length > 0);
+            }
 
             // Initialize flatpickr
             function initFlatpickr() {
@@ -567,48 +588,98 @@
                 });
             }
 
-            // File input functionality
-            const fileInput = document.getElementById('file_input');
-            const fileNameDisplay = document.getElementById('file_name_display');
-            const fileInfoDisplay = document.getElementById('file_info_display');
-            const selectedFileName = document.getElementById('selected_file_name');
-            const selectedFileSize = document.getElementById('selected_file_size');
-            const selectFileBtn = document.getElementById('selectFileBtn');
-            const clearFileBtn = document.getElementById('clear_file_btn');
-            const currentFileViewLink = document.getElementById('currentFileViewLink');
+            // helpers to show/hide and enable/disable IBAN fields
+            function setIbanVisibility(show) {
+                const ibanFields = document.getElementById('ibanFields');
+                if (!ibanFields) return;
+
+                if (show) {
+                    ibanFields.classList.remove('hidden');
+                    if (bankNameSelect) bankNameSelect.removeAttribute('disabled');
+                    if (accountNameInput) accountNameInput.removeAttribute('disabled');
+                    if (ibanInput) {
+                        ibanInput.removeAttribute('disabled');
+                        ibanInput.setAttribute('required', 'required');
+                    }
+                    if (bankNameSelect) bankNameSelect.setAttribute('required', 'required');
+                    if (accountNameInput) accountNameInput.setAttribute('required', 'required');
+                } else {
+                    ibanFields.classList.add('hidden');
+                    if (bankNameSelect) {
+                        bankNameSelect.setAttribute('disabled', 'disabled');
+                        bankNameSelect.removeAttribute('required');
+                    }
+                    if (accountNameInput) {
+                        accountNameInput.setAttribute('disabled', 'disabled');
+                        accountNameInput.removeAttribute('required');
+                    }
+                    if (ibanInput) {
+                        ibanInput.setAttribute('disabled', 'disabled');
+                        ibanInput.removeAttribute('required');
+                    }
+                }
+            }
+
+            // helpers to show/hide and enable/disable contract fields
+            function setContractVisibility(show) {
+                const contractFields = document.getElementById('contractFields');
+                if (!contractFields) return;
+
+                if (show) {
+                    contractFields.classList.remove('hidden');
+                    if (commissionInput) commissionInput.removeAttribute('disabled');
+                    if (contractEndDateInput) contractEndDateInput.removeAttribute('disabled');
+                    // mark required only if you want to force them when creating new contract — we keep optional here
+                    // commissionInput.setAttribute('required', 'required'); // OPTIONAL
+                } else {
+                    contractFields.classList.add('hidden');
+                    if (commissionInput) {
+                        commissionInput.setAttribute('disabled', 'disabled');
+                        commissionInput.removeAttribute('required');
+                    }
+                    if (contractEndDateInput) {
+                        contractEndDateInput.setAttribute('disabled', 'disabled');
+                        contractEndDateInput.removeAttribute('required');
+                    }
+                }
+            }
 
             // Click on the button or input to trigger file selection
             if (selectFileBtn) {
                 selectFileBtn.addEventListener('click', function() {
-                    fileInput.click();
+                    if (fileInput) fileInput.click();
                 });
             }
 
             if (fileNameDisplay) {
                 fileNameDisplay.addEventListener('click', function() {
-                    fileInput.click();
+                    if (fileInput) fileInput.click();
                 });
             }
 
             // Handle file selection
             if (fileInput) {
                 fileInput.addEventListener('change', function() {
+                    updateHasFile();
                     if (this.files && this.files.length > 0) {
                         const file = this.files[0];
                         const fileName = file.name;
                         const fileSize = (file.size / (1024 * 1024)).toFixed(2); // Convert to MB
 
                         // Update display
-                        fileNameDisplay.value = fileName;
-                        selectedFileName.textContent = fileName;
-                        selectedFileSize.textContent = `${fileSize} MB`;
+                        if (fileNameDisplay) fileNameDisplay.value = fileName;
+                        if (selectedFileName) selectedFileName.textContent = fileName;
+                        if (selectedFileSize) selectedFileSize.textContent = `${fileSize} MB`;
 
                         // Show file info section and view link is hidden (new file, not existing)
-                        fileInfoDisplay.classList.remove('hidden');
+                        if (fileInfoDisplay) fileInfoDisplay.classList.remove('hidden');
                         if (currentFileViewLink) currentFileViewLink.classList.add('hidden');
 
                         // Clear currentExistingFile because user selected a new file
                         currentExistingFile = null;
+                    } else {
+                        // No file selected
+                        clearFileSelection();
                     }
                 });
             }
@@ -623,13 +694,14 @@
             function clearFileSelection() {
                 if (fileInput) {
                     fileInput.value = '';
-                    fileNameDisplay.value = '';
-                    fileInfoDisplay.classList.add('hidden');
-                    selectedFileName.textContent = '';
-                    selectedFileSize.textContent = '';
-                    if (currentFileViewLink) currentFileViewLink.classList.add('hidden');
-                    currentExistingFile = null;
                 }
+                if (fileNameDisplay) fileNameDisplay.value = '';
+                if (fileInfoDisplay) fileInfoDisplay.classList.add('hidden');
+                if (selectedFileName) selectedFileName.textContent = '';
+                if (selectedFileSize) selectedFileSize.textContent = '';
+                if (currentFileViewLink) currentFileViewLink.classList.add('hidden');
+                currentExistingFile = null;
+                hasFile = false;
             }
 
             // Handle document update button click
@@ -651,22 +723,25 @@
                     form.reset();
                     clearFileSelection();
 
-                    // Hide all field groups
-                    document.getElementById('contractFields').classList.add('hidden');
-                    document.getElementById('ibanFields').classList.add('hidden');
-                    document.getElementById('currentContractInfo').classList.add('hidden');
-                    document.getElementById('loadingIndicator').classList.add('hidden');
+                    // Hide all field groups (they will be enabled selectively)
+                    setContractVisibility(false);
+                    setIbanVisibility(false);
+                    const currentContractInfoEl = document.getElementById('currentContractInfo');
+                    if (currentContractInfoEl) currentContractInfoEl.classList.add('hidden');
+                    const loadingIndicator = document.getElementById('loadingIndicator');
+                    if (loadingIndicator) loadingIndicator.classList.add('hidden');
 
                     // Reset flags
                     hasExistingContract = false;
                     currentExistingFile = null;
+                    updateHasFile();
 
                     // Set form values
                     document.getElementById('merchant_id').value = currentMerchantId;
                     document.getElementById('document_type').value = currentDocumentType;
                     document.getElementById('bank_id').value = bankId;
 
-                    // Set form action
+                    // Set form action (blade route)
                     form.action = '{{ route('supplier.update-document', ['id' => ':id']) }}'
                         .replace(':id', currentMerchantId);
 
@@ -675,7 +750,7 @@
                     switch (currentDocumentType) {
                         case 'contract':
                             modalTitle = '{{ translate('Update Supplier Contract') }}';
-                            document.getElementById('contractFields').classList.remove('hidden');
+                            setContractVisibility(true);
                             initFlatpickr(); // Initialize flatpickr for contract date
                             // Always fetch contract metadata (commission / end date)
                             loadContractDetails();
@@ -684,28 +759,31 @@
                                 showExistingFilePreview(existingFileUrl);
                                 hasExistingContract = true;
                                 currentExistingFile = existingFileUrl;
+                                // when a contract file exists, we treat it like "hasFile" for submission checks
+                                hasFile = true;
                             }
                             break;
 
                         case 'iban_certificate':
                             modalTitle = '{{ translate('Update IBAN Certificate') }}';
-                            document.getElementById('ibanFields').classList.remove('hidden');
+                            setIbanVisibility(true);
 
                             // Pre-fill IBAN fields
-                            if (bankName) {
-                                document.getElementById('bank_name_select').value = bankName;
+                            if (bankName && bankNameSelect) {
+                                bankNameSelect.value = bankName;
                             }
-                            if (accountName) {
-                                document.getElementById('account_name_input').value = accountName;
+                            if (accountName && accountNameInput) {
+                                accountNameInput.value = accountName;
                             }
-                            if (iban) {
-                                document.getElementById('iban_input').value = iban;
+                            if (iban && ibanInput) {
+                                ibanInput.value = iban;
                             }
 
                             // Show existing file preview if exists
                             if (existingFileUrl) {
                                 showExistingFilePreview(existingFileUrl);
                                 currentExistingFile = existingFileUrl;
+                                hasFile = true;
                             }
                             break;
 
@@ -715,6 +793,7 @@
                             if (existingFileUrl) {
                                 showExistingFilePreview(existingFileUrl);
                                 currentExistingFile = existingFileUrl;
+                                hasFile = true;
                             }
                     }
 
@@ -729,19 +808,22 @@
                 const parts = url.split('/');
                 const filename = parts[parts.length - 1] || url;
 
-                selectedFileName.textContent = filename;
-                selectedFileSize.textContent = '{{ translate('Existing file') }}';
-                fileInfoDisplay.classList.remove('hidden');
+                if (selectedFileName) selectedFileName.textContent = filename;
+                if (selectedFileSize) selectedFileSize.textContent = '{{ translate('Existing file') }}';
+                if (fileInfoDisplay) fileInfoDisplay.classList.remove('hidden');
 
                 if (currentFileViewLink) {
                     currentFileViewLink.href = url;
                     currentFileViewLink.classList.remove('hidden');
                 }
+                // mark hasFile true because there's an existing file to display
+                hasFile = true;
             }
 
-            // Load contract details if exists (unchanged)
+            // Load contract details if exists
             function loadContractDetails() {
-                document.getElementById('loadingIndicator').classList.remove('hidden');
+                const loadingIndicator = document.getElementById('loadingIndicator');
+                if (loadingIndicator) loadingIndicator.classList.remove('hidden');
 
                 fetch('{{ route('supplier.contract-data', ['id' => $merchant->id]) }}')
                     .then(response => response.json())
@@ -750,11 +832,11 @@
                             const contract = data.contract;
 
                             // Pre-fill form fields
-                            if (contract.commission) {
-                                document.getElementById('commission').value = contract.commission;
+                            if (contract.commission && commissionInput) {
+                                commissionInput.value = contract.commission;
                             }
 
-                            if (contract.contract_end_date) {
+                            if (contract.contract_end_date && contractEndDateInput) {
                                 // Format date for flatpickr (YYYY-MM-DD)
                                 const date = new Date(contract.contract_end_date);
                                 const formattedDate = date.toISOString().split('T')[0];
@@ -765,26 +847,32 @@
                                 }
 
                                 // Also set the input value directly as backup
-                                document.getElementById('contract_end_date').value = formattedDate;
+                                contractEndDateInput.value = formattedDate;
                             }
 
                             // Show current contract info
                             if (data.has_contract) {
                                 hasExistingContract = true;
 
-                                document.getElementById('currentCommission').textContent = contract
-                                    .commission || 'N/A';
+                                if (document.getElementById('currentCommission')) {
+                                    document.getElementById('currentCommission').textContent = contract
+                                        .commission || 'N/A';
+                                }
 
                                 if (contract.contract_end_date) {
                                     const date = new Date(contract.contract_end_date);
-                                    document.getElementById('currentExpiryDate').textContent =
-                                        date.toLocaleDateString('en-US', {
-                                            year: 'numeric',
-                                            month: 'short',
-                                            day: 'numeric'
-                                        });
+                                    if (document.getElementById('currentExpiryDate')) {
+                                        document.getElementById('currentExpiryDate').textContent =
+                                            date.toLocaleDateString('en-US', {
+                                                year: 'numeric',
+                                                month: 'short',
+                                                day: 'numeric'
+                                            });
+                                    }
                                 } else {
-                                    document.getElementById('currentExpiryDate').textContent = 'N/A';
+                                    if (document.getElementById('currentExpiryDate')) {
+                                        document.getElementById('currentExpiryDate').textContent = 'N/A';
+                                    }
                                 }
 
                                 // If contract.contract_url is provided by the endpoint, prefer it for preview
@@ -793,7 +881,8 @@
                                     currentExistingFile = contract.contract_url;
                                 }
 
-                                document.getElementById('currentContractInfo').classList.remove('hidden');
+                                const currentContractInfoEl = document.getElementById('currentContractInfo');
+                                if (currentContractInfoEl) currentContractInfoEl.classList.remove('hidden');
                             } else {
                                 hasExistingContract = false;
                             }
@@ -803,184 +892,183 @@
                         console.error('Failed to load contract details:', error);
                     })
                     .finally(() => {
-                        document.getElementById('loadingIndicator').classList.add('hidden');
+                        if (loadingIndicator) loadingIndicator.classList.add('hidden');
                     });
             }
 
             // Handle form submission
-            document.getElementById('documentUpdateForm').addEventListener('submit', function(e) {
-                e.preventDefault();
+            const docForm = document.getElementById('documentUpdateForm');
+            if (docForm) {
+                docForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
 
-                // Validate file only if needed:
-                // - For non-contract docs file is required
-                // - For contract: file required only if there is NO existing contract
-                // - For IBAN certificate: file is required
-                const fileInput = document.getElementById('file_input');
-                const hasFile = fileInput.files && fileInput.files.length > 0;
-                const isContract = currentDocumentType === 'contract';
-                const isIbanCertificate = currentDocumentType === 'iban_certificate';
+                    updateHasFile(); // make sure hasFile is up-to-date
+                    const isIbanCertificate = currentDocumentType === 'iban_certificate';
+                    const isContract = currentDocumentType === 'contract';
 
-                if (!isContract && !hasFile && !isIbanCertificate) {
-                    Swal.fire({
-                        icon: 'error',
-                        title: '{{ translate('Error') }}',
-                        text: '{{ translate('Please select a file to upload.') }}',
-                        confirmButtonColor: '#3b82f6',
-                    });
-                    return;
-                }
+                    // Ensure non-visible fields are disabled (so browser won't validate them)
+                    if (!isIbanCertificate) setIbanVisibility(false);
+                    if (!isContract) setContractVisibility(false);
 
-                if (isContract && !hasExistingContract && !hasFile) {
-                    // no existing contract and no file provided — require file
-                    Swal.fire({
-                        icon: 'error',
-                        title: '{{ translate('Error') }}',
-                        text: '{{ translate('Please select a contract file to upload.') }}',
-                        confirmButtonColor: '#3b82f6',
-                    });
-                    return;
-                }
-
-                if (isIbanCertificate && !hasFile) {
-                    // IBAN certificate requires a file
-                    Swal.fire({
-                        icon: 'error',
-                        title: '{{ translate('Error') }}',
-                        text: '{{ translate('Please select an IBAN certificate file to upload.') }}',
-                        confirmButtonColor: '#3b82f6',
-                    });
-                    return;
-                }
-
-                // Validate IBAN fields if this is an IBAN certificate
-                if (isIbanCertificate) {
-                    const bankName = document.getElementById('bank_name_select').value;
-                    const accountName = document.getElementById('account_name_input').value;
-                    const iban = document.getElementById('iban_input').value;
-
-                    if (!bankName) {
+                    // Validate existence of file when needed
+                    if (isContract && !hasExistingContract && !hasFile) {
                         Swal.fire({
                             icon: 'error',
                             title: '{{ translate('Error') }}',
-                            text: '{{ translate('Please select a bank name.') }}',
+                            text: '{{ translate('Please select a contract file to upload.') }}',
                             confirmButtonColor: '#3b82f6',
                         });
                         return;
                     }
 
-                    if (!accountName) {
+                    if (isIbanCertificate && !hasFile) {
                         Swal.fire({
                             icon: 'error',
                             title: '{{ translate('Error') }}',
-                            text: '{{ translate('Please enter an account name.') }}',
+                            text: '{{ translate('Please select an IBAN certificate file to upload.') }}',
                             confirmButtonColor: '#3b82f6',
                         });
                         return;
                     }
 
-                    if (!iban) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '{{ translate('Error') }}',
-                            text: '{{ translate('Please enter an IBAN number.') }}',
-                            confirmButtonColor: '#3b82f6',
-                        });
-                        return;
-                    }
+                    // Validate IBAN fields if this is an IBAN certificate
+                    if (isIbanCertificate) {
+                        const bankName = bankNameSelect ? bankNameSelect.value : '';
+                        const accountName = accountNameInput ? accountNameInput.value.trim() : '';
+                        const iban = ibanInput ? ibanInput.value.trim() : '';
 
-                    // Validate IBAN format
-                    const ibanPattern = /^[A-Za-z]{2}[0-9]{2}([ ]?[A-Za-z0-9]{4}){1,7}$/;
-                    if (!ibanPattern.test(iban.replace(/\s/g, ''))) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '{{ translate('Error') }}',
-                            text: '{{ translate('Please enter a valid IBAN number.') }}',
-                            confirmButtonColor: '#3b82f6',
-                        });
-                        return;
-                    }
-                }
-
-                // Validate file size if a file was selected
-                if (hasFile) {
-                    const file = fileInput.files[0];
-                    const maxSize = 5 * 1024 * 1024; // 5MB in bytes
-                    if (file.size > maxSize) {
-                        Swal.fire({
-                            icon: 'error',
-                            title: '{{ translate('Error') }}',
-                            text: '{{ translate('File size must be less than 5MB.') }}',
-                            confirmButtonColor: '#3b82f6',
-                        });
-                        return;
-                    }
-                }
-
-                const formData = new FormData(this);
-                const submitBtn = document.getElementById('submitBtn');
-                const originalText = submitBtn.textContent;
-
-                // Show loading state
-                submitBtn.textContent = '{{ translate('Uploading...') }}';
-                submitBtn.disabled = true;
-
-                fetch(this.action, {
-                        method: 'POST',
-                        body: formData,
-                        headers: {
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}',
-                            'Accept': 'application/json'
-                        }
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Show success message with SweetAlert
+                        if (!bankName) {
                             Swal.fire({
-                                icon: 'success',
-                                title: '{{ translate('Success') }}',
-                                text: data.message,
-                                confirmButtonColor: '#10b981',
-                                showConfirmButton: false,
-                                timer: 1500
-                            }).then(() => {
-                                // Close modal
-                                const modalCloseBtn = document.querySelector(
-                                    '#documentUpdateModal [data-modal-dismiss="true"]');
-                                if (modalCloseBtn) modalCloseBtn.click();
-
-                                // Reload page to show updated document
-                                window.location.reload();
+                                icon: 'error',
+                                title: '{{ translate('Error') }}',
+                                text: '{{ translate('Please select a bank name.') }}',
+                                confirmButtonColor: '#3b82f6',
                             });
-                        } else {
+                            return;
+                        }
+
+                        if (!accountName) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '{{ translate('Error') }}',
+                                text: '{{ translate('Please enter an account name.') }}',
+                                confirmButtonColor: '#3b82f6',
+                            });
+                            return;
+                        }
+
+                        if (!iban) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '{{ translate('Error') }}',
+                                text: '{{ translate('Please enter an IBAN number.') }}',
+                                confirmButtonColor: '#3b82f6',
+                            });
+                            return;
+                        }
+
+                        // Validate IBAN format
+                        const ibanPattern = /^[A-Za-z]{2}[0-9]{2}([ ]?[A-Za-z0-9]{4}){1,7}$/;
+                        if (!ibanPattern.test(iban.replace(/\s/g, ''))) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '{{ translate('Error') }}',
+                                text: '{{ translate('Please enter a valid IBAN number.') }}',
+                                confirmButtonColor: '#3b82f6',
+                            });
+                            return;
+                        }
+                    }
+
+                    // Validate file size if a file was selected
+                    if (hasFile) {
+                        const file = fileInput.files[0];
+                        const maxSize = 5 * 1024 * 1024; // 5MB in bytes
+                        if (file.size > maxSize) {
+                            Swal.fire({
+                                icon: 'error',
+                                title: '{{ translate('Error') }}',
+                                text: '{{ translate('File size must be less than 5MB.') }}',
+                                confirmButtonColor: '#3b82f6',
+                            });
+                            return;
+                        }
+                    }
+
+                    const formData = new FormData(this);
+                    const submitBtn = document.getElementById('submitBtn');
+                    const originalText = submitBtn ? submitBtn.textContent : '';
+
+                    // Show loading state
+                    if (submitBtn) {
+                        submitBtn.textContent = '{{ translate('Uploading...') }}';
+                        submitBtn.disabled = true;
+                    }
+
+                    fetch(this.action, {
+                            method: 'POST',
+                            body: formData,
+                            headers: {
+                                'X-CSRF-TOKEN': '{{ csrf_token() }}',
+                                'Accept': 'application/json'
+                            }
+                        })
+                        .then(response => response.json())
+                        .then(data => {
+                            if (data.success) {
+                                // Show success message with SweetAlert
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: '{{ translate('Success') }}',
+                                    text: data.message,
+                                    confirmButtonColor: '#10b981',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                }).then(() => {
+                                    // Close modal
+                                    const modalCloseBtn = document.querySelector(
+                                        '#documentUpdateModal [data-modal-dismiss="true"]');
+                                    if (modalCloseBtn) modalCloseBtn.click();
+
+                                    // Reload page to show updated document
+                                    window.location.reload();
+                                });
+                            } else {
+                                // Show error message with SweetAlert
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: '{{ translate('Error') }}',
+                                    text: data.message,
+                                    confirmButtonColor: '#3b82f6',
+                                });
+                            }
+                        })
+                        .catch(error => {
                             // Show error message with SweetAlert
                             Swal.fire({
                                 icon: 'error',
                                 title: '{{ translate('Error') }}',
-                                text: data.message,
+                                text: '{{ translate('An error occurred. Please try again.') }}',
                                 confirmButtonColor: '#3b82f6',
                             });
-                        }
-                    })
-                    .catch(error => {
-                        // Show error message with SweetAlert
-                        Swal.fire({
-                            icon: 'error',
-                            title: '{{ translate('Error') }}',
-                            text: '{{ translate('An error occurred. Please try again.') }}',
-                            confirmButtonColor: '#3b82f6',
+                        })
+                        .finally(() => {
+                            if (submitBtn) {
+                                submitBtn.textContent = originalText;
+                                submitBtn.disabled = false;
+                            }
                         });
-                    })
-                    .finally(() => {
-                        submitBtn.textContent = originalText;
-                        submitBtn.disabled = false;
-                    });
-            });
+                });
+            }
 
             // Initialize flatpickr on page load for any existing date inputs
             if (document.querySelector('.flatpickr')) {
                 initFlatpickr();
             }
+
+            // Initialize default state: make IBAN and contract inputs disabled (already set in markup)
+            setIbanVisibility(false);
+            setContractVisibility(false);
         });
     </script>
     <script>
@@ -1020,23 +1108,26 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const copyIcon = document.getElementById('iban-copy-icon');
-            const ibanText = document.getElementById('iban-text').innerText;
+            const ibanTextEl = document.getElementById('iban-text');
+            const ibanText = ibanTextEl ? ibanTextEl.innerText : '';
 
-            copyIcon.addEventListener('click', async function() {
-                try {
-                    await navigator.clipboard.writeText(ibanText); // Copy IBAN to clipboard
-                    copyIcon.classList.remove('ki-copy');
-                    copyIcon.classList.add('ki-check');
+            if (copyIcon) {
+                copyIcon.addEventListener('click', async function() {
+                    try {
+                        await navigator.clipboard.writeText(ibanText); // Copy IBAN to clipboard
+                        copyIcon.classList.remove('ki-copy');
+                        copyIcon.classList.add('ki-check');
 
-                    // Optionally revert back to original icon after 2 seconds
-                    setTimeout(() => {
-                        copyIcon.classList.remove('ki-check');
-                        copyIcon.classList.add('ki-copy');
-                    }, 2000);
-                } catch (err) {
-                    console.error('Failed to copy IBAN:', err);
-                }
-            });
+                        // Optionally revert back to original icon after 2 seconds
+                        setTimeout(() => {
+                            copyIcon.classList.remove('ki-check');
+                            copyIcon.classList.add('ki-copy');
+                        }, 2000);
+                    } catch (err) {
+                        console.error('Failed to copy IBAN:', err);
+                    }
+                });
+            }
         });
     </script>
 @endpush
