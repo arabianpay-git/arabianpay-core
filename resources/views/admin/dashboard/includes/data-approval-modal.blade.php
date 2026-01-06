@@ -97,7 +97,6 @@
             background-color: #f1f5f9 !important;
             border: 1px solid #e2e8f0 !important;
             border-radius: 6px !important;
-            padding: 3px 10px !important;
             font-size: 0.8125rem !important;
         }
 

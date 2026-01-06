@@ -45,6 +45,7 @@ class Merchant extends Model
         'owner_iqama_image',
         'term_status',
         'status',
+        'balady_certificate',
     ];
 
     protected $encryptableAttributes = [
