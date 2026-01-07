@@ -543,7 +543,7 @@ class OrderController extends Controller
                     'description' => $description,
                     'click_action' => $clickAction,
                     'mobile_screen' => $mobileScreen,
-                    'order_id' => $order->id,
+                    'reference_id' => $order->id,
                 ]),
             ]);
 
@@ -853,7 +853,7 @@ class OrderController extends Controller
                     'description' => $body,
                     'click_action' => $clickAction,
                     'mobile_screen' => $mobileScreen,
-                    'order_id' => $order->id,
+                    'reference_id' => $order->id,
                     'invoice_number' => $order->invoice_number,
                 ]),
             ]);
@@ -1102,7 +1102,7 @@ class OrderController extends Controller
                     'description' => $body,
                     'click_action' => $clickAction,
                     'mobile_screen' => $mobileScreen,
-                    'order_id' => $order->id,
+                    'reference_id' => $order->id,
                     'rejection_reason' => $order->rejection_reason,
                 ]),
             ]);
