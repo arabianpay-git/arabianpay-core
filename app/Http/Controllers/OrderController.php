@@ -500,6 +500,22 @@ class OrderController extends Controller
                 ], $justificationData)
             );
 
+            $descriptionParts = [];
+            if ($oldDeliveryStatus !== $newDeliveryStatus) {
+                $descriptionParts[] = "Delivery status changed from '{$oldDeliveryStatus}' to '{$newDeliveryStatus}'";
+            }
+            if ($oldGeneralStatus !== $newGeneralStatus) {
+                $descriptionParts[] = "General status changed from '{$oldGeneralStatus}' to '{$newGeneralStatus}'";
+            }
+            $description = implode(' and ', $descriptionParts) ?: 'Order status updated.';
+
+            $this->logOrderAction(
+                $order,
+                'update_status',
+                $description,
+                compact('oldDeliveryStatus', 'newDeliveryStatus', 'oldGeneralStatus', 'newGeneralStatus')
+            );
+
             // =========================
             //   Notification Payload
             // =========================
