@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Mail\OrderAccepted;
+use App\Mail\OrderStatusUpdated;
 use App\Models\Notification;
 use App\Models\Order;
 use App\Models\Product;
@@ -14,6 +16,7 @@ use App\Services\FirebaseService;
 use App\Services\NafithService;
 use App\Services\AuditTrailService;
 use App\Traits\OtpSenderTrait;
+use App\Traits\SmsTrait;
 use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,10 +26,11 @@ use Illuminate\Support\Facades\DB;
 use Detection\MobileDetect;
 use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
-    use OtpSenderTrait;
+    use OtpSenderTrait, SmsTrait;
 
     protected $auditTrailService;
 
@@ -545,6 +549,122 @@ class OrderController extends Controller
                 ]
             );
 
+            // =========================
+            //   SMS & EMAIL NOTIFICATIONS
+            // =========================
+            $user = $order->user ?? null;
+
+            if ($user) {
+                // Prepare status-specific messages
+                $statusMessages = [
+                    'pending' => 'Your order is confirmed and awaiting processing.',
+                    'processing' => 'Your order is being prepared for shipment.',
+                    'accepted' => 'Your order has been accepted and is now being processed.',
+                    'shipped' => 'Your order has been shipped and is on its way.',
+                    'delivered' => 'Your order has been delivered successfully.',
+                    'cancelled' => 'Your order has been cancelled.',
+                    'failed' => 'There was an issue processing your order.',
+                    'returned' => 'Your order has been returned.',
+                ];
+
+                $statusUpdateText = '';
+                if ($oldDeliveryStatus !== $newDeliveryStatus) {
+                    $statusUpdateText .= "Delivery Status: " . ucfirst($newDeliveryStatus) . ". ";
+                }
+                if ($oldGeneralStatus !== $newGeneralStatus) {
+                    $statusUpdateText .= "Order Status: " . ucfirst($newGeneralStatus) . ". ";
+                }
+
+                // SMS Notification
+                if (!empty($user->phone_number)) {
+                    try {
+                        $smsMessage = "Order #{$order->id}: " . trim($statusUpdateText) . " Track at: " . url('/orders/track/' . $order->id);
+                        $smsSent = $this->sendOrderSms($user->phone_number, $smsMessage);
+
+                        // Log SMS sending in audit trail
+                        if ($smsSent) {
+                            $this->auditTrailService->log([
+                                'event_category' => 'notification_events',
+                                'event_type' => 'sms_notification_sent',
+                                'entity_type' => 'Order',
+                                'entity_id' => $order->id,
+                                'action_summary' => 'Sent SMS notification for order status update',
+                                'properties' => [
+                                    'order_id' => $order->id,
+                                    'customer_id' => $order->user_id,
+                                    'phone_number' => $user->phone_number,
+                                    'message' => $smsMessage,
+                                    'sms_status' => 'sent'
+                                ]
+                            ]);
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error("SMS send failed for order {$order->id}: " . $e->getMessage());
+                        $this->auditTrailService->log([
+                            'event_category' => 'error_events',
+                            'event_type' => 'sms_notification_failed',
+                            'entity_type' => 'Order',
+                            'entity_id' => $order->id,
+                            'action_summary' => 'Failed to send SMS notification',
+                            'properties' => [
+                                'order_id' => $order->id,
+                                'customer_id' => $order->user_id,
+                                'phone_number' => $user->phone_number,
+                                'error' => $e->getMessage()
+                            ]
+                        ]);
+                    }
+                }
+
+                // Email Notification
+                if (!empty($user->email)) {
+                    try {
+                        $emailData = [
+                            'subject' => $title,
+                            'order_id' => $order->id,
+                            'delivery_status' => ucfirst($newDeliveryStatus),
+                            'general_status' => ucfirst($newGeneralStatus),
+                            'status_message' => trim($statusUpdateText),
+                            'tracking_url' => url('/orders/track/' . $order->id),
+                            'customer_name' => $user->name ?? 'Customer',
+                        ];
+
+                        $this->sendOrderStatusEmail($user->email, $emailData);
+
+                        // Log email sending in audit trail
+                        $this->auditTrailService->log([
+                            'event_category' => 'notification_events',
+                            'event_type' => 'email_notification_sent',
+                            'entity_type' => 'Order',
+                            'entity_id' => $order->id,
+                            'action_summary' => 'Sent email notification for order status update',
+                            'properties' => [
+                                'order_id' => $order->id,
+                                'customer_id' => $order->user_id,
+                                'email' => $user->email,
+                                'subject' => $title,
+                                'email_status' => 'sent'
+                            ]
+                        ]);
+                    } catch (\Throwable $e) {
+                        Log::error("Email send failed for order {$order->id}: " . $e->getMessage());
+                        $this->auditTrailService->log([
+                            'event_category' => 'error_events',
+                            'event_type' => 'email_notification_failed',
+                            'entity_type' => 'Order',
+                            'entity_id' => $order->id,
+                            'action_summary' => 'Failed to send email notification',
+                            'properties' => [
+                                'order_id' => $order->id,
+                                'customer_id' => $order->user_id,
+                                'email' => $user->email,
+                                'error' => $e->getMessage()
+                            ]
+                        ]);
+                    }
+                }
+            }
+
             DB::commit();
 
             // Log notification sent
@@ -559,7 +679,8 @@ class OrderController extends Controller
                     'customer_id' => $order->user_id,
                     'notification_type' => 'order_status',
                     'delivery_status' => $newDeliveryStatus,
-                    'general_status' => $newGeneralStatus
+                    'general_status' => $newGeneralStatus,
+                    'channels' => ['firebase', 'database', 'sms', 'email']
                 ]
             ]);
 
@@ -625,6 +746,7 @@ class OrderController extends Controller
 
         DB::beginTransaction();
         try {
+            $invoicePath = null;
             if ($request->hasFile('invoice_file')) {
                 $disk = 'public';
                 $folder = 'media';
@@ -636,6 +758,7 @@ class OrderController extends Controller
 
                 $file->storeAs($folder, $filename, $disk);
                 $order->invoice_file = $fullPath;
+                $invoicePath = storage_path('app/public/' . $fullPath);
             }
 
             $order->invoice_number = $request->invoice_number;
@@ -737,6 +860,104 @@ class OrderController extends Controller
                 ]
             );
 
+            // =========================
+            //   SMS & EMAIL NOTIFICATIONS
+            // =========================
+            $user = $order->user ?? null;
+
+            if ($user) {
+                // SMS Notification
+                if (!empty($user->phone_number)) {
+                    try {
+                        $smsMessage = "Great news! Order #{$order->id} has been accepted. Invoice #{$order->invoice_number}. Estimated delivery: {$order->estimated_delivery_date}. View details: " . url('/orders/' . $order->id);
+                        $smsSent = $this->sendOrderSms($user->phone_number, $smsMessage);
+
+                        if ($smsSent) {
+                            $this->auditTrailService->log([
+                                'event_category' => 'notification_events',
+                                'event_type' => 'sms_notification_sent',
+                                'entity_type' => 'Order',
+                                'entity_id' => $order->id,
+                                'action_summary' => 'Sent SMS notification for order acceptance',
+                                'properties' => [
+                                    'order_id' => $order->id,
+                                    'customer_id' => $order->user_id,
+                                    'phone_number' => $user->phone_number,
+                                    'message' => $smsMessage,
+                                    'sms_status' => 'sent'
+                                ]
+                            ]);
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error("SMS send failed for accepted order {$order->id}: " . $e->getMessage());
+                        $this->auditTrailService->log([
+                            'event_category' => 'error_events',
+                            'event_type' => 'sms_notification_failed',
+                            'entity_type' => 'Order',
+                            'entity_id' => $order->id,
+                            'action_summary' => 'Failed to send SMS notification for order acceptance',
+                            'properties' => [
+                                'order_id' => $order->id,
+                                'customer_id' => $order->user_id,
+                                'phone_number' => $user->phone_number,
+                                'error' => $e->getMessage()
+                            ]
+                        ]);
+                    }
+                }
+
+                // Email Notification with Invoice Attachment
+                if (!empty($user->email)) {
+                    try {
+                        $emailData = [
+                            'subject' => "Order #{$order->id} Accepted - Invoice Attached",
+                            'order_id' => $order->id,
+                            'invoice_number' => $order->invoice_number,
+                            'estimated_delivery_date' => $order->estimated_delivery_date,
+                            'customer_name' => $user->name ?? 'Customer',
+                            'order_total' => $order->total_amount ?? 0,
+                            'order_date' => $order->created_at->format('d/m/Y'),
+                            'attachment_path' => $invoicePath,
+                            'attachment_name' => "Invoice_{$order->invoice_number}.pdf",
+                        ];
+
+                        $this->sendOrderAcceptedEmail($user->email, $emailData);
+
+                        $this->auditTrailService->log([
+                            'event_category' => 'notification_events',
+                            'event_type' => 'email_notification_sent',
+                            'entity_type' => 'Order',
+                            'entity_id' => $order->id,
+                            'action_summary' => 'Sent email notification with invoice attachment for order acceptance',
+                            'properties' => [
+                                'order_id' => $order->id,
+                                'customer_id' => $order->user_id,
+                                'email' => $user->email,
+                                'subject' => $emailData['subject'],
+                                'invoice_number' => $order->invoice_number,
+                                'attachment_sent' => $invoicePath !== null,
+                                'email_status' => 'sent'
+                            ]
+                        ]);
+                    } catch (\Throwable $e) {
+                        Log::error("Email send failed for accepted order {$order->id}: " . $e->getMessage());
+                        $this->auditTrailService->log([
+                            'event_category' => 'error_events',
+                            'event_type' => 'email_notification_failed',
+                            'entity_type' => 'Order',
+                            'entity_id' => $order->id,
+                            'action_summary' => 'Failed to send email notification for order acceptance',
+                            'properties' => [
+                                'order_id' => $order->id,
+                                'customer_id' => $order->user_id,
+                                'email' => $user->email,
+                                'error' => $e->getMessage()
+                            ]
+                        ]);
+                    }
+                }
+            }
+
             DB::commit();
 
             // Log successful acceptance
@@ -751,7 +972,8 @@ class OrderController extends Controller
                     'customer_id' => $order->user_id,
                     'invoice_number' => $order->invoice_number,
                     'schedule_payments_created' => true,
-                    'notification_sent' => true
+                    'notification_channels' => ['firebase', 'database', 'sms', 'email'],
+                    'email_with_invoice' => $invoicePath !== null
                 ]
             ]);
 
@@ -887,6 +1109,100 @@ class OrderController extends Controller
                 ]
             );
 
+            // =========================
+            //   SMS & EMAIL NOTIFICATIONS
+            // =========================
+            $user = $order->user ?? null;
+
+            if ($user) {
+                // SMS Notification
+                if (!empty($user->phone_number)) {
+                    try {
+                        $smsMessage = "Update: Order #{$order->id} has been rejected. Reason: {$order->rejection_reason}. Contact support: " . (config('app.support_phone') ?? config('app.support_email'));
+                        $smsSent = $this->sendOrderSms($user->phone_number, $smsMessage);
+
+                        if ($smsSent) {
+                            $this->auditTrailService->log([
+                                'event_category' => 'notification_events',
+                                'event_type' => 'sms_notification_sent',
+                                'entity_type' => 'Order',
+                                'entity_id' => $order->id,
+                                'action_summary' => 'Sent SMS notification for order rejection',
+                                'properties' => [
+                                    'order_id' => $order->id,
+                                    'customer_id' => $order->user_id,
+                                    'phone_number' => $user->phone_number,
+                                    'message' => $smsMessage,
+                                    'sms_status' => 'sent'
+                                ]
+                            ]);
+                        }
+                    } catch (\Throwable $e) {
+                        Log::error("SMS send failed for rejected order {$order->id}: " . $e->getMessage());
+                        $this->auditTrailService->log([
+                            'event_category' => 'error_events',
+                            'event_type' => 'sms_notification_failed',
+                            'entity_type' => 'Order',
+                            'entity_id' => $order->id,
+                            'action_summary' => 'Failed to send SMS notification for order rejection',
+                            'properties' => [
+                                'order_id' => $order->id,
+                                'customer_id' => $order->user_id,
+                                'phone_number' => $user->phone_number,
+                                'error' => $e->getMessage()
+                            ]
+                        ]);
+                    }
+                }
+
+                // Email Notification
+                if (!empty($user->email)) {
+                    try {
+                        $emailData = [
+                            'subject' => $title,
+                            'order_id' => $order->id,
+                            'rejection_reason' => $order->rejection_reason,
+                            'customer_name' => $user->name ?? 'Customer',
+                            'support_contact' => config('app.support_phone') ?? config('app.support_email'),
+                            'order_date' => $order->created_at->format('d/m/Y'),
+                        ];
+
+                        $this->sendOrderStatusEmail($user->email, $emailData);
+
+                        $this->auditTrailService->log([
+                            'event_category' => 'notification_events',
+                            'event_type' => 'email_notification_sent',
+                            'entity_type' => 'Order',
+                            'entity_id' => $order->id,
+                            'action_summary' => 'Sent email notification for order rejection',
+                            'properties' => [
+                                'order_id' => $order->id,
+                                'customer_id' => $order->user_id,
+                                'email' => $user->email,
+                                'subject' => $title,
+                                'rejection_reason' => $order->rejection_reason,
+                                'email_status' => 'sent'
+                            ]
+                        ]);
+                    } catch (\Throwable $e) {
+                        Log::error("Email send failed for rejected order {$order->id}: " . $e->getMessage());
+                        $this->auditTrailService->log([
+                            'event_category' => 'error_events',
+                            'event_type' => 'email_notification_failed',
+                            'entity_type' => 'Order',
+                            'entity_id' => $order->id,
+                            'action_summary' => 'Failed to send email notification for order rejection',
+                            'properties' => [
+                                'order_id' => $order->id,
+                                'customer_id' => $order->user_id,
+                                'email' => $user->email,
+                                'error' => $e->getMessage()
+                            ]
+                        ]);
+                    }
+                }
+            }
+
             DB::commit();
 
             // Log rejection completion
@@ -900,7 +1216,7 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'customer_id' => $order->user_id,
                     'rejection_reason' => $order->rejection_reason,
-                    'notification_sent' => true
+                    'notification_channels' => ['firebase', 'database', 'sms', 'email']
                 ]
             ]);
 
@@ -933,6 +1249,24 @@ class OrderController extends Controller
                 'message' => translate('Failed to reject order. Please try again.')
             ], 500);
         }
+    }
+
+    /**
+     * Send order status email
+     */
+    protected function sendOrderStatusEmail($email, $data)
+    {
+        $mailer = new OrderStatusUpdated($data);
+        Mail::to($email)->send($mailer);
+    }
+
+    /**
+     * Send order accepted email with invoice attachment
+     */
+    protected function sendOrderAcceptedEmail($email, $data)
+    {
+        $mailer = new OrderAccepted($data);
+        Mail::to($email)->send($mailer);
     }
 
     /**
