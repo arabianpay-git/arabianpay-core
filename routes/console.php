@@ -9,9 +9,9 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 // Schedule::command('products:notify-low-stock')->dailyAt('09:00')->withoutOverlapping();
-Schedule::command('products:notify-low-stock')->everyMinute()->withoutOverlapping();
+// Schedule::command('products:notify-low-stock')->everyMinute()->withoutOverlapping();
 
-// Schedule::command('process:scheduled-payments')->everyFiveMinutes()->withoutOverlapping();
-Schedule::command('process:scheduled-payments')->everyMinute()->withoutOverlapping();
+// // Schedule::command('process:scheduled-payments')->everyFiveMinutes()->withoutOverlapping();
+// Schedule::command('process:scheduled-payments')->everyMinute()->withoutOverlapping();
 
 Schedule::command('send:scheduled-payment-reminders')->everyMinute()->withoutOverlapping();
