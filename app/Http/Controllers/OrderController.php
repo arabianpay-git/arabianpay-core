@@ -557,7 +557,7 @@ class OrderController extends Controller
                 $title,
                 $description,
                 [
-                    'order_id' => $order->id,
+                    'reference_id' => $order->id,
                     'delivery_status' => $newDeliveryStatus,
                     'general_status' => $newGeneralStatus,
                     'click_action' => $clickAction,
@@ -868,7 +868,7 @@ class OrderController extends Controller
                 $title,
                 $body,
                 [
-                    'order_id' => $order->id,
+                    'reference_id' => $order->id,
                     'general_status' => 'accepted',
                     'invoice_number' => $order->invoice_number,
                     'click_action' => $clickAction,
@@ -1117,7 +1117,7 @@ class OrderController extends Controller
                 $title,
                 $body,
                 [
-                    'order_id' => $order->id,
+                    'reference_id' => $order->id,
                     'general_status' => 'rejected',
                     'rejection_reason' => $order->rejection_reason,
                     'click_action' => $clickAction,
