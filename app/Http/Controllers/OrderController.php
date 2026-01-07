@@ -543,7 +543,8 @@ class OrderController extends Controller
                     'description' => $description,
                     'click_action' => $clickAction,
                     'mobile_screen' => $mobileScreen,
-                    'reference_id' => $order->id,
+                    'order_id' => $order->id,
+                    'reference_id' => $order->reference_id,
                 ]),
             ]);
 
@@ -557,11 +558,12 @@ class OrderController extends Controller
                 $title,
                 $description,
                 [
-                    'reference_id' => $order->id,
+                    'order_id' => $order->id,
                     'delivery_status' => $newDeliveryStatus,
                     'general_status' => $newGeneralStatus,
                     'click_action' => $clickAction,
                     'mobile_screen' => $mobileScreen,
+                    'reference_id' => $order->reference_id,
                 ]
             );
 
@@ -853,7 +855,8 @@ class OrderController extends Controller
                     'description' => $body,
                     'click_action' => $clickAction,
                     'mobile_screen' => $mobileScreen,
-                    'reference_id' => $order->id,
+                    'order_id' => $order->id,
+                    'reference_id' => $order->reference_id,
                     'invoice_number' => $order->invoice_number,
                 ]),
             ]);
@@ -868,11 +871,12 @@ class OrderController extends Controller
                 $title,
                 $body,
                 [
-                    'reference_id' => $order->id,
+                    'order_id' => $order->id,
                     'general_status' => 'accepted',
                     'invoice_number' => $order->invoice_number,
                     'click_action' => $clickAction,
                     'mobile_screen' => $mobileScreen,
+                    'reference_id' => $order->reference_id,
                 ]
             );
 
@@ -1102,7 +1106,8 @@ class OrderController extends Controller
                     'description' => $body,
                     'click_action' => $clickAction,
                     'mobile_screen' => $mobileScreen,
-                    'reference_id' => $order->id,
+                    'order_id' => $order->id,
+                    'reference_id' => $order->reference_id,
                     'rejection_reason' => $order->rejection_reason,
                 ]),
             ]);
@@ -1117,7 +1122,8 @@ class OrderController extends Controller
                 $title,
                 $body,
                 [
-                    'reference_id' => $order->id,
+                    'order_id' => $order->id,
+                    'reference_id' => $order->reference_id,
                     'general_status' => 'rejected',
                     'rejection_reason' => $order->rejection_reason,
                     'click_action' => $clickAction,
