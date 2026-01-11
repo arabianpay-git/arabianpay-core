@@ -340,7 +340,8 @@ class RiskService
 
         // components placeholders (will fill from SIMAH if possible)
         $components = [
-            'bureau_rating_score' => null,
+            'bureau_rating_raw' => null,
+            'bureau_rating_score' => null, // scaled to max part score (0..60)
             'dpd_score' => null,
             'max_dpd_12m' => null,
             'raw_report' => null,
@@ -365,14 +366,36 @@ class RiskService
                     $bureauScore = $scoreEntry['score'] ?? null;
 
                     if (is_numeric($bureauScore)) {
-                        // use SIMAH score directly (assumed 0..100)
-                        $chs = (float)$bureauScore;
-                        $components['bureau_rating_score'] = $chs;
-                        $notes[] = 'SIMAH consumerScore used from latest report.';
+                        // --- CHANGED: handle raw SIMAH score (e.g. 617) and scale it to the part max (60) ---
+                        // Define raw score expected bounds and the part's max score
+                        $RAW_MIN = 300.0;   // assumed minimum possible SIMAH score (clamp below to 0)
+                        $RAW_MAX = 900.0;   // assumed maximum possible SIMAH score
+                        $PART_MAX = 60.0;   // maximum points available for this CHS part
+
+                        $raw = (float)$bureauScore;
+                        $components['bureau_rating_raw'] = $raw;
+
+                        // compute normalized ratio and clamp to [0,1]
+                        if ($RAW_MAX > $RAW_MIN) {
+                            $ratio = ($raw - $RAW_MIN) / ($RAW_MAX - $RAW_MIN);
+                        } else {
+                            $ratio = 0.0;
+                        }
+                        $ratio = max(0.0, min(1.0, $ratio));
+
+                        // scaled score for this CHS component (0..PART_MAX)
+                        $scaled = round($ratio * $PART_MAX, 2);
+                        $components['bureau_rating_score'] = $scaled;
+
+                        $notes[] = 'SIMAH consumerScore used from latest report and scaled to part max ' . $PART_MAX . '.';
+
                         // detect non-scorable indicator
                         $scoreCardCode = $scoreEntry['scoreCard']['scoreCardCode'] ?? null;
-                        if ($scoreCardCode === 'NS' || $chs === 0) {
+                        if ($scoreCardCode === 'NS' || $raw === 0.0) {
                             $flags[] = 'simah_non_scorable';
+                            // if non-scorable, ensure scaled is zero
+                            $components['bureau_rating_score'] = 0.0;
+                            $scaled = 0.0;
                         }
 
                         // try to extract some DPD / delinquency info if present
@@ -389,7 +412,7 @@ class RiskService
                         $components['dpd_score'] = null;
 
                         return [
-                            'score' => $chs,
+                            'score' => (float)$scaled,
                             'notes' => implode('; ', $notes),
                             'flags' => array_values(array_unique($flags)),
                             'components' => $components,
@@ -1333,7 +1356,7 @@ class RiskService
     protected function getUserId($entity, string $type)
     {
         if ($type === 'merchant') {
-            return $entity->seller_id;
+            return $entity->user_id;
         }
 
         return $entity->user_id;
