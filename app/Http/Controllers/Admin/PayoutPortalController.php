@@ -133,7 +133,7 @@ class PayoutPortalController extends Controller
                     'uuid' => (string) Str::uuid(),
                     'checkout_id' => $order->checkout_id,
                     'customer_id' => null,
-                    'supplier_id' => $order->seller_id,
+                    'supplier_id' => $merchant->id,
                     'user_id' => $currentUser->id,
                     'payment_id' => null,
                     'transaction_type' => 'order_placement',

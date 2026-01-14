@@ -14,7 +14,7 @@ use PhpParser\Node\Expr\Cast\Double;
 class ExpenseService
 {
     // Create financial double entry transaction for an expense
-    public function createExpenseTransaction($expenseReferenceId, User $user,Decimal $baseAmount = 0)
+    public function createExpenseTransaction($expenseReferenceId, User $user)
     {
         // Retrieve expense setting
         $expenseSetting = ExpenseSetting::where('refrence_id', $expenseReferenceId)->with('creditAccount')->first();
@@ -23,11 +23,7 @@ class ExpenseService
         }
         $amount=0;
         // Determine amount
-        if ($expenseSetting->amount_type === 'fixed') {
-            $amount = $expenseSetting->amount;
-        } elseif ($expenseSetting->amount_type === 'percent') {
-            $amount = ($expenseSetting->amount / 100) * $baseAmount;
-        }
+        $amount = $expenseSetting->amount;
        
         // Start DB transaction
         DB::beginTransaction();
