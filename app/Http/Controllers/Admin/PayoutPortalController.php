@@ -79,7 +79,8 @@ class PayoutPortalController extends Controller
         $order = Order::with('seller')->findOrFail($data['order_id']);
 
         // Resolve merchant by seller's user_id
-        $merchant = Merchant::where('id', $order->seller_id)->first();
+
+        $merchant = Merchant::where('user_id', $order->seller_id)->first();
         if (!$merchant) {
             return back()->withErrors(['order_id' => __('No merchant found for the order seller. id : :id', ['id' => $order->seller_id])])->withInput();
         }
