@@ -5,6 +5,7 @@ namespace App\Services\Finance;
 use App\Models\Order;
 use App\Models\SupplierPayout;
 use App\Models\FEntry;
+use App\Models\Merchant;
 use App\Models\FAccounts;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -59,7 +60,7 @@ class SupplierFinanceService
         }
         
         return [
-            'supplier_id' => $supplierId,
+            'supplier_id' => $supplierUserId,
             'upcoming_payout_amount' => round($upcomingAmount, 2),
             'next_payout_date' => $nextTuesday->format('Y-m-d'),
             'next_payout_day' => $nextTuesday->format('l, F j, Y'),
