@@ -1,11 +1,9 @@
 <?php
 
 use App\Models\Approval;
-use App\Models\Customer;
 use App\Models\CustomerCreditLimit;
 use App\Models\Notification;
 use App\Models\Product;
-use App\Models\SensitiveDataApproval;
 use App\Models\Setting;
 use App\Models\User;
 use App\Services\CreditAssessmentService;

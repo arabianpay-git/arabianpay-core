@@ -1065,8 +1065,6 @@ class SupplierController extends Controller
         return view('admin.accounts.supplier-sales', compact('merchant', 'orders'));
     }
 
-
-
     /**
      * Display trashed suppliers
      */

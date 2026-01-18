@@ -1,5 +1,4 @@
 @push('styles')
-    <script src="https://cdn.tailwindcss.com"></script>
     <style>
         .chart-container {
             display: flex;
