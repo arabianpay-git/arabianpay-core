@@ -207,7 +207,7 @@
 
                         input: 'text',
                         inputPlaceholder: 'e.g. 7001234567',
-                        inputValue: currentCr,
+                        // inputValue: currentCr,
                         showCancelButton: true,
                         confirmButtonText: 'Fetch',
                         cancelButtonText: 'Cancel',
