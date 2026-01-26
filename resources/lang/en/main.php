@@ -2899,4 +2899,8 @@ return [
     'No credit history available' => 'No credit history available',
     'bureau rating raw' => 'Bureau Rating Raw',
     'Weekly Settlements' => 'Weekly Settlements',
+
+    'Get Latest Wathiq Data' => 'Get Latest Wathiq Data',
+    'Fetch Latest Wathiq Data' => 'Fetch Latest Wathiq Data',
+    'Enter Commercial Registration (CR) national number (at least 7 digits). Leave empty to use stored CR number' => 'Enter Commercial Registration (CR) national number (at least 7 digits). Leave empty to use stored CR number'
 ];

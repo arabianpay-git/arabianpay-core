@@ -15,6 +15,7 @@ use App\Models\RiskWeight;
 use App\Models\SimahReport;
 use App\Models\Setting; // Added Setting model
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -261,8 +262,38 @@ class RiskService
         // Docs completeness: check cr_data and nafath_data presence.
         $docScore = 0;
         $hasCr = !empty($crData);
-        $nafath = $entity->nafath_data ?? null;
-        $hasNafath = !empty($nafath);
+
+        // CHANGED: For merchants, do NOT use $entity->nafath_data.
+        // Instead check nafath_verifications table for an approved record for this entity's user_id.
+        $hasNafath = false;
+        if ($type === 'merchant') {
+            // ADDED: Query nafath_verifications for approved status (use \DB to avoid adding imports).
+            // If your status values are stored differently (e.g. 'Approved', or an integer), adjust the where clause accordingly.
+            try {
+                $userId = $entity->user_id ?? null;
+                if ($userId) {
+                    $nafathExists = DB::table('nafath_verifications')
+                        ->where('user_id', $userId)
+                        ->where('status', 'approved')
+                        ->exists();
+                    $hasNafath = (bool)$nafathExists;
+                } else {
+                    $hasNafath = false;
+                    $flags[] = 'merchant_no_user_id_for_nafath_check';
+                    $notes[] = 'Merchant entity has no user_id; cannot check nafath_verifications.';
+                }
+            } catch (\Exception $e) {
+                // If DB fails for some reason, treat as not present but add a flag/note.
+                $hasNafath = false;
+                $flags[] = 'nafath_db_error';
+                $notes[] = 'Error checking nafath_verifications: ' . $e->getMessage();
+            }
+        } else {
+            // Non-merchant: use existing nafath_data field
+            $nafath = $entity->nafath_data ?? null;
+            $hasNafath = !empty($nafath);
+        }
+
         if ($hasCr && $hasNafath) {
             $docScore = 100;
         } elseif ($hasCr) {
@@ -323,6 +354,7 @@ class RiskService
             ],
         ];
     }
+
 
     /**
      * Compute CHS per spec using SIMAH if available.

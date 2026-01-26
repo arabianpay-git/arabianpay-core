@@ -1,10 +1,21 @@
 <div class="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
     <div class="flex justify-between items-center mb-6">
-        <h3 class="font-bold text-slate-800">{{ translate('Business Summary') }}</h3>
-        <span class="text-[10px] text-slate-400">
-            {{ translate('Updated') }} {{ $merchant->updated_at?->format('M Y') ?? now()->format('M Y') }}
-        </span>
+        <div class="flex items-center gap-3">
+            <h3 class="font-bold text-slate-800">{{ translate('Business Summary') }}</h3>
+            <span class="text-[10px] text-slate-400 ml-3">
+                {{ translate('Updated') }} {{ $merchant->updated_at?->format('M d, Y') ?? now()->format('M Y') }}
+            </span>
+        </div>
+
+        @if (Auth::user()->user_type === 'admin' || (Auth::user()->user_type === 'employee' && Auth::user()->is_manager))
+            <button type="button" class="btn btn-sm btn-outline btn-secondary fetch-wathiq-btn"
+                data-user-id="{{ $merchant->user_id }}" data-cr-number="{{ $merchant->cr_number }}"
+                aria-label="{{ translate('Get Latest Wathiq Data') }}">
+                {{ translate('Get Latest Wathiq Data') }}
+            </button>
+        @endif
     </div>
+
 
     <div class="grid grid-cols-1 md:grid-cols-12 gap-8">
         <div class="md:col-span-7 space-y-4 border-r border-slate-50 pr-4">
@@ -154,3 +165,142 @@
 </div>
 
 @include('admin.accounts.components.cr-data-modal')
+
+
+@push('scripts')
+    <!-- SweetAlert2 (CDN). Remove if already loaded globally. -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        (function() {
+            // Route URL (rendered server-side)
+            const fetchUrl = {!! json_encode(route('merchants.fetchWathiq')) !!};
+
+            function getCsrfToken() {
+                const meta = document.querySelector('meta[name="csrf-token"]');
+                return meta ? meta.getAttribute('content') : '';
+            }
+
+            document.querySelectorAll('.fetch-wathiq-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+
+                    const userId = btn.dataset.userId;
+                    const currentCr = btn.dataset.crNumber || '';
+
+                    if (!userId) {
+                        Swal.fire('Error', 'Merchant user id not found.', 'error');
+                        return;
+                    }
+
+                    Swal.fire({
+                        title: {!! json_encode(translate('Fetch Latest Wathiq Data')) !!},
+                        html: '<p class="text-sm mb-3">' +
+                            {!! json_encode(
+                                translate(
+                                    'Enter Commercial Registration (CR) national number (at least 7 digits). Leave empty to use stored CR number',
+                                ),
+                            ) !!} +
+                            ': <strong>' +
+                            (currentCr || 'none') +
+                            '</strong></p>',
+
+                        input: 'text',
+                        inputPlaceholder: 'e.g. 7001234567',
+                        // inputValue: currentCr,
+                        showCancelButton: true,
+                        confirmButtonText: 'Fetch',
+                        cancelButtonText: 'Cancel',
+                        preConfirm: (value) => {
+                            // Trim and validate: allow empty (we'll fallback), otherwise must be digits and length >=7
+                            const v = (value || '').toString().trim();
+                            if (v === '') {
+                                return '';
+                            }
+                            if (!/^\d+$/.test(v)) {
+                                Swal.showValidationMessage('CR must contain only digits.');
+                                return false;
+                            }
+                            if (v.length < 7) {
+                                Swal.showValidationMessage('CR must be at least 7 digits.');
+                                return false;
+                            }
+                            return v;
+                        },
+                        focusConfirm: false,
+                    }).then(function(result) {
+                        if (!result.isConfirmed) return;
+
+                        // result.value will be '' (empty string) or the CR entered
+                        const crNumber = result.value || '';
+
+                        // Final confirm (optional): show another confirm if you want extra warning — skipping to fetch directly
+                        // visual feedback on button
+                        const originalHtml = btn.innerHTML;
+                        btn.disabled = true;
+                        btn.innerHTML = 'Fetching...';
+
+                        fetch(fetchUrl, {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': getCsrfToken(),
+                                },
+                                body: JSON.stringify({
+                                    user_id: parseInt(userId, 10),
+                                    cr_number: crNumber || null
+                                })
+                            })
+                            .then(function(res) {
+                                return res.json().catch(function() {
+                                    throw new Error(
+                                        'Invalid JSON response from server.');
+                                }).then(function(json) {
+                                    return {
+                                        status: res.status,
+                                        json: json
+                                    };
+                                });
+                            })
+                            .then(function(resp) {
+                                const status = resp.status;
+                                const json = resp.json;
+
+                                if (json && json.success) {
+                                    Swal.fire('Updated', json.message ||
+                                            'Wathiq data updated', 'success')
+                                        .then(function() {
+                                            window.location.reload();
+                                        });
+                                    return;
+                                }
+
+                                // handle Wathq specific code (like 400.1.5) shown from server
+                                if (json && json.code) {
+                                    Swal.fire('Wathiq Error', json.message ||
+                                        'Wathiq returned an error: ' + json.code,
+                                        'warning');
+                                } else {
+                                    Swal.fire('Error', (json && json.message) ? json
+                                        .message : 'Failed to update Wathiq data',
+                                        'error');
+                                }
+
+                                btn.disabled = false;
+                                btn.innerHTML = originalHtml;
+                            })
+                            .catch(function(err) {
+                                console.error(err);
+                                Swal.fire('Error',
+                                    'Request failed. Check console for details.',
+                                    'error');
+                                btn.disabled = false;
+                                btn.innerHTML = originalHtml;
+                            });
+                    });
+                });
+            });
+        })();
+    </script>
+@endpush

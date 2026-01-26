@@ -25,6 +25,7 @@ use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 
@@ -1638,5 +1639,94 @@ class SupplierController extends Controller
         }
 
         return $total;
+    }
+
+
+    public function fetchWathiq(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer'],
+            // allow leaving cr_number empty (will fallback to merchant->cr_number), otherwise require 7+ digits
+            'cr_number' => ['nullable', 'regex:/^\d{7,}$/'],
+        ], [
+            'cr_number.regex' => 'CR number must contain only digits and be at least 7 characters long.',
+        ]);
+
+        $userId = (int) $validated['user_id'];
+        $merchant = Merchant::where('user_id', $userId)->first();
+
+        if (! $merchant) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Merchant not found for provided user_id.'
+            ], 404);
+        }
+
+        $crNumber = $request->input('cr_number') ?? $merchant->cr_number;
+
+        if (empty($crNumber) || !preg_match('/^\d{7,}$/', $crNumber)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'CR number is required (either enter it now or store it on the merchant). Must be at least 7 digits.'
+            ], 422);
+        }
+
+        $wathqBase = rtrim(env('WATHQ_API_BASE', 'https://api.wathq.sa/'), '/') . '/';
+        $apiKey = env('WATHQ_API_KEY', 'nxNtcpyb0cqiLfkj8umAdkhqJGA8x4Az'); // keep secret in .env
+
+        try {
+            $url = sprintf('%scommercial-registration/fullinfo/%s', $wathqBase, $crNumber);
+
+            $response = Http::withHeaders([
+                'apiKey' => $apiKey,
+                'Accept' => 'application/json',
+            ])->get($url, [
+                'language' => 'en',
+            ]);
+
+            // If HTTP returned non-2xx
+            if (! $response->successful()) {
+                Log::error("Wathq API returned non-success for CR {$crNumber}. Status: {$response->status()}. Body: {$response->body()}");
+                // Try to surface API message if present
+                $body = $response->json();
+                $message = $body['message'] ?? 'Wathq API returned an error. Please try again later.';
+                return response()->json([
+                    'success' => false,
+                    'message' => $message,
+                    'raw' => $body,
+                ], 502);
+            }
+
+            // Parse JSON to check for known Wathq error codes like "400.1.5"
+            $resJson = $response->json();
+
+            if (isset($resJson['code'])) {
+                // Special error from Wathq — forward message back
+                Log::warning("Wathq API returned code {$resJson['code']} for CR {$crNumber}: " . ($resJson['message'] ?? ''));
+                return response()->json([
+                    'success' => false,
+                    'message' => $resJson['message'] ?? 'Wathq returned an error.',
+                    'code' => $resJson['code'],
+                    'raw' => $resJson,
+                ], 422);
+            }
+
+            // Store the complete JSON string into goverment_data as requested
+            $merchant->goverment_data = $response->body();
+            $merchant->save();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Wathiq data updated successfully.',
+                'data' => $resJson // optional: parsed JSON
+            ]);
+        } catch (\Exception $e) {
+            Log::error("Wathq API request failed for CR {$crNumber}: {$e->getMessage()}");
+
+            return response()->json([
+                'success' => false,
+                'message' => 'We could not verify the Commercial Registration at the moment. Please try again shortly or contact support.'
+            ], 500);
+        }
     }
 }

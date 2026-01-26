@@ -2752,4 +2752,8 @@ return [
     'No credit history available.' => 'لا يوجد سجل ائتماني متاح.',
     'bureau rating raw' => 'التصنيف الخام لمركز المعلومات الائتمانية (bureau rating raw)',
     'Weekly Settlements' => 'التسويات الاسبوعية',
+    'Get Latest Wathiq Data' => 'الحصول على أحدث بيانات وثيق',
+    'Fetch Latest Wathiq Data' => 'جلب البيانات الأخيرة من وثيق',
+    'Enter Commercial Registration (CR) national number (at least 7 digits). Leave empty to use stored CR number' => 'أدخل الرقم الوطني لسجل التسجيل التجاري (CR) (7 أرقام على الأقل). اتركه فارغًا لاستخدام الرقم المخزن في سجل التسجيل التجاري'
+
 ];
