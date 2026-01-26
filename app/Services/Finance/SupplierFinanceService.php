@@ -4,6 +4,7 @@ namespace App\Services\Finance;
 
 use App\Models\Order;
 use App\Models\SupplierPayout;
+use App\Models\Settlement;
 use App\Models\FEntry;
 use App\Models\Merchant;
 use App\Models\FAccounts;
@@ -20,29 +21,56 @@ class SupplierFinanceService
      */
     public function getUpcomingPayout($supplierUserId)
     {
-        // Get the next Tuesday
+        // 1. Check if there's an existing generated settlement for next period
+        // Status could be draft, pending_approval, approved
+        $upcomingSettlement = Settlement::where('supplier_user_id', $supplierUserId)
+            ->whereIn('status', ['draft', 'pending_approval', 'approved'])
+            ->orderBy('settlement_date', 'asc')
+            ->first();
+
+        if ($upcomingSettlement) {
+            return [
+                'supplier_id' => $supplierUserId,
+                'upcoming_payout_amount' => (float) $upcomingSettlement->payable_amount,
+                'next_payout_date' => $upcomingSettlement->settlement_date ? $upcomingSettlement->settlement_date->format('Y-m-d') : null,
+                'next_payout_day' => $upcomingSettlement->settlement_date ? $upcomingSettlement->settlement_date->format('l, F j, Y') : null,
+                'orders_count' => $upcomingSettlement->orders()->count(),
+                'orders' => $upcomingSettlement->orders()->get()->map(function ($order) {
+                    return [
+                        'order_id' => $order->id,
+                        'order_uuid' => $order->uuid,
+                        'order_total' => (float)$order->grand_total,
+                        'commission' => (float)$order->commission_amount,
+                        'payable' => (float)$order->grand_total - (float)$order->commission_amount,
+                        'delivery_status' => $order->delivery_status,
+                        'delivered_at' => $order->delivered_at,
+                    ];
+                }),
+                'is_settlement' => true,
+                'settlement_number' => $upcomingSettlement->settlement_number
+            ];
+        }
+
+        // 2. Fallback: Calculate from orders not yet in a settlement
         $nextTuesday = $this->getNextTuesday();
-        
-        // Get all delivered orders for this supplier
+
+        // Get all delivered orders for this supplier NOT in a settlement
         $deliveredOrders = Order::where('seller_id', $supplierUserId)
             ->where('delivery_status', 'delivered')
-            ->with(['payouts'])
+            ->whereNull('settlement_id')
             ->get();
-        
+
         $upcomingAmount = 0;
         $ordersData = [];
-        
+
         foreach ($deliveredOrders as $order) {
             // Calculate the amount owed to supplier (grand_total - commission)
             $orderAmount = (float)$order->grand_total - (float)($order->commission_amount ?? 0);
-            
-            // Calculate how much has already been paid out
-            $paidAmount = $order->payouts()
-                ->sum('amount');
-            
-            // Calculate the remaining amount
-            $remainingAmount = $orderAmount - $paidAmount;
-            
+
+            // Check if partially paid (legacy support)
+            $paidAmount = $order->payouts()->sum('amount');
+            $remainingAmount = max(0, $orderAmount - $paidAmount);
+
             if ($remainingAmount > 0) {
                 $upcomingAmount += $remainingAmount;
                 $ordersData[] = [
@@ -58,7 +86,7 @@ class SupplierFinanceService
                 ];
             }
         }
-        
+
         return [
             'supplier_id' => $supplierUserId,
             'upcoming_payout_amount' => round($upcomingAmount, 2),
@@ -66,9 +94,10 @@ class SupplierFinanceService
             'next_payout_day' => $nextTuesday->format('l, F j, Y'),
             'orders_count' => count($ordersData),
             'orders' => $ordersData,
+            'is_settlement' => false,
         ];
     }
-    
+
     /*
      * Get ledger/statement for a supplier within a date period.
      * Shows all financial entries for the supplier 
@@ -77,7 +106,7 @@ class SupplierFinanceService
     public function getLedger($supplierUserId, $startDate, $endDate)
     {
         $supplier = Merchant::find($supplierUserId);
-        if(!$supplier) {
+        if (!$supplier) {
             return [
                 'error' => 'Supplier not found',
                 'supplier_id' => $supplierUserId,
@@ -88,10 +117,10 @@ class SupplierFinanceService
 
         $start = Carbon::parse($startDate)->startOfDay();
         $end = Carbon::parse($endDate)->endOfDay();
-        
+
         $accountId = 2400;
         $account = FAccounts::find($accountId);
-        
+
         if (!$account) {
             return [
                 'error' => 'Accounts Payable account (2400) not found',
@@ -100,21 +129,21 @@ class SupplierFinanceService
                 'period_end' => $end->format('Y-m-d'),
             ];
         }
-        
+
         // Calculate opening balance (all entries before start date for this supplier)
         $priorEntries = FEntry::where('account_id', $accountId)
             ->where('supplier_id', $supplier->id)
             ->whereDate('entry_date', '<', $start->toDateString())
             ->selectRaw('COALESCE(SUM(debit), 0) as sum_debit, COALESCE(SUM(credit), 0) as sum_credit')
             ->first();
-        
+
         // Accounts Payable is a liability account with credit normal balance (account_type2 = 2)
         $isDebitNormal = ((int)$account->account_type2) === 1;
-        
+
         $openingBalance = $isDebitNormal
             ? (float)$priorEntries->sum_debit - (float)$priorEntries->sum_credit
             : (float)$priorEntries->sum_credit - (float)$priorEntries->sum_debit;
-        
+
         // Get entries within the period for this supplier
         $entries = FEntry::with(['user', 'order', 'transaction'])
             ->where('account_id', $accountId)
@@ -124,32 +153,32 @@ class SupplierFinanceService
             ->orderBy('entry_date', 'asc')
             ->orderBy('id', 'asc')
             ->get();
-        
+
         // Calculate running balance and format entries
         $runningBalance = $openingBalance;
         $formattedEntries = [];
         $totalDebit = 0;
         $totalCredit = 0;
-        
+
         foreach ($entries as $entry) {
             $debit = (float)($entry->debit ?? 0);
             $credit = (float)($entry->credit ?? 0);
-            
+
             $totalDebit += $debit;
             $totalCredit += $credit;
-            
+
             // Calculate balance change
             $delta = $isDebitNormal
                 ? $debit - $credit
                 : $credit - $debit;
-            
+
             $runningBalance += $delta;
-            
+
             $formattedEntries[] = [
                 'entry_id' => $entry->id,
                 'date' => $entry->entry_date,
                 'order_id' => $entry->order_id,
-                'description' => $entry->notes, 
+                'description' => $entry->notes,
                 'debit' => $debit,
                 'credit' => $credit,
                 'balance' => round($runningBalance, 2),
@@ -157,9 +186,9 @@ class SupplierFinanceService
                 'user' => $entry->user ? $entry->user->name : null,
             ];
         }
-        
+
         $closingBalance = $runningBalance;
-        
+
         return [
             'supplier_id' => $supplierUserId,
             'period' => [
@@ -179,16 +208,16 @@ class SupplierFinanceService
             'entries' => $formattedEntries,
         ];
     }
-    
+
     private function getNextTuesday()
     {
         $now = Carbon::now();
-        
+
         // If today is Tuesday, get next Tuesday (7 days from now)
         if ($now->dayOfWeek === Carbon::TUESDAY) {
             return $now->copy()->addWeek()->startOfDay();
         }
-        
+
         // Otherwise, get the next Tuesday
         return $now->copy()->next(Carbon::TUESDAY)->startOfDay();
     }

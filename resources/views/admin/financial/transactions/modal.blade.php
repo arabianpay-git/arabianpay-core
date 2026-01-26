@@ -22,6 +22,7 @@
                     
                     <div class="flex flex-col gap-1">
                         <label class="text-gray-600 text-xs">Amount</label>
+        
                         <span class="text-gray-900 font-medium text-lg" id="modal-amount"></span>
                     </div>
                     
@@ -87,8 +88,8 @@
                             <tfoot>
                                 <tr class="bg-gray-50">
                                     <td colspan="1" class="font-medium">Total</td>
-                                    <td class="font-medium text-red-600" id="modal-total-debit">0.00 SR</td>
-                                    <td class="font-medium text-green-600" id="modal-total-credit">0.00 SR</td>
+                                    <td class="font-medium text-red-600" id="modal-total-debit">0.00 </td>
+                                    <td class="font-medium text-green-600" id="modal-total-credit">0.00 </td>
                                     <td colspan="2" class="font-medium">
                                         <span id="modal-balance-status">Balanced</span>
                                     </td>
@@ -143,9 +144,9 @@ function populateTransactionModal(transaction, entries) {
     // Populate basic transaction info
     document.getElementById('modal-transaction-id').textContent = transaction.id;
     document.getElementById('modal-uuid').textContent = transaction.uuid || '-';
-    document.getElementById('modal-amount').textContent = parseFloat(transaction.amount).toLocaleString('en-US', {minimumFractionDigits: 2}) + ' SR';
+    document.getElementById('modal-amount').innerHTML = `<span class="icon-saudi_riyal"></span><span class="text-gray-900 font-medium text-lg">${parseFloat(transaction.amount).toLocaleString('en-US', {minimumFractionDigits: 2})}</span>`;
     document.getElementById('modal-date').textContent = transaction.transaction_date || '-';
-    document.getElementById('modal-user').textContent = transaction.user ? transaction.user.name : '-';
+    document.getElementById('modal-user').textContent = transaction.user ? transaction.user.first_name + ' ' + transaction.user.last_name : '-';
     
     // Transaction type badge
     //const typeElement = document.getElementById('modal-type');
@@ -222,8 +223,8 @@ function populateEntriesTable(entries) {
                         <span class="text-sm font-medium">${entry.account.account_name}</span>
                     ` : (entry.account_name || '-')}
                 </td>
-                <td>${debit > 0 ? `<span class="text-red-600 font-medium">${debit.toLocaleString('en-US', {minimumFractionDigits: 2})} SR</span>` : '<span class="text-gray-400">-</span>'}</td>
-                <td>${credit > 0 ? `<span class="text-green-600 font-medium">${credit.toLocaleString('en-US', {minimumFractionDigits: 2})} SR</span>` : '<span class="text-gray-400">-</span>'}</td>
+                <td>${debit > 0 ? `<span class="icon-saudi_riyal"></span><span class="text-red-600 font-medium">${debit.toLocaleString('en-US', {minimumFractionDigits: 2})} </span>` : '<span class="text-gray-400">-</span>'}</td>
+                <td>${credit > 0 ? `<span class="icon-saudi_riyal"></span><span class="text-green-600 font-medium">${credit.toLocaleString('en-US', {minimumFractionDigits: 2})} </span>` : '<span class="text-gray-400">-</span>'}</td>
                <td>${entry.notes ? `<span class="text-sm">${entry.notes.substring(0, 50)}${entry.notes.length > 50 ? '...' : ''}</span>` : '<span class="text-gray-400">-</span>'}</td>
             </tr>
         `;
@@ -232,8 +233,8 @@ function populateEntriesTable(entries) {
     tableBody.innerHTML = tableHTML;
     
     // Update totals
-    document.getElementById('modal-total-debit').textContent = `${totalDebit.toLocaleString('en-US', {minimumFractionDigits: 2})} SR`;
-    document.getElementById('modal-total-credit').textContent = `${totalCredit.toLocaleString('en-US', {minimumFractionDigits: 2})} SR`;
+    document.getElementById('modal-total-debit').textContent = `${totalDebit.toLocaleString('en-US', {minimumFractionDigits: 2})} `;
+    document.getElementById('modal-total-credit').textContent = `${totalCredit.toLocaleString('en-US', {minimumFractionDigits: 2})} `;
     
     const balanceStatus = document.getElementById('modal-balance-status');
     const difference = totalDebit - totalCredit;

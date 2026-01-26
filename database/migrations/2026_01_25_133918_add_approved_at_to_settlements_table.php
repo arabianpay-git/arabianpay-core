@@ -11,14 +11,9 @@ return new class extends Migration
      */
     public function up(): void
     {
-        if (!Schema::hasTable('cr_validations')) {
-            Schema::create('cr_validations', function (Blueprint $table) {
-                $table->id();
-                $table->json('cr_data');
-                $table->string('email');
-                $table->timestamps();
-            });
-        }
+        Schema::table('settlements', function (Blueprint $table) {
+            $table->timestamp('approved_at')->nullable()->after('approved_by');
+        });
     }
 
     /**
@@ -26,6 +21,8 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('cr_validations');
+        Schema::table('settlements', function (Blueprint $table) {
+            $table->dropColumn('approved_at');
+        });
     }
 };

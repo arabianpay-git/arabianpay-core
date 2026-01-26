@@ -2898,4 +2898,5 @@ return [
     'This order has been returned.' => 'This order has been returned.',
     'No credit history available' => 'No credit history available',
     'bureau rating raw' => 'Bureau Rating Raw',
+    'Weekly Settlements' => 'Weekly Settlements',
 ];

@@ -1,0 +1,8 @@
+BATCH PAYOUT REPORT
+Date: 2026-01-25 13:52:10
+Report ID: 86d40aba-2f96-4a15-90a8-09832ce0f3da
+Total Amount: 6,177.14
+--------------------------------------------------
+Settlement No	Supplier	Amount	Status
+--------------------------------------------------
+SETT-20260127-3	Asad Merchant Store	6177.14	paid

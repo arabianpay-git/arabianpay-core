@@ -13,6 +13,11 @@
                         Payout Portal
                     </h1>
                 </div>
+                 <div class="flex items-center gap-2.5">
+                    <a href="{{ route('settlements.index') }}" class="btn btn-sm btn-light">
+                        <i class="ki-filled ki-calendar-tick"></i> Weekly Settlements
+                    </a>
+                </div>
             </div>
         </div>
         <!-- End of Container -->
@@ -91,7 +96,7 @@
                         </div>
                     </div>
                     <div class="lg:col-span-2">
-                        <div class="kt-card h-full">
+                        <div class="kt-card h-full border-1">
                             <form method="get" action="" class="flex items-end gap-3">
                                 <div>
                                     <label class="form-label">From</label>

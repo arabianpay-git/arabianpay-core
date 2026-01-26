@@ -2751,5 +2751,5 @@ return [
     'This order has been returned.' => 'تم استرجاع هذا الطلب.',
     'No credit history available.' => 'لا يوجد سجل ائتماني متاح.',
     'bureau rating raw' => 'التصنيف الخام لمركز المعلومات الائتمانية (bureau rating raw)',
-
+    'Weekly Settlements' => 'التسويات الاسبوعية',
 ];

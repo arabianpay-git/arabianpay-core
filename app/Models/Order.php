@@ -35,7 +35,7 @@ class Order extends Model
         'payment_status',
         'payment_details',
         'grand_total',
-         'commission_amount',
+        'commission_amount',
         'commission_percent',
         'coupon_discount',
         'code',
@@ -48,6 +48,7 @@ class Order extends Model
         'delivered_at',
         'delivery_otp',
         'rejection_reason',
+        'settlement_id',
     ];
 
     protected $encryptableAttributes = [
@@ -91,6 +92,12 @@ class Order extends Model
     {
         return $this->belongsTo(User::class, 'seller_id');
     }
+
+    public function settlement()
+    {
+        return $this->belongsTo(Settlement::class, 'settlement_id');
+    }
+
     public function checkout()
     {
         return $this->belongsTo(Checkout::class, 'checkout_id');

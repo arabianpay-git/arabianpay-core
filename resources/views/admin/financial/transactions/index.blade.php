@@ -86,9 +86,10 @@
                                                 </td>
 
                                                 <td>
+                                                    <span class="icon-saudi_riyal"></span>
                                                     <span
                                                         class="text-gray-900 font-medium">{{ number_format($transaction->amount, 2) }}
-                                                        SR</span>
+                                                        </span>
                                                 </td>
 
 

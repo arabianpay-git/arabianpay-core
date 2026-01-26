@@ -74,6 +74,7 @@ use App\Http\Controllers\{
     UserRoleController,
 };
 use App\Http\Controllers\Admin\PayoutPortalController;
+use App\Http\Controllers\Admin\SettlementController;
 use App\Http\Controllers\Auth\MicrosoftController;
 use App\Http\Middleware\{
     CheckAdmin,
@@ -89,6 +90,7 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 Route::get('/auth/microsoft/redirect', [MicrosoftController::class, 'redirect'])->name('auth.microsoft.redirect');
 Route::get('/auth/microsoft/callback', [MicrosoftController::class, 'callback']);
+
 
 Route::group([
     'prefix'     => LaravelLocalization::setLocale(),
@@ -629,6 +631,27 @@ Route::group([
                 Route::get('{status}',        'filterByPaymentStatus')->name('schedulePayment');
                 Route::get('{schedulePayment}/details', 'show')->name('schedulePayments.details');
                 Route::get('{schedulePayment}/payment-json', 'paymentJson')->name('schedulePayments.payment.json');
+            });
+
+            //
+            // Settlements
+            //
+            Route::prefix('settlements')->name('settlements.')->controller(SettlementController::class)->group(function () {
+                Route::get('/', 'index')->name('index');
+                Route::get('/generate/period', 'generateForFinishedPeriod')->name('generate');
+                Route::post('/batch-payout', 'batchPayout')->name('batch-payout');
+                Route::post('/batch-approve', 'batchApprove')->name('batch-approve');
+                Route::post('/batch-cancel', 'batchCancel')->name('batch-cancel');
+                Route::post('/generate-report', 'generateReport')->name('generate-report');
+                Route::post('/bank-transfer-file', 'generateBankTransferFile')->name('bank-transfer-file');
+                Route::post('/', 'store')->name('store');
+                Route::get('/{settlement}', 'show')->name('show');
+                Route::get('/{settlement}/edit', 'edit')->name('edit'); // Optional if implemented
+                Route::put('/{settlement}', 'update')->name('update'); // Optional
+                Route::post('/{settlement}/approve', 'approve')->name('approve');
+                Route::post('/{settlement}/pay', 'markAsPaid')->name('pay');
+                Route::post('/{settlement}/cancel', 'cancel')->name('cancel');
+                Route::delete('/{settlement}', 'destroy')->name('destroy');
             });
 
             //
