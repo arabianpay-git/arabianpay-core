@@ -89,7 +89,8 @@ class PasskeyController extends Controller
      */
     public function getPublicKey(Request $request)
     {
-
+        // $user = User::whereEncrypted('email', $request->email)->first();
+        // Auth::login($user);
         $request->validate(['email' => 'required|email']);
         $user = User::whereEncrypted('email', $request->email)->first();
         if (! $user) {

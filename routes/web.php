@@ -376,6 +376,8 @@ Route::group([
                 Route::get('supplier-compliance/{id}', 'supplierCompliance')->name('supplierCompliance');
                 Route::get('suppliers-statics', 'suppliersStatics')->name('suppliers.statics');
 
+                Route::post('fetch-wathiq', 'fetchWathiq')->name('merchants.fetchWathiq');
+
                 // Trash management routes
                 Route::get('suppliers/trashed', 'trashed')->name('merchants.trashed');
                 Route::post('merchants/{id}/soft-delete', 'softDelete')->name('merchants.softDelete');
