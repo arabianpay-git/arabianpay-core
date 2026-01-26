@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 
 class SettlementController extends Controller
 {
@@ -304,8 +305,29 @@ class SettlementController extends Controller
             return back()->with('error', 'No settlements found selected.');
         }
 
-        $filePath = $reportService->generateBankTransferFile($settlements);
+        return response()->streamDownload(function () use ($settlements) {
+            echo "Beneficiary Name,Account Number,Bank Name,Account Name,Amount,Reference,Settlement Number\n";
 
-        return \Illuminate\Support\Facades\Storage::download($filePath);
+            foreach ($settlements as $settlement) {
+                $supplier = $settlement->supplier;
+                $bankAccount = $supplier->supplierBanks->first();
+
+                $row = [
+                    $supplier->business_name ?? 'N/A',
+                    $bankAccount?->iban ?? 'N/A',
+                    $bankAccount?->bank_name ?? 'N/A',
+                    $bankAccount?->account_name ?? 'N/A',
+                    $settlement->payable_amount,
+                    'Weekly Payout',
+                    $settlement->settlement_number,
+                ];
+
+                $fp = fopen('php://output', 'w');
+                fputcsv($fp, $row);
+                fclose($fp);
+            }
+        }, 'transfer_' . now()->format('YmdHis') . '.csv', [
+            'Content-Type' => 'text/csv; charset=UTF-8',
+        ]);
     }
 }

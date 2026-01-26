@@ -17,6 +17,9 @@ class BatchPayoutReport
      * @param float $totalAmount Total amount processed
      * @return string Path to the generated report
      */
+    /**
+     * 
+     */
     public function generateReport($settlements, $totalAmount)
     {
         // Placeholder for PDF generation
@@ -85,7 +88,7 @@ class BatchPayoutReport
         }
 
         $fileName = "bank-transfers/transfer_" . now()->format('YmdHis') . ".csv";
-        Storage::put($fileName, $content);
+        Storage::disk('public')->put($fileName, $content);
 
         return $fileName;
     }
