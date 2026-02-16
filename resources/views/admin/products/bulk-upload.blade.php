@@ -691,11 +691,11 @@
             let selectedRows = new Set();
 
             // Update toolbar visibility and count
-            function updateToolbar() 
+            function updateToolbar() {
                 const count = selectedRows.size;
                 if (count > 0) {
                     bulkToolbar.classList.add('active');
-                    selectedCountEl.textContent = count + ' ' ;
+                    selectedCountEl.textContent = count + ' ' + (count === 1 ? 'product' : 'products') + ' selected';
                 } else {
                     bulkToolbar.classList.remove('active');
                 }
