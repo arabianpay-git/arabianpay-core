@@ -285,7 +285,7 @@
                                                         <td class="border px-4 py-2" data-col="{{ count($header) + 1 }}">
                                                             <select name="products[{{ $rowIndex }}][brand_id]"
                                                                 class="w-full text-sm rounded border-gray-300 select"
-                                                                required>
+                                                                >
                                                                 <option value="">{{ translate('Select Brand') }}
                                                                 </option>
                                                                 @foreach ($brands as $brand)
