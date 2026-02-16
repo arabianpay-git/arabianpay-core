@@ -2758,5 +2758,6 @@ return [
     'products selected' => 'منتجات محددة',
     'Apply to Selected' => 'تطبيق على المحدد',
     'Clear Selection' => 'مسح التحديد',
+    'Uploaded Products Preview' => 'معاينة المنتجات التي تم رفعها',
 
 ];
