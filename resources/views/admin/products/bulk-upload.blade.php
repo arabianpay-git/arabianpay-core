@@ -254,7 +254,7 @@
                                                 </div>
                                                 <div class="flex items-center gap-3 flex-wrap">
                                                     <div class="flex items-center gap-2">
-                                                        <label class="text-sm font-medium">{{ translate('Category:') }}</label>
+                                                        <label class="text-sm font-medium">{{ translate('Category') }}</label>
                                                         <select id="bulkCategory" class="select bg-white text-gray-900 border-0 rounded px-3 py-2">
                                                             <option value="">{{ translate('Select Category') }}</option>
                                                             @foreach ($categories as $category)
@@ -263,7 +263,7 @@
                                                         </select>
                                                     </div>
                                                     <div class="flex items-center gap-2">
-                                                        <label class="text-sm font-medium">{{ translate('Brand:') }}</label>
+                                                        <label class="text-sm font-medium">{{ translate('Brand') }}</label>
                                                         <select id="bulkBrand" class="select bg-white text-gray-900 border-0 rounded px-3 py-2">
                                                             <option value="">{{ translate('Select Brand') }}</option>
                                                             @foreach ($brands as $brand)
