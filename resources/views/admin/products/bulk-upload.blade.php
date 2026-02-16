@@ -250,7 +250,7 @@
                                             <div class="flex items-center justify-between w-full gap-4 flex-wrap">
                                                 <div class="flex items-center gap-2">
                                                     <i class="ki-filled ki-check-circle text-2xl"></i>
-                                                    <span class="font-semibold" id="selectedCount">0 {{ translate('products selected')}}</span>
+                                                    <span class="font-semibold" id="selectedCount">0 </span>{{ translate('products selected')}}
                                                 </div>
                                                 <div class="flex items-center gap-3 flex-wrap">
                                                     <div class="flex items-center gap-2">
@@ -691,11 +691,11 @@
             let selectedRows = new Set();
 
             // Update toolbar visibility and count
-            function updateToolbar() {
+            function updateToolbar() 
                 const count = selectedRows.size;
                 if (count > 0) {
                     bulkToolbar.classList.add('active');
-                    selectedCountEl.textContent = count + ' ' + (count === 1 ? 'product' : 'products') + ' selected';
+                    selectedCountEl.textContent = count + ' ' ;
                 } else {
                     bulkToolbar.classList.remove('active');
                 }
