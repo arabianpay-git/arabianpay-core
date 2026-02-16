@@ -63,6 +63,32 @@
                 background-color: #fecaca;
                 color: #b91c1c;
             }
+
+            /* Bulk selection styles */
+            .bulk-toolbar {
+                display: none;
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                border-radius: 0.5rem;
+                padding: 1rem;
+                margin-bottom: 1rem;
+                box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+                color: white;
+            }
+
+            .bulk-toolbar.active {
+                display: flex;
+            }
+
+            .row-checkbox {
+                width: 1.125rem;
+                height: 1.125rem;
+                cursor: pointer;
+                border-radius: 0.25rem;
+            }
+
+            .selected-row {
+                background-color: #eff6ff !important;
+            }
         </style>
     @endpush
 
@@ -219,9 +245,50 @@
                                         enctype="multipart/form-data">
                                         @csrf
 
+                                        <!-- Bulk Action Toolbar -->
+                                        <div class="bulk-toolbar" id="bulkToolbar">
+                                            <div class="flex items-center justify-between w-full gap-4 flex-wrap">
+                                                <div class="flex items-center gap-2">
+                                                    <i class="ki-filled ki-check-circle text-2xl"></i>
+                                                    <span class="font-semibold" id="selectedCount">0 {{ translate('products selected')}}</span>
+                                                </div>
+                                                <div class="flex items-center gap-3 flex-wrap">
+                                                    <div class="flex items-center gap-2">
+                                                        <label class="text-sm font-medium">{{ translate('Category:') }}</label>
+                                                        <select id="bulkCategory" class="select bg-white text-gray-900 border-0 rounded px-3 py-2">
+                                                            <option value="">{{ translate('Select Category') }}</option>
+                                                            @foreach ($categories as $category)
+                                                                <option value="{{ $category->id }}">{{ $category->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <div class="flex items-center gap-2">
+                                                        <label class="text-sm font-medium">{{ translate('Brand:') }}</label>
+                                                        <select id="bulkBrand" class="select bg-white text-gray-900 border-0 rounded px-3 py-2">
+                                                            <option value="">{{ translate('Select Brand') }}</option>
+                                                            @foreach ($brands as $brand)
+                                                                <option value="{{ $brand->id }}">{{ $brand->name }}</option>
+                                                            @endforeach
+                                                        </select>
+                                                    </div>
+                                                    <button type="button" id="applyBulk" class="btn btn-sm btn-light">
+                                                        <i class="ki-filled ki-check"></i>
+                                                        {{ translate('Apply to Selected') }}
+                                                    </button>
+                                                    <button type="button" id="clearSelection" class="btn btn-sm btn-light">
+                                                        <i class="ki-filled ki-cross"></i>
+                                                        {{ translate('Clear Selection') }}
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <table class="min-w-full border border-gray-300 bg-white" id="editable-table">
                                             <thead class="bg-gray-100 text-gray-700 text-sm font-semibold">
                                                 <tr>
+                                                    <th class="border px-4 py-2 w-12">
+                                                        <input type="checkbox" id="selectAll" class="row-checkbox" title="{{ translate('Select All') }}">
+                                                    </th>
                                                     <th class="border px-4 py-2" data-col="0">{{ translate('Name') }}
                                                     </th>
                                                     <th class="border px-4 py-2" data-col="1">
@@ -245,7 +312,10 @@
                                             </thead>
                                             <tbody id="editable-table-body">
                                                 @foreach ($parsedData as $rowIndex => $row)
-                                                    <tr class="text-sm text-gray-800">
+                                                    <tr class="text-sm text-gray-800" data-row-index="{{ $rowIndex }}">
+                                                        <td class="border px-4 py-2 text-center">
+                                                            <input type="checkbox" class="row-checkbox product-checkbox" data-row="{{ $rowIndex }}">
+                                                        </td>
                                                         @foreach ($header as $colIndex => $col)
                                                             <td class="cell-wrapper border px-4 py-2 group relative"
                                                                 data-row="{{ $rowIndex }}"
@@ -603,6 +673,146 @@
                 itemSelectText: '',
                 shouldSort: false
             });
+        });
+    </script>
+
+    <script>
+        // Bulk selection functionality
+        document.addEventListener('DOMContentLoaded', function() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const productCheckboxes = document.querySelectorAll('.product-checkbox');
+            const bulkToolbar = document.getElementById('bulkToolbar');
+            const selectedCountEl = document.getElementById('selectedCount');
+            const applyBulkBtn = document.getElementById('applyBulk');
+            const clearSelectionBtn = document.getElementById('clearSelection');
+            const bulkCategorySelect = document.getElementById('bulkCategory');
+            const bulkBrandSelect = document.getElementById('bulkBrand');
+
+            let selectedRows = new Set();
+
+            // Update toolbar visibility and count
+            function updateToolbar() {
+                const count = selectedRows.size;
+                if (count > 0) {
+                    bulkToolbar.classList.add('active');
+                    selectedCountEl.textContent = count + ' ' + (count === 1 ? 'product' : 'products') + ' selected';
+                } else {
+                    bulkToolbar.classList.remove('active');
+                }
+
+                // Update select all checkbox state
+                if (count === 0) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = false;
+                } else if (count === productCheckboxes.length) {
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.indeterminate = false;
+                } else {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.indeterminate = true;
+                }
+            }
+
+            // Handle individual checkbox change
+            productCheckboxes.forEach(checkbox => {
+                checkbox.addEventListener('change', function() {
+                    const rowIndex = this.getAttribute('data-row');
+                    const row = this.closest('tr');
+
+                    if (this.checked) {
+                        selectedRows.add(rowIndex);
+                        row.classList.add('selected-row');
+                    } else {
+                        selectedRows.delete(rowIndex);
+                        row.classList.remove('selected-row');
+                    }
+
+                    updateToolbar();
+                });
+            });
+
+            // Handle select all checkbox
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', function() {
+                    const isChecked = this.checked;
+                    
+                    productCheckboxes.forEach(checkbox => {
+                        checkbox.checked = isChecked;
+                        const rowIndex = checkbox.getAttribute('data-row');
+                        const row = checkbox.closest('tr');
+                        
+                        if (isChecked) {
+                            selectedRows.add(rowIndex);
+                            row.classList.add('selected-row');
+                        } else {
+                            selectedRows.delete(rowIndex);
+                            row.classList.remove('selected-row');
+                        }
+                    });
+
+                    updateToolbar();
+                });
+            }
+
+            // Handle apply bulk action
+            if (applyBulkBtn) {
+                applyBulkBtn.addEventListener('click', function() {
+                    const categoryId = bulkCategorySelect.value;
+                    const brandId = bulkBrandSelect.value;
+
+                    if (!categoryId && !brandId) {
+                        alert('{{ translate("Please select a category or brand to apply.") }}');
+                        return;
+                    }
+
+                    // Apply to selected rows
+                    selectedRows.forEach(rowIndex => {
+                        if (categoryId) {
+                            const categorySelect = document.querySelector(`select[name="products[${rowIndex}][category_id]"]`);
+                            if (categorySelect) {
+                                categorySelect.value = categoryId;
+                                // Trigger change event if using Choices.js or similar
+                                const event = new Event('change', { bubbles: true });
+                                categorySelect.dispatchEvent(event);
+                            }
+                        }
+
+                        if (brandId) {
+                            const brandSelect = document.querySelector(`select[name="products[${rowIndex}][brand_id]"]`);
+                            if (brandSelect) {
+                                brandSelect.value = brandId;
+                                // Trigger change event if using Choices.js or similar
+                                const event = new Event('change', { bubbles: true });
+                                brandSelect.dispatchEvent(event);
+                            }
+                        }
+                    });
+
+                    // Clear selections and reset
+                    clearSelections();
+
+                    // Reset bulk dropdowns
+                    bulkCategorySelect.value = '';
+                    bulkBrandSelect.value = '';
+                });
+            }
+
+            // Handle clear selection
+            if (clearSelectionBtn) {
+                clearSelectionBtn.addEventListener('click', function() {
+                    clearSelections();
+                });
+            }
+
+            function clearSelections() {
+                productCheckboxes.forEach(checkbox => {
+                    checkbox.checked = false;
+                    const row = checkbox.closest('tr');
+                    row.classList.remove('selected-row');
+                });
+                selectedRows.clear();
+                updateToolbar();
+            }
         });
     </script>
 @endpush
