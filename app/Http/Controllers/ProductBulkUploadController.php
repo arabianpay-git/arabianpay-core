@@ -84,26 +84,27 @@ class ProductBulkUploadController extends Controller
             'products.*.description' => ['nullable', 'string'],
             'products.*.unit' => ['required', 'string', 'max:50'],
             'products.*.stock' => ['nullable', 'integer', 'min:0'],
-            'products.*.category_id' => ['required', 'exists:categories,id'],
+            // 'products.*.category_id' => ['required', 'exists:categories,id'],
             'products.*.brand_id' => ['nullable', 'exists:brands,id'],
             'products.*.thumbnail' => ['nullable', 'string'],
         ]);
 
         foreach ($validated['products'] as $product) {
-            Product::create([
-                'name' => $product['name'],
-                'unit_price' => $product['unit_price'],
-                'description' => $product['description'] ?? null,
-                'unit' => $product['unit'],
-                'current_stock' => $product['stock'] ?? 0,
-                'category_id' => $product['category_id'],
-                'brand_id' => $product['brand_id'] ?? null,
-                'thumbnail' => $product['thumbnail'] ?? null,
-                'added_by'       => Auth::user()->user_type ?? 'admin',
-                'user_id'        => $request->user_id ?? Auth::id(),
-                'published'      => 'published',
-                'approved'       => 'approved',
-            ]);
+            $categoryId =
+                Product::create([
+                    'name' => $product['name'],
+                    'unit_price' => $product['unit_price'],
+                    'description' => $product['description'] ?? null,
+                    'unit' => $product['unit'],
+                    'current_stock' => $product['stock'] ?? 0,
+                    'category_id' => $product['category_id'],
+                    'brand_id' => $product['brand_id'] ?? null,
+                    'thumbnail' => $product['thumbnail'] ?? null,
+                    'added_by'       => Auth::user()->user_type ?? 'admin',
+                    'user_id'        => $request->user_id ?? Auth::id(),
+                    'published'      => 'published',
+                    'approved'       => 'approved',
+                ]);
         }
 
         return redirect()->back()->with('success', 'Products uploaded successfully.');
