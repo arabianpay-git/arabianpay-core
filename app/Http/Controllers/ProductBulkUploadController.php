@@ -97,7 +97,7 @@ class ProductBulkUploadController extends Controller
                     'description' => $product['description'] ?? null,
                     'unit' => $product['unit'],
                     'current_stock' => $product['stock'] ?? 0,
-                    'category_id' => $product['category_id'],
+                    'category_id' => $product['category_id'] ?? null,
                     'brand_id' => $product['brand_id'] ?? null,
                     'thumbnail' => $product['thumbnail'] ?? null,
                     'added_by'       => Auth::user()->user_type ?? 'admin',
