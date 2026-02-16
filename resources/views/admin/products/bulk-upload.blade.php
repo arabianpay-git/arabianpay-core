@@ -270,7 +270,7 @@
                                                         <td class="border px-4 py-2" data-col="{{ count($header) }}">
                                                             <select name="products[{{ $rowIndex }}][category_id]"
                                                                 class="w-full text-sm rounded border-gray-300 select"
-                                                                required>
+                                                                >
                                                                 <option value="">{{ translate('Select Category') }}
                                                                 </option>
                                                                 @foreach ($categories as $category)
