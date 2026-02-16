@@ -695,7 +695,7 @@
                 const count = selectedRows.size;
                 if (count > 0) {
                     bulkToolbar.classList.add('active');
-                    selectedCountEl.textContent = count + ' ' + (count === 1 ? 'product' : 'products') + ' selected';
+                    selectedCountEl.textContent = count;
                 } else {
                     bulkToolbar.classList.remove('active');
                 }
