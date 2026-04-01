@@ -28,6 +28,7 @@ class SuppliersExport implements FromCollection, WithHeadings, WithMapping, With
     public function headings(): array
     {
         return [
+            'Arabianpay code',
             'الاسم',
             'اسم الشركة',
             'رقم الجوال',
@@ -53,6 +54,7 @@ class SuppliersExport implements FromCollection, WithHeadings, WithMapping, With
             : '';
 
         return [
+            $merchant->id,
             $name,
             $user->business_name ?? '',
             $user->phone_number ?? '',
