@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Exports\SuppliersExport;
 use App\Models\Approval;
 use App\Models\BusinessCategory;
 use App\Models\CustomerCreditLimit;
 use App\Models\Merchant;
-use App\Models\NafathVerification;
 use App\Models\Order;
 use App\Models\Product;
 use App\Models\ShopSetting;
@@ -28,14 +28,16 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Maatwebsite\Excel\Facades\Excel;
 
 class SupplierController extends Controller
 {
-
-    use SmsSender, EmailSender;
+    use EmailSender, SmsSender;
 
     protected $wathqService;
+
     protected $firebase;
+
     protected $auditTrailService;
 
     public function __construct(WathqService $wathqService, FirebaseService $firebase, AuditTrailService $auditTrailService)
@@ -44,7 +46,6 @@ class SupplierController extends Controller
         $this->firebase = $firebase;
         $this->auditTrailService = $auditTrailService;
     }
-
 
     public function suppliers(Request $request)
     {
@@ -71,19 +72,7 @@ class SupplierController extends Controller
             ]
         );
 
-        $merchantsQuery = Merchant::with(['user', 'businessType', 'assigned', 'approval'])
-            ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to', 'created_at')
-            ->when(
-                !($user->user_type === 'employee' && $user->is_manager) && $user->user_type !== 'admin',
-                fn($query) => $query->where('assigned_to', $user->id)
-            )
-            ->when(!$status, fn($q) => $q->where('status', '!=', 'blacklisted'))
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->when($employee, fn($q) => $q->where('assigned_to', $employee))
-            ->orderByDesc('id')
-            ->orderByRaw('ISNULL(assigned_to) DESC');
-
-        $merchants = $merchantsQuery->get();
+        $merchants = $this->merchantsQueryFromRequest($request)->get();
 
         // Apply search filter
         if ($search) {
@@ -128,11 +117,67 @@ class SupplierController extends Controller
         ]);
     }
 
+    /**
+     * Export suppliers list to Excel (same filters as the list: search, status, employee, visibility rules).
+     */
+    public function exportSuppliers(Request $request)
+    {
+        $user = currentUser();
+        $search = $request->input('search');
+        $status = $request->input('status');
+        $employee = $request->input('employee');
+
+        $this->auditTrailService->logViewOperation(
+            'export_list',
+            'Supplier',
+            'Exported suppliers list to Excel',
+            [
+                'search_query' => $search,
+                'status_filter' => $status,
+                'employee_filter' => $employee,
+                'user_type' => $user->user_type,
+                'is_manager' => $user->is_manager ?? false,
+            ]
+        );
+
+        $merchants = $this->merchantsQueryFromRequest($request)->get();
+
+        if ($search) {
+            $merchants = $this->filterMerchants($merchants, $search);
+        }
+
+        $filename = 'suppliers-'.now()->format('Y-m-d-His').'.xlsx';
+
+        return Excel::download(new SuppliersExport($merchants), $filename);
+    }
+
+    /**
+     * Base query for suppliers index and export (shared filters and authorization).
+     */
+    private function merchantsQueryFromRequest(Request $request)
+    {
+        $user = currentUser();
+        $status = $request->input('status');
+        $employee = $request->input('employee');
+
+        return Merchant::with(['user', 'businessType', 'assigned', 'approval'])
+            ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to', 'created_at')
+            ->when(
+                ! ($user->user_type === 'employee' && $user->is_manager) && $user->user_type !== 'admin',
+                fn ($query) => $query->where('assigned_to', $user->id)
+            )
+            ->when(! $status, fn ($q) => $q->where('status', '!=', 'blacklisted'))
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($employee, fn ($q) => $q->where('assigned_to', $employee))
+            ->orderByDesc('id')
+            ->orderByRaw('ISNULL(assigned_to) DESC');
+    }
+
     public function updateCommission(Request $request)
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'commission' => 'required'
+            'commission' => 'required',
         ]);
 
         DB::beginTransaction();
@@ -201,6 +246,7 @@ class SupplierController extends Controller
         ]);
 
         $supplierShop = ShopSetting::where('user_id', $id)->first();
+
         return view('admin.accounts.supplier-shop', compact('merchant', 'supplierShop'));
     }
 
@@ -258,7 +304,7 @@ class SupplierController extends Controller
                 ],
             ]);
 
-            return redirect()->back()->with('error', 'Failed to save shop settings: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to save shop settings: '.$e->getMessage());
         }
     }
 
@@ -299,7 +345,7 @@ class SupplierController extends Controller
         $merchant = Merchant::where('user_id', $id)
             ->with('user', 'businessType', 'riskManagement', 'approval')
             ->when(
-                !(
+                ! (
                     ($user->user_type === 'employee' && $user->is_manager) || $user->user_type === 'admin'
                 ),
                 function ($query) use ($user) {
@@ -308,13 +354,13 @@ class SupplierController extends Controller
             )
             ->first();
 
-        if (!$merchant) {
+        if (! $merchant) {
             // Log failed access attempt
             $this->auditTrailService->log([
                 'event_category' => 'access_control',
                 'event_type' => 'supplier_access_denied',
                 'entity_type' => 'Supplier',
-                'action_summary' => "Attempted to access supplier profile without proper assignment or permissions",
+                'action_summary' => 'Attempted to access supplier profile without proper assignment or permissions',
                 'properties' => [
                     'attempted_supplier_id' => $id,
                     'current_user_id' => $user->id,
@@ -541,6 +587,7 @@ class SupplierController extends Controller
                 foreach ($items as $item) {
                     $carry += $item['quantity'] ?? 0;
                 }
+
                 return $carry;
             }, 0);
 
@@ -582,7 +629,9 @@ class SupplierController extends Controller
 
         foreach ($transactions as $tx) {
             $order = $tx->order;
-            if (! $order) continue;
+            if (! $order) {
+                continue;
+            }
 
             $items = map_product_details($order->product_details);
             $subTotal = $items->sum('total');
@@ -659,6 +708,7 @@ class SupplierController extends Controller
 
         $contract = Approval::where('user_id', $id)->select('contract', 'contract_end_date', 'created_at')->first();
         $supplierBank = SupplierBank::where('user_id', $id)->select('iban_certificate')->first();
+
         return view('admin.accounts.supplier-compliance', compact('merchant', 'contract', 'supplierBank'));
     }
 
@@ -705,7 +755,7 @@ class SupplierController extends Controller
 
             // Log approval creation
             $justificationData = $this->auditTrailService->withJustification(
-                "Supplier approval with contract and commission terms",
+                'Supplier approval with contract and commission terms',
                 'contractual_obligation',
                 ['commission', 'contract', 'payment_schedule']
             );
@@ -730,7 +780,7 @@ class SupplierController extends Controller
                 $merchant->user->email,
                 'Account Approved',
                 [
-                    'name' => $merchant->user->first_name . " " . $merchant->user->last_name,
+                    'name' => $merchant->user->first_name.' '.$merchant->user->last_name,
                 ]
             );
 
@@ -745,7 +795,7 @@ class SupplierController extends Controller
                 'event_type' => 'supplier_approval_notifications',
                 'entity_type' => 'Supplier',
                 'entity_id' => $merchant->id,
-                'action_summary' => "Sent approval notifications to supplier",
+                'action_summary' => 'Sent approval notifications to supplier',
                 'properties' => [
                     'email_sent' => true,
                     'sms_sent' => true,
@@ -775,7 +825,7 @@ class SupplierController extends Controller
                 ],
             ]);
 
-            return redirect()->back()->with('error', 'Failed to submit approval: ' . $e->getMessage());
+            return redirect()->back()->with('error', 'Failed to submit approval: '.$e->getMessage());
         }
     }
 
@@ -797,7 +847,7 @@ class SupplierController extends Controller
 
             // Log status update with justification
             $justificationData = $this->auditTrailService->withJustification(
-                "Supplier status updated as part of routine review",
+                'Supplier status updated as part of routine review',
                 'business_operation',
                 []
             );
@@ -828,7 +878,7 @@ class SupplierController extends Controller
                     'event_type' => 'firebase_supplier_status_update',
                     'entity_type' => 'Supplier',
                     'entity_id' => $merchant->id,
-                    'action_summary' => "Sent Firebase notification for supplier status update",
+                    'action_summary' => 'Sent Firebase notification for supplier status update',
                     'properties' => [
                         'notification_title' => 'Supplier Status Update',
                         'notification_body' => $description,
@@ -836,7 +886,7 @@ class SupplierController extends Controller
                     ],
                 ]);
             } catch (\Throwable $e) {
-                Log::error("Failed to send supplier status notification: " . $e->getMessage(), ['supplier_id' => $merchant->id]);
+                Log::error('Failed to send supplier status notification: '.$e->getMessage(), ['supplier_id' => $merchant->id]);
             }
 
             DB::commit();
@@ -851,7 +901,7 @@ class SupplierController extends Controller
                 'event_type' => 'supplier_status_update_failed',
                 'entity_type' => 'Supplier',
                 'entity_id' => $merchant->id,
-                'action_summary' => "Failed to update supplier status",
+                'action_summary' => 'Failed to update supplier status',
                 'properties' => [
                     'error_message' => $e->getMessage(),
                     'old_status' => $oldStatus,
@@ -859,20 +909,20 @@ class SupplierController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Failed to update status: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update status: '.$e->getMessage());
         }
     }
 
     public function supplierTransactions($id)
     {
-        if (!hasSensitivePermission('transaction_references')) {
+        if (! hasSensitivePermission('transaction_references')) {
             // Log unauthorized access attempt
             $this->auditTrailService->log([
                 'event_category' => 'security_events',
                 'event_type' => 'unauthorized_supplier_transaction_access',
                 'entity_type' => 'Supplier',
                 'entity_id' => $id,
-                'action_summary' => "Attempted to access supplier transactions without permission",
+                'action_summary' => 'Attempted to access supplier transactions without permission',
                 'properties' => [
                     'permission_required' => 'transaction_references',
                     'supplier_id' => $id,
@@ -933,7 +983,7 @@ class SupplierController extends Controller
             'coupon_discount',
             'delivery_status',
             'general_status',
-            'created_at'
+            'created_at',
         ])
             ->where('seller_id', $id)
             ->with(['user', 'pickupPoint'])
@@ -944,14 +994,14 @@ class SupplierController extends Controller
 
     public function supplierPayments($id)
     {
-        if (!hasSensitivePermission('transaction_references')) {
+        if (! hasSensitivePermission('transaction_references')) {
             // Log unauthorized access attempt
             $this->auditTrailService->log([
                 'event_category' => 'security_events',
                 'event_type' => 'unauthorized_supplier_payment_access',
                 'entity_type' => 'Supplier',
                 'entity_id' => $id,
-                'action_summary' => "Attempted to access supplier payments without permission",
+                'action_summary' => 'Attempted to access supplier payments without permission',
                 'properties' => [
                     'permission_required' => 'transaction_references',
                     'supplier_id' => $id,
@@ -984,16 +1034,16 @@ class SupplierController extends Controller
             ->latest()
             ->paginate(10);
 
-        $summary = $paginator->getCollection()->map(fn($wallet) => [
-            'seller_name'     => trim($wallet->seller->first_name . ' ' . $wallet->seller->last_name),
+        $summary = $paginator->getCollection()->map(fn ($wallet) => [
+            'seller_name' => trim($wallet->seller->first_name.' '.$wallet->seller->last_name),
             'seller_business' => $wallet->seller->business_name,
-            'invoice_number'  => strtoupper($wallet->order->invoice_number ?? 'N/A'),
-            'payment_date'    => $wallet->updated_at->format(dateFormat()),
+            'invoice_number' => strtoupper($wallet->order->invoice_number ?? 'N/A'),
+            'payment_date' => $wallet->updated_at->format(dateFormat()),
             'payment_invoice' => $this->calculateTotalOrderAmountWithoutTax(collect([$wallet->order])),
-            'tax_number'      => optional($wallet->seller->merchant)->vat_register_number ?? 'N/A',
-            'amount_paid'     => $wallet->balance_after,
-            'tax_total'       => calculate_order_tax($wallet->order),
-            'total_bills'     => $this->calculateTotalOrderAmount(collect([$wallet->order])),
+            'tax_number' => optional($wallet->seller->merchant)->vat_register_number ?? 'N/A',
+            'amount_paid' => $wallet->balance_after,
+            'tax_total' => calculate_order_tax($wallet->order),
+            'total_bills' => $this->calculateTotalOrderAmount(collect([$wallet->order])),
         ]);
 
         return view('admin.accounts.supplier-payments', compact('merchant', 'summary', 'paginator'));
@@ -1021,21 +1071,21 @@ class SupplierController extends Controller
         $orders = Order::where('seller_id', $id)->latest()->paginate(10);
 
         $orders->getCollection()->transform(function ($order) {
-            $items         = map_product_details($order->product_details);
-            $subTotal      = $items->sum('total');
-            $shipping      = $order->shipping_cost ?? 0;
-            $discount      = $order->coupon_discount ?? 0;
-            $tax           = calculate_order_tax($order);
+            $items = map_product_details($order->product_details);
+            $subTotal = $items->sum('total');
+            $shipping = $order->shipping_cost ?? 0;
+            $discount = $order->coupon_discount ?? 0;
+            $tax = calculate_order_tax($order);
 
-            $base          = $subTotal + $tax + $shipping - $discount;
+            $base = $subTotal + $tax + $shipping - $discount;
 
-            $commissionPct     = get_system_commission();
-            $commissionAmount  = $base * ($commissionPct / 100);
+            $commissionPct = get_system_commission();
+            $commissionAmount = $base * ($commissionPct / 100);
 
-            $commissionTaxPct  = get_commission_tax();
-            $commissionTaxAmt  = $commissionAmount * ($commissionTaxPct / 100);
+            $commissionTaxPct = get_commission_tax();
+            $commissionTaxAmt = $commissionAmount * ($commissionTaxPct / 100);
 
-            $totalAmount       = $base + $commissionAmount + $commissionTaxAmt;
+            $totalAmount = $base + $commissionAmount + $commissionTaxAmt;
 
             $supplierDue = Wallet::where('seller_id', $order->seller_id)
                 ->where('order_id', $order->id)
@@ -1046,18 +1096,18 @@ class SupplierController extends Controller
 
             // Add calculated fields to order
             $order->calculated = [
-                'subTotal'         => $subTotal,
-                'shipping'         => $shipping,
-                'discount'         => $discount,
-                'tax'              => $tax,
-                'base'             => $base,
-                'commissionPct'    => $commissionPct,
+                'subTotal' => $subTotal,
+                'shipping' => $shipping,
+                'discount' => $discount,
+                'tax' => $tax,
+                'base' => $base,
+                'commissionPct' => $commissionPct,
                 'commissionAmount' => $commissionAmount,
                 'commissionTaxPct' => $commissionTaxPct,
                 'commissionTaxAmt' => $commissionTaxAmt,
-                'totalAmount'      => $totalAmount,
-                'supplierDue'      => $supplierDue,
-                'totalSuplierDue'  => $totalSuplierDue,
+                'totalAmount' => $totalAmount,
+                'supplierDue' => $supplierDue,
+                'totalSuplierDue' => $totalSuplierDue,
             ];
 
             return $order;
@@ -1073,7 +1123,7 @@ class SupplierController extends Controller
     {
         $user = currentUser();
 
-        if (!($user->user_type === 'admin' || ($user->user_type === 'employee' && $user->is_manager))) {
+        if (! ($user->user_type === 'admin' || ($user->user_type === 'employee' && $user->is_manager))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -1163,7 +1213,7 @@ class SupplierController extends Controller
     {
         $user = currentUser();
 
-        if (!($user->user_type === 'admin' || ($user->user_type === 'employee' && $user->is_manager))) {
+        if (! ($user->user_type === 'admin' || ($user->user_type === 'employee' && $user->is_manager))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -1174,7 +1224,7 @@ class SupplierController extends Controller
             if ($merchant->trashed()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Merchant is already in trash.'
+                    'message' => 'Merchant is already in trash.',
                 ], 400);
             }
 
@@ -1198,7 +1248,7 @@ class SupplierController extends Controller
                 ),
                 null,
                 $this->auditTrailService->withJustification(
-                    "Merchant soft deleted and moved to trash for potential restoration",
+                    'Merchant soft deleted and moved to trash for potential restoration',
                     'legitimate_interest',
                     ['business_name', 'email', 'phone_number', 'cr_number']
                 )
@@ -1207,12 +1257,12 @@ class SupplierController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Merchant has been moved to trash successfully.',
-                'redirect' => $request->has('redirect_to_trash') ? route('merchants.trashed') : null
+                'redirect' => $request->has('redirect_to_trash') ? route('merchants.trashed') : null,
             ]);
         } catch (\Exception $e) {
-            Log::error('Soft delete failed: ' . $e->getMessage(), [
+            Log::error('Soft delete failed: '.$e->getMessage(), [
                 'merchant_id' => $id,
-                'user_id' => $user->id
+                'user_id' => $user->id,
             ]);
 
             $this->auditTrailService->log([
@@ -1224,12 +1274,12 @@ class SupplierController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'attempted_by' => $user->id,
-                ]
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete merchant: ' . $e->getMessage()
+                'message' => 'Failed to delete merchant: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -1276,7 +1326,7 @@ class SupplierController extends Controller
                 null,
                 array_merge(
                     $this->auditTrailService->withJustification(
-                        "Merchant permanently deleted with all related data - no recovery possible",
+                        'Merchant permanently deleted with all related data - no recovery possible',
                         'legitimate_interest',
                         ['cr_number', 'vat_register_number', 'owner_name', 'owner_iqama_number']
                     ),
@@ -1301,7 +1351,7 @@ class SupplierController extends Controller
                     ['user' => $userData, 'merchant_id' => $id],
                     null,
                     $this->auditTrailService->withJustification(
-                        "User permanently deleted along with merchant due to complete account removal",
+                        'User permanently deleted along with merchant due to complete account removal',
                         'legitimate_interest',
                         ['email', 'phone_number', 'first_name', 'last_name']
                     )
@@ -1319,14 +1369,14 @@ class SupplierController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Merchant and associated user have been permanently deleted.',
-                'redirect' => $request->has('redirect_to_trash') ? route('merchants.trashed') : null
+                'redirect' => $request->has('redirect_to_trash') ? route('merchants.trashed') : null,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
 
-            Log::error('Force delete failed: ' . $e->getMessage(), [
+            Log::error('Force delete failed: '.$e->getMessage(), [
                 'merchant_id' => $id,
-                'user_id' => $user->id
+                'user_id' => $user->id,
             ]);
 
             $this->auditTrailService->log([
@@ -1339,12 +1389,12 @@ class SupplierController extends Controller
                     'error' => $e->getMessage(),
                     'trace' => $e->getTraceAsString(),
                     'attempted_by' => $user->id,
-                ]
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to permanently delete: ' . $e->getMessage()
+                'message' => 'Failed to permanently delete: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -1356,7 +1406,7 @@ class SupplierController extends Controller
     {
         $user = currentUser();
 
-        if (!($user->user_type === 'admin' || ($user->user_type === 'employee' && $user->is_manager))) {
+        if (! ($user->user_type === 'admin' || ($user->user_type === 'employee' && $user->is_manager))) {
             abort(403, 'Unauthorized action.');
         }
 
@@ -1382,8 +1432,8 @@ class SupplierController extends Controller
                 'restore',
                 'Merchant',
                 $merchant->id,
-                "Restored merchant ID: {$merchant->id} ({$businessName}) from trash" .
-                    ($userRestored ? " (user also restored)" : ""),
+                "Restored merchant ID: {$merchant->id} ({$businessName}) from trash".
+                    ($userRestored ? ' (user also restored)' : ''),
                 null,
                 array_merge(
                     ['merchant' => $merchant->fresh()->toArray()],
@@ -1393,7 +1443,7 @@ class SupplierController extends Controller
                     ]
                 ),
                 $this->auditTrailService->withJustification(
-                    "Merchant restored from trash as requested by authorized user",
+                    'Merchant restored from trash as requested by authorized user',
                     'legitimate_interest',
                     ['business_name', 'cr_number']
                 )
@@ -1402,12 +1452,12 @@ class SupplierController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Merchant has been restored successfully.',
-                'redirect' => $request->has('redirect_to_suppliers') ? route('suppliers') : null
+                'redirect' => $request->has('redirect_to_suppliers') ? route('suppliers') : null,
             ]);
         } catch (\Exception $e) {
-            Log::error('Restore failed: ' . $e->getMessage(), [
+            Log::error('Restore failed: '.$e->getMessage(), [
                 'merchant_id' => $id,
-                'user_id' => $user->id
+                'user_id' => $user->id,
             ]);
 
             $this->auditTrailService->log([
@@ -1420,12 +1470,12 @@ class SupplierController extends Controller
                     'error' => $e->getMessage(),
                     'attempted_by' => $user->id,
                     'timestamp' => now()->toDateTimeString(),
-                ]
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to restore merchant: ' . $e->getMessage()
+                'message' => 'Failed to restore merchant: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -1443,7 +1493,7 @@ class SupplierController extends Controller
 
         // Validate confirmation text
         $request->validate([
-            'confirmation' => 'required|in:DELETE ALL'
+            'confirmation' => 'required|in:DELETE ALL',
         ]);
 
         DB::beginTransaction();
@@ -1455,7 +1505,7 @@ class SupplierController extends Controller
             if ($totalCount === 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Trash is already empty.'
+                    'message' => 'Trash is already empty.',
                 ]);
             }
 
@@ -1487,7 +1537,7 @@ class SupplierController extends Controller
                     'deleted_business_names' => $deletedBusinessNames,
                     'performed_by' => $user->id,
                     'timestamp' => now()->toDateTimeString(),
-                ]
+                ],
             ]);
 
             DB::commit();
@@ -1495,18 +1545,18 @@ class SupplierController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Successfully permanently deleted {$totalCount} merchants from trash.",
-                'count' => $totalCount
+                'count' => $totalCount,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
 
-            Log::error('Empty trash failed: ' . $e->getMessage(), [
-                'user_id' => $user->id
+            Log::error('Empty trash failed: '.$e->getMessage(), [
+                'user_id' => $user->id,
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to empty trash: ' . $e->getMessage()
+                'message' => 'Failed to empty trash: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -1551,8 +1601,8 @@ class SupplierController extends Controller
                 $user->customerCreditLimit()->delete();
             }
         } catch (\Exception $e) {
-            Log::error('Failed to delete user related data: ' . $e->getMessage(), [
-                'user_id' => $user->id
+            Log::error('Failed to delete user related data: '.$e->getMessage(), [
+                'user_id' => $user->id,
             ]);
             throw $e;
         }
@@ -1604,11 +1654,11 @@ class SupplierController extends Controller
         $total = 0;
 
         foreach ($orders as $order) {
-            $items    = map_product_details($order->product_details);
+            $items = map_product_details($order->product_details);
             $subTotal = $items->sum('total');
             $shipping = $order->shipping_cost ?? 0;
             $discount = $order->coupon_discount ?? 0;
-            $tax      = calculate_order_tax($order);
+            $tax = calculate_order_tax($order);
 
             $base = $subTotal + $tax + $shipping - $discount;
         }
@@ -1621,26 +1671,25 @@ class SupplierController extends Controller
         $total = 0;
 
         foreach ($orders as $order) {
-            $items    = map_product_details($order->product_details);
+            $items = map_product_details($order->product_details);
             $subTotal = $items->sum('total');
             $shipping = $order->shipping_cost ?? 0;
             $discount = $order->coupon_discount ?? 0;
-            $tax      = calculate_order_tax($order);
+            $tax = calculate_order_tax($order);
 
             $base = $subTotal + $tax + $shipping - $discount;
 
-            $commissionPct    = get_system_commission();
+            $commissionPct = get_system_commission();
             $commissionAmount = $base * ($commissionPct / 100);
 
-            $commissionTaxPct  = get_commission_tax();
-            $commissionTaxAmt  = $commissionAmount * ($commissionTaxPct / 100);
+            $commissionTaxPct = get_commission_tax();
+            $commissionTaxAmt = $commissionAmount * ($commissionTaxPct / 100);
 
             $total += $base + $commissionAmount + $commissionTaxAmt;
         }
 
         return $total;
     }
-
 
     public function fetchWathiq(Request $request)
     {
@@ -1658,20 +1707,20 @@ class SupplierController extends Controller
         if (! $merchant) {
             return response()->json([
                 'success' => false,
-                'message' => 'Merchant not found for provided user_id.'
+                'message' => 'Merchant not found for provided user_id.',
             ], 404);
         }
 
         $crNumber = $request->input('cr_number') ?? $merchant->cr_number;
 
-        if (empty($crNumber) || !preg_match('/^\d{7,}$/', $crNumber)) {
+        if (empty($crNumber) || ! preg_match('/^\d{7,}$/', $crNumber)) {
             return response()->json([
                 'success' => false,
-                'message' => 'CR number is required (either enter it now or store it on the merchant). Must be at least 7 digits.'
+                'message' => 'CR number is required (either enter it now or store it on the merchant). Must be at least 7 digits.',
             ], 422);
         }
 
-        $wathqBase = rtrim(env('WATHQ_API_BASE', 'https://api.wathq.sa/'), '/') . '/';
+        $wathqBase = rtrim(env('WATHQ_API_BASE', 'https://api.wathq.sa/'), '/').'/';
         $apiKey = env('WATHQ_API_KEY', 'nxNtcpyb0cqiLfkj8umAdkhqJGA8x4Az'); // keep secret in .env
 
         try {
@@ -1690,6 +1739,7 @@ class SupplierController extends Controller
                 // Try to surface API message if present
                 $body = $response->json();
                 $message = $body['message'] ?? 'Wathq API returned an error. Please try again later.';
+
                 return response()->json([
                     'success' => false,
                     'message' => $message,
@@ -1702,7 +1752,8 @@ class SupplierController extends Controller
 
             if (isset($resJson['code'])) {
                 // Special error from Wathq — forward message back
-                Log::warning("Wathq API returned code {$resJson['code']} for CR {$crNumber}: " . ($resJson['message'] ?? ''));
+                Log::warning("Wathq API returned code {$resJson['code']} for CR {$crNumber}: ".($resJson['message'] ?? ''));
+
                 return response()->json([
                     'success' => false,
                     'message' => $resJson['message'] ?? 'Wathq returned an error.',
@@ -1718,14 +1769,14 @@ class SupplierController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Wathiq data updated successfully.',
-                'data' => $resJson // optional: parsed JSON
+                'data' => $resJson, // optional: parsed JSON
             ]);
         } catch (\Exception $e) {
             Log::error("Wathq API request failed for CR {$crNumber}: {$e->getMessage()}");
 
             return response()->json([
                 'success' => false,
-                'message' => 'We could not verify the Commercial Registration at the moment. Please try again shortly or contact support.'
+                'message' => 'We could not verify the Commercial Registration at the moment. Please try again shortly or contact support.',
             ], 500);
         }
     }
