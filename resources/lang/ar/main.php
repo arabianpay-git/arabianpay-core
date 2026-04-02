@@ -2760,6 +2760,11 @@ return [
     'Clear Selection' => 'مسح التحديد',
     'Uploaded Products Preview' => 'معاينة المنتجات التي تم رفعها',
 
+    'Access Denied' => 'تم رفض الوصول',
+    'You do not have permission to access this page.' => 'ليس لديك صلاحية للوصول إلى هذه الصفحة.',
+    'access_denied_title' => 'تم رفض الوصول',
+    'access_denied_body' => 'ليس لديك صلاحية للوصول إلى هذه الصفحة.',
+
     'Two-factor authentication is required. Please enable it in your profile.' => 'مطلوب تفعيل المصادقة الثنائية. يرجى تفعيلها من ملفك الشخصي.',
     'Two-factor authentication is required. Please enable it below before continuing.' => 'مطلوب تفعيل المصادقة الثنائية. يرجى إكمال الإعداد أدناه قبل المتابعة.',
 

@@ -151,7 +151,12 @@ return [
         Features::updatePasswords(),
         Features::twoFactorAuthentication([
             'confirm' => true,
-            'confirmPassword' => true,
+            // Match confirms-password: only local uses password re-confirmation; production (e.g. Microsoft SSO) skips it.
+            // Do not use app() here — config loads before the container is ready; use env (baked by config:cache on deploy).
+            'confirmPassword' => filter_var(
+                env('TWO_FACTOR_CONFIRM_PASSWORD', env('APP_ENV') === 'local'),
+                FILTER_VALIDATE_BOOLEAN
+            ),
             // 'window' => 0,
         ]),
     ],

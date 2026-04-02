@@ -2907,6 +2907,11 @@ return [
     'Apply to Selected' => 'Apply to Selected',
     'Clear Selection' => 'Clear Selection',
 
+    'Access Denied' => 'Access Denied',
+    'You do not have permission to access this page.' => 'You do not have permission to access this page.',
+    'access_denied_title' => 'Access Denied',
+    'access_denied_body' => 'You do not have permission to access this page.',
+
     'Two-factor authentication is required. Please enable it in your profile.' => 'Two-factor authentication is required. Please enable it in your profile.',
     'Two-factor authentication is required. Please enable it below before continuing.' => 'Two-factor authentication is required. Please enable it below before continuing.',
 
