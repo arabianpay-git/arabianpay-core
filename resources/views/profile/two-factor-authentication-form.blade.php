@@ -8,7 +8,7 @@
     </x-slot>
 
     <x-slot name="content">
-        <h3 class="text-lg font-medium text-gray-900">
+        <h3 class="text-base font-medium text-gray-900">
             @if ($this->enabled)
                 @if ($showingConfirmation)
                     {{ translate('Finish enabling two factor authentication.') }}
@@ -20,7 +20,7 @@
             @endif
         </h3>
 
-        <div class="mt-3 max-w-xl text-sm text-gray-600">
+        <div class="mt-3 max-w-xl text-sm text-gray-600 leading-relaxed">
             <p>
                 {{ translate('When two factor authentication is enabled, you will be prompted for a secure, random token during authentication. You may retrieve this token from your phone\'s Google Authenticator application.') }}
             </p>
@@ -38,7 +38,7 @@
                     </p>
                 </div>
 
-                <div class="mt-4 p-2 inline-block bg-white">
+                <div class="mt-4 p-3 inline-block bg-white border border-gray-200 rounded-lg shadow-sm">
                     {!! $this->user->twoFactorQrCodeSvg() !!}
                 </div>
 
@@ -50,9 +50,9 @@
 
                 @if ($showingConfirmation)
                     <div class="mt-4">
-                        <x-label for="code" value="{{ translate('Code') }}" />
+                        <x-label class="form-label text-gray-900" for="code" value="{{ translate('Code') }}" />
 
-                        <x-input id="code" type="text" name="code" class="block mt-1 w-1/2"
+                        <x-input id="code" type="text" name="code" class="input block mt-1 w-full max-w-md"
                             inputmode="numeric" autofocus autocomplete="one-time-code" wire:model="code"
                             wire:keydown.enter="confirmTwoFactorAuthentication" />
 
@@ -68,7 +68,7 @@
                     </p>
                 </div>
 
-                <div class="grid gap-1 max-w-xl mt-4 px-4 py-4 font-mono text-sm bg-gray-100 rounded-lg">
+                <div class="grid gap-1 max-w-xl mt-4 px-4 py-4 font-mono text-sm bg-gray-50 border border-gray-200 rounded-lg">
                     @foreach (json_decode(decrypt($this->user->two_factor_recovery_codes), true) as $code)
                         <div>{{ $code }}</div>
                     @endforeach
@@ -79,26 +79,26 @@
         <div class="mt-5">
             @if (!$this->enabled)
                 <x-confirms-password wire:then="enableTwoFactorAuthentication">
-                    <x-button type="button" wire:loading.attr="disabled">
+                    <x-button type="button" class="btn btn-sm btn-primary" wire:loading.attr="disabled">
                         {{ translate('Enable') }}
                     </x-button>
                 </x-confirms-password>
             @else
                 @if ($showingRecoveryCodes)
                     <x-confirms-password wire:then="regenerateRecoveryCodes">
-                        <x-secondary-button class="me-3">
+                        <x-secondary-button class="me-3 btn btn-sm btn-light">
                             {{ translate('Regenerate Recovery Codes') }}
                         </x-secondary-button>
                     </x-confirms-password>
                 @elseif ($showingConfirmation)
                     <x-confirms-password wire:then="confirmTwoFactorAuthentication">
-                        <x-button type="button" class="me-3" wire:loading.attr="disabled">
+                        <x-button type="button" class="me-3 btn btn-sm btn-primary" wire:loading.attr="disabled">
                             {{ translate('Confirm') }}
                         </x-button>
                     </x-confirms-password>
                 @else
                     <x-confirms-password wire:then="showRecoveryCodes">
-                        <x-secondary-button class="me-3">
+                        <x-secondary-button class="me-3 btn btn-sm btn-light">
                             {{ translate('Show Recovery Codes') }}
                         </x-secondary-button>
                     </x-confirms-password>
@@ -106,13 +106,13 @@
 
                 @if ($showingConfirmation)
                     <x-confirms-password wire:then="disableTwoFactorAuthentication">
-                        <x-secondary-button wire:loading.attr="disabled">
+                        <x-secondary-button class="btn btn-sm btn-outline btn-secondary" wire:loading.attr="disabled">
                             {{ translate('Cancel') }}
                         </x-secondary-button>
                     </x-confirms-password>
                 @else
                     <x-confirms-password wire:then="disableTwoFactorAuthentication">
-                        <x-danger-button wire:loading.attr="disabled">
+                        <x-danger-button class="btn btn-sm btn-danger" wire:loading.attr="disabled">
                             {{ translate('Disable') }}
                         </x-danger-button>
                     </x-confirms-password>

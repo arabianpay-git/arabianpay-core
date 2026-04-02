@@ -162,17 +162,35 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         },
                         body: JSON.stringify(response),
                     });
 
+                    const loginBody = await login.text();
+
                     if (login.ok) {
+                        try {
+                            const data = JSON.parse(loginBody);
+                            if (data.redirect) {
+                                showMessage(
+                                    data.requires_two_factor ?
+                                    '{{ translate('Please complete two-factor authentication') }}' :
+                                    '{{ translate('Login successful. Redirecting…') }}',
+                                    'success'
+                                );
+                                window.location.href = data.redirect;
+                                return;
+                            }
+                        } catch (e) {
+                            showMessage('Unexpected response', 'error');
+                            return;
+                        }
                         showMessage('Login successful. Redirecting…', 'success');
                         setTimeout(() => window.location.href = "{{ route('dashboard') }}", 1000);
                     } else {
-                        const err = await login.text();
-                        showMessage(err, 'error');
+                        showMessage(loginBody, 'error');
                     }
                 } catch (error) {
                     console.error(error);

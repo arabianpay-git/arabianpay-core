@@ -120,13 +120,13 @@ Route::group([
             'broadcast_driver' => config('broadcasting.default'),
             'auth_user' => Auth::user() ? Auth::user()->id : null,
         ]);
-    })->middleware(['auth:sanctum']);
+    })->middleware(['auth:sanctum', 'ensure.two-factor']);
 
     //
     // Admin area (all routes under /{locale}/admin)
     //
     Route::prefix('admin')
-        ->middleware(['auth:sanctum', PreventBackHistory::class, SecureHeaders::class, CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
+        ->middleware(['auth:sanctum', 'ensure.two-factor', PreventBackHistory::class, SecureHeaders::class, CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
         ->group(function () {
 
             // Chat page

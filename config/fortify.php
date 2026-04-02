@@ -156,4 +156,17 @@ return [
         ]),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Mandatory two-factor authentication (admin / protected app areas)
+    |--------------------------------------------------------------------------
+    |
+    | When true, authenticated users without enabled 2FA are redirected to the
+    | profile page until they complete setup. Set MANDATORY_TWO_FACTOR=false to
+    | disable (e.g. local development).
+    |
+    */
+
+    'mandatory_two_factor' => env('MANDATORY_TWO_FACTOR', true),
+
 ];

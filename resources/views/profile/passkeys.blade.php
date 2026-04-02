@@ -1,6 +1,6 @@
 <x-action-section>
     <x-slot name="title">
-        {{ __('Registered Passkeys') }}
+        {{ translate('Registered Passkeys') }}
     </x-slot>
 
     @php
@@ -8,17 +8,17 @@
     @endphp
 
     <x-slot name="description">
-        {{ __('Manage and remove your registered passkeys (security keys, biometrics, etc.).') }}
+        {{ translate('Manage and remove your registered passkeys (security keys, biometrics, etc.).') }}
     </x-slot>
 
     <x-slot name="content">
-        <div class="max-w-xl text-sm text-gray-600">
-            {{ __('Below is a list of passkeys you have registered. You may remove any passkey to revoke its access.') }}
+        <div class="max-w-xl text-sm text-gray-600 leading-relaxed">
+            {{ translate('Below is a list of passkeys you have registered. You may remove any passkey to revoke its access.') }}
         </div>
 
         @if ($passkeys->isEmpty())
             <div class="mt-5 text-sm text-gray-500">
-                {{ __('No passkeys registered yet.') }}
+                {{ translate('No passkeys registered yet.') }}
             </div>
         @else
             <div class="mt-5 space-y-6">
@@ -49,30 +49,29 @@
                         $label = "$browser on $platform";
                     @endphp
 
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-3">
-                            <i class="ki-duotone ki-key text-xl text-gray-600"></i>
-                            <div>
+                    <div class="flex flex-wrap items-center justify-between gap-3 border-b border-gray-100 pb-4 last:border-0 last:pb-0">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <i class="ki-duotone ki-key text-xl text-gray-600 shrink-0"></i>
+                            <div class="min-w-0">
                                 <div class="font-medium text-gray-800">
                                     {{ $label }}
                                 </div>
                                 <div class="text-xs text-gray-500">
-                                    {{ __('Created At') }} {{ $passkey->created_at->format('M j, Y H:i') }}
+                                    {{ translate('Created At') }} {{ $passkey->created_at->format('M j, Y H:i') }}
                                 </div>
                                 <div class="text-xs text-gray-500">
-                                    {{ __('Last Used') }}
-                                    {{ optional($passkey->last_used_at)->diffForHumans() ?? __('Never used') }}
+                                    {{ translate('Last Used') }}
+                                    {{ optional($passkey->last_used_at)->diffForHumans() ?? translate('Never used') }}
                                 </div>
                             </div>
                         </div>
 
                         <form method="POST" action="{{ route('passkeys.destroy', $passkey->id) }}"
-                            onsubmit="return confirm('{{ __('Are you sure you want to delete this passkey?') }}');">
+                            onsubmit="return confirm({{ json_encode(translate('Are you sure you want to delete this passkey?')) }});">
                             @csrf
                             @method('DELETE')
-                            <button type="submit"
-                                class="inline-flex items-center justify-center px-4 py-2 bg-red-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-red-500 active:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition ease-in-out duration-150">
-                                {{ __('Delete') }}
+                            <button type="submit" class="btn btn-sm btn-outline btn-danger shrink-0">
+                                {{ translate('Delete') }}
                             </button>
                         </form>
                     </div>

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsToTwoFactorChallenge;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -15,6 +16,8 @@ use Illuminate\Validation\ValidationException;
  */
 class DevLoginController extends Controller
 {
+    use RedirectsToTwoFactorChallenge;
+
     /**
      * Show the dev login form
      */
@@ -54,6 +57,10 @@ class DevLoginController extends Controller
             'email' => $request->email,
             'ip' => $request->ip(),
         ]);
+
+        if ($this->requiresTwoFactorChallenge($user)) {
+            return $this->redirectToTwoFactorChallenge($request, $user);
+        }
 
         Auth::login($user);
 

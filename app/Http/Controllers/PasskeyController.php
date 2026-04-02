@@ -2,21 +2,24 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
 use App\Actions\GeneratePasskeyRegisterOptionsAction;
 use App\Actions\StorePasskeyAction;
+use App\Http\Controllers\Concerns\RedirectsToTwoFactorChallenge;
 use App\Models\User;
 use Illuminate\Contracts\View\View;
 use Illuminate\Http\RedirectResponse;
-use Spatie\LaravelPasskeys\Actions\GeneratePasskeyAuthenticationOptionsAction;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use Spatie\LaravelPasskeys\Actions\FindPasskeyToAuthenticateAction;
+use Spatie\LaravelPasskeys\Actions\GeneratePasskeyAuthenticationOptionsAction;
 use Spatie\LaravelPasskeys\Exceptions\InvalidPasskey;
 use Spatie\LaravelPasskeys\Models\Passkey;
 
 class PasskeyController extends Controller
 {
+    use RedirectsToTwoFactorChallenge;
+
     /**
      * Show passkey registration options.
      */
@@ -41,6 +44,7 @@ class PasskeyController extends Controller
         $user = $request->user();
         if (! $user) {
             Log::error('Passkey registration attempt with no logged in user');
+
             return response('You must be logged in to register a passkey.', 403);
         }
 
@@ -72,7 +76,8 @@ class PasskeyController extends Controller
                 'passkeyJson' => $passkeyJson,
                 'passkeyOptionsJson' => $passkeyOptionsJson,
             ]);
-            return response('Registration failed: ' . $e->getMessage(), 500);
+
+            return response('Registration failed: '.$e->getMessage(), 500);
         }
     }
 
@@ -96,27 +101,28 @@ class PasskeyController extends Controller
         if (! $user) {
             return response()->json([
                 'error' => 'User not found',
-                'hasPasskeys' => false
+                'hasPasskeys' => false,
             ], 200);
         }
 
-        $base64url = fn(string $data): string => rtrim(
+        $base64url = fn (string $data): string => rtrim(
             strtr(base64_encode($data), '+/', '-_'),
             '='
         );
 
-        $allowCredentials = $user->passkeys->map(fn(Passkey $p) => [
+        $allowCredentials = $user->passkeys->map(fn (Passkey $p) => [
             'type' => 'public-key',
-            'id'   => $base64url($p->data->publicKeyCredentialId),
+            'id' => $base64url($p->data->publicKeyCredentialId),
         ])->values()->all();
 
         if (empty($allowCredentials)) {
             Log::warning("User {$user->email} has no passkeys");
+
             return response()->json([
                 'hasPasskeys' => false,
                 'message' => 'No passkeys registered for this account',
                 'email' => $user->email,
-                'allowCredentials' => []
+                'allowCredentials' => [],
             ], 200);
         }
 
@@ -125,10 +131,10 @@ class PasskeyController extends Controller
 
         $publicKey = json_decode($publicKeyJson, true);
 
-        $publicKey['rpId']             = $publicKey['rpId']
+        $publicKey['rpId'] = $publicKey['rpId']
             ?? parse_url(config('app.url'), PHP_URL_HOST);
         $publicKey['allowCredentials'] = $allowCredentials;
-        $publicKey['timeout']          = $publicKey['timeout'] ?? 60000;
+        $publicKey['timeout'] = $publicKey['timeout'] ?? 60000;
 
         // Store user ID for verification in authenticate method
         $publicKey['user_id'] = $user->id;
@@ -137,7 +143,7 @@ class PasskeyController extends Controller
         // store for later verification
         session([
             'passkey_authentication_options' => $publicKey,
-            'expected_user_id' => $user->id
+            'expected_user_id' => $user->id,
         ]);
 
         return response()->json($publicKey);
@@ -156,8 +162,9 @@ class PasskeyController extends Controller
             if (! is_array($decoded)) {
                 Log::error('PasskeyController@authenticate: Invalid payload', [
                     'raw_content' => $json,
-                    'decoded'     => $decoded,
+                    'decoded' => $decoded,
                 ]);
+
                 return response('Invalid request format', 400);
             }
 
@@ -169,8 +176,9 @@ class PasskeyController extends Controller
             $options = session('passkey_authentication_options', []);
             $expectedUserId = session('expected_user_id');
 
-            if (empty($options) || !$expectedUserId) {
+            if (empty($options) || ! $expectedUserId) {
                 Log::error('Passkey authentication attempted without proper session state');
+
                 return response('Authentication session expired. Please try again.', 401);
             }
 
@@ -185,31 +193,45 @@ class PasskeyController extends Controller
             $user = User::find($passkey->authenticatable_id);
 
             // Verify the authenticated user matches the expected user
-            if (!$user || $user->id !== $expectedUserId) {
+            if (! $user || $user->id !== $expectedUserId) {
                 Log::error('Passkey authentication user mismatch', [
                     'expected_user_id' => $expectedUserId,
                     'authenticated_user_id' => $user?->id,
                     'passkey_id' => $passkey->id,
                 ]);
+
                 return response('Authentication failed: User mismatch.', 401);
             }
 
             Log::info('Passkey authentication successful', [
                 'passkey_id' => $passkey->id,
-                'user_id'    => $user->id,
-                'email'      => $user->email,
+                'user_id' => $user->id,
+                'email' => $user->email,
             ]);
+
+            session()->forget(['passkey_authentication_options', 'expected_user_id']);
+
+            if ($this->requiresTwoFactorChallenge($user)) {
+                $this->beginTwoFactorChallenge($request, $user);
+
+                return response()->json([
+                    'requires_two_factor' => true,
+                    'redirect' => route('two-factor.login'),
+                ]);
+            }
 
             Auth::login($user);
 
-            // Clear session data
-            session()->forget(['passkey_authentication_options', 'expected_user_id']);
-
-            return redirect()->route('dashboard')->with('success', 'Logged in with passkey');
+            return response()->json([
+                'success' => true,
+                'redirect' => route('dashboard'),
+                'message' => 'Logged in with passkey',
+            ]);
         } catch (InvalidPasskey $e) {
             return response('Authentication failed: The passkey is not valid or does not match this account.', 401);
         } catch (\Throwable $e) {
             Log::error('PasskeyController@authenticate error', ['exception' => $e]);
+
             return response('Authentication failed. Please try again.', 500);
         }
     }

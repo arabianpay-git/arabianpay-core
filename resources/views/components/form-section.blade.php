@@ -1,24 +1,22 @@
 @props(['submit'])
 
-<div {{ $attributes->merge(['class' => 'md:grid md:grid-cols-3 md:gap-6']) }}>
-    <x-section-title>
-        <x-slot name="title">{{ $title }}</x-slot>
-        <x-slot name="description">{{ $description }}</x-slot>
-    </x-section-title>
-
-    <div class="mt-5 md:mt-0 md:col-span-2">
-        <form wire:submit="{{ $submit }}">
-            <div class="px-4 py-5 bg-white sm:p-6 shadow {{ isset($actions) ? 'sm:rounded-tl-md sm:rounded-tr-md' : 'sm:rounded-md' }}">
-                <div class="grid grid-cols-6 gap-6">
-                    {{ $form }}
-                </div>
-            </div>
-
-            @if (isset($actions))
-                <div class="flex items-center justify-end px-4 py-3 bg-gray-50 text-end sm:px-6 shadow sm:rounded-bl-md sm:rounded-br-md">
-                    {{ $actions }}
-                </div>
-            @endif
-        </form>
+<div {{ $attributes->merge(['class' => 'card min-w-full']) }}>
+    <div class="card-header border-b border-gray-200">
+        <h3 class="card-title text-sm font-medium text-gray-900">{{ $title }}</h3>
+        <p class="text-sm text-gray-600 mt-1">{{ $description }}</p>
     </div>
+    <form wire:submit="{{ $submit }}">
+        <div class="card-body">
+            <div class="grid grid-cols-1 gap-5 sm:grid-cols-6">
+                {{ $form }}
+            </div>
+        </div>
+
+        @if (isset($actions))
+            <div
+                class="card-footer flex flex-wrap items-center justify-end gap-3 border-t border-gray-100 bg-gray-50/80 px-6 py-4">
+                {{ $actions }}
+            </div>
+        @endif
+    </form>
 </div>

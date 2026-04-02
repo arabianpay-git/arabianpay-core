@@ -22,7 +22,7 @@
                                     reader.readAsDataURL($refs.photo.files[0]);
                             " />
 
-                <x-label for="photo" value="{{ translate('Photo') }}" />
+                <x-label class="form-label text-gray-900" for="photo" value="{{ translate('Photo') }}" />
 
                 <!-- Current Profile Photo -->
                 <div class="mt-2" x-show="! photoPreview">
@@ -37,12 +37,12 @@
                     </span>
                 </div>
 
-                <x-secondary-button class="mt-2 me-2" type="button" x-on:click.prevent="$refs.photo.click()">
+                <x-secondary-button class="mt-2 me-2 btn btn-sm btn-light" type="button" x-on:click.prevent="$refs.photo.click()">
                     {{ translate('Select A New Photo') }}
                 </x-secondary-button>
 
                 @if ($this->user->profile_photo_path)
-                    <x-secondary-button type="button" class="mt-2" wire:click="deleteProfilePhoto">
+                    <x-secondary-button type="button" class="mt-2 btn btn-sm btn-outline btn-secondary" wire:click="deleteProfilePhoto">
                         {{ translate('Remove Photo') }}
                     </x-secondary-button>
                 @endif
@@ -53,16 +53,16 @@
 
         <!-- Name -->
         <div class="col-span-6 sm:col-span-4">
-            <x-label for="first_name" value="{{ translate('name') }}" />
-            <x-input id="first_name" type="text" class="mt-1 block w-full" wire:model="state.first_name" required
+            <x-label class="form-label text-gray-900" for="first_name" value="{{ translate('name') }}" />
+            <x-input id="first_name" type="text" class="input w-full mt-1 block" wire:model="state.first_name" required
                 autocomplete="first_name" />
             <x-input-error for="first_name" class="mt-2" />
         </div>
 
         <!-- Email -->
         <div class="col-span-6 sm:col-span-4">
-            <x-label for="email" value="{{ translate('Email') }}" />
-            <x-input id="email" type="email" class="mt-1 block w-full" wire:model="state.email" required
+            <x-label class="form-label text-gray-900" for="email" value="{{ translate('Email') }}" />
+            <x-input id="email" type="email" class="input w-full mt-1 block" wire:model="state.email" required
                 autocomplete="username" />
             <x-input-error for="email" class="mt-2" />
 
@@ -92,7 +92,7 @@
             {{ translate('Saved.') }}
         </x-action-message>
 
-        <x-button wire:loading.attr="disabled" wire:target="photo">
+        <x-button class="btn btn-sm btn-primary" wire:loading.attr="disabled" wire:target="photo">
             {{ translate('Save') }}
         </x-button>
     </x-slot>

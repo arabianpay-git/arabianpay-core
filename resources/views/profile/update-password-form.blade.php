@@ -9,22 +9,22 @@
 
     <x-slot name="form">
         <div class="col-span-6 sm:col-span-4">
-            <x-label for="current_password" value="{{ translate('Current Password') }}" />
-            <x-input id="current_password" type="password" class="mt-1 block w-full" wire:model="state.current_password"
+            <x-label class="form-label text-gray-900" for="current_password" value="{{ translate('Current Password') }}" />
+            <x-input id="current_password" type="password" class="input w-full mt-1 block" wire:model="state.current_password"
                 autocomplete="current-password" />
             <x-input-error for="current_password" class="mt-2" />
         </div>
 
         <div class="col-span-6 sm:col-span-4">
-            <x-label for="password" value="{{ translate('New Password') }}" />
-            <x-input id="password" type="password" class="mt-1 block w-full" wire:model="state.password"
+            <x-label class="form-label text-gray-900" for="password" value="{{ translate('New Password') }}" />
+            <x-input id="password" type="password" class="input w-full mt-1 block" wire:model="state.password"
                 autocomplete="new-password" />
             <x-input-error for="password" class="mt-2" />
         </div>
 
         <div class="col-span-6 sm:col-span-4">
-            <x-label for="password_confirmation" value="{{ translate('Confirm Password') }}" />
-            <x-input id="password_confirmation" type="password" class="mt-1 block w-full"
+            <x-label class="form-label text-gray-900" for="password_confirmation" value="{{ translate('Confirm Password') }}" />
+            <x-input id="password_confirmation" type="password" class="input w-full mt-1 block"
                 wire:model="state.password_confirmation" autocomplete="new-password" />
             <x-input-error for="password_confirmation" class="mt-2" />
         </div>
@@ -35,7 +35,7 @@
             {{ translate('Saved.') }}
         </x-action-message>
 
-        <x-button>
+        <x-button class="btn btn-sm btn-primary">
             {{ translate('Save') }}
         </x-button>
     </x-slot>
