@@ -1,0 +1,322 @@
+# ArabianPay Core - Full Codebase Context for AI Assistants
+
+## Project Overview
+ArabianPay is a **B2B Buy-Now-Pay-Later (BNPL) fintech platform** built for the Saudi Arabian market. It connects **suppliers** (merchants/sellers) with **customers** (buyers/businesses) through a credit-based purchasing system with instalment payments, risk scoring, collections, and regulatory compliance (SIMAH, Nafith/SANAD, SingleView Open Banking, Nafath identity verification).
+
+**Tech Stack:**
+- **Backend:** Laravel 12 (PHP 8.2+)
+- **Frontend:** Livewire 3 + Blade templates + Tailwind CSS + Vite
+- **Auth:** Laravel Sanctum + Jetstream + Fortify 2FA + Passkeys (Spatie) + Microsoft SSO
+- **Realtime:** Laravel Reverb (WebSockets) for chat & notifications
+- **DB:** MySQL (encrypted fields via `joelwmale/laravel-encryption`)
+- **Permissions:** Spatie Laravel Permission (roles, departments, permissions)
+- **Localization:** mcamara/laravel-localization (Arabic/English, translatable models via Astrotomic)
+- **PDF/Excel:** DomPDF + Maatwebsite Excel
+- **Firebase:** Push notifications via FCM
+- **Activity Logging:** Spatie Activity Log
+
+---
+
+## Database Architecture & Entity Relationships
+
+### Core User System
+
+**User** (central entity - all actors share this table)
+- Fields: `first_name`, `last_name`, `user_type`, `email`, `role`, `business_name`, `phone_number`, `merchant_id`, `main_user_id`, `department_id`, `is_manager`, `country_id`, `state_id`, `city_id`, `password`, `sensitive_permissions`, `status`
+- Encrypted: first_name, last_name, email, business_name, phone_number
+- Soft deletes enabled
+- `user_type` distinguishes: admin, supplier (merchant), customer, employee
+- Relationships:
+  - hasOne **Merchant** (supplier profile)
+  - hasOne **Customer** (buyer profile)
+  - hasOne **CustomerCreditLimit**
+  - hasMany **Products**, **Coupons**, **PickupPoints**
+  - hasMany **Orders** (as buyer via user_id, as seller via seller_id)
+  - hasMany **Transactions** (as buyer and seller)
+  - hasMany **SchedulePayments** (as buyer and seller)
+  - hasMany **Payments** (as buyer and seller)
+  - hasMany **Wallets** (as buyer and seller)
+  - hasMany **SupportTickets**, **RefundRequests**, **ProductWishlists**
+  - hasMany **TransferRequests** (from_user_id, to_user_id)
+  - hasMany **DeviceTokens**, **Notifications**, **SupplierBanks**
+  - hasOne **NafathVerification**
+  - belongsTo **Country**, **State**, **City**, **Department**
+
+**Merchant** (supplier/seller profile)
+- Fields: `user_id`, `assigned_to`, `business_type_id`, `business_category_id`, `goverment_data`, `cr_number`, `pos_revenue`, `vat_register`, `vat_register_number`, `owner_name`, `owner_iqama_number`, `status`, `term_status`, various policy fields, `balady_certificate`
+- Encrypted: cr_number, pos_revenue, vat_register_number, owner_name, owner_iqama_number
+- Soft deletes enabled
+- JSON casts: payment_history, simah_api_response, external_credit_data
+- belongsTo **User**, **BusinessType**, **BusinessCategory**
+
+**Customer** (buyer profile)
+- Fields: `user_id`, `assigned_to`, `package_id`, `business_type_id`, `business_category_id`, `id_number`, `id_owner`, `cr_number`, `tax_number`, `cr_data`, `check_nafath`, `nafath_data`, `date_of_birth`, `purchasing_volume`, `purchasing_natures`, `status`
+- Encrypted: id_number, id_owner, cr_number, tax_number
+- belongsTo **User**, **Package**, **BusinessType**, **BusinessCategory**
+
+### Product & Catalog
+
+**Product**
+- Fields: `name`, `slug`, `added_by`, `user_id`, `category_id`, `brand_id`, `thumbnail`, `photos`, `tags`, `variants`, `sku`, `description`, `unit_price`, `purchase_price`, `discount`, `discount_type`, `current_stock`, `unit`, `weight`, `min_qty`, `low_stock_quantity`, `tax`, `shipping_cost`, `published`, `approved`, `featured`, `rating`, `views`, `refundable`
+- JSON casts: tags, variants
+- belongsTo **User** (seller), **Category**, **Brand**
+- Translatable
+
+**Category** - hierarchical product categories (translatable)
+**Brand** - product brands (translatable)
+**Attribute** / **AttributeValue** - product attributes system (translatable)
+**ProductAttribute** - pivot between Product and AttributeValue
+
+### Order & Payment Flow
+
+**Checkout** (groups orders into a single purchase session)
+- Fields: `user_id`, `pool_id`
+- hasMany **Orders**, **SchedulePayments**
+- hasManyThrough **Payments** via SchedulePayments
+- belongsTo **InvestmentPool** (funding source)
+- hasOne **Transaction**
+
+**Order** (individual order per seller within a checkout)
+- Fields: `user_id`, `seller_id`, `uuid`, `checkout_id`, `pickup_point_id`, `product_details`, shipping fields, `payment_type`, `shipping_cost`, `payment_status`, `grand_total`, `commission_amount`, `commission_percent`, `coupon_discount`, `code`, `tracking`, `delivery_status`, `general_status`, `invoice_number`, `settlement_id`, `rejection_reason`
+- belongsTo **User** (buyer), **User** (seller), **Checkout**, **Settlement**
+- hasMany **SchedulePayments**, **Payments**, **Wallets**, **OrderActionLogs**
+
+**Transaction** (high-level credit/loan record per checkout)
+- Fields: `uuid`, `user_id`, `seller_id`, `order_id`, `plan_id`, `loan_amount`, `loan_start_date`, `loan_end_date`, `loan_term`, `subscription_fees`, `credit_limit_at_time`, `remaining_credit_limit`, `payment_status`, `settlement_status`, `general_status`
+- belongsTo **User** (buyer + seller), **Order**, **InstalmentPlan**
+
+**SchedulePayment** (individual instalment within a checkout)
+- Fields: `user_id`, `seller_id`, `order_id`, `checkout_id`, `assigned_to`, `instalment_number`, `amount`, `due_date`, `paid_date`, `payment_status`, `late_fee`, `days_overdue`
+- belongsTo **User** (buyer + seller), **Order**
+- hasOne **Payment**, hasOne **Promise**, hasMany **PartialPayments**, hasMany **Claims**
+
+**Payment** (actual payment record when money moves)
+- Fields: `user_id`, `schedule_payment_id`, `checkout_id`, `seller_id`, `order_id`, `amount`, `payment_details`, `invoice_number`, `txn_code`, `tax_number`, `payment_status`
+- belongsTo **User**, **SchedulePayment**, **Checkout**, **Order**
+
+**Wallet** (ledger entries for money movement)
+- Fields: `user_id`, `seller_id`, `order_id`, `instalment_id`, `transaction_type` (user_payment, loan_disbursment, seller_payment), `amount`, `balance_after`, `status`
+- belongsTo **User** (buyer + seller), **Order**, **InstalmentPlan**
+
+### Financial System
+
+**InstalmentPlan** (BNPL plan templates)
+- Fields: `name`, `description`, `number_of_instalments`, `interval_days`, `admin_fee_percentage`, `late_fee_percentage`, `min_amount`, `max_amount`, `status`
+- Translatable
+- hasMany **Transactions**, **Wallets**, **Customers**
+
+**Settlement** (batch payment to suppliers)
+- Fields: `supplier_user_id`, `period_start`, `period_end`, `total_sales`, `total_commission`, `total_deductions`, `net_amount`, `status`, `notes`, `created_by`, `paid_by`, `approved_by`, `approved_at`, `paid_at`
+- belongsTo **User** (supplier, creator, payer, approver)
+- hasMany **Orders**, **SupplierPayouts**
+
+**SupplierPayout** (individual payout line items within a settlement)
+- Fields: `supplier_id`, `order_id`, `settlement_id`, `gross_amount`, `commission_amount`, `net_amount`, `status`, `paid_at`, `reference`, `created_by`
+- belongsTo **Merchant**, **Order**, **Settlement**, **User** (creator)
+
+**InvestmentPool** (funding pools that finance checkouts)
+- Fields: `name`, `total_amount`, `used_amount`, `available_amount`, `start_date`, `end_date`, `status`, `description`
+- hasMany **Checkouts**
+- hasManyThrough **Payments**, **SchedulePayments** via Checkouts
+
+**FAccounts / FEntry / FTransaction** - Double-entry accounting system (financial accounts, journal entries, transactions)
+
+**ExpenseSetting** - expense configuration
+
+### Credit & Collections
+
+**CustomerCreditLimit** - per-customer credit limits
+- belongsTo **User**
+
+**Claim** (collection claim on overdue payments)
+- Fields: `schedule_payment_id`, `user_id`, `assigned_to`, `type`, `status`, `priority`, `amount`, `notes`, `attempts`, `last_attempt_at`, `resolved_at`, `resolution_notes`
+- belongsTo **SchedulePayment**, **User**
+
+**Promise** (promise-to-pay commitments)
+- Fields: `schedule_payment_id`, `user_id`, `promised_date`, `promised_amount`, `status`, `notes`
+- belongsTo **SchedulePayment**, **User**
+
+**PartialPayment** (partial payments on instalments)
+- Fields: `schedule_payment_id`, `amount`, `paid_date`, `status`, `notes`
+- belongsTo **SchedulePayment**
+
+**DunningTemplate** - collection letter templates
+**SchedulePaymentReminder** - payment reminder records
+
+### Risk & Compliance
+
+**Risk** - risk register entries
+**RiskScore** - merchant/customer risk scores
+**RiskWeight** - configurable risk scoring weights
+**RiskManagement** - risk management records
+**RealTimeAlert** - real-time risk/fraud alerts
+**CaseManagement** - compliance case tracking
+
+**SimahReport** - Saudi Credit Bureau (SIMAH) report storage
+**LeanReport** - Lean open banking report storage
+**CrValidation** - commercial registration validation records
+**NafathVerification** - Nafath national identity verification
+**Sanad** - Nafith promissory notes (SANAD e-notes)
+
+**AuditLog / AuditTrail** - system audit logging
+**SensitiveDataApproval** - approval workflow for sensitive data access
+
+### Geography & Localization
+
+**Country** / **State** / **City** - hierarchical geography (all translatable)
+- Country hasMany States, State hasMany Cities
+- Used for user addresses, shipping, SANAD issuance
+
+**BusinessType** / **BusinessCategory** - business classification (translatable)
+
+### Support & Communication
+
+**SupportTicket** - customer/supplier support tickets
+**ChatMessage** - internal real-time chat between users
+**Notification** - in-app notifications
+**DeviceToken** - FCM push notification tokens
+**Note** - internal notes on users/accounts
+
+### Access Control
+
+**Role** (Spatie Permission) - user roles
+**Department** - organizational departments
+**SupplierRole** - supplier-specific roles
+- Pivot: department_role, department_has_permissions
+**LoginAttempt** - login attempt tracking
+**UserConsent** - user consent records
+**Approval** - general approval workflow
+
+### Other
+
+**Coupon** - discount coupons
+**Package** - customer tier packages (translatable)
+**PickupPoint** - order pickup locations
+**ProductWishlist** - customer wishlists
+**RefundRequest** - refund requests on orders
+**TransferRequest** - internal fund transfer requests
+**Media** - uploaded media/files
+**Setting** - system settings key-value store
+**ShopSetting** - per-merchant shop configuration
+**Branch** - merchant branch locations
+**UserSearch** - search history tracking
+**Otp** - one-time password records
+**LowStockNotification** - low inventory alerts
+**Membership** - membership records
+**OrderActionLog** - order status change history
+**SupplierBank** - supplier bank account details
+**CustomerBank** - customer bank account details
+
+---
+
+## Key Business Flows
+
+### 1. BNPL Purchase Flow
+```
+Customer browses products → Adds to cart → Checkout created
+→ Checkout links to InvestmentPool (funding source)
+→ Orders created per seller → Transaction record created
+→ SchedulePayments generated based on InstalmentPlan
+→ Each SchedulePayment has due_date and amount
+→ Customer pays instalments → Payment records created
+→ Wallet entries track money flow
+→ Settlement batches collect supplier payouts
+```
+
+### 2. Supplier Onboarding Flow
+```
+User registers as supplier → Merchant profile created
+→ CR validation (CrValidation + WathqService)
+→ Nafath identity verification
+→ SIMAH credit check → Risk scoring
+→ Admin review & approval → Status: active
+→ Products listed → Orders received
+```
+
+### 3. Customer Onboarding Flow
+```
+User registers as customer → Customer profile created
+→ Package selected (credit tier)
+→ Nafath verification → SIMAH report
+→ Credit assessment → CustomerCreditLimit set
+→ Can start purchasing on credit
+```
+
+### 4. Collections Flow
+```
+SchedulePayment overdue → RealTimeAlert generated
+→ DunningTemplate-based reminders sent
+→ Claims created for collection agents
+→ Promise-to-pay negotiated → Promise record
+→ PartialPayments accepted if applicable
+→ Case escalation via CaseManagement
+```
+
+### 5. Settlement Flow
+```
+Period closes → Settlement generated per supplier
+→ Orders aggregated → Commission calculated
+→ SupplierPayouts created per order
+→ Admin approval → Bank transfer file generated
+→ Payout marked as paid
+```
+
+---
+
+## Third-Party Integrations
+
+| Service | Purpose | Service Class |
+|---------|---------|---------------|
+| **SIMAH** | Saudi Credit Bureau reports & scoring | `SimahService` |
+| **Nafith/SANAD** | Electronic promissory notes | `NafithService` |
+| **SingleView** | Open Banking (account aggregation, KYC, credit/income/expense checks) | `SingleViewService` |
+| **Lean** | Open Banking (bank statements, entities) | `LeanService` |
+| **Wathq** | Commercial Registration validation | `WathqService` |
+| **ClickPay** | Payment gateway | `ClickPayService` |
+| **Firebase/FCM** | Push notifications | `FirebaseService` |
+| **Microsoft SSO** | Employee authentication | `MicrosoftController` |
+
+---
+
+## Directory Structure
+
+```
+app/
+├── Http/Controllers/         # 80+ controllers
+│   ├── Admin/               # Checkout, Claims, InvestmentPools, Payouts, Settlements
+│   ├── Auth/                # Session auth, Microsoft SSO
+│   ├── Financial/           # Accounts, Transactions, Dashboard, Expenses
+│   ├── settings/            # Risk weights, System settings
+│   └── ...                  # All other domain controllers
+├── Models/                  # 90+ Eloquent models
+├── Services/                # Business logic services
+│   ├── Finance/             # Settlement, Expense, Payout, Supplier finance
+│   └── ...                  # SIMAH, Lean, Nafith, Risk, Firebase, etc.
+├── Traits/                  # LogsModelActions, etc.
+├── Events/                  # TypingEvent, etc.
+├── Enums/                   # (not yet created)
+database/
+├── migrations/              # 90+ migrations (2025-04 through 2026-01)
+routes/
+├── web.php                  # Main admin panel routes (~790 lines)
+├── api.php                  # API routes (SingleView, Nafith, SIMAH testing)
+├── setting.php              # Settings panel routes
+├── test.php                 # Test routes
+resources/views/             # Blade templates
+config/                      # Laravel config files
+```
+
+---
+
+## Important Patterns
+
+1. **Encryption at rest**: Sensitive PII fields use `EncryptsAttributes` trait - queries on encrypted fields require special handling
+2. **Soft deletes**: User and Merchant models use SoftDeletes
+3. **Translatable models**: Category, Brand, Attribute, Product, City, State, Country, BusinessType, BusinessCategory, Package, InstalmentPlan use Astrotomic translatable
+4. **Activity logging**: Most models use `LogsModelActions` trait with Spatie Activity Log
+5. **Dual-role User**: The same User model serves as buyer (customer) AND seller (supplier) - differentiated by `user_type` field and corresponding Merchant/Customer profiles
+6. **Department-based RBAC**: Permissions are scoped to departments, not just roles
+7. **Assigned-to pattern**: Most entities have an `assigned_to` field linking to the admin/employee managing that record
+8. **UUID generation**: Transactions, Payments use auto-generated UUIDs
+9. **Multi-tenant by user_type**: Not true multi-tenancy, but access scoped by user_type and permissions
+10. **Wallet as ledger**: Wallet model acts as a running balance ledger with transaction_type categorization
