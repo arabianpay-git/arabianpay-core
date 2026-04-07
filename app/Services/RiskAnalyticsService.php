@@ -455,7 +455,7 @@ class RiskAnalyticsService
             return $val === 'false' ? null : (float)$val;
         }
 
-        $apiKey = env('GOOGLE_PLACE_API_KEY');
+        $apiKey = config('services.google.places_api_key'); // [PHASE-5]
         if (!$apiKey) {
             Log::warning("Google API key not configured; skipping rating fetch for: {$businessName}");
             Cache::put($cacheKey, 'false', self::GOOGLE_CACHE_FAILURE_DURATION);

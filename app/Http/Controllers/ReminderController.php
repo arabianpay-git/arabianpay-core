@@ -67,7 +67,6 @@ class ReminderController extends Controller
                     ]);
 
                     $result = $this->sendSmsViaOurSms([$user->phone_number], $message);
-                    // $result = $this->sendSmsViaOurSms(['0545232968'], $message);
 
                     if (isset($result['error'])) {
                         $errors[] = 'SMS failed: ' . $result['error'];

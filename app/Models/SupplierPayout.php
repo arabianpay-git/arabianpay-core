@@ -22,7 +22,8 @@ class SupplierPayout extends Model
 
     protected $casts = [
         'payout_date' => 'datetime',
-        'amount' => 'float',
+        'amount' => 'decimal:2', // [PHASE-2] Fixed float -> decimal:2 (F-033)
+        'status' => \App\Enums\PayoutStatus::class, // [PHASE-2]
     ];
 
     public function supplier()

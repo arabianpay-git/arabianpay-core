@@ -3,12 +3,43 @@
 namespace App\Http\Controllers\settings;
 
 use App\Http\Controllers\Controller;
+use App\Models\Setting;
+use BadMethodCallException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use App\Models\Setting;
 
 class RiskWeightController extends Controller
 {
+    /**
+     * Placeholder pages for risk-related settings linked from settings index (routes/setting.php).
+     */
+    private static function stubPageTitles(): array
+    {
+        return [
+            'complianceRules' => 'Compliance Rules',
+            'fraudDetection' => 'Fraud Detection',
+            'aml' => 'AML Settings',
+            'kyc' => 'KYC Settings',
+        ];
+    }
+
+    /**
+     * @param  mixed  $arguments
+     */
+    public function __call(string $name, $arguments)
+    {
+        $titles = self::stubPageTitles();
+        if (isset($titles[$name])) {
+            return view('settings.page', ['title' => $titles[$name]]);
+        }
+
+        throw new BadMethodCallException(sprintf(
+            'Method %s::%s does not exist.',
+            static::class,
+            $name
+        ));
+    }
+
     protected $defaults = [
         // main
         'lps_weight' => 15,

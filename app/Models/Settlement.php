@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class Settlement extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\HasApprovalRequests;
 
     protected $fillable = [
         'uuid',
@@ -38,6 +38,7 @@ class Settlement extends Model
         'total_amount' => 'decimal:2',
         'commission_amount' => 'decimal:2',
         'payable_amount' => 'decimal:2',
+        'status' => \App\Enums\SettlementStatus::class, // [PHASE-2]
     ];
 
     public function supplier()

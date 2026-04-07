@@ -56,10 +56,7 @@
                                     </div>
                                     <div class="flex flex-col gap-1">
                                         <span class="text-xs text-gray-500 font-medium">Total Amount</span>
-                                        <div class="flex items-center gap-2">
-                                            <span class="icon-saudi_riyal"></span>
-                                            <span class="text-2xl font-bold text-success">{{ number_format($finishedPeriod['total_amount'], 2) }}</span>
-                                        </div>
+                                        <x-fintech.money :amount="$finishedPeriod['total_amount']" size="xl" color="green" />
                                     </div>
                                 </div>
                                 @endif
@@ -75,20 +72,19 @@
                                     </div>
                                     <div class="flex flex-col gap-1">
                                         <span class="text-xs text-gray-500 font-medium">Unsettled Amount</span>
-                                        <div class="flex items-center gap-2">
-                                            <span class="icon-saudi_riyal"></span>
-                                            <span class="text-2xl font-bold text-success">{{ number_format($finishedPeriod['unsettled_amount'], 2) }}</span>
-                                        </div>
+                                        <x-fintech.money :amount="$finishedPeriod['unsettled_amount']" size="xl" color="green" />
                                     </div>
                                 </div>
                                 @endif
                                 <!-- Generate Button -->
+                                @can('settlement.create')
                                 @if($finishedOrdersUnsettled->count() > 0)
                                     <a href="{{ route('settlements.generate') }}" class="btn btn-primary btn-sm w-full">
                                         <i class="ki-filled ki-plus-square"></i>
                                         Generate Settlements for This Period
                                     </a>
                                 @endif
+                                @endcan
                             </div>
                         </div>
                     </div>
@@ -122,10 +118,7 @@
                                     </div>
                                     <div class="flex flex-col gap-1">
                                         <span class="text-xs text-gray-500 font-medium">Running Total</span>
-                                        <div class="flex items-center gap-2">
-                                            <span class="icon-saudi_riyal"></span>
-                                            <span class="text-2xl font-bold text-warning">{{ number_format($currentPeriod['total_amount'], 2) }}</span>
-                                        </div>
+                                        <x-fintech.money :amount="$currentPeriod['total_amount']" size="xl" />
                                     </div>
                                 </div>
 
@@ -164,6 +157,7 @@
                                     <select name="status" class="select select-sm w-full">
                                         <option value="">All Statuses</option>
                                         <option value="draft" {{ request('status') == 'draft' ? 'selected' : '' }}>Draft</option>
+                                        <option value="pending" {{ request('status') == 'pending' ? 'selected' : '' }}>Pending (legacy)</option>
                                         <option value="pending_approval" {{ request('status') == 'pending_approval' ? 'selected' : '' }}>Pending Approval</option>
                                         <option value="approved" {{ request('status') == 'approved' ? 'selected' : '' }}>Approved</option>
                                         <option value="paid" {{ request('status') == 'paid' ? 'selected' : '' }}>Paid</option>
@@ -199,10 +193,10 @@
                             <span id="selected-count" class="text-sm text-gray-500 font-medium">0 selected</span>
                             <select id="batch-action-select" class="select select-sm w-56">
                                 <option value="">Select Batch Action</option>
-                                <option value="approve">✓ Approve Selected</option>
-                                <option value="payout">💵 Process Payout</option>
-                                <option value="cancel">✗ Cancel Selected</option>
-                                <option value="bankfile">📁 Bank Transfer File</option>
+                                @can('settlement.approve')<option value="approve">✓ Approve Selected</option>@endcan
+                                @can('settlement.pay')<option value="payout">💵 Process Payout</option>@endcan
+                                @can('settlement.cancel')<option value="cancel">✗ Cancel Selected</option>@endcan
+                                @can('settlement.export')<option value="bankfile">📁 Bank Transfer File</option>@endcan
                             </select>
                             <button id="execute-batch-action" class="btn btn-sm btn-primary">
                                 <i class="ki-filled ki-flash"></i> Execute
@@ -261,32 +255,11 @@
                                                             {{ $item->orders_count }}
                                                         </span>
                                                     </td>
-                                                    <td class="text-right font-semibold text-gray-900">
-                                                        {{ number_format($item->payable_amount, 2) }}
+                                                    <td>
+                                                        <x-fintech.money :amount="$item->payable_amount" />
                                                     </td>
                                                     <td class="text-center">
-                                                        @php
-                                                            $badgeClass = match($item->status) {
-                                                                'draft' => 'badge-light',
-                                                                'pending_approval' => 'badge-warning',
-                                                                'approved' => 'badge-primary',
-                                                                'paid' => 'badge-success',
-                                                                'cancelled' => 'badge-danger',
-                                                                default => 'badge-secondary'
-                                                            };
-                                                            $icon = match($item->status) {
-                                                                'draft' => 'ki-note-2',
-                                                                'pending_approval' => 'ki-time',
-                                                                'approved' => 'ki-check-circle',
-                                                                'paid' => 'ki-verify',
-                                                                'cancelled' => 'ki-cross-circle',
-                                                                default => 'ki-information'
-                                                            };
-                                                        @endphp
-                                                        <span class="badge badge-sm badge-outline {{ $badgeClass }}">
-                                                            <i class="ki-filled {{ $icon }}"></i>
-                                                            {{ ucfirst(str_replace('_', ' ', $item->status)) }}
-                                                        </span>
+                                                        <x-fintech.status-badge :status="$item->status" />
                                                     </td>
                                                     <td class="text-center text-gray-500 text-xs">
                                                         {{ $item->created_at->format('M d, Y') }}
@@ -297,23 +270,28 @@
                                                                 <i class="ki-filled ki-eye"></i>
                                                             </a>
                                                             
-                                                            @if($item->status === 'draft' || $item->status === 'pending_approval')
+                                                            @php $statusValue = $item->status instanceof \BackedEnum ? $item->status->value : (string) $item->status; @endphp
+                                                            @can('settlement.approve')
+                                                            @if($statusValue === 'draft' || $statusValue === 'pending' || $statusValue === 'pending_approval')
                                                                 <form action="{{ route('settlements.approve', $item->id) }}" method="POST" onsubmit="return confirm('Approve this settlement?');" class="inline">
-                                                                    @csrf 
+                                                                    @csrf
                                                                     <button type="submit" class="btn btn-sm btn-icon btn-light-success" title="Approve">
                                                                         <i class="ki-filled ki-check"></i>
                                                                     </button>
                                                                 </form>
                                                             @endif
-                                                            
-                                                            @if($item->status === 'approved')
+                                                            @endcan
+
+                                                            @can('settlement.pay')
+                                                            @if($statusValue === 'approved')
                                                                 <form action="{{ route('settlements.pay', $item->id) }}" method="POST" onsubmit="return confirm('Mark as Paid? This will generate financial entries.');" class="inline">
-                                                                    @csrf 
+                                                                    @csrf
                                                                     <button type="submit" class="btn btn-sm btn-icon btn-light-primary" title="Mark Paid">
                                                                         <i class="ki-filled ki-dollar"></i>
                                                                     </button>
                                                                 </form>
                                                             @endif
+                                                            @endcan
                                                         </div>
                                                     </td>
                                                 </tr>

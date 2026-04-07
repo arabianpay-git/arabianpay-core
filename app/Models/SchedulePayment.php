@@ -38,9 +38,19 @@ class SchedulePayment extends Model
         'paid_at',
     ];
 
+    // [PHASE-2] Added decimal casts for all financial amount fields
     protected $casts = [
         'due_date' => 'date',
         'is_late' => 'boolean',
+        'instalment_amount' => 'decimal:2',
+        'principle_amount' => 'decimal:2',
+        'late_fee' => 'decimal:2',
+        'subscription_fee' => 'decimal:2',
+        'shipping_amount' => 'decimal:2',
+        'additional_amount' => 'decimal:2',
+        'difference_amount' => 'decimal:2',
+        'deducted_amount' => 'decimal:2',
+        'payment_status' => \App\Enums\SchedulePaymentStatus::class, // [PHASE-2]
     ];
 
     protected static function boot()

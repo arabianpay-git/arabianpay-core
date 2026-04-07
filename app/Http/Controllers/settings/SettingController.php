@@ -9,9 +9,96 @@ use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Facades\Validator;
+use BadMethodCallException;
 
 class SettingController extends Controller
 {
+    /**
+     * Stub settings pages: routes in routes/setting.php reference many actions that are not
+     * implemented yet. Delegate them to a single placeholder view instead of 500s.
+     */
+    private static function stubSettingsTitles(): array
+    {
+        return [
+            'cache' => 'Cache & Performance',
+            'datatables' => 'Datatables',
+            'analytics' => 'Analytics & Tracking',
+            'optimization' => 'Optimization',
+            'sitemap' => 'Sitemap',
+            'financial' => 'Financial Settings',
+            'payout' => 'Payout Settings',
+            'tax' => 'Tax Settings',
+            'currency' => 'Currency Settings',
+            'paymentGateways' => 'Payment Gateways',
+            'creditScoring' => 'Credit Scoring',
+            'creditLimits' => 'Credit Limits',
+            'repaymentRules' => 'Repayment Rules',
+            'collectionRules' => 'Collection Rules',
+            'dunning' => 'Dunning Settings',
+            'lateFees' => 'Late Fees & Penalties',
+            'order' => 'Order Settings',
+            'shipping' => 'Shipping Settings',
+            'delivery' => 'Delivery Settings',
+            'refund' => 'Refund Settings',
+            'product' => 'Product Settings',
+            'inventory' => 'Inventory Settings',
+            'attributes' => 'Attribute Settings',
+            'reviews' => 'Review Settings',
+            'supplier' => 'Supplier Settings',
+            'commission' => 'Commission Settings',
+            'payoutSchedule' => 'Payout Schedule',
+            'customer' => 'Customer Settings',
+            'onboarding' => 'Onboarding Settings',
+            'verification' => 'Verification Settings',
+            'packages' => 'Package Settings',
+            'marketing' => 'Marketing Settings',
+            'notifications' => 'Notification Settings',
+            'emailTemplates' => 'Email Templates',
+            'sms' => 'SMS Settings',
+            'pushNotifications' => 'Push Notifications',
+            'support' => 'Support Settings',
+            'ticket' => 'Ticket Settings',
+            'sla' => 'SLA Settings',
+            'employee' => 'Employee Settings',
+            'departments' => 'Department Settings',
+            'permissions' => 'Permission Settings',
+            'workflow' => 'Workflow Settings',
+            'system' => 'System Settings',
+            'security' => 'Security Settings',
+            'maintenance' => 'Maintenance Settings',
+            'backup' => 'Backup Settings',
+            'logs' => 'Log Settings',
+            'thirdParty' => 'Third Party Services',
+            'smsGateway' => 'SMS Gateway',
+            'emailService' => 'Email Service',
+            'paymentProcessors' => 'Payment Processors',
+            'shippingServices' => 'Shipping Services',
+        ];
+    }
+
+    /**
+     * @param  mixed  $arguments
+     */
+    public function __call(string $name, $arguments)
+    {
+        if ($name === 'generalReset' || $name === 'emailReset') {
+            return redirect()
+                ->back()
+                ->with('info', translate('Reset is not implemented for this section yet.'));
+        }
+
+        $titles = self::stubSettingsTitles();
+        if (isset($titles[$name])) {
+            return view('settings.page', ['title' => $titles[$name]]);
+        }
+
+        throw new BadMethodCallException(sprintf(
+            'Method %s::%s does not exist.',
+            static::class,
+            $name
+        ));
+    }
+
     public function index()
     {
         $settings = [

@@ -360,6 +360,8 @@ class AccountController extends Controller
 
     public function upgradeLimit(Request $request)
     {
+        $this->authorize('update', \App\Models\CustomerCreditLimit::class); // [PHASE-1]
+
         $data = $request->validate([
             'credit_limit_id'            => 'required|exists:customer_credit_limits,id',
             'limit_arabianpay_before'    => 'required|numeric',
@@ -418,6 +420,8 @@ class AccountController extends Controller
 
     public function createCreditLimit(Request $request)
     {
+        $this->authorize('create', \App\Models\CustomerCreditLimit::class); // [PHASE-1]
+
         $data = $request->validate([
             'user_id'                    => 'required|exists:customers,user_id',
             'package_id'                 => 'nullable|exists:packages,id',

@@ -23,6 +23,11 @@ class FTransaction extends Model
         'notes',
     ];
 
+    // [PHASE-2] Added decimal cast for financial amount
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');

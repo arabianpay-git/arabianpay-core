@@ -38,8 +38,16 @@ class Transaction extends Model
         'resource',
     ];
 
+    // [PHASE-2] Added decimal casts for financial amount fields
     protected $casts = [
         'product_ids' => 'array',
+        'collected' => 'decimal:2',
+        'retrieved' => 'decimal:2',
+        'canceled' => 'decimal:2',
+        'loan_amount' => 'decimal:2',
+        'subscription_fees' => 'decimal:2',
+        'credit_limit_at_time' => 'decimal:2',
+        'remaining_credit_limit' => 'decimal:2',
     ];
 
     /**

@@ -12,22 +12,36 @@ use Throwable;
 class FirebaseService
 {
     protected $messaging;
-    protected $projectId;
+
+    protected string $projectId = 'unknown';
+
     protected $logger;
 
     public function __construct(LoggerInterface $logger)
     {
-        $serviceAccountPath = storage_path('app/firebase/arabianpay-b76ba-firebase-adminsdk-fbsvc-5a6b74b662.json');
+        $this->logger = $logger;
+
+        $serviceAccountPath = config('firebase.projects.app.credentials')
+            ?: storage_path('app/firebase/arabianpay-b76ba-firebase-adminsdk-fbsvc-5a6b74b662.json');
+
+        if (! is_string($serviceAccountPath) || ! is_readable($serviceAccountPath)) {
+            $this->logger->warning('FirebaseService: credentials file missing or unreadable; push notifications disabled.');
+
+            return;
+        }
 
         $factory = (new Factory)->withServiceAccount($serviceAccountPath);
         $this->messaging = $factory->createMessaging();
-        $this->logger = $logger;
 
-        // Extract project_id manually from JSON file
-        $config = json_decode(file_get_contents($serviceAccountPath), true);
+        $config = json_decode((string) file_get_contents($serviceAccountPath), true);
         $this->projectId = $config['project_id'] ?? 'unknown';
 
         $this->logger->info('FirebaseService initialized for project: ' . $this->projectId);
+    }
+
+    protected function isConfigured(): bool
+    {
+        return $this->messaging !== null;
     }
 
     public function sendNotification(
@@ -37,6 +51,10 @@ class FirebaseService
         ?string $clickAction = null,
         array $additionalData = []
     ): string {
+        if (! $this->isConfigured()) {
+            return 'Firebase not configured; notification skipped.';
+        }
+
         try {
             $dataPayload = [
                 'title' => $title,
@@ -73,6 +91,10 @@ class FirebaseService
         string $body,
         array $data = []
     ): void {
+        if (! $this->isConfigured()) {
+            return;
+        }
+
         try {
             $deviceTokens = DeviceToken::where('user_id', $userId)->pluck('token');
 

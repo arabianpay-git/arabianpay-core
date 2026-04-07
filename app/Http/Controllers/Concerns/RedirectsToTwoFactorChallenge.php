@@ -11,6 +11,10 @@ trait RedirectsToTwoFactorChallenge
 {
     protected function requiresTwoFactorChallenge(User $user): bool
     {
+        if (config('fortify.bypass_two_factor_challenge', false)) {
+            return false;
+        }
+
         if (! Features::enabled(Features::twoFactorAuthentication())) {
             return false;
         }

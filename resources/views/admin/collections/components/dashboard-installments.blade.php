@@ -134,6 +134,10 @@
 
                                         <td class="py-3">
                                             @php
+                                                $rawStatus = $installment['status'] ?? 'unknown';
+                                                $status = $rawStatus instanceof \BackedEnum
+                                                    ? $rawStatus->value
+                                                    : (string) $rawStatus;
                                                 $statusColors = [
                                                     'paid' => 'success',
                                                     'pending' => 'info',
@@ -141,6 +145,11 @@
                                                     'late' => 'danger',
                                                     'failed' => 'danger',
                                                     'promise' => 'info',
+                                                    'unpaid' => 'warning',
+                                                    'current' => 'info',
+                                                    'partially_paid' => 'warning',
+                                                    'cancelled' => 'secondary',
+                                                    'canceled' => 'secondary',
                                                 ];
                                                 $statusIcons = [
                                                     'paid' => 'ki-check-circle',
@@ -149,15 +158,20 @@
                                                     'late' => 'ki-cross-circle',
                                                     'failed' => 'ki-cross-circle',
                                                     'promise' => 'ki-calendar-8',
+                                                    'unpaid' => 'ki-minus-circle',
+                                                    'current' => 'ki-time',
+                                                    'partially_paid' => 'ki-information',
+                                                    'cancelled' => 'ki-cross-circle',
+                                                    'canceled' => 'ki-cross-circle',
                                                 ];
-                                                $status = $installment['status'] ?? 'unknown';
                                                 $color = $statusColors[$status] ?? 'muted';
                                                 $icon = $statusIcons[$status] ?? 'ki-information';
+                                                $statusLabel = ucfirst(str_replace('_', ' ', $status));
                                             @endphp
                                             <span
                                                 class="badge badge-sm badge-outline badge-{{ $color }} flex items-center gap-1 w-min">
                                                 <i class="ki-filled {{ $icon }} text-xs"></i>
-                                                {{ ucfirst($status) }}
+                                                {{ translate($statusLabel) }}
                                             </span>
                                         </td>
 

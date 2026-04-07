@@ -25,6 +25,11 @@ class Payment extends Model
         'payment_status',
     ];
 
+    // [PHASE-2] Added decimal casts for financial amounts
+    protected $casts = [
+        'amount' => 'decimal:2',
+    ];
+
     // Generate a UUID when creating a new payment
     public static function boot()
     {

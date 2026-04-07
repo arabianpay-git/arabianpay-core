@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\DB;
 
 class RefundRequest extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\HasApprovalRequests;
     use LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
@@ -27,6 +27,12 @@ class RefundRequest extends Model
         'reason',
         'reject_reason',
         'refund_status',
+    ];
+
+    // [PHASE-2] Added casts for financial amount and status enum
+    protected $casts = [
+        'refund_amount' => 'decimal:2',
+        'refund_status' => \App\Enums\RefundStatus::class,
     ];
 
     public function assigned()

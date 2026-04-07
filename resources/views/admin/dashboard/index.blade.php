@@ -79,6 +79,11 @@
             </div>
         </div>
 
+        {{-- [UI-PHASE] Financial KPI strip with alert banners --}}
+        <div class="container-fixed mb-2">
+            @include('admin.dashboard.includes.financial-kpis')
+        </div>
+
         <div class="container-fixed">
             <div class="grid gap-3 lg:gap-7.5">
                 <div class="grid lg:grid-cols-5 gap-y-3 lg:gap-4 items-stretch">

@@ -67,7 +67,7 @@ class ReportController extends Controller
             'business_name' => 'required|string|max:255',
         ]);
 
-        $apiKey = env('GOOGLE_REVIEW');
+        $apiKey = config('services.google.reviews_api_key'); // [PHASE-5]
 
         // Step 1: Get Place ID
         $searchResponse = Http::get('https://maps.googleapis.com/maps/api/place/findplacefromtext/json', [

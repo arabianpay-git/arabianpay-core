@@ -424,7 +424,7 @@ class DashboardController extends Controller
 
             $encryptedUserId = Crypt::encrypt($targetUser->id);
 
-            if (env('APP_ENV') == 'local') {
+            if (config('app.env') === 'local') { // [PHASE-5] migrated to config
                 $baseUrl = 'https://merchant.test/impersonate-login';
             } else {
                 $baseUrl = 'https://partners.arabianpay.net/impersonate-login';
