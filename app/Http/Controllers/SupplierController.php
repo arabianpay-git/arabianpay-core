@@ -1720,8 +1720,8 @@ class SupplierController extends Controller
             ], 422);
         }
 
-        $wathqBase = rtrim(env('WATHQ_API_BASE', 'https://api.wathq.sa/'), '/').'/';
-        $apiKey = env('WATHQ_API_KEY', 'nxNtcpyb0cqiLfkj8umAdkhqJGA8x4Az'); // keep secret in .env
+        $wathqBase = rtrim(config('services.wathq.api_base', 'https://api.wathq.sa/'), '/').'/';
+        $apiKey = config('services.wathq.api_key'); // [PHASE-0] Removed hardcoded fallback (F-004)
 
         try {
             $url = sprintf('%scommercial-registration/fullinfo/%s', $wathqBase, $crNumber);

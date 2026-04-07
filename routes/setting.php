@@ -17,7 +17,8 @@ Route::group([
         ->middleware(['auth:sanctum', PreventBackHistory::class, SecureHeaders::class, CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
         ->group(function () {
 
-            Route::controller(SettingController::class)->prefix('settings')->as('settings.')->group(function () {
+            // [PHASE-1] Settings routes require settings.manage permission
+            Route::controller(SettingController::class)->prefix('settings')->as('settings.')->middleware('permission:settings.manage')->group(function () {
                 Route::get('/', 'index')->name('index');
 
                 // Core Settings

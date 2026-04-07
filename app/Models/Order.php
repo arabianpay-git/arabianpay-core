@@ -6,6 +6,7 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use App\Casts\SafeDecimal;
 use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Order extends Model
@@ -51,6 +52,9 @@ class Order extends Model
         'settlement_id',
     ];
 
+    // [PHASE-2] Removed grand_total, shipping_cost, coupon_discount, code from
+    // encryption. Financial amounts must remain queryable for SUM/AVG aggregation,
+    // settlement calculations, and reporting. PII shipping fields stay encrypted.
     protected $encryptableAttributes = [
         'shipping_first_name',
         'shipping_last_name',
@@ -60,17 +64,15 @@ class Order extends Model
         'shipping_state',
         'shipping_country',
         'shipping_postal_code',
-        'shipping_type',
-        'order_from',
-        'payment_type',
-        'shipping_cost',
-        'grand_total',
-        'coupon_discount',
-        'code',
     ];
 
     protected $casts = [
         'payment_details' => 'array',
+        'grand_total' => SafeDecimal::class,
+        'shipping_cost' => SafeDecimal::class,
+        'coupon_discount' => SafeDecimal::class,
+        'commission_amount' => SafeDecimal::class,
+        'commission_percent' => SafeDecimal::class,
     ];
 
 

@@ -7,20 +7,26 @@ use Illuminate\Database\Eloquent\Model;
 class FEntry extends Model
 {
     protected $fillable = [
-        'transaction_id', // links to f_transactions table
-        'reference_id', // optional, links to another order or payment
-        'user_id', // required, links to a users table
-        'customer_id', // nullable, if the entry is linked to a customer
-        'supplier_id', // nullable, if the entry is linked to a supplier    
-        'order_id', // nullable, if the entry is linked to an order
-        'payment_id', // nullable, if the entry is linked to a payments table
-        'account_id', // required, links to an accounts table
-        'account_name', 
-        'debit',      // amount debited
-        'credit',     // amount credited
-        'status',     // e.g., 'pending', 'completed', 'failed'
+        'transaction_id',
+        'reference_id',
+        'user_id',
+        'customer_id',
+        'supplier_id',
+        'order_id',
+        'payment_id',
+        'account_id',
+        'account_name',
+        'debit',
+        'credit',
+        'status',
         'entry_date',
         'notes',
+    ];
+
+    // [PHASE-2] Added decimal casts for financial amounts
+    protected $casts = [
+        'debit' => 'decimal:2',
+        'credit' => 'decimal:2',
     ];
 
     public function user()

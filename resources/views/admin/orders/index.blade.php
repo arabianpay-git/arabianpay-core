@@ -106,18 +106,27 @@
                                                         style="gap:5px;">
                                                         @forelse ($item->schedulePayments as $payment)
                                                             @php
-                                                                $statusClass = match ($payment->payment_status) {
+                                                                $statusValue = $payment->payment_status instanceof \BackedEnum
+                                                                    ? $payment->payment_status->value
+                                                                    : (string) $payment->payment_status;
+                                                                $statusClass = match ($statusValue) {
                                                                     'paid' => 'badge-success',
                                                                     'pending' => 'badge-warning',
                                                                     'due' => 'badge-primary',
                                                                     'late' => 'badge-danger',
                                                                     'failed' => 'badge-dark',
+                                                                    'unpaid' => 'badge-secondary',
+                                                                    'current' => 'badge-primary',
+                                                                    'partially_paid' => 'badge-warning',
+                                                                    'cancelled' => 'badge-secondary',
+                                                                    'canceled' => 'badge-secondary',
                                                                     default => 'badge-info',
                                                                 };
+                                                                $statusLabel = ucfirst(str_replace('_', ' ', $statusValue));
                                                             @endphp
                                                             <span class="badge badge-sm badge-outline {{ $statusClass }}"
                                                                 style="width: 70px">
-                                                                {{ translate(ucfirst($payment->payment_status)) }}
+                                                                {{ translate($statusLabel) }}
                                                             </span>
                                                         @empty
                                                             <span

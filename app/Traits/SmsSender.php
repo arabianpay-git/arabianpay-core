@@ -7,9 +7,9 @@ trait SmsSender
     protected function sendSms($phone, $message)
     {
         $post = [
-            "userName"   => "Arabianpay",
-            "apiKey"     => "d99970b46c8430547b33815c20b68d41",
-            "userSender" => "Arabianpay",
+            "userName"   => config('services.msegat.username', 'Arabianpay'),
+            "apiKey"     => config('services.msegat.api_key'),
+            "userSender" => config('services.msegat.sender', 'Arabianpay'),
             "msg"        => $message,
             "numbers"    => $phone,
         ];

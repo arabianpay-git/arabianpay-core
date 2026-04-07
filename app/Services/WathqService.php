@@ -10,12 +10,13 @@ class WathqService
     public function fetchCrData(string $cr_number): ?array
     {
         try {
+            // [PHASE-5] Replaced env() with config()
             $response = Http::withHeaders([
-                'apiKey' => env('API_KEY_WATHQ'),
+                'apiKey' => config('services.wathq.api_key'),
                 'Accept' => 'application/json',
             ])->get(sprintf(
-                'https://%s/commercial-registration/fullinfo/%s',
-                env('BASE_URL_WATHQ'),
+                '%scommercial-registration/fullinfo/%s',
+                rtrim(config('services.wathq.api_base', 'https://api.wathq.sa/'), '/') . '/',
                 $cr_number
             ), ['language' => 'en']);
 

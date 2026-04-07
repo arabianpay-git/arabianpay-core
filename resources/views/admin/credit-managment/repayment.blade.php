@@ -91,14 +91,28 @@
                                                     <td>{{ \Carbon\Carbon::parse($item->due_date)->format('d-m-Y') }}</td>
                                                     <td>{{ number_format($item->instalment_amount, 2) }} SAR</td>
                                                     <td>
+                                                        @php
+                                                            $statusValue = $item->payment_status instanceof \BackedEnum
+                                                                ? $item->payment_status->value
+                                                                : (string) ($item->payment_status ?? '');
+                                                            $paymentBadgeClass = match ($statusValue) {
+                                                                'paid' => 'badge-success',
+                                                                'pending' => 'badge-warning',
+                                                                'due' => 'badge-primary',
+                                                                'late' => 'badge-danger',
+                                                                'failed' => 'badge-secondary',
+                                                                'unpaid' => 'badge-secondary',
+                                                                'current' => 'badge-primary',
+                                                                'partially_paid' => 'badge-warning',
+                                                                'cancelled' => 'badge-secondary',
+                                                                'canceled' => 'badge-secondary',
+                                                                default => 'badge-info',
+                                                            };
+                                                            $statusLabel = ucfirst(str_replace('_', ' ', $statusValue));
+                                                        @endphp
                                                         <span
-                                                            class="badge badge-sm badge-outline 
-                                                            @if ($item->payment_status == 'paid') badge-success 
-                                                            @elseif($item->payment_status == 'pending') badge-warning 
-                                                            @elseif($item->payment_status == 'late') badge-danger 
-                                                            @elseif($item->payment_status == 'failed') badge-secondary 
-                                                            @else badge-info @endif">
-                                                            {{ ucfirst($item->payment_status) }}
+                                                            class="badge badge-sm badge-outline {{ $paymentBadgeClass }}">
+                                                            {{ translate($statusLabel) }}
                                                         </span>
                                                     </td>
 

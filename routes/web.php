@@ -71,6 +71,8 @@ use App\Http\Controllers\SupplierAndSalesController;
 use App\Http\Controllers\SupplierController;
 use App\Http\Controllers\SupplierRoleController;
 use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\EmailController;
+use App\Http\Controllers\SmsController;
 use App\Http\Controllers\ThirdPatryController;
 use App\Http\Controllers\TransactionController;
 use App\Http\Controllers\TransferRequestController;
@@ -107,20 +109,7 @@ Route::group([
         Route::get('/get-cities/{state}', 'getCities');
     });
 
-    // Add this to your routes/web.php
-    Route::get('/admin/chat/debug', function () {
-        return response()->json([
-            'echo_loaded' => class_exists(\Illuminate\Support\Facades\Broadcast::class),
-            'reverb_config' => [
-                'app_id' => config('reverb.apps.0.id'),
-                'app_key' => config('reverb.apps.0.key'),
-                'host' => config('reverb.servers.0.host'),
-                'port' => config('reverb.servers.0.port'),
-            ],
-            'broadcast_driver' => config('broadcasting.default'),
-            'auth_user' => Auth::user() ? Auth::user()->id : null,
-        ]);
-    })->middleware(['auth:sanctum', 'ensure.two-factor']);
+    // [PHASE-0 2026-04-06] Removed debug route (F-023) that leaked infrastructure config.
 
     //
     // Admin area (all routes under /{locale}/admin)
@@ -205,9 +194,10 @@ Route::group([
             Route::get('categories/search', [CategoryController::class, 'search'])->name('categories.search');
             Route::get('brands/search', [BrandController::class, 'search'])->name('brands.search');
 
-            Route::get('approvals', [SensitiveDataApprovalController::class, 'index'])->name('approvals.index');
-            Route::get('approvals/{approval}', [SensitiveDataApprovalController::class, 'show'])->name('approvals.show');
-            Route::post('approvals/{approval}/decision', [SensitiveDataApprovalController::class, 'decision'])->name('approvals.decision');
+            // [PHASE-1] Sensitive data approval routes with permission middleware
+            Route::get('approvals', [SensitiveDataApprovalController::class, 'index'])->name('approvals.index')->middleware('permission:sensitive-data.access');
+            Route::get('approvals/{approval}', [SensitiveDataApprovalController::class, 'show'])->name('approvals.show')->middleware('permission:sensitive-data.access');
+            Route::post('approvals/{approval}/decision', [SensitiveDataApprovalController::class, 'decision'])->name('approvals.decision')->middleware('permission:sensitive-data.approve');
 
             //
             // Master-data CRUD
@@ -238,11 +228,12 @@ Route::group([
             //
             // Financial Management Routes
             //
-            Route::prefix('financial')->name('financial.')->group(function () {
+            // [PHASE-1] Financial routes with permission middleware
+            Route::prefix('financial')->name('financial.')->middleware('permission:financial.view')->group(function () {
                 Route::get('/', [FinancialDashboardController::class, 'index'])->name('dashboard');
                 Route::get('/dashboard/chart-data', [FinancialDashboardController::class, 'getChartDataJson'])->name('dashboard.chart-data');
                 Route::get('/trial-balance', [FinancialDashboardController::class, 'trialBalance'])->name('trial-balance');
-                Route::get('/trial-balance/export', [FinancialDashboardController::class, 'exportTrialBalance'])->name('trial-balance.export');
+                Route::get('/trial-balance/export', [FinancialDashboardController::class, 'exportTrialBalance'])->name('trial-balance.export')->middleware('permission:financial.export');
                 Route::resource('accounts', FinancialAccounts::class);
                 Route::get('accounts/{account}/ledger', [FinancialAccounts::class, 'ledger'])->name('accounts.ledger');
                 Route::resource('transactions', FinancialTransactions::class);
@@ -354,7 +345,7 @@ Route::group([
 
             Route::controller(SupplierController::class)->group(function () {
                 // Supplier management routes
-                Route::get('suppliers/export', 'exportSuppliers')->name('suppliers.export');
+                Route::get('suppliers/export', 'exportSuppliers')->name('suppliers.export')->middleware('permission:report.export');
                 Route::get('suppliers', 'suppliers')->name('suppliers');
                 Route::post('update-commission', 'updateCommission')->name('updateCommission');
                 Route::get('supplier/{id}', 'supplierProfile')->name('supplierProfile');
@@ -428,13 +419,13 @@ Route::group([
             //
             // Risk Analytics
             //
-            Route::controller(RiskAnalyticsController::class)->prefix('risk')->group(function () {
+            // [PHASE-1] Risk routes with permission middleware
+            Route::controller(RiskAnalyticsController::class)->prefix('risk')->middleware('permission:risk.view')->group(function () {
                 Route::get('dashboard', 'dashboard')->name('risk.dashboard');
                 Route::get('alerts', 'allAlerts')->name('risk.alerts');
-                // Route::get('score-engine', 'score')->name('risk.merchantScore');
-                Route::post('score-update', 'scoreUpdate')->name('risk.merchantScoreUpdate')->middleware(EnsureOtpVerified::class);
-                Route::get('export/pdf', 'exportPdf')->name('risk.exportPdf');
-                Route::get('export/csv', 'exportCsv')->withoutMiddleware([PreventBackHistory::class])->name('risk.exportCsv');
+                Route::post('score-update', 'scoreUpdate')->name('risk.merchantScoreUpdate')->middleware([EnsureOtpVerified::class, 'permission:risk.update-score']);
+                Route::get('export/pdf', 'exportPdf')->name('risk.exportPdf')->middleware('permission:risk.export');
+                Route::get('export/csv', 'exportCsv')->withoutMiddleware([PreventBackHistory::class])->name('risk.exportCsv')->middleware('permission:risk.export');
 
                 Route::get('/merchant-score', 'merchantScore')->name('risk.merchantScore');
 
@@ -443,23 +434,26 @@ Route::group([
                 Route::get('/risk-analysis/{user}/{type}/components', 'components')->name('risk.analysis.components');
             });
 
-            Route::controller(RiskExportController::class)->prefix('risk')->group(function () {
+            // [PHASE-4] Risk export routes with permission middleware
+            Route::controller(RiskExportController::class)->prefix('risk')->middleware('permission:risk.export')->group(function () {
                 Route::post('risk/export', 'startExport')->name('risk.export');
                 Route::get('risk/export/status/{id}', 'status')->name('risk.export.status');
                 Route::get('risk/export/download/{id}', 'download')->name('risk.export.download');
             });
 
-            Route::prefix('risk-weights')->group(function () {
-                Route::post('/', [RiskWeightController::class, 'store'])->name('risk-weights.store');
+            // [PHASE-1] Risk weight routes with permission middleware
+            Route::prefix('risk-weights')->middleware('permission:risk-weight.view')->group(function () {
+                Route::post('/', [RiskWeightController::class, 'store'])->name('risk-weights.store')->middleware('permission:risk-weight.manage');
                 Route::get('/get', [RiskWeightController::class, 'getWeights'])->name('risk-weights.get');
-                Route::post('/reset', [RiskWeightController::class, 'resetToDefault'])->name('risk-weights.reset');
+                Route::post('/reset', [RiskWeightController::class, 'resetToDefault'])->name('risk-weights.reset')->middleware('permission:risk-weight.manage');
                 Route::get('/history', [RiskWeightController::class, 'getWeightHistory'])->name('risk-weights.history');
             });
 
             //
             // Collection Department
             //
-            Route::prefix('collections')->as('collections.')->controller(CollectionController::class)->group(function () {
+            // [PHASE-1] Collection routes with permission middleware
+            Route::prefix('collections')->as('collections.')->controller(CollectionController::class)->middleware('permission:collection.view')->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/installments', 'installments')->name('installments');
                 Route::get('/installments-calander', 'installmentsCalander')->name('installmentsCalander');
@@ -512,8 +506,8 @@ Route::group([
             //
             Route::controller(ActivityLogsController::class)->prefix('activity-logs')->group(function () {
                 Route::get('/', 'index')->name('activity-logs.index');
-                Route::get('/export/csv', 'exportCsv')->name('activity-logs.exportCsv');
-                Route::get('/export/pdf', 'exportPdf')->name('activity-logs.exportPdf');
+                Route::get('/export/csv', 'exportCsv')->name('activity-logs.exportCsv')->middleware('permission:audit.export');
+                Route::get('/export/pdf', 'exportPdf')->name('activity-logs.exportPdf')->middleware('permission:audit.export');
             });
 
             Route::get('/otp/send', [OtpVerificationController::class, 'send'])->name('otp.send');
@@ -526,12 +520,13 @@ Route::group([
             //
             // Credit Managment
             //
-            Route::controller(CreditManagmentController::class)->prefix('credit')->group(function () {
+            // [PHASE-1] Credit management routes with permission middleware
+            Route::controller(CreditManagmentController::class)->prefix('credit')->middleware('permission:credit-limit.view')->group(function () {
                 Route::get('credit-profiles', 'creditProfile')->name('creditProfile');
                 Route::get('credit-limit', 'creditLimit')->name('creditLimit');
                 Route::get('repayment-schedule', 'repaymentSchedule')->name('repaymentSchedule');
-                Route::get('export/pdf', 'exportPdf')->name('credit.exportPdf');
-                Route::get('export/csv', 'exportCsv')->name('credit.exportCsv');
+                Route::get('export/pdf', 'exportPdf')->name('credit.exportPdf')->middleware('permission:report.export');
+                Route::get('export/csv', 'exportCsv')->name('credit.exportCsv')->middleware('permission:report.export');
             });
 
             //
@@ -610,16 +605,18 @@ Route::group([
             //
             // Refund requests
             //
-            Route::controller(RefundRequestController::class)->prefix('refund-requests')->group(function () {
+            // [PHASE-1] Refund routes with permission middleware
+            Route::controller(RefundRequestController::class)->prefix('refund-requests')->middleware('permission:refund.view')->group(function () {
                 Route::get('/', 'refundRequests')->name('refund-requests');
                 Route::get('{status}', 'showRefundRequests')->name('refund-requests.status');
-                Route::patch('{id}/status', 'updateRefundStatus')->name('refund-requests.update-status');
+                Route::patch('{id}/status', 'updateRefundStatus')->name('refund-requests.update-status')->middleware('permission:refund.manage');
             });
 
             //
             // Scheduled payments
             //
-            Route::controller(SchedulePaymentController::class)->prefix('schedule-payments')->group(function () {
+            // [PHASE-1] Schedule payments with permission middleware
+            Route::controller(SchedulePaymentController::class)->prefix('schedule-payments')->middleware('permission:schedule_payment.view')->group(function () {
                 Route::get('/', 'index')->name('schedulePayments');
                 Route::get('{status}', 'filterByPaymentStatus')->name('schedulePayment');
                 Route::get('{schedulePayment}/details', 'show')->name('schedulePayments.details');
@@ -629,32 +626,34 @@ Route::group([
             //
             // Settlements
             //
+            // [PHASE-1] Settlement routes with permission middleware
             Route::prefix('settlements')->name('settlements.')->controller(SettlementController::class)->group(function () {
-                Route::get('/', 'index')->name('index');
-                Route::get('/generate/period', 'generateForFinishedPeriod')->name('generate');
-                Route::post('/batch-payout', 'batchPayout')->name('batch-payout');
-                Route::post('/batch-approve', 'batchApprove')->name('batch-approve');
-                Route::post('/batch-cancel', 'batchCancel')->name('batch-cancel');
-                Route::post('/generate-report', 'generateReport')->name('generate-report');
-                Route::post('/bank-transfer-file', 'generateBankTransferFile')->name('bank-transfer-file');
-                Route::post('/', 'store')->name('store');
-                Route::get('/{settlement}', 'show')->name('show');
-                Route::get('/{settlement}/edit', 'edit')->name('edit'); // Optional if implemented
-                Route::put('/{settlement}', 'update')->name('update'); // Optional
-                Route::post('/{settlement}/approve', 'approve')->name('approve');
-                Route::post('/{settlement}/pay', 'markAsPaid')->name('pay');
-                Route::post('/{settlement}/cancel', 'cancel')->name('cancel');
-                Route::delete('/{settlement}', 'destroy')->name('destroy');
+                Route::get('/', 'index')->name('index')->middleware('permission:settlement.view');
+                Route::get('/generate/period', 'generateForFinishedPeriod')->name('generate')->middleware('permission:settlement.create');
+                Route::post('/batch-payout', 'batchPayout')->name('batch-payout')->middleware('permission:settlement.pay');
+                Route::post('/batch-approve', 'batchApprove')->name('batch-approve')->middleware('permission:settlement.approve');
+                Route::post('/batch-cancel', 'batchCancel')->name('batch-cancel')->middleware('permission:settlement.cancel');
+                Route::post('/generate-report', 'generateReport')->name('generate-report')->middleware('permission:settlement.export');
+                Route::post('/bank-transfer-file', 'generateBankTransferFile')->name('bank-transfer-file')->middleware('permission:settlement.export');
+                Route::post('/', 'store')->name('store')->middleware('permission:settlement.create');
+                Route::get('/{settlement}', 'show')->name('show')->middleware('permission:settlement.view');
+                Route::get('/{settlement}/edit', 'edit')->name('edit')->middleware('permission:settlement.view');
+                Route::put('/{settlement}', 'update')->name('update')->middleware('permission:settlement.create');
+                Route::post('/{settlement}/approve', 'approve')->name('approve')->middleware('permission:settlement.approve');
+                Route::post('/{settlement}/pay', 'markAsPaid')->name('pay')->middleware('permission:settlement.pay');
+                Route::post('/{settlement}/cancel', 'cancel')->name('cancel')->middleware('permission:settlement.cancel');
+                Route::delete('/{settlement}', 'destroy')->name('destroy')->middleware('permission:settlement.cancel');
             });
 
             //
             // Supplier Payouts Portal
             //
-            Route::prefix('payouts')->name('payouts.')->controller(PayoutPortalController::class)->group(function () {
+            // [PHASE-1] Payout routes with permission middleware
+            Route::prefix('payouts')->name('payouts.')->controller(PayoutPortalController::class)->middleware('permission:payout.view')->group(function () {
                 Route::get('/', 'index')->name('index');
-                Route::post('/', 'store')->name('store');
-                Route::post('/{payout}/complete', 'markCompleted')->name('complete');
-                Route::post('/{payout}/fail', 'markFailed')->name('fail');
+                Route::post('/', 'store')->name('store')->middleware('permission:payout.process');
+                Route::post('/{payout}/complete', 'markCompleted')->name('complete')->middleware('permission:payout.complete');
+                Route::post('/{payout}/fail', 'markFailed')->name('fail')->middleware('permission:payout.complete');
                 Route::get('/status-by-order/{order}', 'statusByOrder')->name('status-by-order');
                 Route::get('/{payout}/details-modal-data', 'detailsModalData')->name('details-modal-data');
             });
@@ -687,7 +686,8 @@ Route::group([
             //
             // Reports
             //
-            Route::controller(ReportController::class)->prefix('reports')->group(function () {
+            // [PHASE-1] Report routes with permission middleware
+            Route::controller(ReportController::class)->prefix('reports')->middleware('permission:report.view')->group(function () {
                 Route::get('product-stock', 'productStock')->name('productStock');
                 Route::get('product-wishlist', 'productWishlist')->name('productWishlist');
                 Route::get('user-search', 'userSearch')->name('userSearch');
@@ -728,40 +728,63 @@ Route::group([
             Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 
             // Audit logs and audit trails
-            Route::get('/audit/trails', [AuditController::class, 'showAuditTrails'])->name('audit.trails');
-            Route::get('/audit/logs', [AuditController::class, 'showAuditLogs'])->name('audit.logs');
+            // [PHASE-1] Audit routes with permission middleware
+            Route::get('/audit/trails', [AuditController::class, 'showAuditTrails'])->name('audit.trails')->middleware('permission:audit.view');
+            Route::get('/audit/logs', [AuditController::class, 'showAuditLogs'])->name('audit.logs')->middleware('permission:audit.view');
+            Route::get('/audit/{id}/details', [AuditController::class, 'getAuditDetails'])->name('audit.details')->middleware('permission:audit.view');
+            Route::get('/audit/logs/{id}/details', [AuditController::class, 'showAuditLogDetails'])->name('audit.logs.details')->middleware('permission:audit.view');
+            Route::get('/logs/export', [AuditController::class, 'exportLogs'])->name('audit.logs.export')->middleware('permission:audit.export');
+            Route::get('/trails/export', [AuditController::class, 'exportTrails'])->name('audit.trails.export')->middleware('permission:audit.export');
 
-            Route::get('/audit/{id}/details', [AuditController::class, 'getAuditDetails'])->name('audit.details');
-            Route::get('/audit/logs/{id}/details', [AuditController::class, 'showAuditLogDetails'])->name('audit.logs.details');
-            Route::get('/logs/export', [AuditController::class, 'exportLogs'])->name('audit.logs.export');
-            Route::get('/trails/export', [AuditController::class, 'exportTrails'])->name('audit.trails.export');
+            // ─────────────────────────────────────────────
+            // PDPL Data Subject Requests
+            // ─────────────────────────────────────────────
+            Route::prefix('pdpl/requests')->name('pdpl.requests.')->middleware('permission:sensitive-data.access')->group(function () {
+                Route::get('/', [\App\Http\Controllers\Admin\PDPLController::class, 'index'])->name('index');
+                Route::post('/', [\App\Http\Controllers\Admin\PDPLController::class, 'store'])->name('store');
+                Route::get('/{dataSubjectRequest}', [\App\Http\Controllers\Admin\PDPLController::class, 'show'])->name('show');
+                Route::post('/{dataSubjectRequest}/approve', [\App\Http\Controllers\Admin\PDPLController::class, 'approve'])->name('approve')->middleware('permission:sensitive-data.approve');
+                Route::post('/{dataSubjectRequest}/reject', [\App\Http\Controllers\Admin\PDPLController::class, 'reject'])->name('reject')->middleware('permission:sensitive-data.approve');
+                Route::post('/{dataSubjectRequest}/complete', [\App\Http\Controllers\Admin\PDPLController::class, 'complete'])->name('complete')->middleware('permission:sensitive-data.approve');
+            });
+
+            // ─────────────────────────────────────────────
+            // [PHASE-0 2026-04-06] Moved inside admin middleware group (F-007)
+            // Previously these were outside auth/admin protection.
+            // ─────────────────────────────────────────────
+
+            // Third party api control
+            Route::get('/third-party', [ThirdPatryController::class, 'index'])->name('thirdParty.index');
+
+            // Merchants
+            Route::get('/merchants', [MerchantUpdateController::class, 'index'])->name('merchants.index');
+            Route::get('/merchants/search', [MerchantUpdateController::class, 'search'])->name('merchants.search');
+            Route::post('/merchants/{id}/update', [MerchantUpdateController::class, 'update'])->name('merchants.update');
+
+            // Firebase / FCM notification tools
+            Route::post('/send-fcm', [FirebaseController::class, 'sendNotification'])->name('fcm.sendNotification');
+            Route::get('/fcm-test', function () {
+                return view('fcm');
+            })->name('fcm');
+            Route::get('/send-fcm', function () {
+                return view('send-fcm');
+            })->name('fcm.send');
+
+            // Google reviews
+            Route::get('/google-reviews', [ReportController::class, 'index'])->name('google.reviews.form');
+            Route::post('/google-reviews', [ReportController::class, 'getReviews'])->name('google.reviews.fetch');
+
+            // Email / SMS sending tools
+            Route::get('/send-email', [EmailController::class, 'create'])->name('email.create');
+            Route::post('/send-email', [EmailController::class, 'send'])->name('email.send');
+            Route::get('/send-sms', [SmsController::class, 'create'])->name('sms.create');
+            Route::post('/send-sms', [SmsController::class, 'send'])->name('sms.send');
         });
-
-    // Third party api control
-    Route::get('/third-party', [ThirdPatryController::class, 'index'])->name('thirdParty.index');
-
-    Route::get('/merchants', [MerchantUpdateController::class, 'index'])->name('merchants.index');
-    Route::get('/merchants/search', [MerchantUpdateController::class, 'search'])->name('merchants.search');
-    Route::post('/merchants/{id}/update', [MerchantUpdateController::class, 'update'])->name('merchants.update');
 });
 
-//
-// Firebase Realtime Notification
-//
-
-Route::post('/send-fcm', [FirebaseController::class, 'sendNotification']);
-
-Route::get('/fcm-test', function () {
-    return view('fcm');
-})->name('fcm');
-
-Route::get('/send-fcm', function () {
-    return view('send-fcm');
-})->name('fcm.send');
-
-Route::get('/google-reviews', [ReportController::class, 'index'])->name('google.reviews.form');
-Route::post('/google-reviews', [ReportController::class, 'getReviews'])->name('google.reviews.fetch');
-
+// ─────────────────────────────────────────────
+// Passkeys: login routes must remain public, register/manage require auth
+// ─────────────────────────────────────────────
 Route::middleware(['auth'])->group(function () {
     Route::get('/passkeys-register', [PasskeyController::class, 'create'])->name('passkeys.create');
     Route::post('/passkeys-register', [PasskeyController::class, 'store'])->name('passkeys.store');
@@ -774,17 +797,13 @@ Route::get('/passkeys-login', [PasskeyController::class, 'login'])->name('passke
 Route::post('/passkeys-phone', [PasskeyController::class, 'getPublicKey'])->name('passkeys.getPublicKey');
 Route::post('/passkeys-login', [PasskeyController::class, 'authenticate'])->name('passkeys.authenticate');
 
-Route::get('/dev-login', [DevLoginController::class, 'showLoginForm'])->name('dev.login');
-Route::post('/dev-login', [DevLoginController::class, 'login'])->name('dev.login.store');
+// ─────────────────────────────────────────────
+// [PHASE-0] Dev login: only loaded in local environment (F-008)
+// ─────────────────────────────────────────────
+if (app()->environment('local')) {
+    Route::get('/dev-login', [DevLoginController::class, 'showLoginForm'])->name('dev.login');
+    Route::post('/dev-login', [DevLoginController::class, 'login'])->name('dev.login.store');
+}
 
-use App\Http\Controllers\EmailController;
-use App\Http\Controllers\SmsController;
-
-Route::get('/send-email', [EmailController::class, 'create'])->name('email.create');
-Route::post('/send-email', [EmailController::class, 'send'])->name('email.send');
-Route::get('/send-sms', [SmsController::class, 'create'])->name('sms.create');
-Route::post('/send-sms', [SmsController::class, 'send'])->name('sms.send');
-
-// routes/web.php
 require __DIR__.'/test.php';
 require __DIR__.'/setting.php';

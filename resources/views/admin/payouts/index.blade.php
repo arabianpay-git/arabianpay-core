@@ -21,6 +21,20 @@
             </div>
         </div>
         <!-- End of Container -->
+        {{-- [UI-A] Payout KPI cards --}}
+        <div class="container-fixed mb-4">
+            @php
+                $totalPaid = $payouts->where('status', 'completed')->sum('amount');
+                $pendingPayout = $orders->where('general_status', 'processing')->sum('grand_total');
+            @endphp
+            <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                <x-fintech.kpi-card title="Total Paid Out" :value="$totalPaid" :isMoney="true" icon="ki-verify" color="success" />
+                <x-fintech.kpi-card title="Ready to Pay" :value="$orders->where('general_status', 'processing')->count()" icon="ki-dollar" color="warning" :subtitle="'SAR ' . number_format((float)$pendingPayout, 2)" />
+                <x-fintech.kpi-card title="Completed Payouts" :value="$payouts->where('status', 'completed')->count()" icon="ki-check-circle" color="info" />
+                <x-fintech.kpi-card title="Failed" :value="$payouts->where('status', 'failed')->count()" icon="ki-disconnect" :color="$payouts->where('status', 'failed')->count() > 0 ? 'danger' : 'success'" />
+            </div>
+        </div>
+
         <!-- Container -->
         <div class="container-fixed">
 
@@ -285,26 +299,16 @@
 
 
 
-                                                        <td class="text-center">
-                                                            <div class="font-semibold text-gray-900">
-                                                                {{ number_format((float) $item->grand_total, 2) }}</div>
-
-                                                            <div class="text-xs text-success"> -
-                                                                {{ number_format((float) $item->commission_amount, 2) }}
-                                                                Commission</div>
-
+                                                        <td>
+                                                            <x-fintech.money :amount="$item->grand_total" />
+                                                            <div class="text-xs text-gray-400 mt-0.5">
+                                                                Fee: <x-fintech.money :amount="$item->commission_amount" size="sm" :showCurrency="false" :inline="true" />
+                                                            </div>
                                                         </td>
 
                                                         <td class="text-center">
-                                                            @if ($item->delivery_status == 'delivered')
-                                                                <span
-                                                                    class="badge badge-sm badge-outline badge-success">{{ ucfirst($item->delivery_status) }}</span>
-                                                            @elseif($item->delivery_status == 'shipped')
-                                                                <span
-                                                                    class="badge badge-sm badge-outline badge-warning">{{ ucfirst($item->delivery_status) }}</span>
-                                                            @elseif($item->delivery_status == 'pending')
-                                                                <span
-                                                                    class="badge badge-sm badge-outline badge-primary">{{ ucfirst($item->delivery_status) }}</span>
+                                                            <x-fintech.status-badge :status="$item->delivery_status ?? 'pending'" />
+                                                            @if (false) {{-- Keep fallback for IDE --}}
                                                             @else
                                                                 <span
                                                                     class="badge badge-sm badge-outline badge-info">{{ ucfirst($item->delivery_status) }}</span>
@@ -341,6 +345,7 @@
                                                                     data-model-type="App\Models\Order">
                                                                     <i class="ki-filled ki-eye"> </i>
                                                                 </button>
+                                                                @can('payout.process')
                                                                 @if ($item->general_status == 'processing')
                                                                     <button
                                                                         class="btn btn-sm btn-icon btn-clear btn-success payout-order-btn"
@@ -353,6 +358,7 @@
                                                                         <i class="ki-filled ki-dollar"> </i>
                                                                     </button>
                                                                 @endif
+                                                                @endcan
                                                             </div>
                                                         </td>
                                                     </tr>
@@ -455,10 +461,8 @@
                                                                 </small>
                                                             </div>
                                                         </td>
-                                                        <td class="text-center">
-                                                            <div class="font-semibold text-gray-900">
-                                                                {{ number_format((float) $payout->amount, 2) }}</div>
-
+                                                        <td>
+                                                            <x-fintech.money :amount="$payout->amount" />
                                                         </td>
                                                         <td>
                                                             {{ $payout->notes ?? '--' }}

@@ -22,7 +22,7 @@ trait SendReminderTrait
             "body"  => $message,
         ];
 
-        $response = Http::withToken('EGE4CF3dD_Q6yXGnnMRJ')
+        $response = Http::withToken(config('services.oursms.token'))
             ->acceptJson()
             ->post('https://api.oursms.com/msgs/sms', $postData);
 

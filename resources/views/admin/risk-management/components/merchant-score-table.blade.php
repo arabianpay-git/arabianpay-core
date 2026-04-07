@@ -26,6 +26,7 @@
                     $user = $item['user'];
                     $risk = $item['risk'];
                     $hasError = isset($risk['error']);
+                    $type = request('type') ?: 'user';
 
                     // Get weights for this user from database or use defaults
                     $userWeights = $riskWeights[$user->id] ?? null;
@@ -80,7 +81,6 @@
 
                         <div class="whitespace-nowrap">
                             @php
-                                $type = request('type');
                                 $profileRoute =
                                     $type === 'merchant'
                                         ? route('supplierProfile', ['id' => $user->id])

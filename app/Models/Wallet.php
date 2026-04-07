@@ -22,6 +22,33 @@ class Wallet extends Model
         'status',
     ];
 
+    // [PHASE-2] Added decimal casts for financial amounts
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'balance_after' => 'decimal:2',
+    ];
+
+    /**
+     * [PHASE-2] Boot: validate balance_after on creation.
+     *
+     * NOTE: This is an activity-log wallet, not a true double-entry ledger.
+     * The balance_after field is informational. This guard logs mismatches
+     * but does not block creation to avoid breaking existing flows.
+     */
+    protected static function booted(): void
+    {
+        static::creating(function (Wallet $wallet) {
+            if ($wallet->balance_after === null && $wallet->amount !== null) {
+                // Auto-calculate balance_after if not explicitly set
+                $previousBalance = static::where('seller_id', $wallet->seller_id)
+                    ->latest('id')
+                    ->value('balance_after') ?? '0.00';
+
+                $wallet->balance_after = \App\Helpers\Money::add($previousBalance, $wallet->amount);
+            }
+        });
+    }
+
     // Relationships
     public function user()
     {

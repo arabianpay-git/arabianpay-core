@@ -14,7 +14,7 @@ class StoreProductRequest extends FormRequest
      */
     public function authorize()
     {
-        return true; // You can add authorization logic if needed
+        return $this->user()?->can('product.create') ?? false;
     }
 
     /**

@@ -8,7 +8,9 @@
         <div class="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-1">
             @foreach ($schedulePayments as $index => $payment)
                 @php
-                    $status = $payment->payment_status ?? 'pending';
+                    $status = $payment->payment_status instanceof \BackedEnum
+                        ? $payment->payment_status->value
+                        : (string) ($payment->payment_status ?? 'pending');
                     $dueDateCarbon = \Carbon\Carbon::parse($payment->due_date);
                     $today = \Carbon\Carbon::today();
 

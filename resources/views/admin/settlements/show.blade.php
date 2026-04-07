@@ -9,6 +9,11 @@
     </style>
 @endpush
 @section('content')
+    @php
+        $settlementStatusValue = $settlement->status instanceof \BackedEnum
+            ? $settlement->status->value
+            : (string) $settlement->status;
+    @endphp
     <main class="grow content pt-5" id="content" role="content">
         <!-- Container -->
         <div class="container-fixed" id="content_container"></div>
@@ -26,8 +31,9 @@
                             Settlement {{ $settlement->settlement_number }}
                         </h1>
                         @php
-                            $textClass = match($settlement->status) {
+                            $textClass = match ($settlementStatusValue) {
                                 'draft' => 'text-light',
+                                'pending' => 'text-warning',
                                 'pending_approval' => 'text-warning',
                                 'approved' => 'text-primary',
                                 'paid' => 'text-success',
@@ -36,7 +42,7 @@
                             };
                         @endphp
                         <span class="text-xs font-medium {{ $textClass }}">
-                            {{ ucfirst(str_replace('_', ' ', $settlement->status)) }}
+                            {{ ucfirst(str_replace('_', ' ', $settlementStatusValue)) }}
                         </span>
                     </div>
                    
@@ -49,8 +55,14 @@
                                 ['name' => 'Approved', 'icon' => 'ki-check-circle', 'status' => 'approved'],
                                 ['name' => 'Paid', 'icon' => 'ki-verify', 'status' => 'paid'],
                             ];
-                            $currentIndex = array_search($settlement->status, array_column($steps, 'status'));
-                            if ($currentIndex === false) $currentIndex = -1;
+                            $currentIndex = match ($settlementStatusValue) {
+                                'draft' => 0,
+                                'pending' => 0,
+                                'pending_approval' => 0,
+                                'approved' => 1,
+                                'paid' => 2,
+                                default => -1,
+                            };
                         @endphp
 
                         @foreach($steps as $index => $step)
@@ -66,7 +78,7 @@
                             </div>
                         @endforeach
 
-                        @if($settlement->status === 'cancelled')
+                        @if($settlementStatusValue === 'cancelled')
                             <div class="flex items-center gap-1 px-2 py-1 rounded bg-danger text-white">
                                 <i class="ki-filled ki-cross-circle text-xs"></i>
                                 <span class="text-xs font-medium">Cancelled</span>
@@ -83,26 +95,32 @@
                   
 
                     <!-- Workflow Actions -->
-                    @if($settlement->status === 'draft' || $settlement->status === 'pending_approval')
+                    @if($settlementStatusValue === 'draft' || $settlementStatusValue === 'pending' || $settlementStatusValue === 'pending_approval')
+                        @can('settlement.approve')
                         <form action="{{ route('settlements.approve', $settlement->id) }}" method="POST">
-                            @csrf 
+                            @csrf
                             <button type="submit" class="btn btn-success btn-sm">
                                 <i class="ki-filled ki-check"></i> Approve
                             </button>
                         </form>
+                        @endcan
+                        @can('settlement.cancel')
                         <button class="btn btn-danger btn-sm" data-modal-toggle="#cancel_settlement_modal">
                             <i class="ki-filled ki-cross"></i> Cancel
                         </button>
+                        @endcan
                     @endif
-                    
-                    @if($settlement->status === 'approved')
+
+                    @can('settlement.pay')
+                    @if($settlementStatusValue === 'approved')
                         <form action="{{ route('settlements.pay', $settlement->id) }}" method="POST" >
-                            @csrf 
+                            @csrf
                             <button type="submit" class="btn btn-primary btn-sm">
                                 <i class="ki-filled ki-dollar"></i> Mark as Paid
                             </button>
                         </form>
                     @endif
+                    @endcan
                 </div>
             </div>
         </div>
@@ -168,16 +186,16 @@
                         <div class="separator"></div>
                         <div class="flex justify-between items-center">
                             <span class="text-xs text-gray-600">Total Orders</span>
-                            <span class="font-semibold text-gray-900">{{ number_format($settlement->total_amount, 2) }}</span>
+                            <x-fintech.money :amount="$settlement->total_amount" size="base" />
                         </div>
                         <div class="flex justify-between items-center">
                             <span class="text-xs text-gray-600">ArabianPay Fees</span>
-                            <span class="font-semibold text-info">-{{ number_format($settlement->commission_amount, 2) }}</span>
+                            <x-fintech.money :amount="'-' . $settlement->commission_amount" size="base" color="red" />
                         </div>
                         <div class="separator my-1"></div>
                         <div class="flex justify-between items-center">
                             <span class="text-sm text-gray-800 font-bold">Payable</span>
-                            <span class="text-xl font-bold text-success">{{ number_format($settlement->payable_amount, 2) }}</span>
+                            <x-fintech.money :amount="$settlement->payable_amount" size="lg" color="green" />
                         </div>
                     </div>
                 </div>
@@ -221,8 +239,20 @@
                
             </div>
 
+            {{-- [UI-PHASE] Maker-checker governance info --}}
+            <div class="mb-5">
+                <x-fintech.maker-checker-info
+                    :createdBy="$settlement->creator"
+                    :createdAt="$settlement->created_at"
+                    :approvedBy="$settlement->approver"
+                    :approvedAt="$settlement->approved_at"
+                    :paidBy="$settlement->payer"
+                    :paidAt="$settlement->paid_at"
+                />
+            </div>
+
             <!-- Payout Confirmation Section -->
-            @if($settlement->status === 'paid' && $settlement->payouts->isNotEmpty())
+            @if($settlementStatusValue === 'paid' && $settlement->payouts->isNotEmpty())
             <div class="card mb-5">
                 <div class="card-header">
                     <h3 class="card-title">Payout Confirmation</h3>
@@ -311,32 +341,19 @@
         </div>
     </main>
     
-    <!-- Cancel Modal -->
-    <div class="modal" id="cancel_settlement_modal" data-modal="true">
-        <div class="modal-content max-w-[500px]">
-            <div class="modal-header">
-                <h3 class="modal-title">Cancel Settlement</h3>
-                <button class="btn btn-sm btn-icon btn-light" data-modal-dismiss="true">
-                    <i class="ki-filled ki-cross"></i>
-                </button>
-            </div>
-            <form action="{{ route('settlements.cancel', $settlement->id) }}" method="POST">
-                @csrf
-                <div class="modal-body">
-                    <div class="mb-3">
-                        <label class="form-label required">Cancellation Reason</label>
-                        <textarea class="form-control" name="reason" rows="3" required placeholder="Why is this settlement being cancelled?"></textarea>
-                    </div>
-                    <div class="alert alert-warning">
-                        <i class="ki-filled ki-information-2 text-xl me-2"></i>
-                        <span>Cancelling will release the orders back to the unsettled pool.</span>
-                    </div>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-light" data-modal-dismiss="true">Close</button>
-                    <button type="submit" class="btn btn-danger">Confirm Cancel</button>
-                </div>
-            </form>
-        </div>
-    </div>
+    {{-- [UI-PHASE] Cancel modal using fintech approval-modal component --}}
+    <x-fintech.approval-modal
+        id="cancel_settlement_modal"
+        title="Cancel Settlement"
+        :action="route('settlements.cancel', $settlement->id)"
+        :entityLabel="'Settlement ' . $settlement->settlement_number"
+        :amount="$settlement->payable_amount"
+        confirmText="Confirm Cancellation"
+        confirmClass="btn-danger"
+        :requireReason="true"
+    >
+        <x-fintech.alert-banner type="warning" :dismissible="false">
+            Cancelling will release all orders back to the unsettled pool. This action is logged.
+        </x-fintech.alert-banner>
+    </x-fintech.approval-modal>
 @endsection

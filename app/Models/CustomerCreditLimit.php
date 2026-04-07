@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 
 class CustomerCreditLimit extends Model
 {
-    use HasFactory;
+    use HasFactory, \App\Traits\HasApprovalRequests;
 
     protected $fillable = [
         'user_id',

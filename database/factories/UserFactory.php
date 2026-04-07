@@ -11,37 +11,29 @@ use Laravel\Jetstream\Features;
 
 /**
  * @extends \Illuminate\Database\Eloquent\Factories\Factory<\App\Models\User>
+ *
+ * [PHASE-1] Updated to include required fields: first_name, last_name,
+ * business_name, phone_number, user_type.
  */
 class UserFactory extends Factory
 {
-    /**
-     * The current password being used by the factory.
-     */
     protected static ?string $password;
 
-    /**
-     * Define the model's default state.
-     *
-     * @return array<string, mixed>
-     */
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
+            'first_name' => fake()->firstName(),
+            'last_name' => fake()->lastName(),
             'email' => fake()->unique()->safeEmail(),
+            'business_name' => fake()->unique()->company(),
+            'phone_number' => fake()->unique()->numerify('05########'),
+            'user_type' => 'admin',
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),
-            'two_factor_secret' => null,
-            'two_factor_recovery_codes' => null,
             'remember_token' => Str::random(10),
-            'profile_photo_path' => null,
-            'current_team_id' => null,
         ];
     }
 
-    /**
-     * Indicate that the model's email address should be unverified.
-     */
     public function unverified(): static
     {
         return $this->state(fn (array $attributes) => [
@@ -49,9 +41,21 @@ class UserFactory extends Factory
         ]);
     }
 
-    /**
-     * Indicate that the user should have a personal team.
-     */
+    public function admin(): static
+    {
+        return $this->state(fn () => ['user_type' => 'admin']);
+    }
+
+    public function employee(): static
+    {
+        return $this->state(fn () => ['user_type' => 'employee']);
+    }
+
+    public function merchant(): static
+    {
+        return $this->state(fn () => ['user_type' => 'merchant']);
+    }
+
     public function withPersonalTeam(?callable $callback = null): static
     {
         if (! Features::hasTeamFeatures()) {

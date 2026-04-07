@@ -557,6 +557,11 @@ if (! function_exists('hasSensitivePermission')) {
             return true;
         }
 
+        // Admins (superadmin) have full sensitive-data access
+        if ($user->user_type === 'admin') {
+            return true;
+        }
+
         // Normalize stored permissions from user
         $raw = $user->sensitive_permissions ?? [];
         if (is_string($raw)) {

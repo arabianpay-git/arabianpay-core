@@ -33,19 +33,28 @@
                     <div class="flex flex-wrap gap-1">
                         @forelse ($transaction->schedulePayments as $payment)
                             @php
+                                $statusValue = $payment->payment_status instanceof \BackedEnum
+                                    ? $payment->payment_status->value
+                                    : (string) ($payment->payment_status ?? 'pending');
                                 $paymentStatusClasses = [
                                     'pending' => 'badge badge-sm badge-outline badge-info',
                                     'due' => 'badge badge-sm badge-outline badge-warning',
                                     'late' => 'badge badge-sm badge-outline badge-error',
                                     'paid' => 'badge badge-sm badge-outline badge-success',
                                     'failed' => 'badge badge-sm badge-outline badge-danger',
+                                    'unpaid' => 'badge badge-sm badge-outline badge-secondary',
+                                    'current' => 'badge badge-sm badge-outline badge-primary',
+                                    'partially_paid' => 'badge badge-sm badge-outline badge-warning',
+                                    'cancelled' => 'badge badge-sm badge-outline badge-secondary',
+                                    'canceled' => 'badge badge-sm badge-outline badge-secondary',
                                 ];
                                 $paymentStatusClass =
-                                    $paymentStatusClasses[$payment->payment_status ?? 'pending'] ??
+                                    $paymentStatusClasses[$statusValue] ??
                                     'badge badge-sm badge-outline';
+                                $statusLabel = ucfirst(str_replace('_', ' ', $statusValue));
                             @endphp
                             <span class="{{ $paymentStatusClass }}">
-                                {{ ucfirst($payment->payment_status ?? 'N/A') }}
+                                {{ translate($statusLabel) }}
                             </span>
                         @empty
                             <span class="badge badge-sm badge-outline badge-secondary">No Payments</span>

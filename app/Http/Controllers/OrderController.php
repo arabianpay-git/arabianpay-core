@@ -729,7 +729,7 @@ class OrderController extends Controller
     /** Accept order */
     public function acceptOrder(Request $request)
     {
-        $this->authorizeUser();
+        $this->authorize('accept', new \App\Models\Order()); // [PHASE-1] Policy-based authorization
 
         $validator = Validator::make($request->all(), [
             'order_id' => 'required|exists:orders,id',
@@ -1032,7 +1032,7 @@ class OrderController extends Controller
     /** Reject order */
     public function rejectOrder(Request $request)
     {
-        $this->authorizeUser();
+        $this->authorize('reject', new \App\Models\Order()); // [PHASE-1] Policy-based authorization
 
         $request->validate([
             'order_id' => 'required|exists:orders,id',
@@ -1394,7 +1394,7 @@ class OrderController extends Controller
     private function createNafithSanad(Order $order): ?string
     {
         $user = $order->user;
-        $nafithMaxAmount = env('NAFITH_MAX_AMOUNT', 10000);
+        $nafithMaxAmount = config('services.nafith.max_amount', 10000); // [PHASE-5]
 
         // Check initial criteria for eligibility
         if ($order->grand_total < $nafithMaxAmount) {

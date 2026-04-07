@@ -59,7 +59,7 @@ class SecureHeaders
         $wssHost = 'wss://' . $currentHost;                      // wss://core.arabianpay.net
 
         // If you run Reverb on a specific port (like 8080 internally), add that too (optional)
-        $reverbPort = env('REVERB_SERVER_PORT', null);
+        $reverbPort = config('services.reverb.server_port'); // [PHASE-5]
         if (!empty($reverbPort) && is_numeric($reverbPort) && (int)$reverbPort !== 443) {
             $directives['connect-src'][] = 'wss://' . $currentHost . ':' . $reverbPort;
         }
@@ -92,7 +92,7 @@ class SecureHeaders
         $connectSrc[] = 'https://fcmregistrations.googleapis.com';
 
         // Add Vite dev server if present in env
-        $viteDev = env('VITE_DEV_SERVER', null);
+        $viteDev = config('services.vite.dev_server'); // [PHASE-5]
         if ($viteDev) {
             $connectSrc[] = $viteDev;
         }

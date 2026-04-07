@@ -5,19 +5,32 @@ namespace App\Http\Middleware;
 use App\Models\Otp;
 use Closure;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
-use App\Http\Controllers\OtpVerificationController;
 use Carbon\Carbon;
 
 class EnsureOtpVerified
 {
     /**
      * Redirect to OTP process if not verified yet.
+     *
+     * [PHASE-0 2026-04-06] Removed hardcoded phone number bypass (F-026).
+     * Now uses the authenticated user's phone_number instead.
      */
     public function handle(Request $request, Closure $next): Response
     {
-        // $phone = OtpVerificationController::PHONE;
-        $phone = "0545232968";
+        $user = $request->user();
+
+        if (! $user || ! $user->phone_number) {
+            Log::warning('[PHASE-0] OTP verification failed: no authenticated user or phone', [
+                'ip' => $request->ip(),
+                'user_id' => $user?->id,
+            ]);
+            abort(403, 'Phone number required for OTP verification.');
+        }
+
+        $phone = $user->phone_number;
+
         // Get the latest OTP
         $otp = Otp::where('phone', $phone)->latest()->first();
 

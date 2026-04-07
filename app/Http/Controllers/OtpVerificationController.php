@@ -10,15 +10,21 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Validation\ValidationException;
 
+/**
+ * [PHASE-0 2026-04-06] Removed hardcoded phone number (F-026) and
+ * hardcoded SMS API credentials. Phone is now derived from the
+ * authenticated user. SMS credentials moved to config/services.php.
+ */
 class OtpVerificationController extends Controller
 {
-    const PHONE = '0506879195';
     const COOLDOWN_SECONDS = 60;
     const MAX_ATTEMPTS = 5;
 
-    public function send()
+    public function send(Request $request)
     {
-        $key = 'send-otp:' . self::PHONE;
+        $phone = $this->resolvePhone($request);
+        $key = 'send-otp:' . $phone;
+
         if (RateLimiter::tooManyAttempts($key, 1)) {
             $seconds = RateLimiter::availableIn($key);
             throw ValidationException::withMessages([
@@ -28,7 +34,7 @@ class OtpVerificationController extends Controller
 
         RateLimiter::hit($key, self::COOLDOWN_SECONDS);
 
-        $activeOtp = Otp::where('phone', self::PHONE)
+        $activeOtp = Otp::where('phone', $phone)
             ->where('used', false)
             ->where('expires_at', '>', now())
             ->latest()
@@ -38,23 +44,23 @@ class OtpVerificationController extends Controller
             return redirect()->route('risk.merchantScore')->with('error', 'An active OTP is already pending. Please wait or use that one.');
         }
 
-        Otp::where('phone', self::PHONE)->update(['used' => true]);
+        Otp::where('phone', $phone)->update(['used' => true]);
 
         $code = rand(100000, 999999);
         $expiresAt = now()->addMinutes(12);
 
         Otp::create([
-            'phone' => self::PHONE,
+            'phone' => $phone,
             'code' => $code,
             'expires_at' => $expiresAt,
             'sends' => 1,
         ]);
 
-        $this->sendSmsOtp(self::PHONE, $code, "Your OTP code is: {$code}");
+        $this->sendSmsOtp($phone, $code, "Your OTP code is: {$code}");
 
         return redirect()
-            ->route('otp.verify.form', ['phone' => self::PHONE])
-            ->with('status', 'OTP sent to ' . self::PHONE);
+            ->route('otp.verify.form', ['phone' => $phone])
+            ->with('status', 'OTP sent to ' . $phone);
     }
 
     public function showVerifyForm(Request $request)
@@ -115,41 +121,26 @@ class OtpVerificationController extends Controller
         return redirect()->route('risk.merchantScore')->with('success', 'OTP verified. You may now update the score.');
     }
 
-    protected function sendSms($phone, $message)
-    {
-        $post = [
-            "userName"   => "Arabianpay",
-            "apiKey"     => "d99970b46c8430547b33815c20b68d41",
-            "userSender" => "Arabianpay",
-            "msg"        => $message,
-            "numbers"    => $phone,
-        ];
-
-        $curl = curl_init();
-        curl_setopt_array($curl, [
-            CURLOPT_URL            => 'https://www.msegat.com/gw/sendsms.php',
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode($post),
-            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-        ]);
-        curl_exec($curl);
-        curl_close($curl);
-    }
-
     public function sendSmsOtp(array|string $phones, string $otp, ?string $message = null): array
     {
         $phones = is_array($phones) ? $phones : [$phones];
         $message = $message ?? "Your OTP is: {$otp}";
 
+        $token = config('services.oursms.token');
+
+        if (empty($token)) {
+            Log::error('[PHASE-0] OURSMS_API_TOKEN not configured, cannot send OTP SMS');
+            throw new \RuntimeException('SMS service not configured.');
+        }
+
         $postData = [
-            "src"   => "Arabianpay",
+            "src"   => config('services.oursms.sender', 'Arabianpay'),
             "dests" => $phones,
             "body"  => $message,
         ];
 
         try {
-            $response = Http::withToken('EGE4CF3dD_Q6yXGnnMRJ')
+            $response = Http::withToken($token)
                 ->acceptJson()
                 ->post('https://api.oursms.com/msgs/sms', $postData);
 
@@ -169,5 +160,22 @@ class OtpVerificationController extends Controller
             ]);
             throw $e;
         }
+    }
+
+    /**
+     * Resolve the phone number from the authenticated user.
+     */
+    private function resolvePhone(Request $request): string
+    {
+        $user = $request->user();
+
+        if (! $user || empty($user->phone_number)) {
+            Log::warning('[PHASE-0] OTP send attempted without authenticated user phone', [
+                'ip' => $request->ip(),
+            ]);
+            abort(403, 'Authenticated user with phone number required.');
+        }
+
+        return $user->phone_number;
     }
 }

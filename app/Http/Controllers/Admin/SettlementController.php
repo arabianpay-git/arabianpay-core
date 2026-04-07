@@ -145,6 +145,8 @@ class SettlementController extends Controller
      */
     public function approve(Settlement $settlement)
     {
+        $this->authorize('approve', $settlement); // [PHASE-1] Maker-checker enforcement
+
         try {
             $this->settlementService->approveSettlement($settlement, Auth::user());
             return back()->with('success', 'Settlement approved successfully.');
@@ -184,6 +186,8 @@ class SettlementController extends Controller
      */
     public function markAsPaid(Settlement $settlement)
     {
+        $this->authorize('pay', $settlement); // [PHASE-1] Maker-checker enforcement
+
         try {
             $this->settlementService->markSettlementAsPaid($settlement, Auth::user());
             return back()->with('success', 'Settlement marked as paid successfully.');
