@@ -2,29 +2,28 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Controllers\Concerns\RedirectsToTwoFactorChallenge;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\ValidationException;
 
 /**
- * TEMPORARY DEV-ONLY LOGIN CONTROLLER
- * 
- * ⚠️ WARNING: This controller bypasses authentication for local development only!
- * DELETE THIS FILE before deploying to production!
- * 
- * Purpose: Allows login with email only (no password) for local testing
- * when passkey and Microsoft login are unavailable.
+ * Local-environment-only login using email + password (same verification as Fortify).
+ * Routes return 404 when APP_ENV is not local.
  */
 class DevLoginController extends Controller
 {
+    use RedirectsToTwoFactorChallenge;
+
     /**
      * Show the dev login form
      */
     public function showLoginForm()
     {
-        // Only allow in local environment
-        if (!app()->environment('local')) {
+        if (! app()->environment('local')) {
             abort(404);
         }
 
@@ -32,36 +31,37 @@ class DevLoginController extends Controller
     }
 
     /**
-     * Handle dev login (email only, no password)
+     * Handle dev login (email + password, matches Fortify::authenticateUsing).
      */
     public function login(Request $request)
     {
-        // Only allow in local environment
-        if (!app()->environment('local')) {
+        if (! app()->environment('local')) {
             abort(404);
         }
 
         $request->validate([
             'email' => 'required|email',
+            'password' => 'required|string',
         ]);
 
-        // Find user by encrypted email
         $user = User::whereEncrypted('email', $request->email)->first();
 
-        if (!$user) {
-            return back()->withErrors([
-                'email' => 'No user found with this email address.',
+        if (! $user || ! Hash::check($request->password, $user->password)) {
+            throw ValidationException::withMessages([
+                'email' => [trans('auth.failed')],
             ]);
         }
 
-        // Log the dev login
-        Log::warning('DEV LOGIN BYPASS USED', [
+        Log::warning('DEV LOGIN (email/password) USED', [
             'user_id' => $user->id,
             'email' => $request->email,
             'ip' => $request->ip(),
         ]);
 
-        // Login without password verification
+        if ($this->requiresTwoFactorChallenge($user)) {
+            return $this->redirectToTwoFactorChallenge($request, $user);
+        }
+
         Auth::login($user);
 
         $request->session()->regenerate();

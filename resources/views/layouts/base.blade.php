@@ -13,6 +13,7 @@
     </title>
     @include('layouts.includes.meta')
     @include('layouts.includes.styles')
+    @livewireStyles
 </head>
 
 
@@ -57,6 +58,7 @@
     @include('layouts.includes.passkey-modal')
     <!-- Scripts -->
     @include('layouts.includes.scripts')
+    @livewireScripts
 </body>
 
 </html>

@@ -2,19 +2,20 @@
 
 namespace App\Providers;
 
+use App\Http\Middleware\EnsureTwoFactorIsEnabled;
 use App\Models\Setting;
 use App\Services\AuditTrailService;
-use App\Services\TokenEncryptionService;
-use Illuminate\Support\Facades\App;
-use Illuminate\Support\Facades\RateLimiter;
-use Illuminate\Support\ServiceProvider;
-use Illuminate\Http\Request;
 use Illuminate\Cache\RateLimiting\Limit;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\App;
 use Illuminate\Support\Facades\Config;
+use Illuminate\Support\Facades\Event;
+use Illuminate\Support\Facades\RateLimiter;
+use Illuminate\Support\Facades\Route;
+use Illuminate\Support\ServiceProvider;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use SocialiteProviders\Manager\SocialiteWasCalled;
 use SocialiteProviders\Microsoft\Provider as MicrosoftProvider;
-use Illuminate\Support\Facades\Event;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -33,6 +34,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        Route::aliasMiddleware('ensure.two-factor', EnsureTwoFactorIsEnabled::class);
+
         // Get default language from settings
         $general = settings('general', []);
         $locale = $general['default_language'] ?? config('app.locale', 'en');
@@ -46,7 +49,7 @@ class AppServiceProvider extends ServiceProvider
         }
 
         $general = Setting::getByKey('general', []);
-        if (!empty($general['timezone'])) {
+        if (! empty($general['timezone'])) {
             Config::set('app.timezone', $general['timezone']);
             date_default_timezone_set($general['timezone']);
         }
@@ -58,15 +61,15 @@ class AppServiceProvider extends ServiceProvider
             // Sliding window: 100 requests per minute
             $sliding = Limit::perMinute(60)
                 ->by($identifier)
-                ->response(fn() => response()->json([
-                    'message' => 'Too many requests. Slow down and try again later.'
+                ->response(fn () => response()->json([
+                    'message' => 'Too many requests. Slow down and try again later.',
                 ], 429));
 
             // Burst window: 200 requests every 5 minutes
             $burst = Limit::perMinutes(5, 100)
                 ->by($identifier)
-                ->response(fn() => response()->json([
-                    'message' => 'Burst limit exceeded. Please wait before retrying.'
+                ->response(fn () => response()->json([
+                    'message' => 'Burst limit exceeded. Please wait before retrying.',
                 ], 429));
 
             return [$sliding, $burst];
@@ -74,10 +77,11 @@ class AppServiceProvider extends ServiceProvider
             // ------------ EMAIL SEND RATE LIMITER ------------
             RateLimiter::for('send-email', function (Request $request) {
                 $identifier = optional($request->user())->id ?: $request->ip();
+
                 return Limit::perHour(10)
                     ->by($identifier)
-                    ->response(fn() => response()->json([
-                        'message' => 'Email send limit reached. Please try again later.'
+                    ->response(fn () => response()->json([
+                        'message' => 'Email send limit reached. Please try again later.',
                     ], 429));
             });
 
@@ -85,17 +89,19 @@ class AppServiceProvider extends ServiceProvider
             // Email verification link resend: max 3 per hour
             RateLimiter::for('verification', function (Request $request) {
                 $identifier = optional($request->user())->id ?: $request->ip();
+
                 return Limit::perHour(3)
                     ->by($identifier)
-                    ->response(fn() => back()->withErrors(['email' => 'Too many verification emails sent. Try again later.']));
+                    ->response(fn () => back()->withErrors(['email' => 'Too many verification emails sent. Try again later.']));
             });
 
             // Password reset (forgot password email): max 5 per hour
             RateLimiter::for('password-reset', function (Request $request) {
-                $identifier = $request->email . '|' . $request->ip();
+                $identifier = $request->email.'|'.$request->ip();
+
                 return Limit::perHour(5)
                     ->by($identifier)
-                    ->response(fn() => back()->withErrors(['email' => 'Too many password reset requests. Try again later.']));
+                    ->response(fn () => back()->withErrors(['email' => 'Too many password reset requests. Try again later.']));
             });
         });
 

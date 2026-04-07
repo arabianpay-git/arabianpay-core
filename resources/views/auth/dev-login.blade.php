@@ -3,7 +3,7 @@
 @section('content')
     <div class="flex items-center justify-center grow bg-center bg-no-repeat page-bg">
         <div class="card max-w-[370px] w-full">
-            <form action="{{ route('dev.login') }}" class="card-body flex flex-col gap-5 p-10" method="POST">
+            <form action="{{ route('dev.login.store') }}" class="card-body flex flex-col gap-5 p-10" method="POST">
                 @csrf
 
                 <div class="text-center mb-8">
@@ -32,7 +32,8 @@
                         <div>
                             <h4 class="text-sm font-semibold text-yellow-800">Development Only</h4>
                             <p class="text-xs text-yellow-700 mt-1">
-                                This bypasses all authentication. Remove before production!
+                                This page is only registered when <code class="text-yellow-800">APP_ENV=local</code>.
+                                Uses the same password check as normal login; two-factor is not enforced here.
                             </p>
                         </div>
                     </div>
@@ -46,12 +47,21 @@
                         Email Address
                     </label>
                     <input id="email" name="email" type="email" placeholder="Enter your email"
-                        class="input" value="{{ old('email') }}" required autofocus />
+                        class="input" value="{{ old('email') }}" required autofocus autocomplete="username" />
+                </div>
+
+                {{-- Password --}}
+                <div class="flex flex-col gap-1">
+                    <label class="form-label text-gray-900" for="password">
+                        Password
+                    </label>
+                    <input id="password" name="password" type="password" placeholder="Enter your password"
+                        class="input" required autocomplete="current-password" />
                 </div>
 
                 {{-- Submit Button --}}
                 <button type="submit" class="btn btn-primary w-full">
-                    🔓 Login (No Password)
+                    Sign in (dev)
                 </button>
 
                 {{-- Back to Normal Login --}}

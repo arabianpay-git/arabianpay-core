@@ -74,6 +74,12 @@
                                     <i class="ki-filled ki-arrows-circle"></i>
                                     {{ translate('Clear') }}
                                 </a>
+
+                                <a href="{{ route('suppliers.export', request()->query()) }}" id="suppliers-export-link"
+                                    class="btn btn-sm btn-success" data-export-url="{{ route('suppliers.export') }}">
+                                    <i class="ki-filled ki-file-down"></i>
+                                    {{ translate('Export Excel') }}
+                                </a>
                             </div>
 
                             <div class="flex justify-end">
@@ -211,6 +217,29 @@
                 return url;
             }
 
+            function syncExportLink() {
+                const exportLink = document.getElementById('suppliers-export-link');
+                if (!exportLink) {
+                    return;
+                }
+                const base = exportLink.getAttribute('data-export-url');
+                if (!base) {
+                    return;
+                }
+                const finalUrl = buildFinalUrl(false);
+                const u = new URL(base, window.location.origin);
+                ['search', 'status', 'employee'].forEach((key) => {
+                    const v = finalUrl.searchParams.get(key);
+                    if (v) {
+                        u.searchParams.set(key, v);
+                    } else {
+                        u.searchParams.delete(key);
+                    }
+                });
+                u.searchParams.delete('page');
+                exportLink.href = u.toString();
+            }
+
             function updateBrowserUrl(url) {
                 window.history.replaceState({}, '', url.toString());
             }
@@ -244,6 +273,7 @@
                         tableContainer.innerHTML = html;
                         tableContainer.classList.remove('opacity-50', 'pointer-events-none');
                         initCheckboxes();
+                        syncExportLink();
                     })
                     .catch(err => {
                         if (err.name !== 'AbortError') {
@@ -326,6 +356,7 @@
             });
 
             initCheckboxes();
+            syncExportLink();
         });
     </script>
 @endpush

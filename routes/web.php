@@ -1,87 +1,84 @@
 <?php
 
-use App\Http\Controllers\{
-    ActivityLogsController,
-    AccountController,
-    AttributeController,
-    AttributeValueController,
-    BranchController,
-    BrandController,
-    BusinessCategoryController,
-    BusinessTypeController,
-    CaseManagementController,
-    CategoryController,
-    CityController,
-    CollectionController,
-    CountryController,
-    CouponController,
-    CreditManagmentController,
-    CustomerAndSalesController,
-    DashboardController,
-    DepartmentController,
-    DeviceTokenController,
-    DunningTemplateController,
-    EmployeeController,
-    FahmanController,
-    FirebaseController,
-    Financial\FinancialAccounts,
-    Financial\FinancialTransactions,
-    Financial\FinancialDashboardController,
-    Financial\ExpenseSettingController,
-    Admin\InvestmentPoolsController,
-    AuditController,
-    ChatController,
-    ComplianceController,
-    InstalmentPlanController,
-    LeanController,
-    MediaController,
-    MerchantUpdateController,
-    NoteController,
-    NotificationController,
-    OrderController,
-    OtpVerificationController,
-    PackageController,
-    PartialPaymentController,
-    PasskeyController,
-    PermissionController,
-    ProductBulkUploadController,
-    ProductController,
-    PromiseController,
-    RealTimeAlertController,
-    RefundRequestController,
-    ReminderController,
-    ReportController,
-    RiskAnalyticsController,
-    RiskController,
-    RiskExportController,
-    RiskWeightController,
-    RoleController,
-    RolePermissionController,
-    SanadController,
-    SchedulePaymentController,
-    SensitiveDataApprovalController,
-    SimahController,
-    SingleViewController,
-    StateController,
-    StaticsController,
-    SupplierAndSalesController,
-    SupplierController,
-    SupplierRoleController,
-    SupportTicketController,
-    ThirdPatryController,
-    TransactionController,
-    TransferRequestController,
-    UserRoleController,
-};
+use App\Http\Controllers\AccountController;
+use App\Http\Controllers\ActivityLogsController;
+use App\Http\Controllers\Admin\InvestmentPoolsController;
 use App\Http\Controllers\Admin\PayoutPortalController;
 use App\Http\Controllers\Admin\SettlementController;
+use App\Http\Controllers\AttributeController;
+use App\Http\Controllers\AttributeValueController;
+use App\Http\Controllers\AuditController;
 use App\Http\Controllers\Auth\MicrosoftController;
-use App\Http\Middleware\{
-    CheckAdmin,
-    EnsureOtpVerified,
-    PreventBackHistory,
-    SecureHeaders
-};
+use App\Http\Controllers\BranchController;
+use App\Http\Controllers\BrandController;
+use App\Http\Controllers\BusinessCategoryController;
+use App\Http\Controllers\BusinessTypeController;
+use App\Http\Controllers\CaseManagementController;
+use App\Http\Controllers\CategoryController;
+use App\Http\Controllers\ChatController;
+use App\Http\Controllers\CityController;
+use App\Http\Controllers\CollectionController;
+use App\Http\Controllers\ComplianceController;
+use App\Http\Controllers\CountryController;
+use App\Http\Controllers\CouponController;
+use App\Http\Controllers\CreditManagmentController;
+use App\Http\Controllers\CustomerAndSalesController;
+use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\DepartmentController;
+use App\Http\Controllers\DeviceTokenController;
+use App\Http\Controllers\DevLoginController;
+use App\Http\Controllers\DunningTemplateController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\FahmanController;
+use App\Http\Controllers\Financial\ExpenseSettingController;
+use App\Http\Controllers\Financial\FinancialAccounts;
+use App\Http\Controllers\Financial\FinancialDashboardController;
+use App\Http\Controllers\Financial\FinancialTransactions;
+use App\Http\Controllers\FirebaseController;
+use App\Http\Controllers\InstalmentPlanController;
+use App\Http\Controllers\LeanController;
+use App\Http\Controllers\MediaController;
+use App\Http\Controllers\MerchantUpdateController;
+use App\Http\Controllers\NoteController;
+use App\Http\Controllers\NotificationController;
+use App\Http\Controllers\OrderController;
+use App\Http\Controllers\OtpVerificationController;
+use App\Http\Controllers\PackageController;
+use App\Http\Controllers\PartialPaymentController;
+use App\Http\Controllers\PasskeyController;
+use App\Http\Controllers\PermissionController;
+use App\Http\Controllers\ProductBulkUploadController;
+use App\Http\Controllers\ProductController;
+use App\Http\Controllers\PromiseController;
+use App\Http\Controllers\RealTimeAlertController;
+use App\Http\Controllers\RefundRequestController;
+use App\Http\Controllers\ReminderController;
+use App\Http\Controllers\ReportController;
+use App\Http\Controllers\RiskAnalyticsController;
+use App\Http\Controllers\RiskController;
+use App\Http\Controllers\RiskExportController;
+use App\Http\Controllers\RiskWeightController;
+use App\Http\Controllers\RoleController;
+use App\Http\Controllers\RolePermissionController;
+use App\Http\Controllers\SanadController;
+use App\Http\Controllers\SchedulePaymentController;
+use App\Http\Controllers\SensitiveDataApprovalController;
+use App\Http\Controllers\SimahController;
+use App\Http\Controllers\SingleViewController;
+use App\Http\Controllers\StateController;
+use App\Http\Controllers\StaticsController;
+use App\Http\Controllers\SupplierAndSalesController;
+use App\Http\Controllers\SupplierController;
+use App\Http\Controllers\SupplierRoleController;
+use App\Http\Controllers\SupportTicketController;
+use App\Http\Controllers\ThirdPatryController;
+use App\Http\Controllers\TransactionController;
+use App\Http\Controllers\TransferRequestController;
+use App\Http\Controllers\UserRoleController;
+use App\Http\Middleware\CheckAdmin;
+use App\Http\Middleware\EnsureOtpVerified;
+use App\Http\Middleware\PreventBackHistory;
+use App\Http\Middleware\SecureHeaders;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Middleware\ThrottleRequests;
 use Illuminate\Support\Facades\Auth;
@@ -90,7 +87,6 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 Route::get('/auth/microsoft/redirect', [MicrosoftController::class, 'redirect'])->name('auth.microsoft.redirect');
 Route::get('/auth/microsoft/callback', [MicrosoftController::class, 'callback']);
-
 // Dev login routes - for local testing only
 Route::get('/devlogin', function () {
     return view('auth.dev-login');
@@ -120,7 +116,7 @@ Route::post('/devlogin', function (Request $request) {
 })->name('dev.login');
 
 Route::group([
-    'prefix'     => LaravelLocalization::setLocale(),
+    'prefix' => LaravelLocalization::setLocale(),
     'middleware' => ThrottleRequests::class,
 ], function () {
 
@@ -134,8 +130,8 @@ Route::group([
         Route::get('/register', function () {
             return redirect('/login');
         });
-        Route::get('/get-states/{country}',  'getStates');
-        Route::get('/get-cities/{state}',    'getCities');
+        Route::get('/get-states/{country}', 'getStates');
+        Route::get('/get-cities/{state}', 'getCities');
     });
 
     // Add this to your routes/web.php
@@ -151,14 +147,13 @@ Route::group([
             'broadcast_driver' => config('broadcasting.default'),
             'auth_user' => Auth::user() ? Auth::user()->id : null,
         ]);
-    })->middleware(['auth:sanctum']);
-
+    })->middleware(['auth:sanctum', 'ensure.two-factor']);
 
     //
     // Admin area (all routes under /{locale}/admin)
     //
     Route::prefix('admin')
-        ->middleware(['auth:sanctum', PreventBackHistory::class, SecureHeaders::class, CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
+        ->middleware(['auth:sanctum', 'ensure.two-factor', PreventBackHistory::class, SecureHeaders::class, CheckAdmin::class, config('jetstream.auth_session'), 'verified'])
         ->group(function () {
 
             // Chat page
@@ -189,7 +184,6 @@ Route::group([
                 Route::get('/impersonate-user/{id}', 'redirectToPartner')->name('impersonate.redirect');
                 Route::post('/approvals', 'approvalStore')->name('approvals.store');
             });
-
 
             //
             // Role and Permission
@@ -246,25 +240,25 @@ Route::group([
             // Master-data CRUD
             //
             Route::resources([
-                'categories'        => CategoryController::class,
-                'brands'            => BrandController::class,
-                'countries'         => CountryController::class,
-                'states'            => StateController::class,
-                'cities'            => CityController::class,
-                'attributes'        => AttributeController::class,
-                'attribute-values'  => AttributeValueController::class,
-                'products'          => ProductController::class,
-                'coupons'           => CouponController::class,
-                'business-types'    => BusinessTypeController::class,
+                'categories' => CategoryController::class,
+                'brands' => BrandController::class,
+                'countries' => CountryController::class,
+                'states' => StateController::class,
+                'cities' => CityController::class,
+                'attributes' => AttributeController::class,
+                'attribute-values' => AttributeValueController::class,
+                'products' => ProductController::class,
+                'coupons' => CouponController::class,
+                'business-types' => BusinessTypeController::class,
                 'business-categories' => BusinessCategoryController::class,
-                'instalment-plans'  => InstalmentPlanController::class,
-                'packages'          => PackageController::class,
-                'employees'         => EmployeeController::class,
-                'risk-register'     => RiskController::class,
-                'case-management'     => CaseManagementController::class,
-                'activity-logs'     => ActivityLogsController::class,
-                'departments'       => DepartmentController::class,
-                'supplier_roles'    => SupplierRoleController::class,
+                'instalment-plans' => InstalmentPlanController::class,
+                'packages' => PackageController::class,
+                'employees' => EmployeeController::class,
+                'risk-register' => RiskController::class,
+                'case-management' => CaseManagementController::class,
+                'activity-logs' => ActivityLogsController::class,
+                'departments' => DepartmentController::class,
+                'supplier_roles' => SupplierRoleController::class,
 
             ]);
 
@@ -311,7 +305,7 @@ Route::group([
             });
 
             //
-            // Checkout Routes  
+            // Checkout Routes
             //
             Route::prefix('checkouts')->name('checkouts.')->controller(\App\Http\Controllers\Admin\CheckoutController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
@@ -342,12 +336,12 @@ Route::group([
             )->name('attributes.editAttributeValue');
 
             // product-specific extras
-            Route::get('product-approval',      [ProductController::class, 'productApproval'])->name('productApproval');
-            Route::get('product-reviews',       [ProductController::class, 'productReviews'])->name('productReviews');
+            Route::get('product-approval', [ProductController::class, 'productApproval'])->name('productApproval');
+            Route::get('product-reviews', [ProductController::class, 'productReviews'])->name('productReviews');
 
             // coupon → merchant products
 
-            Route::get('products/{userId}',     [CouponController::class, 'getProductsForMerchant']);
+            Route::get('products/{userId}', [CouponController::class, 'getProductsForMerchant']);
 
             //
             // Account management
@@ -358,11 +352,11 @@ Route::group([
             Route::get('fahman-supplier-details/{id}', [FahmanController::class, 'fahmanSupplierDetails']);
 
             Route::controller(AccountController::class)->group(function () {
-                Route::get('customers',            'customers')->name('customers');
-                Route::get('customer/{id}',        'customerProfile')->name('customerProfile');
-                Route::get('customer-business/{id}',        'customerBusiness')->name('customerBusiness');
-                Route::get('customer-simah/{id}',        'customerSimah')->name('customerSimah');
-                Route::get('customer-finance/{id}',        'customerFinance')->name('customerFinance');
+                Route::get('customers', 'customers')->name('customers');
+                Route::get('customer/{id}', 'customerProfile')->name('customerProfile');
+                Route::get('customer-business/{id}', 'customerBusiness')->name('customerBusiness');
+                Route::get('customer-simah/{id}', 'customerSimah')->name('customerSimah');
+                Route::get('customer-finance/{id}', 'customerFinance')->name('customerFinance');
                 Route::get('customer-transactions/{id}', 'transactions')->name('customerTransactions');
                 Route::get('customer-orders/{id}', 'orders')->name('customerOrders');
                 Route::get('customer-payments/{id}', 'payments')->name('customerPayments');
@@ -376,9 +370,7 @@ Route::group([
                 Route::post('customer/create-limit', 'createCreditLimit')->name('createCreditLimit');
                 Route::get('custoemr-transactions', 'transactions')->name('transactions');
 
-
-
-                Route::get('customers-statics',    'customersStatics')->name('customers.statics');
+                Route::get('customers-statics', 'customersStatics')->name('customers.statics');
 
                 Route::get('nafath', 'nafath')->name('nafath');
             });
@@ -389,6 +381,7 @@ Route::group([
 
             Route::controller(SupplierController::class)->group(function () {
                 // Supplier management routes
+                Route::get('suppliers/export', 'exportSuppliers')->name('suppliers.export');
                 Route::get('suppliers', 'suppliers')->name('suppliers');
                 Route::post('update-commission', 'updateCommission')->name('updateCommission');
                 Route::get('supplier/{id}', 'supplierProfile')->name('supplierProfile');
@@ -490,7 +483,6 @@ Route::group([
                 Route::get('/history', [RiskWeightController::class, 'getWeightHistory'])->name('risk-weights.history');
             });
 
-
             //
             // Collection Department
             //
@@ -555,7 +547,6 @@ Route::group([
             Route::get('otp', [OtpVerificationController::class, 'showVerifyForm'])->name('otp.verify.form');
             Route::post('/otp/verify', [OtpVerificationController::class, 'verifyOtp'])->name('otp.verify.confirm');
 
-
             Route::get('real-time-alerts', [RealTimeAlertController::class, 'index'])
                 ->name('real-time-alerts.index');
 
@@ -574,24 +565,24 @@ Route::group([
             // Orders + shipping
             //
             Route::controller(OrderController::class)->prefix('orders')->group(function () {
-                Route::get('/',               'orders')->name('orders');
-                Route::get('processing',      'processing')->name('orders.processing');
-                Route::get('confirmed',       'confirmed')->name('orders.confirmed');
-                Route::get('cancelled',       'cancelled')->name('orders.cancelled');
-                Route::get('failed',          'failed')->name('orders.failed');
+                Route::get('/', 'orders')->name('orders');
+                Route::get('processing', 'processing')->name('orders.processing');
+                Route::get('confirmed', 'confirmed')->name('orders.confirmed');
+                Route::get('cancelled', 'cancelled')->name('orders.cancelled');
+                Route::get('failed', 'failed')->name('orders.failed');
 
-                Route::get('shipping-orders',           'shippingOrders')->name('shippingOrders');
-                Route::get('shipping-order/{status}',   'shippingOrder')->name('shippingOrder');
+                Route::get('shipping-orders', 'shippingOrders')->name('shippingOrders');
+                Route::get('shipping-order/{status}', 'shippingOrder')->name('shippingOrder');
 
                 // Modal data endpoint for AJAX
                 Route::get('{id}/modal-data', 'getModalData')->name('orders.modal-data');
 
-                Route::get('/details/{id}',         'orderDetails')->name('orders.details');
+                Route::get('/details/{id}', 'orderDetails')->name('orders.details');
                 Route::put('/orders/{id}/status', 'updateStatus')->name('order.updateStatus');
                 Route::get('/orders/{order}/shipping-label', 'downloadShippingLabel')->name('order.downloadShippingLabel');
                 Route::get('/track/{tracking}', 'trackShipment')->name('trackShipment');
 
-                Route::get('order/{orderId}/download-invoice',  'downloadInvoice')->name('order.downloadInvoice');
+                Route::get('order/{orderId}/download-invoice', 'downloadInvoice')->name('order.downloadInvoice');
 
                 Route::post('/orders/accept', 'acceptOrder')->name('orders.accept');
                 Route::post('/orders/reject', 'rejectOrder')->name('orders.reject');
@@ -632,12 +623,12 @@ Route::group([
             // Transactions
             //
             Route::controller(TransactionController::class)->prefix('transactions')->group(function () {
-                Route::get('history',         'transactionHistory')->name('transactionHistory');
-                Route::get('payments',        'payments')->name('payments');
-                Route::get('pending',         'pending')->name('pendingPayments');
-                Route::get('due',             'due')->name('duePayments');
-                Route::get('late',            'late')->name('latePayments');
-                Route::get('paid',            'paid')->name('paidPayments');
+                Route::get('history', 'transactionHistory')->name('transactionHistory');
+                Route::get('payments', 'payments')->name('payments');
+                Route::get('pending', 'pending')->name('pendingPayments');
+                Route::get('due', 'due')->name('duePayments');
+                Route::get('late', 'late')->name('latePayments');
+                Route::get('paid', 'paid')->name('paidPayments');
 
                 Route::get('wallet', 'wallet')->name('wallet');
                 Route::get('invoice/generate/{order}', 'generate')->name('merchant.invoice.generate');
@@ -647,17 +638,17 @@ Route::group([
             // Refund requests
             //
             Route::controller(RefundRequestController::class)->prefix('refund-requests')->group(function () {
-                Route::get('/',               'refundRequests')->name('refund-requests');
-                Route::get('{status}',        'showRefundRequests')->name('refund-requests.status');
-                Route::patch('{id}/status',   'updateRefundStatus')->name('refund-requests.update-status');
+                Route::get('/', 'refundRequests')->name('refund-requests');
+                Route::get('{status}', 'showRefundRequests')->name('refund-requests.status');
+                Route::patch('{id}/status', 'updateRefundStatus')->name('refund-requests.update-status');
             });
 
             //
             // Scheduled payments
             //
             Route::controller(SchedulePaymentController::class)->prefix('schedule-payments')->group(function () {
-                Route::get('/',               'index')->name('schedulePayments');
-                Route::get('{status}',        'filterByPaymentStatus')->name('schedulePayment');
+                Route::get('/', 'index')->name('schedulePayments');
+                Route::get('{status}', 'filterByPaymentStatus')->name('schedulePayment');
                 Route::get('{schedulePayment}/details', 'show')->name('schedulePayments.details');
                 Route::get('{schedulePayment}/payment-json', 'paymentJson')->name('schedulePayments.payment.json');
             });
@@ -699,10 +690,10 @@ Route::group([
             // Statics
             //
             Route::controller(StaticsController::class)->prefix('statics')->group(function () {
-                Route::get('products',       'products')->name('products.statics');
-                Route::get('brands',         'brands')->name('brands.statics');
-                Route::get('categories',     'categories')->name('categories.statics');
-                Route::get('reviews',        'reviews')->name('reviews.statics');
+                Route::get('products', 'products')->name('products.statics');
+                Route::get('brands', 'brands')->name('brands.statics');
+                Route::get('categories', 'categories')->name('categories.statics');
+                Route::get('reviews', 'reviews')->name('reviews.statics');
             });
 
             //
@@ -750,10 +741,10 @@ Route::group([
             // Media management
             //
             Route::controller(MediaController::class)->prefix('media')->group(function () {
-                Route::get('/',              'index')->name('media.index');
-                Route::get('lazy-load',      'lazyLoad')->name('media.lazyLoad');
-                Route::post('upload',        'upload')->name('media.upload');
-                Route::post('bulk-delete',   'bulkDelete')->name('media.bulkDelete');
+                Route::get('/', 'index')->name('media.index');
+                Route::get('lazy-load', 'lazyLoad')->name('media.lazyLoad');
+                Route::post('upload', 'upload')->name('media.upload');
+                Route::post('bulk-delete', 'bulkDelete')->name('media.bulkDelete');
                 Route::get('refresh', 'refresh')->name('media.refresh');
             });
 
@@ -762,7 +753,6 @@ Route::group([
 
             Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead'])->name('notifications.markAllRead');
             Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
-
 
             // Audit logs and audit trails
             Route::get('/audit/trails', [AuditController::class, 'showAuditTrails'])->name('audit.trails');
@@ -796,7 +786,6 @@ Route::get('/send-fcm', function () {
     return view('send-fcm');
 })->name('fcm.send');
 
-
 Route::get('/google-reviews', [ReportController::class, 'index'])->name('google.reviews.form');
 Route::post('/google-reviews', [ReportController::class, 'getReviews'])->name('google.reviews.fetch');
 
@@ -812,6 +801,9 @@ Route::get('/passkeys-login', [PasskeyController::class, 'login'])->name('passke
 Route::post('/passkeys-phone', [PasskeyController::class, 'getPublicKey'])->name('passkeys.getPublicKey');
 Route::post('/passkeys-login', [PasskeyController::class, 'authenticate'])->name('passkeys.authenticate');
 
+Route::get('/dev-login', [DevLoginController::class, 'showLoginForm'])->name('dev.login');
+Route::post('/dev-login', [DevLoginController::class, 'login'])->name('dev.login.store');
+
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\SmsController;
 
@@ -821,5 +813,5 @@ Route::get('/send-sms', [SmsController::class, 'create'])->name('sms.create');
 Route::post('/send-sms', [SmsController::class, 'send'])->name('sms.send');
 
 // routes/web.php
-require __DIR__ . '/test.php';
-require __DIR__ . '/setting.php';
+require __DIR__.'/test.php';
+require __DIR__.'/setting.php';

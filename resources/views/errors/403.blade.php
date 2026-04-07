@@ -8,10 +8,10 @@
                     src="{{ asset('assets/media/illustrations/12.svg') }}">
             </div>
             <h3 class="text-lg font-medium text-gray-900 dark:text-white text-center mb-3">
-                {{ translate('Access Denied') }}
+                {{ translate('access_denied_title') }}
             </h3>
             <div class="text-sm text-center text-gray-700 dark:text-gray-300 mb-7">
-                {{ translate('You do not have permission to access this page.') }}
+                {{ translate('access_denied_body') }}
             </div>
             <a class="btn btn-primary inline-flex justify-center" href="{{ url('/') }}">
                 {{ translate('Go to Home') }}

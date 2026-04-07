@@ -44,6 +44,13 @@ class FortifyServiceProvider extends ServiceProvider
 
             return null;
         });
+
+        // Must match authenticateUsing: default $guard->validate() uses where('email', …) which
+        // cannot find users when email is stored encrypted (see ConfirmPassword action).
+        Fortify::confirmPasswordsUsing(function ($user, ?string $password) {
+            return filled($password) && Hash::check($password, $user->password);
+        });
+
         Fortify::createUsersUsing(CreateNewUser::class);
         Fortify::updateUserProfileInformationUsing(UpdateUserProfileInformation::class);
         Fortify::updateUserPasswordsUsing(UpdateUserPassword::class);

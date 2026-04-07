@@ -201,20 +201,38 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
+                            'Accept': 'application/json',
                             'X-CSRF-TOKEN': '{{ csrf_token() }}',
                         },
                         body: JSON.stringify(credential),
                     });
 
+                    const resBody = await res.text();
+
                     if (res.ok) {
+                        try {
+                            const data = JSON.parse(resBody);
+                            if (data.redirect) {
+                                showMessage(
+                                    data.requires_two_factor ?
+                                    '{{ translate('Please complete two-factor authentication') }}' :
+                                    '✓ Authentication successful! Redirecting…',
+                                    'success'
+                                );
+                                window.location.href = data.redirect;
+                                return;
+                            }
+                        } catch (e) {
+                            showError('Unexpected response from server.');
+                            return;
+                        }
                         showMessage('✓ Authentication successful! Redirecting…', 'success');
                         setTimeout(() => window.location.href = "{{ route('dashboard') }}", 1000);
                     } else {
-                        const err = await res.text();
                         if (res.status === 401) {
                             showError('Authentication failed: Invalid passkey or user mismatch.');
                         } else {
-                            showError(`Authentication failed: ${err}`);
+                            showError(`Authentication failed: ${resBody}`);
                         }
                     }
                 } catch (err) {

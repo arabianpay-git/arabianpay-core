@@ -6,11 +6,11 @@
 
         <div x-data="{ recovery: false }">
             <div class="mb-4 text-sm text-gray-600" x-show="! recovery">
-                {{ translate('Please confirm access to your account by entering the authentication code provided by your authenticator application.') }}
+                {{ translate('two_factor_challenge_intro') }}
             </div>
 
             <div class="mb-4 text-sm text-gray-600" x-cloak x-show="recovery">
-                {{ translate('Please confirm access to your account by entering one of your emergency recovery codes.') }}
+                {{ translate('two_factor_challenge_recovery_intro') }}
             </div>
 
             <x-validation-errors class="mb-4" />
@@ -25,7 +25,7 @@
                 </div>
 
                 <div class="mt-4" x-cloak x-show="recovery">
-                    <x-label for="recovery_code" value="{{ translate('Recovery Code') }}" />
+                    <x-label for="recovery_code" value="{{ translate('two_factor_recovery_code_label') }}" />
                     <x-input id="recovery_code" class="block mt-1 w-full" type="text" name="recovery_code"
                         x-ref="recovery_code" autocomplete="one-time-code" />
                 </div>
@@ -37,7 +37,7 @@
                                         recovery = true;
                                         $nextTick(() => { $refs.recovery_code.focus() })
                                     ">
-                        {{ translate('Use a recovery code') }}
+                        {{ translate('two_factor_use_recovery_code') }}
                     </button>
 
                     <button type="button" class="text-sm text-gray-600 hover:text-gray-900 underline cursor-pointer"
@@ -46,11 +46,11 @@
                                         recovery = false;
                                         $nextTick(() => { $refs.code.focus() })
                                     ">
-                        {{ translate('Use an authentication code') }}
+                        {{ translate('two_factor_use_authentication_code') }}
                     </button>
 
                     <x-button class="ms-4">
-                        {{ translate('Log in') }}
+                        {{ translate('two_factor_challenge_log_in') }}
                     </x-button>
                 </div>
             </form>

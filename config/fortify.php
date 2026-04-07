@@ -151,9 +151,27 @@ return [
         Features::updatePasswords(),
         Features::twoFactorAuthentication([
             'confirm' => true,
-            'confirmPassword' => true,
+            // Match confirms-password: only local uses password re-confirmation; production (e.g. Microsoft SSO) skips it.
+            // Do not use app() here — config loads before the container is ready; use env (baked by config:cache on deploy).
+            'confirmPassword' => filter_var(
+                env('TWO_FACTOR_CONFIRM_PASSWORD', env('APP_ENV') === 'local'),
+                FILTER_VALIDATE_BOOLEAN
+            ),
             // 'window' => 0,
         ]),
     ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mandatory two-factor authentication (admin / protected app areas)
+    |--------------------------------------------------------------------------
+    |
+    | When true, authenticated users without enabled 2FA are redirected to the
+    | profile page until they complete setup. Set MANDATORY_TWO_FACTOR=false to
+    | disable (e.g. local development).
+    |
+    */
+
+    'mandatory_two_factor' => env('MANDATORY_TWO_FACTOR', true),
 
 ];

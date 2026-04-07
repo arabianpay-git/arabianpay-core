@@ -16,7 +16,7 @@
     <link href="{{ asset('assets/media/images/favicon.png') }}" rel="icon" sizes="16x16" type="image/png" />
     <link href="{{ asset('assets/media/images/favicon.png') }}" rel="shortcut icon" />
 
-    @vite(['resources/css/app.css', 'resources/js/bootstrap.js'])
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     @livewireStyles
 </head>
