@@ -91,6 +91,33 @@ use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 Route::get('/auth/microsoft/redirect', [MicrosoftController::class, 'redirect'])->name('auth.microsoft.redirect');
 Route::get('/auth/microsoft/callback', [MicrosoftController::class, 'callback']);
 
+// Dev login routes - for local testing only
+Route::get('/devlogin', function () {
+    return view('auth.dev-login');
+})->name('dev.login.form');
+
+Route::post('/devlogin', function (Request $request) {
+    $request->validate([
+        'email' => 'required|email',
+    ]);
+
+    // Since email is encrypted in database, we need to get all users and check
+    // This is acceptable for dev login only - DO NOT use in production!
+    $user = \App\Models\User::all()->first(function ($u) use ($request) {
+        return $u->email === $request->email;
+    });
+
+    if ($user) {
+        Auth::login($user);
+        $request->session()->regenerate();
+
+        return redirect()->intended('/admin/dashboard');
+    }
+
+    return back()->withErrors([
+        'email' => 'User not found with that email address.',
+    ]);
+})->name('dev.login');
 
 Route::group([
     'prefix'     => LaravelLocalization::setLocale(),

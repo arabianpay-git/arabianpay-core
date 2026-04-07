@@ -5,7 +5,9 @@ namespace App\Models;
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
+use Joelwmale\LaravelEncryption\Services\EncryptService;
 
 class Product extends Model
 {
@@ -92,6 +94,29 @@ class Product extends Model
         return $this->translatable ?? [];
     }
 
+
+    public function getRawValue(string $key): mixed
+    {
+        // raw from DB column (no accessors/translations/casts)
+        $raw = $this->getRawOriginal($key);
+
+        if ($raw === null) {
+            return null;
+        }
+
+        // Try decrypt only for encryptable fields
+        if (in_array($key, $this->getEncryptableAttributes(), true)) {
+            try {
+                return EncryptService::decrypt($raw);
+            } catch (\Throwable $e) {
+                // already decrypted OR not encrypted
+                return $raw;
+            }
+        }
+
+        return $raw;
+    }
+
     // Relations
     public function attributes()
     {
@@ -153,6 +178,7 @@ class Product extends Model
 
         $locale = app()->getLocale();
 
+
         if ($locale === 'en') {
             return $value;
         }
@@ -160,6 +186,64 @@ class Product extends Model
         $translation = $this->translations->where('locale', $locale)->first();
 
         return $translation?->$key ?? $value;
+    }
+
+
+    public function encryptAttributes()
+    {
+        if (! config('laravel_encryption.enabled', true)) {
+            return;
+        }
+
+        foreach ($this->getEncryptableAttributes() as $attribute) {
+            $value = parent::getAttribute($attribute);
+
+            if (! empty($value)) {
+                $this->attributes[$attribute] = EncryptService::encrypt(
+                    \Joelwmale\LaravelEncryption\Support\ParseAttributes::parse(
+                        $this->encryptableCasts ?? [],
+                        $attribute,
+                        $value
+                    )
+                );
+            }
+        }
+    }
+
+    public function decryptAttributes()
+    {
+        if (! config('laravel_encryption.enabled', true)) {
+            return;
+        }
+
+        foreach ($this->getEncryptableAttributes() as $attribute) {
+            $value = parent::getAttribute($attribute);
+
+            if (! empty($value) && $this->attributeIsEncrypted($attribute)) {
+                $decryptedValue = EncryptService::decrypt($value);
+
+                if (! empty($this->encryptableCasts)) {
+                    $this->attributes[$attribute] = \Joelwmale\LaravelEncryption\Support\HandleCastableAttributes::handle(
+                        $this->encryptableCasts,
+                        $attribute,
+                        $decryptedValue
+                    );
+                } else {
+                    $this->attributes[$attribute] = $decryptedValue;
+                }
+            }
+        }
+    }
+
+    public function attributeIsEncrypted($attribute)
+    {
+        try {
+            EncryptService::decrypt(parent::getAttribute($attribute));
+        } catch (\Exception $e) {
+            return false;
+        }
+
+        return true;
     }
 
     protected static function booted()

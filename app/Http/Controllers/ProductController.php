@@ -340,6 +340,15 @@ class ProductController extends Controller
             try {
                 $data = $this->normalizeProductData($data, $request);
 
+                $tempProduct = new Product();
+                foreach ($tempProduct->getTranslatableFields() as $field) {
+                    if (isset($data[$field]) && is_array($data[$field])) {
+                        $enValue = $data[$field]['en'] ?? null;
+                        $arValue = $data[$field]['ar'] ?? null;
+                        $data[$field] = !empty($enValue) ? $enValue : $arValue;
+                    }
+                }
+
                 $product = Product::create($data);
 
                 // Sync attributes and their values on create
@@ -588,10 +597,12 @@ class ProductController extends Controller
                 $data = $this->normalizeProductData($data, $request);
                 foreach ($product->getTranslatableFields() as $field) {
                     if (isset($data[$field]) && is_array($data[$field])) {
-                        $data[$field] = $data[$field]['en'] ?? null;
+                        $enValue = $data[$field]['en'] ?? null;
+                        $arValue = $data[$field]['ar'] ?? null;
+                        $data[$field] = !empty($enValue) ? $enValue : $arValue;
                     }
                 }
-
+                Log::info('Product update data: ' . json_encode($data));
                 $product->update($data);
 
                 // Store Arabic translations
