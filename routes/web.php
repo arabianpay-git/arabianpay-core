@@ -399,6 +399,7 @@ Route::group([
                 Route::get('suppliers-statics', 'suppliersStatics')->name('suppliers.statics');
 
                 Route::post('fetch-wathiq', 'fetchWathiq')->name('merchants.fetchWathiq');
+                Route::post('merchants/{id}/toggle-integration', 'toggleIntegration')->name('merchants.toggleIntegration');
 
                 // Trash management routes
                 Route::get('suppliers/trashed', 'trashed')->name('merchants.trashed');

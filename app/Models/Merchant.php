@@ -46,6 +46,7 @@ class Merchant extends Model
         'term_status',
         'status',
         'balady_certificate',
+        'is_integration',
     ];
 
     protected $encryptableAttributes = [

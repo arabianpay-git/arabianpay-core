@@ -159,9 +159,10 @@ class SupplierController extends Controller
         $user = currentUser();
         $status = $request->input('status');
         $employee = $request->input('employee');
+        $integration = $request->input('integration');
 
         return Merchant::with(['user', 'businessType', 'assigned', 'approval'])
-            ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to', 'created_at')
+            ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'is_integration', 'assigned_to', 'created_at')
             ->when(
                 ! ($user->user_type === 'employee' && $user->is_manager) && $user->user_type !== 'admin',
                 fn ($query) => $query->where('assigned_to', $user->id)
@@ -169,6 +170,7 @@ class SupplierController extends Controller
             ->when(! $status, fn ($q) => $q->where('status', '!=', 'blacklisted'))
             ->when($status, fn ($q) => $q->where('status', $status))
             ->when($employee, fn ($q) => $q->where('assigned_to', $employee))
+            ->when($integration !== null && $integration !== '', fn ($q) => $q->where('is_integration', (bool) $integration))
             ->orderByDesc('id')
             ->orderByRaw('ISNULL(assigned_to) DESC');
     }
@@ -224,6 +226,18 @@ class SupplierController extends Controller
 
             return response()->json(['success' => false, 'error' => $e->getMessage()], 500);
         }
+    }
+
+    public function toggleIntegration(Request $request, $id)
+    {
+        $merchant = Merchant::findOrFail($id);
+        $merchant->is_integration = ! $merchant->is_integration;
+        $merchant->save();
+
+        return response()->json([
+            'success' => true,
+            'is_integration' => $merchant->is_integration,
+        ]);
     }
 
     public function supplierShop($id)

@@ -56,6 +56,12 @@
                                     @endforeach
                                 </select>
 
+                                <select id="filter-integration" class="select select-sm" style="width: 10rem;">
+                                    <option value="">{{ translate('All Integration') }}</option>
+                                    <option value="1" {{ request('integration') === '1' ? 'selected' : '' }}>{{ translate('Integration On') }}</option>
+                                    <option value="0" {{ request('integration') === '0' ? 'selected' : '' }}>{{ translate('Integration Off') }}</option>
+                                </select>
+
                                 <select id="filter-employee" class="select select-sm" style="width: 10rem;">
                                     <option value="">{{ translate('All Employees') }}</option>
                                     @foreach (\App\Models\User::where('user_type', 'employee')->get() as $emp)
@@ -185,6 +191,7 @@
         document.addEventListener('DOMContentLoaded', function() {
             const searchInput = document.getElementById('supplier-search-input');
             const statusFilter = document.getElementById('filter-status');
+            const integrationFilter = document.getElementById('filter-integration');
             const employeeFilter = document.getElementById('filter-employee');
             const tableContainer = document.getElementById('suppliers-table-container');
             const bulkBtn = document.getElementById('bulk-transfer-btn');
@@ -208,6 +215,7 @@
 
                 addParam('search', searchInput.value);
                 addParam('status', statusFilter.value);
+                addParam('integration', integrationFilter.value);
                 addParam('employee', employeeFilter.value);
 
                 if (resetPage) {
@@ -228,7 +236,7 @@
                 }
                 const finalUrl = buildFinalUrl(false);
                 const u = new URL(base, window.location.origin);
-                ['search', 'status', 'employee'].forEach((key) => {
+                ['search', 'status', 'integration', 'employee'].forEach((key) => {
                     const v = finalUrl.searchParams.get(key);
                     if (v) {
                         u.searchParams.set(key, v);
@@ -340,12 +348,14 @@
 
             searchInput.addEventListener('input', () => triggerFilter(true));
             statusFilter.addEventListener('change', () => triggerFilter(true));
+            integrationFilter.addEventListener('change', () => triggerFilter(true));
             employeeFilter.addEventListener('change', () => triggerFilter(true));
 
             window.addEventListener('popstate', function() {
                 const urlParams = new URLSearchParams(window.location.search);
                 searchInput.value = urlParams.get('search') || '';
                 statusFilter.value = urlParams.get('status') || '';
+                integrationFilter.value = urlParams.get('integration') || '';
                 employeeFilter.value = urlParams.get('employee') || '';
                 fetchSuppliers(false);
             });

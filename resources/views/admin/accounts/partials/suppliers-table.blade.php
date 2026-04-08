@@ -11,9 +11,10 @@
                 <th class="w-[60px] text-center">{{ translate('ID') }}</th>
                 <th>{{ translate('Name') }}</th>
                 <th>{{ translate('CR Number') }}</th>
-                <th>{{ translate('Business Type') }}</th>
+                {{-- <th>{{ translate('Business Type') }}</th> --}}
                 <th>{{ translate('Assigned To') }}</th>
                 <th>{{ translate('Status') }}</th>
+                <th class="text-center">{{ translate('Integration') }}</th>
                 <th>{{ translate('Commission') }}</th>
                 <th>{{ translate('Member Since') }}</th>
                 <th>{{ translate('Action') }}</th>
@@ -71,13 +72,7 @@
                             {{ maskedSensitiveText('business_identity', $item->cr_number) ?: '—' }}
                         @endif
                     </td>
-                    <td>
-                        @if ($isUserOnly)
-                            N/A
-                        @else
-                            {{ $item->businessType->name ?? 'N/A' }}
-                        @endif
-                    </td>
+                    {{-- Business Type column hidden --}}
                     <td>
                         @if ($isUserOnly)
                             — Not Assigned —
@@ -121,6 +116,24 @@
                                 ">
                                 {{ ucfirst(str_replace('_', ' ', $item->status)) }}
                             </span>
+                        @endif
+                    </td>
+
+                    <td class="text-center">
+                        @if ($isUserOnly)
+                            —
+                        @else
+                            <button
+                                class="integration-toggle-btn inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium border transition-all"
+                                data-id="{{ $item->id }}"
+                                data-active="{{ $item->is_integration ? '1' : '0' }}"
+                                title="{{ $item->is_integration ? translate('Disable Integration') : translate('Enable Integration') }}"
+                                style="{{ $item->is_integration
+                                    ? 'background:#dcfce7;color:#166534;border-color:#86efac;'
+                                    : 'background:#f1f5f9;color:#64748b;border-color:#cbd5e1;' }}">
+                                <i class="ki-filled {{ $item->is_integration ? 'ki-check-circle' : 'ki-minus-circle' }}" style="font-size:0.85rem"></i>
+                                {{ $item->is_integration ? translate('On') : translate('Off') }}
+                            </button>
                         @endif
                     </td>
 
@@ -273,5 +286,45 @@
         }
 
         window.softDeleteMerchant = softDeleteMerchant;
+
+        // Integration toggle
+        document.querySelectorAll('.integration-toggle-btn').forEach(function(btn) {
+            btn.addEventListener('click', function() {
+                const id = this.dataset.id;
+                const isActive = this.dataset.active === '1';
+                const el = this;
+
+                el.disabled = true;
+                el.style.opacity = '0.6';
+
+                fetch(`/admin/merchants/${id}/toggle-integration`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: JSON.stringify({})
+                })
+                .then(r => r.json())
+                .then(data => {
+                    if (data.success) {
+                        const on = data.is_integration;
+                        el.dataset.active = on ? '1' : '0';
+                        el.innerHTML = `<i class="ki-filled ${on ? 'ki-check-circle' : 'ki-minus-circle'}" style="font-size:0.85rem"></i> ${on ? '{{ translate('On') }}' : '{{ translate('Off') }}'}`;
+                        el.style.cssText = on
+                            ? 'background:#dcfce7;color:#166534;border-color:#86efac;'
+                            : 'background:#f1f5f9;color:#64748b;border-color:#cbd5e1;';
+                        el.title = on ? '{{ translate('Disable Integration') }}' : '{{ translate('Enable Integration') }}';
+                    }
+                    el.disabled = false;
+                    el.style.opacity = '1';
+                })
+                .catch(() => {
+                    el.disabled = false;
+                    el.style.opacity = '1';
+                });
+            });
+        });
     </script>
 @endpush
