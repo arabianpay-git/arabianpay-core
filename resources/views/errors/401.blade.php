@@ -5,13 +5,13 @@
         <div class="text-center">
             <div class="mb-9">
                 <img alt="image" class="dark:hidden mx-auto max-h-[150px]"
-                    src="{{ asset('assets/media/illustrations/9.svg') }}">
+                    src="{{ asset('assets/media/illustrations/12.svg') }}">
             </div>
             <h3 class="text-lg font-medium text-gray-900 dark:text-white text-center mb-3">
-                {{ translate('Request Timeout') }}
+                {{ translate('Unauthorized') }}
             </h3>
             <div class="text-sm text-center text-gray-700 dark:text-gray-300 mb-7">
-                {{ translate('The server timed out waiting for the request. Please try again.') }}
+                {{ translate('You are not authorized to access this page. Please log in and try again.') }}
             </div>
             <a class="btn btn-primary inline-flex justify-center" href="{{ url('/') }}">
                 {{ translate('Go to Home') }}

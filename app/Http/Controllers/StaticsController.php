@@ -58,6 +58,6 @@ class StaticsController extends Controller
 
     public function reviews()
     {
-        dd('remaing');
+        // TODO: implement reviews statistics view [CORE-P0-04]
     }
 }

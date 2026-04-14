@@ -72,7 +72,6 @@ class FahmanController extends Controller
         ];
         $sectorAvg = $riskMap[$sectorRisk] ?? 1;
 
-        //dd($merchant->businessType->risk_level);
         $score = $riskScore->total_score;
 
         $fahmanAdvice = match (true) {

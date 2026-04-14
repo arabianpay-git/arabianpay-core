@@ -15,15 +15,8 @@ class FinancialAccounts extends Controller
      */
     public function index()
     {
-        // Debug: Check if we can retrieve any accounts
-        $totalCount = FAccounts::count();
         $accounts = FAccounts::orderBy('id')->paginate(15);
-        
-        // Temporary debug
-        if ($totalCount === 0) {
-            dd('No accounts found in f_accounts table. Total count: ' . $totalCount);
-        }
-        
+
         return view('admin.financial.accounts.index', compact('accounts'));
     }
 
