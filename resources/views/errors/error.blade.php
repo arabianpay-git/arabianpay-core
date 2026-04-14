@@ -2,7 +2,7 @@
 
 @php
     // Get status code and default messages
-    $code = isset($code) ? $code : $exception->getStatusCode() ?? 500;
+    $code = $code ?? optional($exception)->getStatusCode() ?? 500;
 
     $messages = [
         403 => __('Forbidden'),
