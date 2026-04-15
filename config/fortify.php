@@ -166,12 +166,12 @@ return [
     | Mandatory two-factor authentication (admin / protected app areas)
     |--------------------------------------------------------------------------
     |
-    | When true, authenticated users without enabled 2FA are redirected to the
-    | profile page until they complete setup. Set MANDATORY_TWO_FACTOR=false to
-    | disable (e.g. local development).
+    | Always true. Authenticated users without enabled 2FA are redirected to
+    | the profile page until they complete setup. This value is NOT configurable
+    | via environment variables — bypassing 2FA is prohibited under SAMA FC-02.
     |
     */
 
-    'mandatory_two_factor' => env('MANDATORY_TWO_FACTOR', true),
+    'mandatory_two_factor' => true,
 
 ];
