@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\ApiTokenController;
 use App\Http\Controllers\ChatController;
 use App\Services\NafithService;
 use App\Services\SimahService;
@@ -8,7 +9,17 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Route;
 
-
+/*
+ * Auth token lifecycle.
+ *
+ * SAMA CSF 3.3.5 / MVC §4.2: Sanctum tokens expire after
+ * config('sanctum.expiration') minutes. Clients must rotate via this endpoint.
+ * Rate limited to 10 refreshes per minute per user/IP to prevent abuse.
+ */
+Route::middleware(['auth:sanctum', 'throttle:10,1'])->group(function () {
+    Route::post('/auth/refresh-token', [ApiTokenController::class, 'refresh'])
+        ->name('api.auth.refresh-token');
+});
 
 // routes in routes/api.php
 Route::middleware('auth')->group(function () {
@@ -20,34 +31,18 @@ Route::middleware('auth')->group(function () {
 Route::post('/typing', function (Illuminate\Http\Request $request) {
     $request->validate(['receiver_id' => 'required|integer|exists:users,id']);
     broadcast(new \App\Events\TypingEvent(Auth::id(), $request->receiver_id));
+
     return response()->json(['status' => 'ok']);
 })->middleware('auth');
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 Route::prefix('singleview')->group(function () {
 
     // Test: Get Access Token
     Route::get('/token', function () {
         $service = app(SingleViewService::class);
+
         return response()->json([
-            'access_token' => $service->getAccessToken()
+            'access_token' => $service->getAccessToken(),
         ]);
     });
 
@@ -56,18 +51,21 @@ Route::prefix('singleview')->group(function () {
         $service = app(SingleViewService::class);
         $bankCode = request()->query('bankCode', 'SVMOB1'); // default bankCode if not provided
         $redirectUrl = request()->query('redirectUrl', 'https://partners.arabianpay.net/');
+
         return response()->json($service->createConsent($redirectUrl, $bankCode));
     });
 
     // Test: Get Consent Details
     Route::get('/consent/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getConsentDetails($bankCode, $consentId));
     });
 
     // Test: Revoke Consent
     Route::get('/consent/{bankCode}/{consentId}/revoke', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->revokeConsent($bankCode, $consentId));
     });
 
@@ -76,6 +74,7 @@ Route::prefix('singleview')->group(function () {
         $service = app(SingleViewService::class);
         $iban = request()->query('iban', ''); // optional IBAN query parameter
         $ibanCheck = filter_var(request()->query('ibanCheck', true), FILTER_VALIDATE_BOOLEAN); // optional, defaults to true
+
         return response()->json($service->getAccounts($bankCode, $consentId, $iban, $ibanCheck));
     });
 
@@ -83,8 +82,9 @@ Route::prefix('singleview')->group(function () {
     Route::get('/all-transactions/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
         $fromDate = request()->query('fromDate', '2016-01-01T00:00:00+02:00'); // optional
-        $toDate   = request()->query('toDate', now()->toIso8601String());   // optional
+        $toDate = request()->query('toDate', now()->toIso8601String());   // optional
         $estatement = filter_var(request()->query('estatement', true), FILTER_VALIDATE_BOOLEAN);
+
         return response()->json($service->getAllAccountsStatement($bankCode, $consentId, $fromDate, $toDate, $estatement));
     });
 
@@ -92,8 +92,9 @@ Route::prefix('singleview')->group(function () {
     Route::get('/credit-check-basic/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
         $fromDate = request()->query('fromDate'); // optional
-        $toDate   = request()->query('toDate');   // optional
+        $toDate = request()->query('toDate');   // optional
         $creditCheck = filter_var(request()->query('creditCheck', true), FILTER_VALIDATE_BOOLEAN);
+
         return response()->json($service->creditCheckBasic($bankCode, $consentId, $fromDate, $toDate, $creditCheck));
     });
 
@@ -101,75 +102,85 @@ Route::prefix('singleview')->group(function () {
     Route::get('/credit-check-advanced/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
         $fromDate = request()->query('fromDate'); // optional
-        $toDate   = request()->query('toDate');   // optional
+        $toDate = request()->query('toDate');   // optional
         $creditCheckAdvanced = filter_var(request()->query('creditCheckAdvanced', true), FILTER_VALIDATE_BOOLEAN);
+
         return response()->json($service->creditCheckAdvanced($bankCode, $consentId, $fromDate, $toDate, $creditCheckAdvanced));
     });
 
     // Test: Income Check Basic
     Route::get('/income-check-basic/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
-        $fromDate   = request()->query('fromDate'); // optional
-        $toDate     = request()->query('toDate');   // optional
-        $timeLine   = request()->query('timeLine', 'byDay'); // optional
+        $fromDate = request()->query('fromDate'); // optional
+        $toDate = request()->query('toDate');   // optional
+        $timeLine = request()->query('timeLine', 'byDay'); // optional
         $incomeCheck = filter_var(request()->query('incomeCheck', true), FILTER_VALIDATE_BOOLEAN);
+
         return response()->json($service->incomeCheckBasic($bankCode, $consentId, $fromDate, $toDate, $timeLine, $incomeCheck));
     });
 
     // Test: Income Check Advanced
     Route::get('/income-check-advanced/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
-        $fromDate   = request()->query('fromDate'); // optional
-        $toDate     = request()->query('toDate');   // optional
-        $timeLine   = request()->query('timeLine', 'byDay'); // optional
+        $fromDate = request()->query('fromDate'); // optional
+        $toDate = request()->query('toDate');   // optional
+        $timeLine = request()->query('timeLine', 'byDay'); // optional
         $incomeCheck = filter_var(request()->query('incomeCheck', true), FILTER_VALIDATE_BOOLEAN);
+
         return response()->json($service->incomeCheckAdvanced($bankCode, $consentId, $fromDate, $toDate, $timeLine, $incomeCheck));
     });
 
     // Test: Expense Check Basic
     Route::get('/expense-check-basic/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
-        $fromDate   = request()->query('fromDate'); // optional
-        $toDate     = request()->query('toDate');   // optional
-        $timeLine   = request()->query('timeLine', 'byDay'); // optional
+        $fromDate = request()->query('fromDate'); // optional
+        $toDate = request()->query('toDate');   // optional
+        $timeLine = request()->query('timeLine', 'byDay'); // optional
         $expenseCheck = filter_var(request()->query('expenseCheck', true), FILTER_VALIDATE_BOOLEAN);
+
         return response()->json($service->expenseCheckBasic($bankCode, $consentId, $fromDate, $toDate, $timeLine, $expenseCheck));
     });
 
     // Test: Expense Check Advanced
     Route::get('/expense-check-advanced/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
-        $fromDate   = request()->query('fromDate'); // optional
-        $toDate     = request()->query('toDate');   // optional
-        $timeLine   = request()->query('timeLine', 'byDay'); // optional
+        $fromDate = request()->query('fromDate'); // optional
+        $toDate = request()->query('toDate');   // optional
+        $timeLine = request()->query('timeLine', 'byDay'); // optional
         $expenseCheckAdvanced = filter_var(request()->query('expenseCheckAdvanced', true), FILTER_VALIDATE_BOOLEAN);
+
         return response()->json($service->expenseCheckAdvanced($bankCode, $consentId, $fromDate, $toDate, $timeLine, $expenseCheckAdvanced));
     });
 
     // Test: Get All Accounts
     Route::get('/all-accounts/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getAllAccounts($bankCode, $consentId));
     });
 
     Route::get('/all-parties/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getParties($bankCode, $consentId));
     });
 
     Route::get('/account/{bankCode}/{consentId}/{accountId}', function ($bankCode, $consentId, $accountId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getAccountById($bankCode, $consentId, $accountId));
     });
 
     Route::get('/parties/{bankCode}/{consentId}/{accountId}', function ($bankCode, $consentId, $accountId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getPartiesById($bankCode, $consentId, $accountId));
     });
 
     // Test: Get All Accounts Balance
     Route::get('/accounts-balance/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getAllAccountsBalance($bankCode, $consentId));
     });
 
@@ -178,56 +189,59 @@ Route::prefix('singleview')->group(function () {
         $service = app(SingleViewService::class);
         $fromDate = request()->query('fromDate'); // optional
         $toDate = request()->query('toDate');     // optional
+
         return response()->json($service->getAllAccountsTransactions($bankCode, $consentId, $fromDate, $toDate));
     });
 
     // Test: Get All Accounts Direct Debits
     Route::get('/accounts-direct-debits/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getAllAccountsDirectDebits($bankCode, $consentId));
     });
 
     // Test: Get All Accounts Standing Orders
     Route::get('/accounts-standing-orders/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getAllAccountsStandingOrders($bankCode, $consentId));
     });
 
     // Test: Get All Accounts Scheduled Payments
     Route::get('/accounts-scheduled-payments/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getAllAccountsScheduledPayments($bankCode, $consentId));
     });
 
     // Test: Get All Account Check
     Route::get('/accounts-check/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getAllAccountsCheck($bankCode, $consentId));
     });
 
     // Test: Get All Accounts Balance (Balance Check)
     Route::get('/accounts-balance-check/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->getAllAccountsBalanceCheck($bankCode, $consentId));
     });
 
     // Test: KYC
     Route::get('/kyc/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->kyc($bankCode, $consentId));
     });
 
     // Test: Customer Verification
     Route::get('/customer-verification/{bankCode}/{consentId}', function ($bankCode, $consentId) {
         $service = app(SingleViewService::class);
+
         return response()->json($service->customerVerification($bankCode, $consentId));
     });
 });
-
-
-
-
-
 
 Route::prefix('nafith')->group(function () {
 
@@ -240,12 +254,12 @@ Route::prefix('nafith')->group(function () {
             return response()->json([
                 'success' => true,
                 'token' => $token,
-                'length' => strlen($token)
+                'length' => strlen($token),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     });
@@ -265,27 +279,27 @@ Route::prefix('nafith')->group(function () {
                 'total_value' => $request->input('total_value', 200),
                 'currency' => $request->input('currency', 'SAR'),
                 'max_approve_duration' => $request->input('max_approve_duration', 100),
-                'reference_id' => $request->input('reference_id', 'test_ref_' . time()),
+                'reference_id' => $request->input('reference_id', 'test_ref_'.time()),
                 'sanad' => [
                     [
                         'due_type' => $request->input('due_type', 'date'),
                         'due_date' => $request->input('due_date', '2025-12-28'),
                         'total_value' => $request->input('total_value', 200),
-                        'reference_id' => $request->input('sanad_reference_id', 'sanad_test_' . time()),
-                    ]
-                ]
+                        'reference_id' => $request->input('sanad_reference_id', 'sanad_test_'.time()),
+                    ],
+                ],
             ];
 
             $result = $nafithService->createSanad($sanadData);
 
             return response()->json([
                 'success' => true,
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     });
@@ -306,12 +320,12 @@ Route::prefix('nafith')->group(function () {
                     'due_type' => 'date',
                     'due_date' => '2025-12-28',
                     'total_value' => 200.00,
-                    'reference_id' => 'sanad_multi_1_' . time(),
+                    'reference_id' => 'sanad_multi_1_'.time(),
                 ],
                 [
                     'due_type' => 'upon request',
                     'total_value' => 920.44,
-                    'reference_id' => 'sanad_multi_2_' . time(),
+                    'reference_id' => 'sanad_multi_2_'.time(),
                 ],
             ];
 
@@ -320,19 +334,19 @@ Route::prefix('nafith')->group(function () {
             $result = $nafithService->createMultipleSanads(
                 $debtorData,
                 $sanadItems,
-                $request->input('reference_id', 'test_multi_ref_' . time()),
+                $request->input('reference_id', 'test_multi_ref_'.time()),
                 $request->input('city_of_payment', '1'),
                 $totalValue
             );
 
             return response()->json([
                 'success' => true,
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     });
@@ -356,12 +370,12 @@ Route::prefix('nafith')->group(function () {
                     'due_type' => 'date',
                     'due_date' => '2025-12-28',
                     'total_value' => 200.00,
-                    'reference_id' => 'sanad4_' . time(),
+                    'reference_id' => 'sanad4_'.time(),
                 ],
                 [
                     'due_type' => 'upon request',
                     'total_value' => 920.44,
-                    'reference_id' => 'sanad5_' . time(),
+                    'reference_id' => 'sanad5_'.time(),
                 ],
             ];
 
@@ -371,7 +385,7 @@ Route::prefix('nafith')->group(function () {
                 $creditorData,
                 $debtorData,
                 $sanadItems,
-                $request->input('reference_id', 'test_creditor_ref_' . time()),
+                $request->input('reference_id', 'test_creditor_ref_'.time()),
                 $request->input('city_of_issuance', 1),
                 $request->input('city_of_payment', 2),
                 $totalValue,
@@ -381,12 +395,12 @@ Route::prefix('nafith')->group(function () {
 
             return response()->json([
                 'success' => true,
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     });
@@ -399,12 +413,12 @@ Route::prefix('nafith')->group(function () {
 
             return response()->json([
                 'success' => true,
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     });
@@ -417,12 +431,12 @@ Route::prefix('nafith')->group(function () {
 
             return response()->json([
                 'success' => true,
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     });
@@ -441,12 +455,12 @@ Route::prefix('nafith')->group(function () {
 
             return response()->json([
                 'success' => true,
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     });
@@ -459,12 +473,12 @@ Route::prefix('nafith')->group(function () {
 
             return response()->json([
                 'success' => true,
-                'message' => 'Token cleared'
+                'message' => 'Token cleared',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     });
@@ -480,12 +494,12 @@ Route::prefix('nafith')->group(function () {
 
             return response()->json([
                 'success' => true,
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     });
@@ -506,12 +520,12 @@ Route::prefix('nafith')->group(function () {
 
             return response()->json([
                 'success' => true,
-                'data' => $result
+                'data' => $result,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ], 500);
         }
     });
@@ -524,14 +538,14 @@ Route::get('/test-silver-report', function () {
 
         // Dummy data for testing
         $data = [
-            'idNumber'    => '7035087050',
+            'idNumber' => '7035087050',
             'nationality' => 196,
-            'familyName'  => 'ABC',
-            'firstName'   => 'ABB',
-            'secondName'  => 'BBC',
-            'thirdName'   => 'CCD',
-            'expiryDate'  => '30/10/2040',
-            'gender'      => 1,
+            'familyName' => 'ABC',
+            'firstName' => 'ABB',
+            'secondName' => 'BBC',
+            'thirdName' => 'CCD',
+            'expiryDate' => '30/10/2040',
+            'gender' => 1,
             'dateOfBirth' => '30/11/1970',
             'memberRefNo' => 'rRQgsi47pLDnWi_JKElEGWAwBY887',
         ];
@@ -540,12 +554,12 @@ Route::get('/test-silver-report', function () {
 
         return response()->json([
             'success' => true,
-            'data' => $result
+            'data' => $result,
         ]);
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'error' => $e->getMessage()
+            'error' => $e->getMessage(),
         ], 500);
     }
 });
@@ -559,40 +573,40 @@ Route::get('/test-consumer-score', function () {
         $data = [
             'language' => 'en',
             'identityInfo' => [
-                'idType'   => 2,
+                'idType' => 2,
                 'idNumber' => '2583103284',
                 'productId' => 23,
             ],
             'applicationDetails' => [
-                'amount'      => 100,
+                'amount' => 100,
                 'productType' => 23,
             ],
             'demographicInfo' => [
                 'isHijriIDExpiryDate' => true,
-                'idExpiryDate'        => '30/05/1453',
-                'nationality'         => 168,
-                'maritalStatus'       => 1,
-                'isHijriDateOfBirth'  => true,
-                'dateOfBirth'         => '09/06/1930',
-                'firstName'           => 'Asad',
-                'gender'              => 1,
-                'secondName'          => 'Mahmood',
-                'thirdName'           => 'third',
-                'familyName'          => 'family',
+                'idExpiryDate' => '30/05/1453',
+                'nationality' => 168,
+                'maritalStatus' => 1,
+                'isHijriDateOfBirth' => true,
+                'dateOfBirth' => '09/06/1930',
+                'firstName' => 'Asad',
+                'gender' => 1,
+                'secondName' => 'Mahmood',
+                'thirdName' => 'third',
+                'familyName' => 'family',
             ],
-            'accept'          => true,
+            'accept' => true,
         ];
 
         $result = $simahService->consumerScore($data);
 
         return response()->json([
             'success' => true,
-            'data'    => $result
+            'data' => $result,
         ]);
     } catch (\Exception $e) {
         return response()->json([
             'success' => false,
-            'error'   => $e->getMessage()
+            'error' => $e->getMessage(),
         ], 500);
     }
 });
