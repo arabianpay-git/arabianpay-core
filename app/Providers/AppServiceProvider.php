@@ -45,22 +45,28 @@ class AppServiceProvider extends ServiceProvider
         // Usage: <script @cspNonce>…</script>  →  <script nonce="…">…</script>
         Blade::directive('cspNonce', fn () => "<?php echo 'nonce=\"'.e(app(\\App\\Support\\CspNonce::class)->value()).'\"'; ?>");
 
-        // Get default language from settings
-        $general = settings('general', []);
-        $locale = $general['default_language'] ?? config('app.locale', 'en');
+        // Get default language from settings.
+        // Wrapped in try/catch: during tests (RefreshDatabase) migrations haven't
+        // run yet when the service provider boots, so the settings table may not exist.
+        try {
+            $general = settings('general', []);
+            $locale = $general['default_language'] ?? config('app.locale', 'en');
 
-        // Set Laravel locale
-        App::setLocale($locale);
+            // Set Laravel locale
+            App::setLocale($locale);
 
-        // If LaravelLocalization is installed, set its locale too
-        if (class_exists(LaravelLocalization::class)) {
-            LaravelLocalization::setLocale($locale);
-        }
+            // If LaravelLocalization is installed, set its locale too
+            if (class_exists(LaravelLocalization::class)) {
+                LaravelLocalization::setLocale($locale);
+            }
 
-        $general = Setting::getByKey('general', []);
-        if (! empty($general['timezone'])) {
-            Config::set('app.timezone', $general['timezone']);
-            date_default_timezone_set($general['timezone']);
+            $general = Setting::getByKey('general', []);
+            if (! empty($general['timezone'])) {
+                Config::set('app.timezone', $general['timezone']);
+                date_default_timezone_set($general['timezone']);
+            }
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Table does not exist yet (fresh migration / test bootstrap). Use defaults.
         }
 
         RateLimiter::for('global', function (Request $request) {

@@ -53,23 +53,32 @@ class SecureHeaders
         // Base directives from config
         $directives = config('csp.directives', []);
 
-        // CORE-P0-10: attach per-request nonce to script-src and style-src.
-        // When CSP_NONCE_ENFORCE=true we also strip 'unsafe-inline' from
-        // script-src so a mis-nonced inline script is blocked by the
-        // browser. Until all inline scripts are migrated (Phase 2) the
-        // default is permissive — nonce is emitted but 'unsafe-inline'
-        // remains as a fallback.
+        // CORE-P0-10: per-request nonce for CSP.
+        //
+        // IMPORTANT — CSP3 spec §8.3: the presence of a nonce in a directive
+        // causes the browser to ignore 'unsafe-inline' for that directive,
+        // regardless of whether 'unsafe-inline' is also listed.
+        //
+        // Therefore we only inject the nonce TOKEN into the CSP *header* when
+        // CSP_NONCE_ENFORCE=true (Phase 2, after all inline scripts are migrated).
+        // In Phase 1 (default, CSP_NONCE_ENFORCE=false) the nonce is generated
+        // and available via @cspNonce in Blade, but is NOT emitted in the header —
+        // 'unsafe-inline' remains the effective allowance for un-migrated scripts.
         $nonce = app(CspNonce::class)->value();
-        $nonceToken = "'nonce-{$nonce}'";
         $enforceNonce = filter_var(env('CSP_NONCE_ENFORCE', false), FILTER_VALIDATE_BOOLEAN);
 
-        foreach (['script-src', 'style-src'] as $directive) {
-            $sources = $directives[$directive] ?? [];
-            if ($enforceNonce) {
-                $sources = array_values(array_filter($sources, fn ($s) => $s !== "'unsafe-inline'" && $s !== "'unsafe-eval'"));
+        if ($enforceNonce) {
+            $nonceToken = "'nonce-{$nonce}'";
+            foreach (['script-src', 'style-src'] as $directive) {
+                $sources = $directives[$directive] ?? [];
+                // Strip fallback keywords that the nonce replaces
+                $sources = array_values(array_filter(
+                    $sources,
+                    fn ($s) => $s !== "'unsafe-inline'" && $s !== "'unsafe-eval'"
+                ));
+                array_unshift($sources, $nonceToken);
+                $directives[$directive] = $sources;
             }
-            array_unshift($sources, $nonceToken);
-            $directives[$directive] = $sources;
         }
 
         $currentHost = $request->getHost();                      // e.g. core.arabianpay.net
@@ -87,6 +96,20 @@ class SecureHeaders
         // Add dynamic domains to sensible directives
         $directives['img-src'][] = $httpsHost;
         $directives['form-action'][] = $httpsHost;
+
+        // Also allow storage URLs from APP_URL origin (may differ from request host
+        // in local dev, e.g. adminpanel.test vs localhost:8000).
+        $appUrl = rtrim(config('app.url', ''), '/');
+        if ($appUrl) {
+            $appParsed = parse_url($appUrl);
+            $appOrigin = ($appParsed['scheme'] ?? 'https').'://'.($appParsed['host'] ?? '');
+            if (! empty($appParsed['port'])) {
+                $appOrigin .= ':'.$appParsed['port'];
+            }
+            if ($appOrigin !== $httpsHost) {
+                $directives['img-src'][] = $appOrigin;
+            }
+        }
 
         // Connect-src: allow secure websocket to this host and the HTTPS origin
         // Include scheme sources 'wss:' and 'ws:' so other valid ws/wss endpoints are allowed if needed
