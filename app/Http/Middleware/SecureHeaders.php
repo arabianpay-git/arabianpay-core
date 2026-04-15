@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Support\CspNonce;
 use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -13,7 +14,7 @@ class SecureHeaders
         /** @var Response $response */
         $response = $next($request);
 
-        if (!config('csp.enabled', true)) {
+        if (! config('csp.enabled', true)) {
             return $response;
         }
 
@@ -52,16 +53,35 @@ class SecureHeaders
         // Base directives from config
         $directives = config('csp.directives', []);
 
+        // CORE-P0-10: attach per-request nonce to script-src and style-src.
+        // When CSP_NONCE_ENFORCE=true we also strip 'unsafe-inline' from
+        // script-src so a mis-nonced inline script is blocked by the
+        // browser. Until all inline scripts are migrated (Phase 2) the
+        // default is permissive — nonce is emitted but 'unsafe-inline'
+        // remains as a fallback.
+        $nonce = app(CspNonce::class)->value();
+        $nonceToken = "'nonce-{$nonce}'";
+        $enforceNonce = filter_var(env('CSP_NONCE_ENFORCE', false), FILTER_VALIDATE_BOOLEAN);
+
+        foreach (['script-src', 'style-src'] as $directive) {
+            $sources = $directives[$directive] ?? [];
+            if ($enforceNonce) {
+                $sources = array_values(array_filter($sources, fn ($s) => $s !== "'unsafe-inline'" && $s !== "'unsafe-eval'"));
+            }
+            array_unshift($sources, $nonceToken);
+            $directives[$directive] = $sources;
+        }
+
         $currentHost = $request->getHost();                      // e.g. core.arabianpay.net
         $isSecure = $request->isSecure();                        // https?
         $httpProtocol = $isSecure ? 'https://' : 'http://';
-        $httpsHost = $httpProtocol . $currentHost;               // https://core.arabianpay.net
-        $wssHost = 'wss://' . $currentHost;                      // wss://core.arabianpay.net
+        $httpsHost = $httpProtocol.$currentHost;               // https://core.arabianpay.net
+        $wssHost = 'wss://'.$currentHost;                      // wss://core.arabianpay.net
 
         // If you run Reverb on a specific port (like 8080 internally), add that too (optional)
         $reverbPort = env('REVERB_SERVER_PORT', null);
-        if (!empty($reverbPort) && is_numeric($reverbPort) && (int)$reverbPort !== 443) {
-            $directives['connect-src'][] = 'wss://' . $currentHost . ':' . $reverbPort;
+        if (! empty($reverbPort) && is_numeric($reverbPort) && (int) $reverbPort !== 443) {
+            $directives['connect-src'][] = 'wss://'.$currentHost.':'.$reverbPort;
         }
 
         // Add dynamic domains to sensible directives
@@ -133,14 +153,14 @@ class SecureHeaders
                 if ($s === '') {
                     continue;
                 }
-                if (!isset($seen[$s])) {
+                if (! isset($seen[$s])) {
                     $seen[$s] = true;
                     $unique[] = $s;
                 }
             }
 
-            if (!empty($unique)) {
-                $cspParts[] = $directive . ' ' . implode(' ', $unique) . ';';
+            if (! empty($unique)) {
+                $cspParts[] = $directive.' '.implode(' ', $unique).';';
             }
         }
 

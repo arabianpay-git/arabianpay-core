@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Http\Middleware\EnsureTwoFactorIsEnabled;
 use App\Models\Setting;
 use App\Services\AuditTrailService;
+use App\Support\CspNonce;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -27,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('audit-trail', function ($app) {
             return new AuditTrailService($app['request']);
         });
+
+        // CORE-P0-10: request-scoped CSP nonce.
+        $this->app->singleton(CspNonce::class);
     }
 
     /**
@@ -35,6 +40,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Route::aliasMiddleware('ensure.two-factor', EnsureTwoFactorIsEnabled::class);
+
+        // CORE-P0-10: expose the per-request CSP nonce to Blade as @cspNonce.
+        // Usage: <script @cspNonce>…</script>  →  <script nonce="…">…</script>
+        Blade::directive('cspNonce', fn () => "<?php echo 'nonce=\"'.e(app(\\App\\Support\\CspNonce::class)->value()).'\"'; ?>");
 
         // Get default language from settings
         $general = settings('general', []);
