@@ -118,7 +118,7 @@ class AccountController extends Controller
             'Accessed customer business section'
         );
 
-        dd('Remaning');
+        // TODO: implement customer business view [CORE-P0-04]
     }
 
     public function customerSimah($id)

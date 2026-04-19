@@ -127,7 +127,7 @@ class AccountController extends Controller
 
     public function customerBusiness()
     {
-        dd('Remaning');
+        // TODO: implement customer business view [CORE-P0-04]
     }
 
     public function customerSimah($id)
@@ -1213,7 +1213,6 @@ class AccountController extends Controller
 
     private function calculateCreditScore($orders, $customer = null)
     {
-        // dd($customer->user_id);
         // 1) Monthly POS Revenue (weight 25%)
         // Sum total revenue from orders, assume 'total_amount' column or similar
         $monthlyRevenue = Wallet::where('user_id', $customer->user_id)

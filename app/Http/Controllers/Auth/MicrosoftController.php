@@ -34,11 +34,8 @@ class MicrosoftController extends Controller
             $microsoftUser = Socialite::driver('microsoft')->user();
             $email = $microsoftUser->user['mail'] ?? $microsoftUser->user['userPrincipalName'] ?? null;
 
-            // dd($email);
-
             // Check if user exist
             $user = User::whereEncrypted('email', $email)->first();
-            // dd($user);
             if (! $user) {
                 return redirect('/login')->with('error', 'User not exist');
             }

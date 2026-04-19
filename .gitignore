@@ -29,6 +29,9 @@ dist/
 .DS_Store
 Thumbs.db
 
+# Claude Code scratch / worktrees
+/.claude/
+
 # Other
 Homestead.json
 Homestead.yaml

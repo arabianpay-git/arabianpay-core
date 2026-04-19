@@ -23,6 +23,7 @@ if (! function_exists('get_setting')) {
     function get_setting(string $key, $default = null)
     {
         $setting = Setting::where('key', $key)->first();
+
         return $setting ? $setting->value : $default;
     }
 }
@@ -54,6 +55,7 @@ if (! function_exists('get_credit_limit')) {
     function get_credit_limit($user_id, $default = 0.00)
     {
         $creditLimit = CustomerCreditLimit::where('user_id', $user_id)->latest()->first();
+
         return $creditLimit ? (float) $creditLimit->limit_arabianpay_after : (float) $default;
     }
 }
@@ -65,6 +67,7 @@ if (! function_exists('get_seller_commission')) {
     function get_seller_commission($user_id, $default = 5.00)
     {
         $commission = Approval::where('user_id', $user_id)->latest()->first();
+
         return $commission ? (float) $commission->commission : (float) $default;
     }
 }
@@ -101,8 +104,8 @@ if (! function_exists('calculate_order_tax')) {
 
             $productTax = $product->tax ?? (float) get_setting('tax', 0);
 
-            $attributePrice = collect($item['attributes'] ?? [])->sum(fn($a) => isset($a['price']) ? (float)$a['price'] : 0.0);
-            $quantity = isset($item['quantity']) ? (int)$item['quantity'] : 0;
+            $attributePrice = collect($item['attributes'] ?? [])->sum(fn ($a) => isset($a['price']) ? (float) $a['price'] : 0.0);
+            $quantity = isset($item['quantity']) ? (int) $item['quantity'] : 0;
             $totalPrice = $attributePrice * $quantity;
 
             if ($product->tax_type === 'percent') {
@@ -211,6 +214,7 @@ if (! function_exists('get_credit_score')) {
     {
         $service = app(CreditAssessmentService::class);
         $result = $service->assess($userId);
+
         return $result['creditScore'] ?? [];
     }
 }
@@ -275,7 +279,8 @@ if (! function_exists('hijriToGregorian')) {
                     'adjustment' => $adjustment,
                 ]);
         } catch (\Throwable $e) {
-            Log::warning('hijriToGregorian: http error: ' . $e->getMessage());
+            Log::warning('hijriToGregorian: http error: '.$e->getMessage());
+
             return null;
         }
 
@@ -320,17 +325,18 @@ if (! function_exists('resolveMedia')) {
         $candidates = [];
 
         if ($options['type'] === 'product') {
-            $candidates[] = public_path('uploads/' . ltrim($path, '/'));
+            $candidates[] = public_path('uploads/'.ltrim($path, '/'));
         }
 
-        $candidates[] = public_path('partners-media/' . ltrim($path, '/'));
-        $candidates[] = public_path('storage/media/' . ltrim($path, '/'));
+        $candidates[] = public_path('partners-media/'.ltrim($path, '/'));
+        $candidates[] = public_path('storage/media/'.ltrim($path, '/'));
         $candidates[] = public_path(ltrim($path, '/'));
 
         foreach ($candidates as $fullPath) {
             if ($fullPath && file_exists($fullPath) && is_file($fullPath)) {
                 $rel = str_replace('\\', '/', ltrim(str_replace(public_path(), '', $fullPath), '/'));
                 $rel = $rel ?: ltrim($path, '/');
+
                 return asset($rel);
             }
         }
@@ -340,7 +346,7 @@ if (! function_exists('resolveMedia')) {
             $prefix = rtrim('https://partners.arabianpay.net/public', '/');
         }
 
-        $partnerUrl = $prefix . '/' . ltrim($path, '/');
+        $partnerUrl = $prefix.'/'.ltrim($path, '/');
 
         if (! $options['check_remote']) {
             return $partnerUrl;
@@ -359,7 +365,7 @@ if (! function_exists('resolveMedia')) {
                 }
             }
         } catch (\Throwable $e) {
-            Log::warning('resolveMedia: error checking partner URL: ' . $e->getMessage());
+            Log::warning('resolveMedia: error checking partner URL: '.$e->getMessage());
         }
 
         return $options['default'];
@@ -413,6 +419,7 @@ if (! function_exists('create_notification')) {
     function create_notification(?int $userId, ?string $type, $data)
     {
         $service = app(NotificationService::class);
+
         return $service->createNotification($userId, $type, $data);
     }
 }
@@ -444,12 +451,12 @@ if (! function_exists('getMediaUrl')) {
             return asset($filename);
         }
 
-        if (file_exists(public_path('partners-media/' . $filename))) {
-            return asset('partners-media/' . $filename);
+        if (file_exists(public_path('partners-media/'.$filename))) {
+            return asset('partners-media/'.$filename);
         }
 
-        if (file_exists(public_path('storage/media/' . $filename))) {
-            return asset('storage/media/' . $filename);
+        if (file_exists(public_path('storage/media/'.$filename))) {
+            return asset('storage/media/'.$filename);
         }
 
         return asset($defaultImage);
@@ -464,7 +471,8 @@ if (! function_exists('partnerRoute')) {
     {
         $base = app()->environment('local') ? 'https://adminpanel.test' : 'https://partners.arabianpay.net';
         $path = route($name, $parameters, false);
-        return rtrim($base, '/') . '/' . ltrim($path, '/');
+
+        return rtrim($base, '/').'/'.ltrim($path, '/');
     }
 }
 
@@ -475,6 +483,7 @@ if (! function_exists('settings')) {
     function settings($key, $default = [])
     {
         $value = Setting::where('key', $key)->value('value');
+
         return $value ? json_decode($value, true) : $default;
     }
 }
@@ -490,7 +499,8 @@ if (! function_exists('dateFormat')) {
 
         if ($includeTime) {
             $timeFormat = isset($general['time_format']) && $general['time_format'] == '24' ? 'H:i' : 'h:i A';
-            return $dateFormat . ' ' . $timeFormat;
+
+            return $dateFormat.' '.$timeFormat;
         }
 
         return $dateFormat;
@@ -516,11 +526,11 @@ if (! function_exists('updateEnvValue')) {
         if (preg_match("/^{$key}=.*$/m", $envContents)) {
             $envContents = preg_replace(
                 "/^{$key}=.*$/m",
-                $key . '="' . $escapedValue . '"',
+                $key.'="'.$escapedValue.'"',
                 $envContents
             );
         } else {
-            $envContents .= PHP_EOL . $key . '="' . $escapedValue . '"';
+            $envContents .= PHP_EOL.$key.'="'.$escapedValue.'"';
         }
 
         file_put_contents($path, $envContents);
@@ -533,9 +543,16 @@ if (! function_exists('updateEnvValue')) {
 if (! function_exists('human_number')) {
     function human_number(float $number): string
     {
-        if ($number >= 1_000_000_000) return round($number / 1_000_000_000, 1) . 'B';
-        if ($number >= 1_000_000)     return round($number / 1_000_000, 1) . 'M';
-        if ($number >= 1_000)         return round($number / 1_000, 1) . 'K';
+        if ($number >= 1_000_000_000) {
+            return round($number / 1_000_000_000, 1).'B';
+        }
+        if ($number >= 1_000_000) {
+            return round($number / 1_000_000, 1).'M';
+        }
+        if ($number >= 1_000) {
+            return round($number / 1_000, 1).'K';
+        }
+
         return (string) number_format($number, 2, '.', '');
     }
 }
@@ -553,7 +570,7 @@ if (! function_exists('hasSensitivePermission')) {
         }
 
         // Managers automatically have all permissions
-        if ($user->user_type === 'employee' && !empty($user->is_manager)) {
+        if ($user->user_type === 'employee' && ! empty($user->is_manager)) {
             return true;
         }
 
@@ -617,13 +634,13 @@ if (! function_exists('maskedSensitiveText')) {
         }
 
         $start = Str::substr($text, 0, $startMask);
-        $end   = Str::substr($text, -$endMask);
+        $end = Str::substr($text, -$endMask);
 
         $stars = $maskLength !== null
             ? str_repeat('*', $maskLength)
             : str_repeat('*', $length - ($startMask + $endMask));
 
-        return $start . $stars . $end;
+        return $start.$stars.$end;
     }
 }
 
@@ -649,7 +666,7 @@ if (! function_exists('authorizeSensitiveFileOrDeny')) {
     }
 }
 
-if (!function_exists('audit')) {
+if (! function_exists('audit')) {
     /**
      * Helper function to access audit trail service
      *
@@ -658,5 +675,22 @@ if (!function_exists('audit')) {
     function audit()
     {
         return app('audit-trail');
+    }
+}
+
+if (! function_exists('csp_nonce')) {
+    /**
+     * Return the per-request CSP nonce.
+     *
+     * SAMA CSF 3.3.7: inline scripts must be authenticated with a
+     * per-request nonce. Use this helper or the @cspNonce Blade
+     * directive on any inline <script> that cannot be extracted into
+     * a static file.
+     *
+     * @return string
+     */
+    function csp_nonce()
+    {
+        return app(\App\Support\CspNonce::class)->value();
     }
 }

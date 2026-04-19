@@ -5,9 +5,11 @@ namespace App\Providers;
 use App\Http\Middleware\EnsureTwoFactorIsEnabled;
 use App\Models\Setting;
 use App\Services\AuditTrailService;
+use App\Support\CspNonce;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\App;
+use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
@@ -27,6 +29,9 @@ class AppServiceProvider extends ServiceProvider
         $this->app->singleton('audit-trail', function ($app) {
             return new AuditTrailService($app['request']);
         });
+
+        // CORE-P0-10: request-scoped CSP nonce.
+        $this->app->singleton(CspNonce::class);
     }
 
     /**
@@ -36,22 +41,32 @@ class AppServiceProvider extends ServiceProvider
     {
         Route::aliasMiddleware('ensure.two-factor', EnsureTwoFactorIsEnabled::class);
 
-        // Get default language from settings
-        $general = settings('general', []);
-        $locale = $general['default_language'] ?? config('app.locale', 'en');
+        // CORE-P0-10: expose the per-request CSP nonce to Blade as @cspNonce.
+        // Usage: <script @cspNonce>…</script>  →  <script nonce="…">…</script>
+        Blade::directive('cspNonce', fn () => "<?php echo 'nonce=\"'.e(app(\\App\\Support\\CspNonce::class)->value()).'\"'; ?>");
 
-        // Set Laravel locale
-        App::setLocale($locale);
+        // Get default language from settings.
+        // Wrapped in try/catch: during tests (RefreshDatabase) migrations haven't
+        // run yet when the service provider boots, so the settings table may not exist.
+        try {
+            $general = settings('general', []);
+            $locale = $general['default_language'] ?? config('app.locale', 'en');
 
-        // If LaravelLocalization is installed, set its locale too
-        if (class_exists(LaravelLocalization::class)) {
-            LaravelLocalization::setLocale($locale);
-        }
+            // Set Laravel locale
+            App::setLocale($locale);
 
-        $general = Setting::getByKey('general', []);
-        if (! empty($general['timezone'])) {
-            Config::set('app.timezone', $general['timezone']);
-            date_default_timezone_set($general['timezone']);
+            // If LaravelLocalization is installed, set its locale too
+            if (class_exists(LaravelLocalization::class)) {
+                LaravelLocalization::setLocale($locale);
+            }
+
+            $general = Setting::getByKey('general', []);
+            if (! empty($general['timezone'])) {
+                Config::set('app.timezone', $general['timezone']);
+                date_default_timezone_set($general['timezone']);
+            }
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Table does not exist yet (fresh migration / test bootstrap). Use defaults.
         }
 
         RateLimiter::for('global', function (Request $request) {
