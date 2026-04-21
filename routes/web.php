@@ -162,16 +162,18 @@ Route::group([
             })->name('chat');
 
             // Web routes for chat (session auth)
-            Route::get('/messages/{user}', [ChatController::class, 'fetchMessages']);
-            Route::post('/messages', [ChatController::class, 'sendMessage']);
-            Route::post('/messages/{user}/read', [ChatController::class, 'markAsRead']);
+            Route::middleware('permission:messages.manage')->group(function () {
+                Route::get('/messages/{user}', [ChatController::class, 'fetchMessages']);
+                Route::post('/messages', [ChatController::class, 'sendMessage']);
+                Route::post('/messages/{user}/read', [ChatController::class, 'markAsRead']);
 
-            // Typing indicator
-            Route::post('/typing', [ChatController::class, 'typing']);
-            Route::post('/typing/stop', [ChatController::class, 'stopTyping']);
+                // Typing indicator
+                Route::post('/typing', [ChatController::class, 'typing']);
+                Route::post('/typing/stop', [ChatController::class, 'stopTyping']);
 
-            // Sidebar AJAX users
-            Route::get('/chat-users', [ChatController::class, 'listUsers']);
+                // Sidebar AJAX users
+                Route::get('/chat-users', [ChatController::class, 'listUsers']);
+            });
 
             Route::post('/device-token', [DeviceTokenController::class, 'store']);
 
@@ -188,37 +190,41 @@ Route::group([
             //
             // Role and Permission
             //
-            Route::get('/roles-by-department/{departmentId}', [RolePermissionController::class, 'getRolesByDepartment'])
-                ->name('roles.by.department');
+            Route::middleware('permission:rbac.manage')->group(function () {
+                Route::get('/roles-by-department/{departmentId}', [RolePermissionController::class, 'getRolesByDepartment'])
+                    ->name('roles.by.department');
 
-            Route::get('/permissions-by-department/{department}/{role}', [RolePermissionController::class, 'getPermissionsByDepartment']);
-            Route::get('role-permissions/{role}/{department}/edit', [RolePermissionController::class, 'edit'])->name('role-permissions.edit');
-            Route::put('role-permissions/{role}/{department}', [RolePermissionController::class, 'update'])->name('role-permissions.update');
-            Route::delete('role-permissions/{role}/{department}', [RolePermissionController::class, 'destroy'])->name('role-permissions.destroy');
-            Route::get('role-permissions/create', [RolePermissionController::class, 'create'])->name('role-permissions.create');
-            Route::post('role-permissions', [RolePermissionController::class, 'store'])->name('role-permissions.store');
-            Route::get('role-permissions', [RolePermissionController::class, 'index'])->name('role-permissions.index');
+                Route::get('/permissions-by-department/{department}/{role}', [RolePermissionController::class, 'getPermissionsByDepartment']);
+                Route::get('role-permissions/{role}/{department}/edit', [RolePermissionController::class, 'edit'])->name('role-permissions.edit');
+                Route::put('role-permissions/{role}/{department}', [RolePermissionController::class, 'update'])->name('role-permissions.update');
+                Route::delete('role-permissions/{role}/{department}', [RolePermissionController::class, 'destroy'])->name('role-permissions.destroy');
+                Route::get('role-permissions/create', [RolePermissionController::class, 'create'])->name('role-permissions.create');
+                Route::post('role-permissions', [RolePermissionController::class, 'store'])->name('role-permissions.store');
+                Route::get('role-permissions', [RolePermissionController::class, 'index'])->name('role-permissions.index');
 
-            Route::resource('roles', RoleController::class);
-            Route::resource('permissions', PermissionController::class);
+                Route::resource('roles', RoleController::class);
+                Route::resource('permissions', PermissionController::class);
 
-            Route::get('/roles/{role}', [RoleController::class, 'show']);
+                Route::get('/roles/{role}', [RoleController::class, 'show']);
 
-            // Route::resource('role-permissions', RolePermissionController::class);
-            Route::get('user-roles', [UserRoleController::class, 'index'])->name('user-roles.index');
-            Route::get('user-roles/create', [UserRoleController::class, 'create'])->name('user-roles.create');
-            Route::post('user-roles', [UserRoleController::class, 'store'])->name('user-roles.store');
-            Route::get('user-roles/{user}/edit', [UserRoleController::class, 'edit'])->name('user-roles.edit');
-            Route::put('user-roles/{user}', [UserRoleController::class, 'update'])->name('user-roles.update');
+                // Route::resource('role-permissions', RolePermissionController::class);
+                Route::get('user-roles', [UserRoleController::class, 'index'])->name('user-roles.index');
+                Route::get('user-roles/create', [UserRoleController::class, 'create'])->name('user-roles.create');
+                Route::post('user-roles', [UserRoleController::class, 'store'])->name('user-roles.store');
+                Route::get('user-roles/{user}/edit', [UserRoleController::class, 'edit'])->name('user-roles.edit');
+                Route::put('user-roles/{user}', [UserRoleController::class, 'update'])->name('user-roles.update');
+            });
 
             //
             // Request Transfer and managment
             //
-            Route::get('/transfer-requests', [TransferRequestController::class, 'index'])->name('transferRequests.index');
-            Route::post('/transfer-requests', [TransferRequestController::class, 'store'])->name('transfer-requests.store');
-            Route::post('/transfer-requests/bulk', [TransferRequestController::class, 'bulkStore'])
-                ->name('transfer-requests.bulk');
-            Route::get('/get-transfer-requests', [TransferRequestController::class, 'fetch'])->name('transfer.requests.fetch');
+            Route::middleware('permission:finance.transfers.manage')->group(function () {
+                Route::get('/transfer-requests', [TransferRequestController::class, 'index'])->name('transferRequests.index');
+                Route::post('/transfer-requests', [TransferRequestController::class, 'store'])->name('transfer-requests.store');
+                Route::post('/transfer-requests/bulk', [TransferRequestController::class, 'bulkStore'])
+                    ->name('transfer-requests.bulk');
+                Route::get('/get-transfer-requests', [TransferRequestController::class, 'fetch'])->name('transfer.requests.fetch');
+            });
 
             // Product bulk upload
             Route::get('/products/bulk-upload', [ProductBulkUploadController::class, 'bulkUploadForm'])->name('productsBulkUpload');
@@ -280,7 +286,7 @@ Route::group([
             //
             // Investment Pools Routes
             //
-            Route::prefix('investment-pools')->name('investment-pools.')->group(function () {
+            Route::prefix('investment-pools')->middleware('permission:pools.manage')->name('investment-pools.')->group(function () {
                 Route::get('/calendar', [InvestmentPoolsController::class, 'calendar'])->name('calendar');
                 Route::get('/calendar-events', [InvestmentPoolsController::class, 'calendarEvents'])->name('calendar-events');
                 Route::post('/', [InvestmentPoolsController::class, 'store'])->name('store');
@@ -292,7 +298,7 @@ Route::group([
             //
             // Claims Routes
             //
-            Route::prefix('claims')->name('claims.')->controller(\App\Http\Controllers\Admin\ClaimsController::class)->group(function () {
+            Route::prefix('claims')->middleware('permission:collections.manage')->name('claims.')->controller(\App\Http\Controllers\Admin\ClaimsController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
@@ -307,7 +313,7 @@ Route::group([
             //
             // Checkout Routes
             //
-            Route::prefix('checkouts')->name('checkouts.')->controller(\App\Http\Controllers\Admin\CheckoutController::class)->group(function () {
+            Route::prefix('checkouts')->middleware('permission:checkouts.manage')->name('checkouts.')->controller(\App\Http\Controllers\Admin\CheckoutController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
@@ -320,7 +326,7 @@ Route::group([
             });
 
             // Branch Routes
-            Route::prefix('branches')->name('branches.')->controller(BranchController::class)->group(function () {
+            Route::prefix('branches')->middleware('permission:branches.manage')->name('branches.')->controller(BranchController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/create', 'create')->name('create');
                 Route::post('/', 'store')->name('store');
@@ -351,7 +357,7 @@ Route::group([
             Route::get('fahman-supplier-results/{id}', [FahmanController::class, 'fahmanSupplierResults'])->name('fahmanSupplierResults');
             Route::get('fahman-supplier-details/{id}', [FahmanController::class, 'fahmanSupplierDetails']);
 
-            Route::controller(AccountController::class)->group(function () {
+            Route::middleware('permission:customers.manage')->controller(AccountController::class)->group(function () {
                 Route::get('customers', 'customers')->name('customers');
                 Route::get('customer/{id}', 'customerProfile')->name('customerProfile');
                 Route::get('customer-business/{id}', 'customerBusiness')->name('customerBusiness');
@@ -379,51 +385,75 @@ Route::group([
             // Supplier Accounts
             //
 
-            Route::controller(SupplierController::class)->group(function () {
-                // Supplier management routes
-                Route::get('suppliers/export', 'exportSuppliers')->name('suppliers.export');
-                Route::get('suppliers', 'suppliers')->name('suppliers');
-                Route::post('update-commission', 'updateCommission')->name('updateCommission');
-                Route::get('supplier/{id}', 'supplierProfile')->name('supplierProfile');
-                Route::get('supplier-shop-settings/{id}', 'supplierShop')->name('supplierShop');
-                Route::post('shop-settings', 'supplierShopSubmit')->name('supplierShopSubmit');
-                Route::get('supplier-transactions/{id}', 'supplierTransactions')->name('supplierTransactions');
-                Route::get('supplier-finance/{id}', 'supplierFinance')->name('supplierFinance');
-                Route::get('supplier-orders/{id}', 'supplierOrders')->name('supplierOrders');
-                Route::get('supplier-payments/{id}', 'supplierPayments')->name('supplierPayments');
-                Route::get('supplier-products/{id}', 'supplierProducts')->name('supplierProducts');
-                Route::get('supplier-sales/{id}', 'supplierSales')->name('supplierSales');
-                Route::put('supplier-status/{id}', 'updateSupplierStatus')->name('updateSupplierStatus');
-                Route::put('supplier-status/approve/{id}', 'updateSupplierStatusApprove')->name('updateSupplierStatusApprove');
-                Route::get('supplier-compliance/{id}', 'supplierCompliance')->name('supplierCompliance');
-                Route::get('suppliers-statics', 'suppliersStatics')->name('suppliers.statics');
+            Route::middleware('permission:merchants.manage')->group(function () {
+                Route::controller(SupplierController::class)->group(function () {
+                    // Supplier management routes
+                    Route::get('suppliers/export', 'exportSuppliers')->name('suppliers.export');
+                    Route::get('suppliers', 'suppliers')->name('suppliers');
+                    Route::post('update-commission', 'updateCommission')->name('updateCommission');
+                    Route::get('supplier/{id}', 'supplierProfile')->name('supplierProfile');
+                    Route::get('supplier-shop-settings/{id}', 'supplierShop')->name('supplierShop');
+                    Route::post('shop-settings', 'supplierShopSubmit')->name('supplierShopSubmit');
+                    Route::get('supplier-transactions/{id}', 'supplierTransactions')->name('supplierTransactions');
+                    Route::get('supplier-finance/{id}', 'supplierFinance')->name('supplierFinance');
+                    Route::get('supplier-orders/{id}', 'supplierOrders')->name('supplierOrders');
+                    Route::get('supplier-payments/{id}', 'supplierPayments')->name('supplierPayments');
+                    Route::get('supplier-products/{id}', 'supplierProducts')->name('supplierProducts');
+                    Route::get('supplier-sales/{id}', 'supplierSales')->name('supplierSales');
+                    Route::put('supplier-status/{id}', 'updateSupplierStatus')->name('updateSupplierStatus');
+                    Route::put('supplier-status/approve/{id}', 'updateSupplierStatusApprove')->name('updateSupplierStatusApprove');
+                    Route::get('supplier-compliance/{id}', 'supplierCompliance')->name('supplierCompliance');
+                    Route::get('suppliers-statics', 'suppliersStatics')->name('suppliers.statics');
 
-                Route::post('fetch-wathiq', 'fetchWathiq')->name('merchants.fetchWathiq');
-                Route::post('merchants/{id}/toggle-integration', 'toggleIntegration')->name('merchants.toggleIntegration');
+                    Route::post('fetch-wathiq', 'fetchWathiq')->name('merchants.fetchWathiq');
+                    Route::post('merchants/{id}/toggle-integration', 'toggleIntegration')->name('merchants.toggleIntegration');
 
-                // Trash management routes
-                Route::get('suppliers/trashed', 'trashed')->name('merchants.trashed');
-                Route::post('merchants/{id}/soft-delete', 'softDelete')->name('merchants.softDelete');
-                Route::post('merchants/{id}/force-delete', 'forceDelete')->name('merchants.forceDelete');
-                Route::post('merchants/{id}/restore', 'restore')->name('merchants.restore');
-                Route::post('merchants/empty-trash', 'emptyTrash')->name('merchants.emptyTrash');
+                    // Trash management routes
+                    Route::get('suppliers/trashed', 'trashed')->name('merchants.trashed');
+                    Route::post('merchants/{id}/soft-delete', 'softDelete')->name('merchants.softDelete');
+                    Route::post('merchants/{id}/force-delete', 'forceDelete')->name('merchants.forceDelete');
+                    Route::post('merchants/{id}/restore', 'restore')->name('merchants.restore');
+                    Route::post('merchants/empty-trash', 'emptyTrash')->name('merchants.emptyTrash');
+                });
+
+                Route::post('/supplier/{id}/update-document', [ComplianceController::class, 'updateDocument'])->name('supplier.update-document');
+                Route::get('/supplier/{id}/contract-data', [ComplianceController::class, 'getContractData'])->name('supplier.contract-data');
             });
-
-            Route::post('/supplier/{id}/update-document', [ComplianceController::class, 'updateDocument'])->name('supplier.update-document');
-            Route::get('/supplier/{id}/contract-data', [ComplianceController::class, 'getContractData'])->name('supplier.contract-data');
 
             //
             // LEAN routes
             //
-            Route::controller(LeanController::class)->prefix('lean')->name('lean.')->group(function () {
-                Route::get('/{id}', 'index')->name('index');
-                Route::get('/{id}/banks', 'getBanks')->name('banks');
-                Route::get('/{id}/entities', 'getEntities')->name('entities');
-                Route::get('/{id}/bank-statement/{reportId}', 'getBankStatement')->name('bank-statement');
+            Route::middleware('permission:openbanking.use')->group(function () {
+                Route::controller(LeanController::class)->prefix('lean')->name('lean.')->group(function () {
+                    Route::get('/{id}', 'index')->name('index');
+                    Route::get('/{id}/banks', 'getBanks')->name('banks');
+                    Route::get('/{id}/entities', 'getEntities')->name('entities');
+                    Route::get('/{id}/bank-statement/{reportId}', 'getBankStatement')->name('bank-statement');
 
-                Route::post('/test-connection', 'testConnection')->name('test-connection');
-                Route::post('/clear-cache', 'clearCache')->name('clear-cache');
-            });
+                    Route::post('/test-connection', 'testConnection')->name('test-connection');
+                    Route::post('/clear-cache', 'clearCache')->name('clear-cache');
+                });
+
+                //
+                // Single View
+                //
+                Route::controller(SingleViewController::class)->prefix('singleview')->group(function () {
+                    Route::get('/{id}', 'index')->name('singleview.index');
+                    Route::get('/{id}/fetch-accounts', 'fetchAccountsAjax')->name('singleview.fetchAccounts');
+                    Route::get('/{id}/fetch-accounts-balance', 'fetchAccountsBalance')->name('singleview.fetchAccountsBalance');
+                    Route::get('/{id}/fetch-credit-check', 'fetchCreditCheck')->name('singleview.fetchCreditCheck');
+
+                    Route::post('/consent', 'createConsent')->name('singleview.createConsent');
+                    Route::get('/consent/{bankCode}/{consentId}', 'getConsentDetails')->name('singleview.getConsentDetails');
+                    Route::get('/accounts/{bankCode}/{consentId}', 'getAccounts')->name('singleview.getAccounts');
+                    Route::get('/e-statements/{bankCode}/{consentId}/{accountId}', 'getEStatements')->name('singleview.getEStatements');
+                    Route::get('/credit-check-basic/{bankCode}/{consentId}', 'creditCheckBasic')->name('singleview.creditCheckBasic');
+                    Route::get('/credit-check-advanced/{bankCode}/{consentId}', 'creditCheckAdvanced')->name('singleview.creditCheckAdvanced');
+
+                    Route::get('/{id}/fetch-income-check-advanced', 'fetchIncomeCheckAdvanced')->name('singleview.fetchIncomeCheckAdvanced');
+                    Route::get('/income-check-advanced/{bankCode}/{consentId}', 'incomeCheckAdvanced')->name('singleview.incomeCheckAdvanced');
+                });
+            }); // end permission:openbanking.use
 
             //
             // SIMAH routes
@@ -432,26 +462,6 @@ Route::group([
                 ->name('customer.simah.fetch');
             Route::post('/customer/simah/consumer-score', [SimahController::class, 'fetchConsumerScore'])
                 ->name('customer.simah.consumer-score');
-
-            //
-            // Single View
-            //
-            Route::controller(SingleViewController::class)->prefix('singleview')->group(function () {
-                Route::get('/{id}', 'index')->name('singleview.index');
-                Route::get('/{id}/fetch-accounts', 'fetchAccountsAjax')->name('singleview.fetchAccounts');
-                Route::get('/{id}/fetch-accounts-balance', 'fetchAccountsBalance')->name('singleview.fetchAccountsBalance');
-                Route::get('/{id}/fetch-credit-check', 'fetchCreditCheck')->name('singleview.fetchCreditCheck');
-
-                Route::post('/consent', 'createConsent')->name('singleview.createConsent');
-                Route::get('/consent/{bankCode}/{consentId}', 'getConsentDetails')->name('singleview.getConsentDetails');
-                Route::get('/accounts/{bankCode}/{consentId}', 'getAccounts')->name('singleview.getAccounts');
-                Route::get('/e-statements/{bankCode}/{consentId}/{accountId}', 'getEStatements')->name('singleview.getEStatements');
-                Route::get('/credit-check-basic/{bankCode}/{consentId}', 'creditCheckBasic')->name('singleview.creditCheckBasic');
-                Route::get('/credit-check-advanced/{bankCode}/{consentId}', 'creditCheckAdvanced')->name('singleview.creditCheckAdvanced');
-
-                Route::get('/{id}/fetch-income-check-advanced', 'fetchIncomeCheckAdvanced')->name('singleview.fetchIncomeCheckAdvanced');
-                Route::get('/income-check-advanced/{bankCode}/{consentId}', 'incomeCheckAdvanced')->name('singleview.incomeCheckAdvanced');
-            });
 
             //
             // Risk Analytics
@@ -477,7 +487,7 @@ Route::group([
                 Route::get('risk/export/download/{id}', 'download')->name('risk.export.download');
             });
 
-            Route::prefix('risk-weights')->group(function () {
+            Route::prefix('risk-weights')->middleware('permission:risk.config.manage')->group(function () {
                 Route::post('/', [RiskWeightController::class, 'store'])->name('risk-weights.store');
                 Route::get('/get', [RiskWeightController::class, 'getWeights'])->name('risk-weights.get');
                 Route::post('/reset', [RiskWeightController::class, 'resetToDefault'])->name('risk-weights.reset');

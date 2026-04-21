@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\RefundRequest;
+use App\Services\Finance\RefundApprovalService;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -11,6 +12,8 @@ use Illuminate\Support\Str;
 
 class RefundRequestController extends Controller
 {
+    public function __construct(private RefundApprovalService $refundApprovalService) {}
+
     public function updateRefundStatus(Request $request, $id)
     {
         $request->validate([
@@ -18,17 +21,22 @@ class RefundRequestController extends Controller
         ]);
 
         $refundRequest = RefundRequest::findOrFail($id);
+
+        // TODO: add $this->authorize('approve', $refundRequest) once RefundRequestPolicy is created
+
         $oldStatus = $refundRequest->refund_status;
         $newStatus = $request->input('refund_status');
 
-        $refundRequest->update([
-            'refund_status' => $newStatus,
-        ]);
+        match ($newStatus) {
+            'approved' => $this->refundApprovalService->approve($refundRequest, Auth::user()),
+            'rejected' => $this->refundApprovalService->reject($refundRequest, Auth::user()),
+            default => $refundRequest->update(['refund_status' => $newStatus]),
+        };
 
         // ===== Log the refund status update =====
         $refundRequest->logModelAction(
             event: 'update',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated refund request status to {$refundRequest->refund_status} for order ID {$refundRequest->order_id}",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." updated refund request status to {$refundRequest->refund_status} for order ID {$refundRequest->order_id}",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),
@@ -49,7 +57,7 @@ class RefundRequestController extends Controller
                 'rejected' => "Your refund request for Order #{$refundRequest->order_id} has been rejected. Please contact support for details.",
             ];
 
-            $notificationBody = $statusMessages[$newStatus] ?? "Your refund request status has changed.";
+            $notificationBody = $statusMessages[$newStatus] ?? 'Your refund request status has changed.';
 
             $firebaseService->sendCustomNotification(
                 $refundRequest->user_id, // Assuming refundRequest has user_id
@@ -63,7 +71,7 @@ class RefundRequestController extends Controller
                 ]
             );
         } catch (\Throwable $e) {
-            Log::error("Failed to send refund notification: " . $e->getMessage(), ['refund_request_id' => $refundRequest->id]);
+            Log::error('Failed to send refund notification: '.$e->getMessage(), ['refund_request_id' => $refundRequest->id]);
         }
         // ========================================
 
@@ -80,6 +88,7 @@ class RefundRequestController extends Controller
             })->orderByRaw('assigned_to IS NULL DESC')
             ->paginate(10);
         $status = 'Refund';
+
         return view('admin.refund-requests.index', compact('refundRequests', 'status'));
     }
 
@@ -87,7 +96,7 @@ class RefundRequestController extends Controller
     {
         $statuses = ['pending', 'approved', 'rejected'];
 
-        if (!in_array($status, $statuses)) {
+        if (! in_array($status, $statuses)) {
             abort(404);
         }
         $user = currentUser();

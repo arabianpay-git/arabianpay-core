@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\WithApprovalContext;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class Transaction extends Model
@@ -43,13 +45,36 @@ class Transaction extends Model
     ];
 
     /**
-     * Boot method to generate UUID
+     * Boot method to generate UUID and register soft-audit guard.
      */
-    protected static function booted()
+    protected static function booted(): void
     {
         static::creating(function ($transaction) {
             if (empty($transaction->uuid)) {
                 $transaction->uuid = (string) Str::uuid();
+            }
+        });
+
+        static::updating(function (self $model): void {
+            if (! WithApprovalContext::isInApprovalContext()) {
+                Log::critical('Direct mutation on financial model outside approval context', [
+                    'model' => static::class,
+                    'id' => $model->getKey(),
+                    'dirty' => array_keys($model->getDirty()),
+                ]);
+
+                try {
+                    app(\App\Services\AuditTrailService::class)->logCrudOperation(
+                        'unauthorized_direct_mutation',
+                        class_basename($model),
+                        $model->getKey(),
+                        'CRITICAL: Financial model mutated directly — bypassing approval service',
+                        $model->getOriginal(),
+                        $model->getDirty(),
+                    );
+                } catch (\Throwable) {
+                    // AuditTrailService unavailable (e.g., seeding, testing) — Log::critical already fired
+                }
             }
         });
     }
@@ -59,11 +84,11 @@ class Transaction extends Model
     {
         return $this->belongsTo(User::class, 'assigned_to');
     }
+
     public function user()
     {
         return $this->belongsTo(User::class);
     }
-
 
     public function seller()
     {
@@ -103,15 +128,14 @@ class Transaction extends Model
         return $this->refund_requests_sum ?? 0;
     }
 
-
     /**
      * Disbursed vs repaid over past N months.
      */
     public static function getLoanFlowData($range)
     {
-        $months = (int)$range;
-        $end    = Carbon::now();
-        $start  = $end->copy()->subMonths($months - 1)->startOfMonth();
+        $months = (int) $range;
+        $end = Carbon::now();
+        $start = $end->copy()->subMonths($months - 1)->startOfMonth();
 
         $labels = [];
         for ($i = 0; $i < $months; $i++) {
@@ -136,7 +160,7 @@ class Transaction extends Model
         $d = $r = [];
         foreach ($labels as $m) {
             $d[] = $disbursed[$m] ?? 0;
-            $r[] = $repaid[$m]   ?? 0;
+            $r[] = $repaid[$m] ?? 0;
         }
 
         return ['months' => $labels, 'disbursed' => $d, 'repaid' => $r];
@@ -148,6 +172,7 @@ class Transaction extends Model
     public static function getCashFlowData($range)
     {
         $base = self::getLoanFlowData($range);
+
         // reuse disbursed/repaid or swap in canceled if preferred
         return ['months' => $base['months'], 'inflows' => $base['repaid'], 'outflows' => $base['canceled'] ?? []];
     }

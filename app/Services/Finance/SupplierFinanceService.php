@@ -2,21 +2,22 @@
 
 namespace App\Services\Finance;
 
-use App\Models\Order;
-use App\Models\SupplierPayout;
-use App\Models\Settlement;
+use App\Models\FAccounts;
 use App\Models\FEntry;
 use App\Models\Merchant;
-use App\Models\FAccounts;
+use App\Models\Order;
+use App\Models\Settlement;
+use App\Services\AuditTrailService;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\DB;
 
 class SupplierFinanceService
 {
+    public function __construct(private AuditTrailService $auditTrail) {}
+
     /*
      * Get upcoming payout for a supplier.
      * For now we will hard code the payout date to be every Tuesday, until we have a proper setting table for this feature.
-     * This calculates the total amount to be paid on the next Tuesday payout. 
+     * This calculates the total amount to be paid on the next Tuesday payout.
      * Only includes delivered orders that have not been fully paid out yet.
      */
     public function getUpcomingPayout($supplierUserId)
@@ -29,6 +30,13 @@ class SupplierFinanceService
             ->first();
 
         if ($upcomingSettlement) {
+            $this->auditTrail->logViewOperation(
+                'supplier_payout_read',
+                'SupplierPayout',
+                'Supplier upcoming payout accessed',
+                ['supplier_user_id' => $supplierUserId]
+            );
+
             return [
                 'supplier_id' => $supplierUserId,
                 'upcoming_payout_amount' => (float) $upcomingSettlement->payable_amount,
@@ -39,15 +47,15 @@ class SupplierFinanceService
                     return [
                         'order_id' => $order->id,
                         'order_uuid' => $order->uuid,
-                        'order_total' => (float)$order->grand_total,
-                        'commission' => (float)$order->commission_amount,
-                        'payable' => (float)$order->grand_total - (float)$order->commission_amount,
+                        'order_total' => (float) $order->grand_total,
+                        'commission' => (float) $order->commission_amount,
+                        'payable' => (float) $order->grand_total - (float) $order->commission_amount,
                         'delivery_status' => $order->delivery_status,
                         'delivered_at' => $order->delivered_at,
                     ];
                 }),
                 'is_settlement' => true,
-                'settlement_number' => $upcomingSettlement->settlement_number
+                'settlement_number' => $upcomingSettlement->settlement_number,
             ];
         }
 
@@ -65,7 +73,7 @@ class SupplierFinanceService
 
         foreach ($deliveredOrders as $order) {
             // Calculate the amount owed to supplier (grand_total - commission)
-            $orderAmount = (float)$order->grand_total - (float)($order->commission_amount ?? 0);
+            $orderAmount = (float) $order->grand_total - (float) ($order->commission_amount ?? 0);
 
             // Check if partially paid (legacy support)
             $paidAmount = $order->payouts()->sum('amount');
@@ -87,6 +95,13 @@ class SupplierFinanceService
             }
         }
 
+        $this->auditTrail->logViewOperation(
+            'supplier_payout_read',
+            'SupplierPayout',
+            'Supplier upcoming payout accessed',
+            ['supplier_user_id' => $supplierUserId]
+        );
+
         return [
             'supplier_id' => $supplierUserId,
             'upcoming_payout_amount' => round($upcomingAmount, 2),
@@ -100,13 +115,13 @@ class SupplierFinanceService
 
     /*
      * Get ledger/statement for a supplier within a date period.
-     * Shows all financial entries for the supplier 
+     * Shows all financial entries for the supplier
      * with opening balance, transactions, and closing balance.
      */
     public function getLedger($supplierUserId, $startDate, $endDate)
     {
         $supplier = Merchant::find($supplierUserId);
-        if (!$supplier) {
+        if (! $supplier) {
             return [
                 'error' => 'Supplier not found',
                 'supplier_id' => $supplierUserId,
@@ -121,7 +136,7 @@ class SupplierFinanceService
         $accountId = 2400;
         $account = FAccounts::find($accountId);
 
-        if (!$account) {
+        if (! $account) {
             return [
                 'error' => 'Accounts Payable account (2400) not found',
                 'supplier_id' => $supplier->id,
@@ -138,11 +153,11 @@ class SupplierFinanceService
             ->first();
 
         // Accounts Payable is a liability account with credit normal balance (account_type2 = 2)
-        $isDebitNormal = ((int)$account->account_type2) === 1;
+        $isDebitNormal = ((int) $account->account_type2) === 1;
 
         $openingBalance = $isDebitNormal
-            ? (float)$priorEntries->sum_debit - (float)$priorEntries->sum_credit
-            : (float)$priorEntries->sum_credit - (float)$priorEntries->sum_debit;
+            ? (float) $priorEntries->sum_debit - (float) $priorEntries->sum_credit
+            : (float) $priorEntries->sum_credit - (float) $priorEntries->sum_debit;
 
         // Get entries within the period for this supplier
         $entries = FEntry::with(['user', 'order', 'transaction'])
@@ -161,8 +176,8 @@ class SupplierFinanceService
         $totalCredit = 0;
 
         foreach ($entries as $entry) {
-            $debit = (float)($entry->debit ?? 0);
-            $credit = (float)($entry->credit ?? 0);
+            $debit = (float) ($entry->debit ?? 0);
+            $credit = (float) ($entry->credit ?? 0);
 
             $totalDebit += $debit;
             $totalCredit += $credit;
@@ -188,6 +203,13 @@ class SupplierFinanceService
         }
 
         $closingBalance = $runningBalance;
+
+        $this->auditTrail->logViewOperation(
+            'supplier_ledger_read',
+            'SupplierLedger',
+            'Supplier ledger accessed',
+            ['supplier_user_id' => $supplierUserId]
+        );
 
         return [
             'supplier_id' => $supplierUserId,

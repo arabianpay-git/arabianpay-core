@@ -36,7 +36,7 @@ class SecureHeaders
         $response->headers->set('X-XSS-Protection', '1; mode=block');
 
         // Referrer policy
-        $response->headers->set('Referrer-Policy', 'no-referrer-when-downgrade');
+        $response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
 
         // Feature policy (Permissions-Policy)
         $response->headers->set('Permissions-Policy', 'geolocation=(), microphone=(), camera=()');

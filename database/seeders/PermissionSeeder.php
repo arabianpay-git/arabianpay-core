@@ -3,8 +3,8 @@
 namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
-use Spatie\Permission\Models\Role;
 use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class PermissionSeeder extends Seeder
 {
@@ -131,6 +131,19 @@ class PermissionSeeder extends Seeder
             'settings.manage',
             'faq.manage',
             'page.manage',
+
+            // SAMA P1 — granular route-level permissions
+            'messages.manage',
+            'rbac.manage',
+            'finance.transfers.manage',
+            'customers.manage',
+            'merchants.manage',
+            'pools.manage',
+            'collections.manage',
+            'checkouts.manage',
+            'branches.manage',
+            'openbanking.use',
+            'risk.config.manage',
         ];
 
         foreach ($permissions as $permission) {

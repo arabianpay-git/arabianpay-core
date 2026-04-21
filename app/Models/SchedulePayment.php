@@ -2,10 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\WithApprovalContext;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SchedulePayment extends Model
@@ -51,6 +53,32 @@ class SchedulePayment extends Model
         });
     }
 
+    protected static function booted(): void
+    {
+        static::updating(function (self $model): void {
+            if (! WithApprovalContext::isInApprovalContext()) {
+                Log::critical('Direct mutation on financial model outside approval context', [
+                    'model' => static::class,
+                    'id' => $model->getKey(),
+                    'dirty' => array_keys($model->getDirty()),
+                ]);
+
+                try {
+                    app(\App\Services\AuditTrailService::class)->logCrudOperation(
+                        'unauthorized_direct_mutation',
+                        class_basename($model),
+                        $model->getKey(),
+                        'CRITICAL: Financial model mutated directly — bypassing approval service',
+                        $model->getOriginal(),
+                        $model->getDirty(),
+                    );
+                } catch (\Throwable) {
+                    // AuditTrailService unavailable (e.g., seeding, testing) — Log::critical already fired
+                }
+            }
+        });
+    }
+
     // Relations
     public function assigned()
     {
@@ -71,10 +99,12 @@ class SchedulePayment extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
     public function payment()
     {
         return $this->hasOne(Payment::class, 'schedule_payment_id');
     }
+
     public function partialPayments()
     {
         return $this->hasMany(PartialPayment::class, 'schedule_payment_id');
@@ -84,10 +114,12 @@ class SchedulePayment extends Model
     {
         return $this->hasOne(Promise::class, 'schedule_payment_id');
     }
+
     public function claims()
     {
         return $this->hasMany(Claim::class, 'schedule_payment_id');
     }
+
     /**
      * Payment status distribution.
      */
@@ -107,9 +139,9 @@ class SchedulePayment extends Model
      */
     public static function getOverdueTrend($range)
     {
-        $months = (int)$range;
-        $end    = Carbon::now();
-        $start  = $end->copy()->subMonths($months - 1)->startOfMonth();
+        $months = (int) $range;
+        $end = Carbon::now();
+        $start = $end->copy()->subMonths($months - 1)->startOfMonth();
 
         $labels = [];
         $series = [];
@@ -129,9 +161,9 @@ class SchedulePayment extends Model
             $series[] = $raw[$m] ?? 0;
         }
 
-        $total   = DB::table('schedule_payments')->count();
+        $total = DB::table('schedule_payments')->count();
         $overdue = DB::table('schedule_payments')->whereIn('payment_status', ['due', 'late'])->where('due_date', '<', $end)->count();
-        $rate    = $total ? round($overdue / $total * 100, 1) : 0;
+        $rate = $total ? round($overdue / $total * 100, 1) : 0;
 
         return ['months' => $labels, 'series' => $series, 'rate' => $rate];
     }
