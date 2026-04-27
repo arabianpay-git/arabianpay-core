@@ -174,7 +174,7 @@
         @foreach ($inputValue as $val)
             @if ($val)
                 @php
-                    $url = getMediaURL($val);
+                    $url = supplierMedia($val, getMediaUrl($val));
                     $ext = strtolower(pathinfo($url, PATHINFO_EXTENSION));
                     $isVideo = in_array($ext, ['mp4', 'webm', 'ogg']);
                     $isPdf = $ext === 'pdf';

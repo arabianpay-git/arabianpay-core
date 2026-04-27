@@ -36,13 +36,6 @@ npm-debug.log
 yarn-error.log
 auth.json
 
-# -----------------------------
-# Fix for bootstrap tracking
-# -----------------------------
-
-# Ignore everything under bootstrap
-/bootstrap/*
-
-# But allow cache and everything inside it
-!bootstrap/cache/
-!bootstrap/cache/**
+# Laravel bootstrap cache
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore

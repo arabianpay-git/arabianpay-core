@@ -973,8 +973,12 @@ class ProductController extends Controller
             $data['tags'] = null;
         }
 
-        if (!empty($data['photos']) && is_array($data['photos'])) {
-            $data['photos'] = json_encode(array_map('strval', $data['photos']));
+        $photos = $request->input('photos', null);
+        if (is_array($photos)) {
+            $photos = array_values(array_filter(array_map('strval', $photos), fn ($photo) => $photo !== ''));
+            $data['photos'] = !empty($photos) ? json_encode($photos) : null;
+        } else {
+            $data['photos'] = null;
         }
 
         return $data;
