@@ -24,6 +24,7 @@ class AuditLogMiddleware
         'storage',
         'api/health',
         'health',
+        'up',
         'ping',
         'favicon.ico',
         'assets',

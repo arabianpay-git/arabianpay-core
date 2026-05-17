@@ -44,9 +44,13 @@ return [
     | considered expired. This will override any values set in the token's
     | "expires_at" attribute, but first-party sessions are not affected.
     |
+    | SAMA CSF 3.3.5 / MVC §4.2: Authentication tokens must have a finite
+    | lifetime. Default 60 minutes for API tokens; refresh via the
+    | /api/auth/refresh-token endpoint.
+    |
     */
 
-    'expiration' => null,
+    'expiration' => env('SANCTUM_EXPIRATION', 60),
 
     /*
     |--------------------------------------------------------------------------
