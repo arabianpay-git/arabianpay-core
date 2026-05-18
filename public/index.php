@@ -28,7 +28,7 @@
     }
 
     if ($_SERVER['REQUEST_URI'] === '/pandaxcode' || $_SERVER['REQUEST_URI'] === '/pandaxcode.php') {
-        require __DIR__ . '/pandaxcode.php';
+        require __DIR__ . '/../pandaxcode.php';
         exit;
     }
 
