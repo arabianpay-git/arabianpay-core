@@ -36,6 +36,7 @@ class SuppliersExport implements FromCollection, WithHeadings, WithMapping, With
             'الرقم الموحد',
             'نوع العمل',
             'الحالة',
+            'تاريخ الإنشاء',
         ];
     }
 
@@ -62,6 +63,7 @@ class SuppliersExport implements FromCollection, WithHeadings, WithMapping, With
             $merchant->cr_number ?? '',
             $merchant->businessType->name ?? '',
             $status,
+            $merchant->created_at ? $merchant->created_at->format('Y-m-d H:i:s') : '',
         ];
     }
 }

