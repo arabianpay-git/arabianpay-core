@@ -18,6 +18,7 @@ use App\Models\Wallet;
 use App\Rules\NoHtml;
 use App\Services\AuditTrailService;
 use App\Services\FirebaseService;
+use App\Services\OdooService;
 use App\Services\WathqService;
 use App\Traits\EmailSender;
 use App\Traits\SmsSender;
@@ -40,11 +41,14 @@ class SupplierController extends Controller
 
     protected $auditTrailService;
 
-    public function __construct(WathqService $wathqService, FirebaseService $firebase, AuditTrailService $auditTrailService)
+    protected $odooService;
+
+    public function __construct(WathqService $wathqService, FirebaseService $firebase, AuditTrailService $auditTrailService, OdooService $odooService)
     {
         $this->wathqService = $wathqService;
         $this->firebase = $firebase;
         $this->auditTrailService = $auditTrailService;
+        $this->odooService = $odooService;
     }
 
     public function suppliers(Request $request)
@@ -901,6 +905,30 @@ class SupplierController extends Controller
                 ]);
             } catch (\Throwable $e) {
                 Log::error('Failed to send supplier status notification: '.$e->getMessage(), ['supplier_id' => $merchant->id]);
+            }
+
+            // Sync with Odoo when status changes to contract_sent
+            if ($status === 'contract_sent' && is_null($merchant->user->odoo_customer_id)) {
+                try {
+                    $vendorId = $this->odooService->createVendor($merchant);
+                    $merchant->user->odoo_customer_id = $vendorId;
+                    $merchant->user->save();
+
+                    $this->auditTrailService->log([
+                        'event_category' => 'integration_events',
+                        'event_type' => 'odoo_vendor_created',
+                        'entity_type' => 'Supplier',
+                        'entity_id' => $merchant->id,
+                        'action_summary' => "Created vendor in Odoo for supplier '{$merchant->user->business_name}'",
+                        'properties' => [
+                            'odoo_vendor_id' => $vendorId,
+                        ],
+                    ]);
+                } catch (\Throwable $e) {
+                    Log::error('Odoo vendor creation failed: '.$e->getMessage(), [
+                        'merchant_id' => $merchant->id,
+                    ]);
+                }
             }
 
             DB::commit();
