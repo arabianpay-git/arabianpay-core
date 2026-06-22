@@ -15,7 +15,7 @@
 
                 @if (
                     $ticket->user_id == Auth::id() ||
-                        Auth::user()->user_type == 'admin' ||
+                        Auth::user()->can('ticket.manage') ||
                         (Auth::user()->user_type == 'employee' && Auth::user()->is_manager))
                     <div class="">
                         <form action="{{ route('ticketUpdateStatus', $ticket->ticket_number) }}" method="POST"

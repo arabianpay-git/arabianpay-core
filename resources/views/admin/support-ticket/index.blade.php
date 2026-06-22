@@ -13,13 +13,15 @@
                         {{ translate('Support Tickets') }}
                     </h1>
                 </div>
-                @if (Route::is('internelTickets'))
-                    <div class="flex items-center gap-2.5">
-                        <a class="btn btn-sm btn-light" href="{{ route('ticketCreate') }}">
-                            {{ translate('Create New Ticket') }}
-                        </a>
-                    </div>
-                @endif
+                @canany(['ticket.create', 'ticket.manage'])
+                    @if (Route::is('internelTickets'))
+                        <div class="flex items-center gap-2.5">
+                            <a class="btn btn-sm btn-light" href="{{ route('ticketCreate') }}">
+                                {{ translate('Create New Ticket') }}
+                            </a>
+                        </div>
+                    @endif
+                @endcanany
             </div>
         </div>
         <!-- End of Container -->

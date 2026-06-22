@@ -1457,7 +1457,7 @@
                     </div>
                 @endcanany
 
-                @can('ticket.manage')
+                @canany(['ticket.view', 'ticket.manage'])
                     <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">
                         <a href="{{ route('tickets') }}">
                             <div class="menu-link flex items-center grow cursor-pointer border border-transparent gap-[10px] ps-[10px] pe-[10px] py-[6px]"
@@ -1501,7 +1501,7 @@
                             </div>
                         </a>
                     </div>
-                @endcan
+                @endcanany
 
                 @can('package.manage')
                     <div class="menu-item" data-menu-item-toggle="accordion" data-menu-item-trigger="click">

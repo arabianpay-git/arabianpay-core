@@ -72,6 +72,9 @@ class PermissionSeeder extends Seeder
             'ad.manage',
 
             // Support & Tickets
+            'ticket.view',
+            'ticket.create',
+            'ticket.reply',
             'ticket.manage',
 
             // Customer Packages

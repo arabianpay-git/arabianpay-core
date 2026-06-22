@@ -24,6 +24,10 @@ class SupportTicketController extends Controller
         try {
             $user = Auth::user();
 
+            if (!$user->can('ticket.view') && !$user->can('ticket.manage')) {
+                abort(403, 'Unauthorized access to support tickets.');
+            }
+
             $tickets = SupportTicket::selectRaw('MAX(id) as id, ticket_number, MAX(user_id) as user_id, MAX(subject) as subject, MAX(details) as details, MAX(files) as files, MAX(reply) as reply, MAX(status) as status, MAX(created_at) as created_at')
                 ->groupBy('ticket_number')
                 ->orderByDesc('id')
@@ -81,7 +85,7 @@ class SupportTicketController extends Controller
             $ticket = SupportTicket::findOrFail($id);
 
             // Check if user has permission to view this ticket
-            if ($user->user_type !== 'admin' && $ticket->user_id !== $user->id && $ticket->assigned_to !== $user->id) {
+            if (!$user->can('ticket.view') && !$user->can('ticket.manage') && $ticket->user_id !== $user->id && $ticket->assigned_to !== $user->id) {
                 $this->auditTrailService->log([
                     'event_category' => 'access_control',
                     'event_type' => 'unauthorized_ticket_view',
@@ -185,6 +189,10 @@ class SupportTicketController extends Controller
         try {
             $user = Auth::user();
 
+            if (!$user->can('ticket.create') && !$user->can('ticket.manage')) {
+                abort(403, 'Unauthorized to create support tickets.');
+            }
+
             // Log ticket creation form view
             $this->auditTrailService->log([
                 'event_category' => 'support_operations',
@@ -214,6 +222,10 @@ class SupportTicketController extends Controller
     {
         try {
             $user = Auth::user();
+
+            if (!$user->can('ticket.create') && !$user->can('ticket.manage')) {
+                abort(403, 'Unauthorized to create support tickets.');
+            }
 
             $validated = $request->validate([
                 'subject' => 'required|string|max:255',
@@ -335,7 +347,8 @@ class SupportTicketController extends Controller
             $ticket = SupportTicket::findOrFail($ticket_id);
 
             // Check if user has permission to reply to this ticket
-            $canReply = $user->user_type === 'admin' ||
+            $canReply = $user->can('ticket.reply') ||
+                $user->can('ticket.manage') ||
                 $user->id === $ticket->assigned_to ||
                 $user->id === $ticket->user_id;
 
@@ -505,7 +518,7 @@ class SupportTicketController extends Controller
 
             // Check authorization
             $isAuthorized = $ticket->user_id === $user->id ||
-                $user->user_type === 'admin' ||
+                $user->can('ticket.manage') ||
                 ($user->user_type === 'employee' && $user->is_manager);
 
             if (!$isAuthorized) {
@@ -627,6 +640,10 @@ class SupportTicketController extends Controller
     {
         try {
             $user = Auth::user();
+
+            if (!$user->can('ticket.view') && !$user->can('ticket.manage')) {
+                abort(403, 'Unauthorized to view internal tickets.');
+            }
 
             $tickets = SupportTicket::selectRaw('
                 MAX(id) as id,
