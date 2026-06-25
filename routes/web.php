@@ -238,9 +238,11 @@ Route::group([
             Route::get('categories/search', [CategoryController::class, 'search'])->name('categories.search');
             Route::get('brands/search', [BrandController::class, 'search'])->name('brands.search');
 
-            Route::get('approvals', [SensitiveDataApprovalController::class, 'index'])->name('approvals.index');
-            Route::get('approvals/{approval}', [SensitiveDataApprovalController::class, 'show'])->name('approvals.show');
-            Route::post('approvals/{approval}/decision', [SensitiveDataApprovalController::class, 'decision'])->name('approvals.decision');
+            Route::middleware('permission:approvals.manage')->group(function () {
+                Route::get('approvals', [SensitiveDataApprovalController::class, 'index'])->name('approvals.index');
+                Route::get('approvals/{approval}', [SensitiveDataApprovalController::class, 'show'])->name('approvals.show');
+                Route::post('approvals/{approval}/decision', [SensitiveDataApprovalController::class, 'decision'])->name('approvals.decision');
+            });
 
             //
             // Master-data CRUD
@@ -271,7 +273,7 @@ Route::group([
             //
             // Financial Management Routes
             //
-            Route::prefix('financial')->name('financial.')->group(function () {
+            Route::prefix('financial')->name('financial.')->middleware('permission:finance.view')->group(function () {
                 Route::get('/', [FinancialDashboardController::class, 'index'])->name('dashboard');
                 Route::get('/dashboard/chart-data', [FinancialDashboardController::class, 'getChartDataJson'])->name('dashboard.chart-data');
                 Route::get('/trial-balance', [FinancialDashboardController::class, 'trialBalance'])->name('trial-balance');
@@ -466,7 +468,7 @@ Route::group([
             //
             // Risk Analytics
             //
-            Route::controller(RiskAnalyticsController::class)->prefix('risk')->group(function () {
+            Route::controller(RiskAnalyticsController::class)->prefix('risk')->middleware('permission:risk.view')->group(function () {
                 Route::get('dashboard', 'dashboard')->name('risk.dashboard');
                 Route::get('alerts', 'allAlerts')->name('risk.alerts');
                 // Route::get('score-engine', 'score')->name('risk.merchantScore');
@@ -497,7 +499,7 @@ Route::group([
             //
             // Collection Department
             //
-            Route::prefix('collections')->as('collections.')->controller(CollectionController::class)->group(function () {
+            Route::prefix('collections')->as('collections.')->middleware('permission:collections.manage')->controller(CollectionController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/installments', 'installments')->name('installments');
                 Route::get('/installments-calander', 'installmentsCalander')->name('installmentsCalander');
@@ -532,18 +534,20 @@ Route::group([
             Route::put('/promises/{promise}', [PromiseController::class, 'update'])->name('promises.update');
             Route::delete('/promises/{promise}', [PromiseController::class, 'destroy'])->name('promises.destroy');
 
-            Route::prefix('partial-payments')->controller(PartialPaymentController::class)->group(function () {
+            Route::prefix('partial-payments')->middleware('permission:partial_payments.manage')->controller(PartialPaymentController::class)->group(function () {
                 Route::post('/', 'store')->name('partial-payments.store');
                 Route::get('/{id}/edit', 'edit')->name('partial-payments.edit');
                 Route::put('/{id}', 'update')->name('partial-payments.update');
                 Route::delete('/{id}', 'destroy')->name('partial-payments.destroy');
             });
 
-            Route::put('schedule-payments/{id}', [SchedulePaymentController::class, 'update'])
-                ->name('schedule-payments.update');
+            Route::middleware('permission:schedule_payments.manage')->group(function () {
+                Route::put('schedule-payments/{id}', [SchedulePaymentController::class, 'update'])
+                    ->name('schedule-payments.update');
 
-            Route::post('/schedule-payments/pay-now', [SchedulePaymentController::class, 'payNow'])
-                ->name('schedule-payments.pay-now');
+                Route::post('/schedule-payments/pay-now', [SchedulePaymentController::class, 'payNow'])
+                    ->name('schedule-payments.pay-now');
+            });
 
             //
             // Activity logs
@@ -564,7 +568,7 @@ Route::group([
             //
             // Credit Managment
             //
-            Route::controller(CreditManagmentController::class)->prefix('credit')->group(function () {
+            Route::controller(CreditManagmentController::class)->prefix('credit')->middleware('permission:credit.manage')->group(function () {
                 Route::get('credit-profiles', 'creditProfile')->name('creditProfile');
                 Route::get('credit-limit', 'creditLimit')->name('creditLimit');
                 Route::get('repayment-schedule', 'repaymentSchedule')->name('repaymentSchedule');
@@ -575,7 +579,7 @@ Route::group([
             //
             // Orders + shipping
             //
-            Route::controller(OrderController::class)->prefix('orders')->group(function () {
+            Route::controller(OrderController::class)->prefix('orders')->middleware('permission:orders.manage')->group(function () {
                 Route::get('/', 'orders')->name('orders');
                 Route::get('processing', 'processing')->name('orders.processing');
                 Route::get('confirmed', 'confirmed')->name('orders.confirmed');
@@ -633,7 +637,7 @@ Route::group([
             //
             // Transactions
             //
-            Route::controller(TransactionController::class)->prefix('transactions')->group(function () {
+            Route::controller(TransactionController::class)->prefix('transactions')->middleware('permission:transactions.view')->group(function () {
                 Route::get('history', 'transactionHistory')->name('transactionHistory');
                 Route::get('payments', 'payments')->name('payments');
                 Route::get('pending', 'pending')->name('pendingPayments');
@@ -648,7 +652,7 @@ Route::group([
             //
             // Refund requests
             //
-            Route::controller(RefundRequestController::class)->prefix('refund-requests')->group(function () {
+            Route::controller(RefundRequestController::class)->prefix('refund-requests')->middleware('permission:refunds.manage')->group(function () {
                 Route::get('/', 'refundRequests')->name('refund-requests');
                 Route::get('{status}', 'showRefundRequests')->name('refund-requests.status');
                 Route::patch('{id}/status', 'updateRefundStatus')->name('refund-requests.update-status');
@@ -667,7 +671,7 @@ Route::group([
             //
             // Settlements
             //
-            Route::prefix('settlements')->name('settlements.')->controller(SettlementController::class)->group(function () {
+            Route::prefix('settlements')->name('settlements.')->middleware('permission:settlements.manage')->controller(SettlementController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::get('/generate/period', 'generateForFinishedPeriod')->name('generate');
                 Route::post('/batch-payout', 'batchPayout')->name('batch-payout');
@@ -688,7 +692,7 @@ Route::group([
             //
             // Supplier Payouts Portal
             //
-            Route::prefix('payouts')->name('payouts.')->controller(PayoutPortalController::class)->group(function () {
+            Route::prefix('payouts')->name('payouts.')->middleware('permission:payouts.manage')->controller(PayoutPortalController::class)->group(function () {
                 Route::get('/', 'index')->name('index');
                 Route::post('/', 'store')->name('store');
                 Route::post('/{payout}/complete', 'markCompleted')->name('complete');
@@ -725,7 +729,7 @@ Route::group([
             //
             // Reports
             //
-            Route::controller(ReportController::class)->prefix('reports')->group(function () {
+            Route::controller(ReportController::class)->prefix('reports')->middleware('permission:reports.view')->group(function () {
                 Route::get('product-stock', 'productStock')->name('productStock');
                 Route::get('product-wishlist', 'productWishlist')->name('productWishlist');
                 Route::get('user-search', 'userSearch')->name('userSearch');
@@ -766,13 +770,15 @@ Route::group([
             Route::delete('/notifications/delete-all', [NotificationController::class, 'deleteAll'])->name('notifications.deleteAll');
 
             // Audit logs and audit trails
-            Route::get('/audit/trails', [AuditController::class, 'showAuditTrails'])->name('audit.trails');
-            Route::get('/audit/logs', [AuditController::class, 'showAuditLogs'])->name('audit.logs');
+            Route::middleware('permission:audit.view')->group(function () {
+                Route::get('/audit/trails', [AuditController::class, 'showAuditTrails'])->name('audit.trails');
+                Route::get('/audit/logs', [AuditController::class, 'showAuditLogs'])->name('audit.logs');
 
-            Route::get('/audit/{id}/details', [AuditController::class, 'getAuditDetails'])->name('audit.details');
-            Route::get('/audit/logs/{id}/details', [AuditController::class, 'showAuditLogDetails'])->name('audit.logs.details');
-            Route::get('/logs/export', [AuditController::class, 'exportLogs'])->name('audit.logs.export');
-            Route::get('/trails/export', [AuditController::class, 'exportTrails'])->name('audit.trails.export');
+                Route::get('/audit/{id}/details', [AuditController::class, 'getAuditDetails'])->name('audit.details');
+                Route::get('/audit/logs/{id}/details', [AuditController::class, 'showAuditLogDetails'])->name('audit.logs.details');
+                Route::get('/logs/export', [AuditController::class, 'exportLogs'])->name('audit.logs.export');
+                Route::get('/trails/export', [AuditController::class, 'exportTrails'])->name('audit.trails.export');
+            });
         });
 
     // Third party api control
@@ -787,7 +793,7 @@ Route::group([
 // Firebase Realtime Notification
 //
 
-Route::post('/send-fcm', [FirebaseController::class, 'sendNotification']);
+Route::post('/send-fcm', [FirebaseController::class, 'sendNotification'])->middleware(['auth:sanctum', 'CheckAdmin']);
 
 Route::get('/fcm-test', function () {
     return view('fcm');
@@ -795,10 +801,10 @@ Route::get('/fcm-test', function () {
 
 Route::get('/send-fcm', function () {
     return view('send-fcm');
-})->name('fcm.send');
+})->name('fcm.send')->middleware(['auth:sanctum', 'CheckAdmin']);
 
-Route::get('/google-reviews', [ReportController::class, 'index'])->name('google.reviews.form');
-Route::post('/google-reviews', [ReportController::class, 'getReviews'])->name('google.reviews.fetch');
+Route::get('/google-reviews', [ReportController::class, 'index'])->name('google.reviews.form')->middleware(['auth:sanctum', 'CheckAdmin']);
+Route::post('/google-reviews', [ReportController::class, 'getReviews'])->name('google.reviews.fetch')->middleware(['auth:sanctum', 'CheckAdmin']);
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/passkeys-register', [PasskeyController::class, 'create'])->name('passkeys.create');
@@ -812,17 +818,18 @@ Route::get('/passkeys-login', [PasskeyController::class, 'login'])->name('passke
 Route::post('/passkeys-phone', [PasskeyController::class, 'getPublicKey'])->name('passkeys.getPublicKey');
 Route::post('/passkeys-login', [PasskeyController::class, 'authenticate'])->name('passkeys.authenticate');
 
-Route::get('/dev-login', [DevLoginController::class, 'showLoginForm'])->name('dev.login');
-Route::post('/dev-login', [DevLoginController::class, 'login'])->name('dev.login.store');
+if (app()->environment('local')) {
+    Route::get('/dev-login', [DevLoginController::class, 'showLoginForm'])->name('dev.login');
+    Route::post('/dev-login', [DevLoginController::class, 'login'])->name('dev.login.store');
+}
 
 use App\Http\Controllers\EmailController;
 use App\Http\Controllers\SmsController;
 
-Route::get('/send-email', [EmailController::class, 'create'])->name('email.create');
-Route::post('/send-email', [EmailController::class, 'send'])->name('email.send');
-Route::get('/send-sms', [SmsController::class, 'create'])->name('sms.create');
-Route::post('/send-sms', [SmsController::class, 'send'])->name('sms.send');
+Route::get('/send-email', [EmailController::class, 'create'])->name('email.create')->middleware(['auth:sanctum', 'CheckAdmin']);
+Route::post('/send-email', [EmailController::class, 'send'])->name('email.send')->middleware(['auth:sanctum', 'CheckAdmin']);
+Route::get('/send-sms', [SmsController::class, 'create'])->name('sms.create')->middleware(['auth:sanctum', 'CheckAdmin']);
+Route::post('/send-sms', [SmsController::class, 'send'])->name('sms.send')->middleware(['auth:sanctum', 'CheckAdmin']);
 
 // routes/web.php
-require __DIR__.'/test.php';
 require __DIR__.'/setting.php';
