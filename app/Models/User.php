@@ -2,12 +2,12 @@
 
 namespace App\Models;
 
+use App\Traits\EncryptsAttributes;
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 use Laravel\Fortify\TwoFactorAuthenticatable;
 use Laravel\Jetstream\HasProfilePhoto;
 use Laravel\Jetstream\HasTeams;
@@ -18,21 +18,24 @@ use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements HasPasskeys
 {
-    use HasApiTokens,
-        HasRoles,
+    use EncryptsAttributes,
+        HasApiTokens,
         HasFactory,
         HasProfilePhoto,
+        HasRoles,
         HasTeams,
-        Notifiable,
-        TwoFactorAuthenticatable,
-        LogsModelActions,
-        EncryptsAttributes,
         InteractsWithPasskeys,
-        SoftDeletes;
+        LogsModelActions,
+        Notifiable,
+        SoftDeletes,
+        TwoFactorAuthenticatable;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'user';
+
     /**
      * The users that are mass assignable.
      *
@@ -128,6 +131,7 @@ class User extends Authenticatable implements HasPasskeys
     {
         return $this->belongsTo(City::class);
     }
+
     public function merchant()
     {
         return $this->hasOne(Merchant::class, 'user_id', 'id');

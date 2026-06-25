@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Traits\LogsModelActions;
+use App\Traits\WithApprovalContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
@@ -11,9 +12,12 @@ class RefundRequest extends Model
 {
     use HasFactory;
     use LogsModelActions;
+    use WithApprovalContext;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'refund_request';
 
     protected $fillable = [

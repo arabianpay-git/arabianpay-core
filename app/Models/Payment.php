@@ -5,12 +5,12 @@ namespace App\Models;
 use App\Traits\WithApprovalContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class Payment extends Model
 {
     use HasFactory;
+    use WithApprovalContext;
 
     protected $fillable = [
         'user_id',
@@ -26,6 +26,11 @@ class Payment extends Model
         'payment_status',
     ];
 
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'paid_at' => 'datetime',
+    ];
+
     // Generate a UUID when creating a new payment
     public static function boot()
     {
@@ -33,32 +38,6 @@ class Payment extends Model
 
         static::creating(function ($payment) {
             $payment->uuid = (string) Str::uuid();
-        });
-    }
-
-    protected static function booted(): void
-    {
-        static::updating(function (self $model): void {
-            if (! WithApprovalContext::isInApprovalContext()) {
-                Log::critical('Direct mutation on financial model outside approval context', [
-                    'model' => static::class,
-                    'id' => $model->getKey(),
-                    'dirty' => array_keys($model->getDirty()),
-                ]);
-
-                try {
-                    app(\App\Services\AuditTrailService::class)->logCrudOperation(
-                        'unauthorized_direct_mutation',
-                        class_basename($model),
-                        $model->getKey(),
-                        'CRITICAL: Financial model mutated directly — bypassing approval service',
-                        $model->getOriginal(),
-                        $model->getDirty(),
-                    );
-                } catch (\Throwable) {
-                    // AuditTrailService unavailable (e.g., seeding, testing) — Log::critical already fired
-                }
-            }
         });
     }
 

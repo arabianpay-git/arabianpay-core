@@ -8,12 +8,12 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class Transaction extends Model
 {
     use HasFactory;
+    use WithApprovalContext;
 
     protected $fillable = [
         'uuid',
@@ -42,39 +42,23 @@ class Transaction extends Model
 
     protected $casts = [
         'product_ids' => 'array',
+        'loan_amount' => 'decimal:2',
+        'collected' => 'decimal:2',
+        'retrieved' => 'decimal:2',
+        'canceled' => 'decimal:2',
+        'subscription_fees' => 'decimal:2',
+        'credit_limit_at_time' => 'decimal:2',
+        'remaining_credit_limit' => 'decimal:2',
     ];
 
     /**
-     * Boot method to generate UUID and register soft-audit guard.
+     * Boot method to generate UUID.
      */
     protected static function booted(): void
     {
         static::creating(function ($transaction) {
             if (empty($transaction->uuid)) {
                 $transaction->uuid = (string) Str::uuid();
-            }
-        });
-
-        static::updating(function (self $model): void {
-            if (! WithApprovalContext::isInApprovalContext()) {
-                Log::critical('Direct mutation on financial model outside approval context', [
-                    'model' => static::class,
-                    'id' => $model->getKey(),
-                    'dirty' => array_keys($model->getDirty()),
-                ]);
-
-                try {
-                    app(\App\Services\AuditTrailService::class)->logCrudOperation(
-                        'unauthorized_direct_mutation',
-                        class_basename($model),
-                        $model->getKey(),
-                        'CRITICAL: Financial model mutated directly — bypassing approval service',
-                        $model->getOriginal(),
-                        $model->getDirty(),
-                    );
-                } catch (\Throwable) {
-                    // AuditTrailService unavailable (e.g., seeding, testing) — Log::critical already fired
-                }
             }
         });
     }
@@ -171,10 +155,36 @@ class Transaction extends Model
      */
     public static function getCashFlowData($range)
     {
-        $base = self::getLoanFlowData($range);
+        $months = (int) $range;
+        $end = Carbon::now();
+        $start = $end->copy()->subMonths($months - 1)->startOfMonth();
 
-        // reuse disbursed/repaid or swap in canceled if preferred
-        return ['months' => $base['months'], 'inflows' => $base['repaid'], 'outflows' => $base['canceled'] ?? []];
+        $labels = [];
+        for ($i = 0; $i < $months; $i++) {
+            $labels[] = $start->copy()->addMonths($i)->format('M Y');
+        }
+
+        $repaid = DB::table('transactions')
+            ->select(DB::raw("DATE_FORMAT(created_at, '%b %Y') as month"), DB::raw('SUM(collected) as total'))
+            ->whereBetween('created_at', [$start, $end])
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->toArray();
+
+        $canceled = DB::table('transactions')
+            ->select(DB::raw("DATE_FORMAT(created_at, '%b %Y') as month"), DB::raw('SUM(canceled) as total'))
+            ->whereBetween('created_at', [$start, $end])
+            ->groupBy('month')
+            ->pluck('total', 'month')
+            ->toArray();
+
+        $inflows = $outflows = [];
+        foreach ($labels as $m) {
+            $inflows[] = $repaid[$m] ?? 0;
+            $outflows[] = $canceled[$m] ?? 0;
+        }
+
+        return ['months' => $labels, 'inflows' => $inflows, 'outflows' => $outflows];
     }
 
     /**

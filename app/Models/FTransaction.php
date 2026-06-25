@@ -4,11 +4,12 @@ namespace App\Models;
 
 use App\Traits\WithApprovalContext;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Log;
 
 // Financial Transaction
 class FTransaction extends Model
 {
+    use WithApprovalContext;
+
     protected $table = 'f_transactions';
 
     protected $fillable = [
@@ -26,31 +27,10 @@ class FTransaction extends Model
         'notes',
     ];
 
-    protected static function booted(): void
-    {
-        static::updating(function (self $model): void {
-            if (! WithApprovalContext::isInApprovalContext()) {
-                Log::critical('Direct mutation on financial model outside approval context', [
-                    'model' => static::class,
-                    'id' => $model->getKey(),
-                    'dirty' => array_keys($model->getDirty()),
-                ]);
-
-                try {
-                    app(\App\Services\AuditTrailService::class)->logCrudOperation(
-                        'unauthorized_direct_mutation',
-                        class_basename($model),
-                        $model->getKey(),
-                        'CRITICAL: Financial model mutated directly — bypassing approval service',
-                        $model->getOriginal(),
-                        $model->getDirty(),
-                    );
-                } catch (\Throwable) {
-                    // AuditTrailService unavailable (e.g., seeding, testing) — Log::critical already fired
-                }
-            }
-        });
-    }
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'transaction_date' => 'datetime',
+    ];
 
     public function user()
     {

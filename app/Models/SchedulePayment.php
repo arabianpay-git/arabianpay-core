@@ -7,12 +7,12 @@ use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class SchedulePayment extends Model
 {
     use HasFactory;
+    use WithApprovalContext;
 
     protected $fillable = [
         'uuid',
@@ -43,6 +43,15 @@ class SchedulePayment extends Model
     protected $casts = [
         'due_date' => 'date',
         'is_late' => 'boolean',
+        'instalment_amount' => 'decimal:2',
+        'principle_amount' => 'decimal:2',
+        'late_fee' => 'decimal:2',
+        'subscription_fee' => 'decimal:2',
+        'shipping_amount' => 'decimal:2',
+        'additional_amount' => 'decimal:2',
+        'difference_amount' => 'decimal:2',
+        'deducted_amount' => 'decimal:2',
+        'paid_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -50,32 +59,6 @@ class SchedulePayment extends Model
         parent::boot();
         static::creating(function ($model) {
             $model->uuid = (string) Str::uuid();
-        });
-    }
-
-    protected static function booted(): void
-    {
-        static::updating(function (self $model): void {
-            if (! WithApprovalContext::isInApprovalContext()) {
-                Log::critical('Direct mutation on financial model outside approval context', [
-                    'model' => static::class,
-                    'id' => $model->getKey(),
-                    'dirty' => array_keys($model->getDirty()),
-                ]);
-
-                try {
-                    app(\App\Services\AuditTrailService::class)->logCrudOperation(
-                        'unauthorized_direct_mutation',
-                        class_basename($model),
-                        $model->getKey(),
-                        'CRITICAL: Financial model mutated directly — bypassing approval service',
-                        $model->getOriginal(),
-                        $model->getDirty(),
-                    );
-                } catch (\Throwable) {
-                    // AuditTrailService unavailable (e.g., seeding, testing) — Log::critical already fired
-                }
-            }
         });
     }
 
