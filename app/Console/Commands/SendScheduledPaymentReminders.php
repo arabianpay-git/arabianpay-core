@@ -230,11 +230,8 @@ class SendScheduledPaymentReminders extends Command
         $data['title'] = $data['title'] ?? $title;
         $data['description'] = $data['description'] ?? $body;
 
-        // persist notification record
         try {
             UserNotification::create([
-                'title' => $title,
-                'description' => $body,
                 'user_id' => $userId,
                 'type' => 'schedule_payment_reminder',
                 'data' => $data,

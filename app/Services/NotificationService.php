@@ -13,10 +13,8 @@ class NotificationService
      */
     public function createNotification(?int $userId, ?string $type, $data): Notification
     {
-        if (is_array($data)) {
-            $data = json_encode($data);
-        }
-
+        // The model's $casts handles array -> JSON serialization;
+        // pass raw values so the cast doesn't double-encode.
         return Notification::create([
             'user_id' => $userId,
             'type' => $type,
