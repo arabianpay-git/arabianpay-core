@@ -4,8 +4,8 @@ namespace App\Console\Commands;
 
 use App\Mail\PaymentDueReminderMail;
 use App\Mail\PaymentUpcomingReminderMail;
-use App\Models\SchedulePayment;
 use App\Models\Notification as UserNotification;
+use App\Models\SchedulePayment;
 use App\Services\FirebaseService;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Mail;
 class SendScheduledPaymentReminders extends Command
 {
     protected $signature = 'send:scheduled-payment-reminders {--date= : date to consider (Y-m-d)}';
+
     protected $description = 'Send pre-due (7/3/1 days) and daily due reminders for schedule payments.';
 
     /**
@@ -39,6 +40,7 @@ class SendScheduledPaymentReminders extends Command
 
         if (! $lock->get()) {
             $this->info('Another reminders process is running. Exiting.');
+
             return 0;
         }
 
@@ -53,14 +55,14 @@ class SendScheduledPaymentReminders extends Command
 
             $this->info('Reminders run completed.');
         } catch (\Throwable $e) {
-            Log::error('Error in SendScheduledPaymentReminders: ' . $e->getMessage());
+            Log::error('Error in SendScheduledPaymentReminders: '.$e->getMessage());
             $this->error($e->getMessage());
         } finally {
             try {
                 $lock->release();
             } catch (\Throwable $e) {
                 // guard against release errors
-                Log::warning('Could not release lock: ' . $e->getMessage());
+                Log::warning('Could not release lock: '.$e->getMessage());
             }
         }
 
@@ -79,7 +81,7 @@ class SendScheduledPaymentReminders extends Command
                 ->get();
 
             foreach ($schedules as $schedule) {
-                $this->sendUniqueReminder($schedule, "pre_{$d}", $targetDate, function ($schedule) use ($d, $targetDate) {
+                $this->sendUniqueReminder($schedule, "pre_{$d}", $targetDate, function ($schedule) use ($d) {
                     $user = $schedule->user;
                     if ($user && filter_var($user->email ?? null, FILTER_VALIDATE_EMAIL)) {
                         // Send email
@@ -88,15 +90,15 @@ class SendScheduledPaymentReminders extends Command
                     }
 
                     // Send FCM + persist notification (mobile_screen & reference_id required)
-                    $notificationTitle = "Upcoming payment in {$d} day" . ($d > 1 ? 's' : '');
+                    $notificationTitle = "Upcoming payment in {$d} day".($d > 1 ? 's' : '');
                     $notificationDescription = "Your scheduled payment #{$schedule->id} is due on {$schedule->due_date}.";
                     $notificationData = [
                         'title' => $notificationTitle,
                         'description' => $notificationDescription,
                         'mobile_screen' => 'schedule_payment',
-                        'reference_id' => (string)$schedule->id,
-                        'schedule_payment_id' => (string)$schedule->id,
-                        'due_date' => (string)$schedule->due_date,
+                        'reference_id' => (string) $schedule->id,
+                        'schedule_payment_id' => (string) $schedule->id,
+                        'due_date' => (string) $schedule->due_date,
                         'days_left' => $d,
                     ];
 
@@ -126,7 +128,7 @@ class SendScheduledPaymentReminders extends Command
 
             $attemptNumber = $attempts + 1;
 
-            $this->sendUniqueReminder($schedule, 'due_daily', $date->toDateString(), function ($schedule) use ($attemptNumber, $date) {
+            $this->sendUniqueReminder($schedule, 'due_daily', $date->toDateString(), function ($schedule) use ($attemptNumber) {
                 $user = $schedule->user;
                 if ($user && filter_var($user->email ?? null, FILTER_VALIDATE_EMAIL)) {
                     Mail::to($user->email)->send(new PaymentDueReminderMail($user, $schedule, $attemptNumber));
@@ -140,10 +142,10 @@ class SendScheduledPaymentReminders extends Command
                     'title' => $notificationTitle,
                     'description' => $notificationDescription,
                     'mobile_screen' => 'schedule_payment',
-                    'reference_id' => (string)$schedule->id,
-                    'schedule_payment_id' => (string)$schedule->id,
+                    'reference_id' => (string) $schedule->id,
+                    'schedule_payment_id' => (string) $schedule->id,
                     'attempt' => $attemptNumber,
-                    'due_date' => (string)$schedule->due_date,
+                    'due_date' => (string) $schedule->due_date,
                 ];
 
                 $this->dispatchNotification(
@@ -159,10 +161,8 @@ class SendScheduledPaymentReminders extends Command
     /**
      * Insert unique reminder record and run the provided callback (which should send emails/notifications).
      *
-     * @param mixed $schedule
-     * @param string $type
-     * @param string $targetDate
-     * @param callable $sendCallback
+     * @param  mixed  $schedule
+     * @param  string  $targetDate
      * @return void
      */
     protected function sendUniqueReminder($schedule, string $type, $targetDate, callable $sendCallback)
@@ -179,6 +179,7 @@ class SendScheduledPaymentReminders extends Command
             if ($exists) {
                 DB::commit();
                 $this->line("Reminder exists: {$type} schedule #{$schedule->id} target {$targetDate}");
+
                 return;
             }
 
@@ -198,36 +199,31 @@ class SendScheduledPaymentReminders extends Command
             try {
                 call_user_func($sendCallback, $schedule);
             } catch (\Throwable $e) {
-                Log::error("Failed to send reminder mail/notification for schedule {$schedule->id}: " . $e->getMessage());
+                Log::error("Failed to send reminder mail/notification for schedule {$schedule->id}: ".$e->getMessage());
             }
         } catch (\Throwable $e) {
             DB::rollBack();
-            Log::error("Error inserting reminder record for schedule {$schedule->id}: " . $e->getMessage());
+            Log::error("Error inserting reminder record for schedule {$schedule->id}: ".$e->getMessage());
         }
     }
 
     /**
      * Persist notification record and call FirebaseService to send push notifications.
-     *
-     * @param int|null $userId
-     * @param string $title
-     * @param string $body
-     * @param array $data
-     * @return void
      */
     protected function dispatchNotification(?int $userId, string $title, string $body, array $data = []): void
     {
         if (empty($userId)) {
             Log::info('dispatchNotification: no user id provided, skipping FCM/persist.');
+
             return;
         }
 
         // ensure required keys exist
-        if (!isset($data['mobile_screen']) || !isset($data['reference_id'])) {
+        if (! isset($data['mobile_screen']) || ! isset($data['reference_id'])) {
             Log::warning("dispatchNotification: required data keys missing for user {$userId}. mobile_screen & reference_id are required.");
             // still proceed but ensure they exist
             $data['mobile_screen'] = $data['mobile_screen'] ?? 'schedule_payment';
-            $data['reference_id'] = $data['reference_id'] ?? (string)($data['schedule_payment_id'] ?? '');
+            $data['reference_id'] = $data['reference_id'] ?? (string) ($data['schedule_payment_id'] ?? '');
         }
 
         // ensure title & description exist in data (for mobile)
@@ -245,7 +241,7 @@ class SendScheduledPaymentReminders extends Command
                 'read_at' => null,
             ]);
         } catch (\Throwable $e) {
-            Log::error("Failed to persist notification for user {$userId}: " . $e->getMessage());
+            Log::error("Failed to persist notification for user {$userId}: ".$e->getMessage());
         }
 
         // send via FirebaseService (handles empty tokens internally)
@@ -253,7 +249,7 @@ class SendScheduledPaymentReminders extends Command
             $this->firebaseService->sendCustomNotification($userId, $title, $body, $data);
             $this->info("FCM dispatched for user {$userId} (title: {$title})");
         } catch (\Throwable $e) {
-            Log::error("FCM dispatch failed for user {$userId}: " . $e->getMessage());
+            Log::error("FCM dispatch failed for user {$userId}: ".$e->getMessage());
         }
     }
 }

@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\DeviceToken;
+use Illuminate\Http\Request;
 
 class DeviceTokenController extends Controller
 {
@@ -20,7 +20,7 @@ class DeviceTokenController extends Controller
             ->where('token', $request->token)
             ->first();
 
-        if (!$existingToken) {
+        if (! $existingToken) {
             // Get token count
             $tokenCount = DeviceToken::where('user_id', $user->id)->count();
 

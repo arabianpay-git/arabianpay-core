@@ -8,7 +8,7 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class PickupPoint extends Model
 {
-    use HasFactory, EncryptsAttributes;
+    use EncryptsAttributes, HasFactory;
 
     protected $table = 'pickup_points';
 

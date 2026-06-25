@@ -3,11 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Spatie\Permission\Models\Role;
-use Illuminate\Support\Str;
-use App\Services\AuditTrailService;
 
 class UserRoleController extends Controller
 {
@@ -27,7 +26,7 @@ class UserRoleController extends Controller
             'event_category' => 'user_management',
             'event_type' => 'user_roles_viewed',
             'entity_type' => 'User',
-            'action_summary' => "Viewed user roles management page",
+            'action_summary' => 'Viewed user roles management page',
             'properties' => [
                 'user_type_filter' => 'employee',
                 'viewed_by' => Auth::id(),
@@ -72,7 +71,7 @@ class UserRoleController extends Controller
         $oldRoles = $user->getRoleNames()->toArray();
 
         // Get old role for PDPL justification
-        $oldRoleName = !empty($oldRoles) ? $oldRoles[0] : 'no_role';
+        $oldRoleName = ! empty($oldRoles) ? $oldRoles[0] : 'no_role';
         $newRoleName = $role->name;
 
         $user->syncRoles([$role->name]);

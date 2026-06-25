@@ -33,6 +33,7 @@ class DepartmentController extends Controller
         );
 
         $departments = Department::with(['roles', 'users'])->latest()->paginate(10);
+
         return view('admin.departments.index', compact('departments'));
     }
 
@@ -139,8 +140,9 @@ class DepartmentController extends Controller
                 ],
             ]);
 
-            Log::error('Department Store Error: ' . $e->getMessage());
-            return back()->withErrors(['error' => 'Something went wrong: ' . $e->getMessage()])->withInput();
+            Log::error('Department Store Error: '.$e->getMessage());
+
+            return back()->withErrors(['error' => 'Something went wrong: '.$e->getMessage()])->withInput();
         }
     }
 
@@ -285,8 +287,9 @@ class DepartmentController extends Controller
                 ],
             ]);
 
-            Log::error('Department Update Error: ' . $e->getMessage());
-            return back()->with(['error' => 'Department Update Error: ' . $e->getMessage()]);
+            Log::error('Department Update Error: '.$e->getMessage());
+
+            return back()->with(['error' => 'Department Update Error: '.$e->getMessage()]);
         }
     }
 
@@ -341,8 +344,9 @@ class DepartmentController extends Controller
                 ],
             ]);
 
-            Log::error('Department Delete Error: ' . $e->getMessage());
-            return back()->with(['error' => 'Department Delete Error: ' . $e->getMessage()]);
+            Log::error('Department Delete Error: '.$e->getMessage());
+
+            return back()->with(['error' => 'Department Delete Error: '.$e->getMessage()]);
         }
     }
 }

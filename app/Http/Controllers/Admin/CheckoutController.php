@@ -4,10 +4,10 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Checkout;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class CheckoutController extends Controller
 {
@@ -20,7 +20,7 @@ class CheckoutController extends Controller
             'user',
             'investmentPool',
             'schedulePayments',
-            'orders'
+            'orders',
         ]);
 
         // Filter by customer
@@ -113,7 +113,7 @@ class CheckoutController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Checkout created successfully',
-                'checkout' => $checkout->load(['user', 'investmentPool'])
+                'checkout' => $checkout->load(['user', 'investmentPool']),
             ]);
         }
 
@@ -133,7 +133,7 @@ class CheckoutController extends Controller
             'orders.seller',
             'schedulePayments',
             'schedulePayments.payment',
-            'schedulePayments.claims'
+            'schedulePayments.claims',
 
         ]);
 
@@ -162,6 +162,7 @@ class CheckoutController extends Controller
     public function edit(Checkout $checkout)
     {
         $checkout->load(['user', 'investmentPool']);
+
         return view('admin.checkouts.edit', compact('checkout'));
     }
 
@@ -182,7 +183,7 @@ class CheckoutController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Checkout updated successfully',
-                'checkout' => $checkout->load(['user', 'investmentPool'])
+                'checkout' => $checkout->load(['user', 'investmentPool']),
             ]);
         }
 
@@ -199,7 +200,7 @@ class CheckoutController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Checkout deleted successfully'
+            'message' => 'Checkout deleted successfully',
         ]);
     }
 
@@ -210,14 +211,14 @@ class CheckoutController extends Controller
     {
         $checkout->load([
             'schedulePayments.payment',
-            'schedulePayments.claims'
+            'schedulePayments.claims',
         ]);
 
         $metrics = $this->calculateCheckoutMetrics($checkout);
 
         return response()->json([
             'success' => true,
-            'metrics' => $metrics
+            'metrics' => $metrics,
         ]);
     }
 
@@ -245,7 +246,7 @@ class CheckoutController extends Controller
 
         return response()->json([
             'success' => true,
-            'timeline' => $timeline
+            'timeline' => $timeline,
         ]);
     }
 
@@ -261,7 +262,7 @@ class CheckoutController extends Controller
         $pendingAmount = $totalAmount - $paidAmount;
 
         $overduePayments = $schedulePayments->filter(function ($payment) {
-            return !$payment->payment && Carbon::parse($payment->due_date)->lt(Carbon::now());
+            return ! $payment->payment && Carbon::parse($payment->due_date)->lt(Carbon::now());
         });
 
         $overdueAmount = $overduePayments->sum('amount');
@@ -294,7 +295,7 @@ class CheckoutController extends Controller
                 'late_payments' => $schedulePayments->filter(function ($payment) {
                     return $payment->payment && $payment->payment->created_at->gt(Carbon::parse($payment->due_date));
                 })->count(),
-            ]
+            ],
         ];
     }
 }

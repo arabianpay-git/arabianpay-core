@@ -9,9 +9,13 @@ use Illuminate\Support\Facades\Log;
 class LeanService
 {
     protected string $baseUrl;
+
     protected string $authUrl;
+
     protected string $clientId;
+
     protected string $clientSecret;
+
     protected int $tokenTtl = 3500; // 58 minutes in seconds
 
     public function __construct()
@@ -25,7 +29,7 @@ class LeanService
     {
         $config = config("lean.environments.{$environment}");
 
-        if (!$config) {
+        if (! $config) {
             throw new \InvalidArgumentException("Invalid Lean environment: {$environment}");
         }
 
@@ -54,7 +58,7 @@ class LeanService
                     'scope' => 'api',
                 ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Lean Auth Failed', [
                     'status' => $response->status(),
                     'response' => $response->body(),
@@ -64,7 +68,7 @@ class LeanService
 
             $data = $response->json();
 
-            if (!isset($data['access_token'])) {
+            if (! isset($data['access_token'])) {
                 throw new \Exception('Invalid token response from Lean API');
             }
 
@@ -88,7 +92,7 @@ class LeanService
             $response = Http::withToken($token)
                 ->timeout(60)
                 ->acceptJson()
-                ->$method($this->baseUrl . $endpoint, $params);
+                ->$method($this->baseUrl.$endpoint, $params);
 
             if ($response->status() === 401) {
                 $this->clearTokenCache();
@@ -97,16 +101,16 @@ class LeanService
                 $response = Http::withToken($token)
                     ->timeout(60)
                     ->acceptJson()
-                    ->$method($this->baseUrl . $endpoint, $params);
+                    ->$method($this->baseUrl.$endpoint, $params);
             }
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Lean API Request Failed', [
                     'endpoint' => $endpoint,
                     'status' => $response->status(),
                     'response' => $response->body(),
                 ]);
-                throw new \Exception("Lean API request failed with status: " . $response->status());
+                throw new \Exception('Lean API request failed with status: '.$response->status());
             }
 
             return $response->json();
@@ -119,7 +123,7 @@ class LeanService
         }
     }
 
-    public function getBanks(string $accountType = null): array
+    public function getBanks(?string $accountType = null): array
     {
         $params = [];
 
@@ -171,6 +175,7 @@ class LeanService
     {
         try {
             $response = $this->getCustomers(0, 1);
+
             return isset($response['data']) || isset($response['page']);
         } catch (\Exception $e) {
             return false;
@@ -180,11 +185,9 @@ class LeanService
     /**
      * Get bank statements report for a specific customer
      *
-     * @param string $customerId
-     * @param array|string $accountSubTypes One or multiple account types
-     * @param string $startDate YYYY-MM-DD
-     * @param string $endDate YYYY-MM-DD
-     * @return array
+     * @param  array|string  $accountSubTypes  One or multiple account types
+     * @param  string  $startDate  YYYY-MM-DD
+     * @param  string  $endDate  YYYY-MM-DD
      */
     public function createBankStatementsReport(
         string $customerId,
@@ -208,10 +211,6 @@ class LeanService
 
     /**
      * Get a specific bank statements report by customer ID and report ID
-     *
-     * @param string $customerId
-     * @param string $reportId
-     * @return array
      */
     public function getBankStatementReportById(string $customerId, string $reportId): array
     {

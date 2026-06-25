@@ -4,14 +4,18 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreProductRequest;
 use App\Http\Requests\UpdateProductRequest;
-use App\Models\{Attribute, AttributeValue, Product, Category, Brand, User};
+use App\Models\Attribute;
+use App\Models\AttributeValue;
+use App\Models\Brand;
+use App\Models\Category;
+use App\Models\Product;
+use App\Models\User;
 use App\Services\AuditTrailService;
-use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class ProductController extends Controller
 {
@@ -37,7 +41,7 @@ class ProductController extends Controller
                     'approved',
                     'published',
                     'reason_reject',
-                    'created_at'
+                    'created_at',
                 ]);
 
             $request->validate([
@@ -50,10 +54,10 @@ class ProductController extends Controller
             $filters = [];
             if ($request->filled('from') && $request->filled('to')) {
                 $query->whereBetween('created_at', [
-                    $request->input('from') . ' 00:00:00',
-                    $request->input('to') . ' 23:59:59',
+                    $request->input('from').' 00:00:00',
+                    $request->input('to').' 23:59:59',
                 ]);
-                $filters['date_range'] = $request->input('from') . ' to ' . $request->input('to');
+                $filters['date_range'] = $request->input('from').' to '.$request->input('to');
             } else {
                 if ($request->filled('from')) {
                     $query->whereDate('created_at', '>=', $request->input('from'));
@@ -102,8 +106,8 @@ class ProductController extends Controller
                     'approved_products_count' => $approvedCount,
                     'pending_products_count' => $pendingCount,
                     'viewed_by' => Auth::id(),
-                    'viewed_by_type' => Auth::user()->user_type
-                ]
+                    'viewed_by_type' => Auth::user()->user_type,
+                ],
             ], $justificationData));
 
             return view('admin.products.index', compact('products'));
@@ -111,7 +115,7 @@ class ProductController extends Controller
             Log::error('Failed to load product list', [
                 'error' => $e->getMessage(),
                 'filters' => $request->all(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -122,8 +126,8 @@ class ProductController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'filters' => $request->all(),
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load products. Please try again.');
@@ -143,7 +147,7 @@ class ProductController extends Controller
             $approvalDistribution = [];
             foreach ($products as $product) {
                 $status = $product->approved ?? 'unknown';
-                if (!isset($approvalDistribution[$status])) {
+                if (! isset($approvalDistribution[$status])) {
                     $approvalDistribution[$status] = 0;
                 }
                 $approvalDistribution[$status]++;
@@ -167,15 +171,15 @@ class ProductController extends Controller
                     'per_page' => $products->perPage(),
                     'approval_status_distribution' => $approvalDistribution,
                     'viewed_by' => Auth::id(),
-                    'viewed_by_type' => Auth::user()->user_type
-                ]
+                    'viewed_by_type' => Auth::user()->user_type,
+                ],
             ], $justificationData));
 
             return view('admin.products.index', compact('products'));
         } catch (\Exception $e) {
             Log::error('Failed to load product approval queue', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -185,8 +189,8 @@ class ProductController extends Controller
                 'action_summary' => 'Failed to load product approval queue',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load approval queue. Please try again.');
@@ -203,7 +207,7 @@ class ProductController extends Controller
 
             // Calculate rating statistics safely
             $ratings = $products->pluck('rating')->filter(function ($rating) {
-                return !is_null($rating);
+                return ! is_null($rating);
             });
 
             $minRating = $ratings->isNotEmpty() ? $ratings->min() : 0;
@@ -229,18 +233,18 @@ class ProductController extends Controller
                     'average_rating_range' => [
                         'min' => $minRating,
                         'max' => $maxRating,
-                        'avg' => $avgRating
+                        'avg' => $avgRating,
                     ],
                     'viewed_by' => Auth::id(),
-                    'viewed_by_type' => Auth::user()->user_type
-                ]
+                    'viewed_by_type' => Auth::user()->user_type,
+                ],
             ], $justificationData));
 
             return view('admin.products.reviews', compact('products'));
         } catch (\Exception $e) {
             Log::error('Failed to load product reviews', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -250,8 +254,8 @@ class ProductController extends Controller
                 'action_summary' => 'Failed to load product reviews',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load product reviews. Please try again.');
@@ -276,8 +280,8 @@ class ProductController extends Controller
                     'brands_count' => Brand::count(),
                     'attributes_count' => Attribute::count(),
                     'merchants_count' => User::where('user_type', 'merchant')->count(),
-                    'timestamp' => now()->toISOString()
-                ]
+                    'timestamp' => now()->toISOString(),
+                ],
             ]);
 
             $categories = Category::orderBy('parent_id')
@@ -293,7 +297,7 @@ class ProductController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to load product creation form', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -303,8 +307,8 @@ class ProductController extends Controller
                 'action_summary' => 'Failed to load product creation form',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'user_id' => Auth::id()
-                ]
+                    'user_id' => Auth::id(),
+                ],
             ]);
 
             return redirect()->route('products.index')->with('error', 'Failed to load creation form. Please try again.');
@@ -329,8 +333,8 @@ class ProductController extends Controller
                         'product_name' => $data['name']['en'] ?? 'Unknown',
                         'merchant_id' => $data['user_id'] ?? 'Unknown',
                         'unit_price' => $data['unit_price'] ?? 0,
-                        'attempted_by' => $user->id
-                    ]
+                        'attempted_by' => $user->id,
+                    ],
                 ]);
 
                 return back()->withErrors($error)->withInput();
@@ -340,12 +344,12 @@ class ProductController extends Controller
             try {
                 $data = $this->normalizeProductData($data, $request);
 
-                $tempProduct = new Product();
+                $tempProduct = new Product;
                 foreach ($tempProduct->getTranslatableFields() as $field) {
                     if (isset($data[$field]) && is_array($data[$field])) {
                         $enValue = $data[$field]['en'] ?? null;
                         $arValue = $data[$field]['ar'] ?? null;
-                        $data[$field] = !empty($enValue) ? $enValue : $arValue;
+                        $data[$field] = ! empty($enValue) ? $enValue : $arValue;
                     }
                 }
 
@@ -383,7 +387,7 @@ class ProductController extends Controller
 
                 $this->auditTrailService->logCreated(
                     $product,
-                    'Created new product: ' . $product->name,
+                    'Created new product: '.$product->name,
                     array_merge([
                         'event_category' => 'inventory_operations',
                         'event_type' => 'product_created',
@@ -406,8 +410,8 @@ class ProductController extends Controller
                             'created_by' => $user->id,
                             'created_by_type' => $user->user_type,
                             'ip_address' => $request->ip(),
-                            'user_agent' => $request->userAgent()
-                        ]
+                            'user_agent' => $request->userAgent(),
+                        ],
                     ], $justificationData)
                 );
 
@@ -417,7 +421,7 @@ class ProductController extends Controller
                 $batchUuid = (string) Str::uuid();
                 $product->logModelAction(
                     event: 'create',
-                    description: $user->first_name . " " . $user->last_name . " created product: {$product->name} [$product->id]",
+                    description: $user->first_name.' '.$user->last_name." created product: {$product->name} [$product->id]",
                     properties: [
                         'reason' => $request->input('reason', null),
                         'ip' => request()->ip(),
@@ -439,8 +443,8 @@ class ProductController extends Controller
                         'error' => $e->getMessage(),
                         'product_name' => $data['name']['en'] ?? 'Unknown',
                         'merchant_id' => $data['user_id'] ?? 'Unknown',
-                        'attempted_by' => $user->id
-                    ]
+                        'attempted_by' => $user->id,
+                    ],
                 ]);
 
                 return back()->withErrors(['error' => 'Something went wrong.'])->withInput();
@@ -449,7 +453,7 @@ class ProductController extends Controller
             Log::error('Failed to store product', [
                 'error' => $e->getMessage(),
                 'request_data_keys' => array_keys($request->all()),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -461,8 +465,8 @@ class ProductController extends Controller
                     'error' => $e->getMessage(),
                     'has_name' => $request->has('name'),
                     'has_category' => $request->has('category_id'),
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return back()->withErrors(['error' => 'Failed to create product. Please try again.'])->withInput();
@@ -496,13 +500,13 @@ class ProductController extends Controller
                         'published' => $product->published ?? 'unknown',
                         'featured' => (bool) ($product->featured ?? false),
                         'stock' => $product->current_stock ?? 0,
-                        'price' => $product->unit_price ?? 0
+                        'price' => $product->unit_price ?? 0,
                     ],
                     'viewed_by' => $user->id,
                     'viewed_by_type' => $user->user_type,
                     'is_product_owner' => $product->user_id == $user->id,
-                    'has_attributes' => $product->attributes->count() > 0
-                ]
+                    'has_attributes' => $product->attributes->count() > 0,
+                ],
             ], $justificationData));
 
             $product->load(['attributes.values']);
@@ -542,7 +546,7 @@ class ProductController extends Controller
             Log::error('Failed to load product edit form', [
                 'error' => $e->getMessage(),
                 'product_id' => $product->id,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -554,8 +558,8 @@ class ProductController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'product_id' => $product->id,
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->route('products.index')->with('error', 'Failed to load edit form. Please try again.');
@@ -581,8 +585,8 @@ class ProductController extends Controller
                         'product_id' => $product->id,
                         'product_name' => $product->name,
                         'attempted_price' => $data['unit_price'] ?? $product->unit_price,
-                        'attempted_by' => $user->id
-                    ]
+                        'attempted_by' => $user->id,
+                    ],
                 ]);
 
                 return back()->withErrors($error)->withInput();
@@ -599,10 +603,10 @@ class ProductController extends Controller
                     if (isset($data[$field]) && is_array($data[$field])) {
                         $enValue = $data[$field]['en'] ?? null;
                         $arValue = $data[$field]['ar'] ?? null;
-                        $data[$field] = !empty($enValue) ? $enValue : $arValue;
+                        $data[$field] = ! empty($enValue) ? $enValue : $arValue;
                     }
                 }
-                Log::info('Product update data: ' . json_encode($data));
+                Log::info('Product update data: '.json_encode($data));
                 $product->update($data);
 
                 // Store Arabic translations
@@ -627,7 +631,7 @@ class ProductController extends Controller
                 $attributeIds = $request->input('attribute_id', []);
                 $valueIds = [];
                 foreach ($request->input('attribute_value_id', []) as $i => $valueName) {
-                    if (!empty($attributeIds[$i]) && !empty($valueName)) {
+                    if (! empty($attributeIds[$i]) && ! empty($valueName)) {
                         $attributeValue = AttributeValue::where('attribute_id', $attributeIds[$i])
                             ->where('value', $valueName)
                             ->first();
@@ -659,7 +663,7 @@ class ProductController extends Controller
                 $this->auditTrailService->logUpdated(
                     $product,
                     $beforeState,
-                    'Updated product: ' . $product->name,
+                    'Updated product: '.$product->name,
                     array_merge([
                         'event_category' => 'inventory_operations',
                         'event_type' => 'product_updated',
@@ -673,17 +677,17 @@ class ProductController extends Controller
                                 'old_unit_price' => $beforeState['unit_price'] ?? null,
                                 'new_unit_price' => $product->unit_price,
                                 'old_purchase_price' => $beforeState['purchase_price'] ?? null,
-                                'new_purchase_price' => $product->purchase_price
+                                'new_purchase_price' => $product->purchase_price,
                             ],
                             'stock_changes' => [
                                 'old_stock' => $beforeState['current_stock'] ?? null,
-                                'new_stock' => $product->current_stock
+                                'new_stock' => $product->current_stock,
                             ],
                             'attribute_changes' => [
                                 'old_attributes' => $beforeAttributes,
                                 'new_attributes' => $afterAttributes,
                                 'attributes_added' => array_diff($afterAttributes, $beforeAttributes),
-                                'attributes_removed' => array_diff($beforeAttributes, $afterAttributes)
+                                'attributes_removed' => array_diff($beforeAttributes, $afterAttributes),
                             ],
                             'status_changes' => [
                                 'old_approved' => $beforeState['approved'] ?? null,
@@ -691,13 +695,13 @@ class ProductController extends Controller
                                 'old_published' => $beforeState['published'] ?? null,
                                 'new_published' => $product->published,
                                 'old_featured' => $beforeState['featured'] ?? null,
-                                'new_featured' => $product->featured
+                                'new_featured' => $product->featured,
                             ],
                             'updated_by' => $user->id,
                             'updated_by_type' => $user->user_type,
                             'ip_address' => $request->ip(),
-                            'user_agent' => $request->userAgent()
-                        ]
+                            'user_agent' => $request->userAgent(),
+                        ],
                     ], $justificationData)
                 );
 
@@ -707,7 +711,7 @@ class ProductController extends Controller
                 $batchUuid = (string) Str::uuid();
                 $product->logModelAction(
                     event: 'update',
-                    description: $user->first_name . " " . $user->last_name . " updated product: {$product->name} [$product->id]",
+                    description: $user->first_name.' '.$user->last_name." updated product: {$product->name} [$product->id]",
                     properties: [
                         'reason' => $request->input('reason', null),
                         'ip' => request()->ip(),
@@ -733,8 +737,8 @@ class ProductController extends Controller
                         'error' => $e->getMessage(),
                         'product_id' => $product->id,
                         'product_name' => $product->name,
-                        'attempted_by' => $user->id
-                    ]
+                        'attempted_by' => $user->id,
+                    ],
                 ]);
 
                 return back()->withErrors(['error' => 'Something went wrong.'])->withInput();
@@ -743,7 +747,7 @@ class ProductController extends Controller
             Log::error('Failed to update product', [
                 'error' => $e->getMessage(),
                 'product_id' => $product->id,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -755,8 +759,8 @@ class ProductController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'product_id' => $product->id,
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return back()->withErrors(['error' => 'Failed to update product. Please try again.'])->withInput();
@@ -769,7 +773,7 @@ class ProductController extends Controller
             $user = Auth::user();
             $merchant = User::find($userId);
 
-            if (!$merchant) {
+            if (! $merchant) {
                 $this->auditTrailService->log([
                     'event_category' => 'error_events',
                     'event_type' => 'merchant_products_not_found',
@@ -777,8 +781,8 @@ class ProductController extends Controller
                     'action_summary' => 'Attempted to view products for non-existent merchant',
                     'properties' => [
                         'merchant_id' => $userId,
-                        'requested_by' => $user->id
-                    ]
+                        'requested_by' => $user->id,
+                    ],
                 ]);
 
                 return response()->json(['error' => 'Merchant not found'], 404);
@@ -806,18 +810,18 @@ class ProductController extends Controller
                     'products_count' => $products->count(),
                     'viewed_by' => $user->id,
                     'viewed_by_type' => $user->user_type,
-                    'api_request' => true
-                ]
+                    'api_request' => true,
+                ],
             ], $justificationData));
 
             return response()->json([
-                'products' => $products
+                'products' => $products,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to fetch merchant products', [
                 'error' => $e->getMessage(),
                 'merchant_id' => $userId,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -828,8 +832,8 @@ class ProductController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'merchant_id' => $userId,
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return response()->json(['error' => 'Failed to fetch products'], 500);
@@ -853,7 +857,7 @@ class ProductController extends Controller
 
             $this->auditTrailService->logDeleted(
                 $product,
-                'Deleted product: ' . $product->name,
+                'Deleted product: '.$product->name,
                 array_merge([
                     'event_category' => 'inventory_operations',
                     'event_type' => 'product_deleted',
@@ -873,8 +877,8 @@ class ProductController extends Controller
                         'deleted_by_type' => $user->user_type,
                         'deleted_at' => now()->toISOString(),
                         'ip_address' => request()->ip(),
-                        'user_agent' => request()->userAgent()
-                    ]
+                        'user_agent' => request()->userAgent(),
+                    ],
                 ], $justificationData)
             );
 
@@ -882,7 +886,7 @@ class ProductController extends Controller
             $batchUuid = (string) Str::uuid();
             $product->logModelAction(
                 event: 'delete',
-                description: $user->first_name . " " . $user->last_name . " deleted product: {$product->name} [$product->id]",
+                description: $user->first_name.' '.$user->last_name." deleted product: {$product->name} [$product->id]",
                 properties: [
                     'ip' => request()->ip(),
                     'batch_uuid' => $batchUuid,
@@ -896,7 +900,7 @@ class ProductController extends Controller
             Log::error('Failed to delete product', [
                 'error' => $e->getMessage(),
                 'product_id' => $product->id,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -909,8 +913,8 @@ class ProductController extends Controller
                     'error' => $e->getMessage(),
                     'product_id' => $product->id,
                     'product_name' => $product->name,
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->route('products.index')->with('error', 'Failed to delete product. Please try again.');
@@ -921,12 +925,12 @@ class ProductController extends Controller
     private function validateBusinessRules(array $data): ?array
     {
         // Purchase price check
-        if (!empty($data['purchase_price']) && $data['purchase_price'] > $data['unit_price']) {
+        if (! empty($data['purchase_price']) && $data['purchase_price'] > $data['unit_price']) {
             return ['purchase_price' => 'Cost per item cannot be greater than the unit price.'];
         }
 
         // Discount validation
-        if (!empty($data['discount'])) {
+        if (! empty($data['discount'])) {
 
             if ($data['discount_type'] === 'percent') {
 
@@ -950,16 +954,16 @@ class ProductController extends Controller
         }
 
         // Validate against credit limit
-        //$creditLimit = get_credit_limit($data['user_id']);
-        //if (!is_null($creditLimit) && !empty($data['unit_price']) && $data['unit_price'] > $creditLimit) {
+        // $creditLimit = get_credit_limit($data['user_id']);
+        // if (!is_null($creditLimit) && !empty($data['unit_price']) && $data['unit_price'] > $creditLimit) {
         //  return ['unit_price' => 'Unit price cannot exceed the credit limit.'];
-        //}
+        // }
         return null;
     }
 
     private function normalizeProductData(array $data, Request $request): array
     {
-        $data['featured'] = !empty($data['featured']);
+        $data['featured'] = ! empty($data['featured']);
 
         if ($request->has('published')) {
             $data['published'] = $request->published;
@@ -967,13 +971,13 @@ class ProductController extends Controller
             $data['published'] = $request->action === 'publish' ? 'published' : 'pending';
         }
 
-        if (!empty($data['tags']['en']) && is_array($data['tags']['en'])) {
+        if (! empty($data['tags']['en']) && is_array($data['tags']['en'])) {
             $data['tags'] = json_encode(array_map('trim', $data['tags']['en']));
         } else {
             $data['tags'] = null;
         }
 
-        if (!empty($data['photos']) && is_array($data['photos'])) {
+        if (! empty($data['photos']) && is_array($data['photos'])) {
             $data['photos'] = json_encode(array_map('strval', $data['photos']));
         }
 
@@ -984,7 +988,7 @@ class ProductController extends Controller
     {
         $syncData = [];
         foreach ($attributeIds as $i => $attributeId) {
-            if (!empty($attributeId)) {
+            if (! empty($attributeId)) {
                 $syncData[$attributeId] = ['attribute_value_id' => $valueIds[$i] ?? null];
             }
         }
@@ -995,25 +999,25 @@ class ProductController extends Controller
     {
         $structured = [];
         foreach ($rawVariants as $key => $data) {
-            if (!empty($data['attribute_id']) && !empty($data['value'])) {
+            if (! empty($data['attribute_id']) && ! empty($data['value'])) {
                 $attrIds = explode(',', $data['attribute_id']);
                 $valueNames = explode(' / ', $data['value'] ?? '');
                 $attributes = [];
 
                 foreach ($attrIds as $i => $aid) {
-                    if (!empty($aid)) {
+                    if (! empty($aid)) {
                         $attribute = Attribute::find($aid);
                         $valueName = $valueNames[$i] ?? null;
                         $attributeValue = null;
 
-                        if (!empty($valueName)) {
+                        if (! empty($valueName)) {
                             $attributeValue = AttributeValue::where('attribute_id', $aid)
                                 ->where('value', $valueName)
                                 ->first();
                         }
 
                         $attributes[] = [
-                            'attribute_id' => (int)$aid,
+                            'attribute_id' => (int) $aid,
                             'attribute_value_id' => $attributeValue ? $attributeValue->id : null,
                             'attribute' => $attribute ? $attribute->name : null,
                             'value' => $valueName,
@@ -1036,10 +1040,6 @@ class ProductController extends Controller
 
     /**
      * Helper method to identify changed fields in product updates
-     *
-     * @param array $beforeState
-     * @param array $afterState
-     * @return array
      */
     private function getProductChangedFields(array $beforeState, array $afterState): array
     {
@@ -1053,19 +1053,19 @@ class ProductController extends Controller
                         $changed[$key] = [
                             'old_length' => strlen($value ?? ''),
                             'new_length' => strlen($afterState[$key] ?? ''),
-                            'changed' => true
+                            'changed' => true,
                         ];
                     } else {
                         $changed[$key] = [
                             'old' => '***MASKED***',
                             'new' => '***MASKED***',
-                            'changed' => true
+                            'changed' => true,
                         ];
                     }
                 } else {
                     $changed[$key] = [
                         'old' => $value,
-                        'new' => $afterState[$key]
+                        'new' => $afterState[$key],
                     ];
                 }
             }
@@ -1073,23 +1073,23 @@ class ProductController extends Controller
 
         // Check for new fields that weren't in before state
         foreach ($afterState as $key => $value) {
-            if (!isset($beforeState[$key])) {
+            if (! isset($beforeState[$key])) {
                 if (in_array($key, $sensitiveFields)) {
                     if ($key === 'name' || $key === 'description' || $key === 'short_description') {
                         $changed[$key] = [
                             'old' => null,
-                            'new_length' => strlen($value ?? '')
+                            'new_length' => strlen($value ?? ''),
                         ];
                     } else {
                         $changed[$key] = [
                             'old' => null,
-                            'new' => '***MASKED***'
+                            'new' => '***MASKED***',
                         ];
                     }
                 } else {
                     $changed[$key] = [
                         'old' => null,
-                        'new' => $value
+                        'new' => $value,
                     ];
                 }
             }

@@ -6,9 +6,9 @@ use App\Models\Department;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\Models\Permission;
 use Illuminate\Support\Str;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 
 class RolePermissionController extends Controller
 {
@@ -105,7 +105,7 @@ class RolePermissionController extends Controller
         $departmentPermissionIds = $this->getDepartmentPermissionIds($departmentId);
         $permissions = Permission::whereIn('id', $departmentPermissionIds)
             ->get()
-            ->groupBy(fn($permission) => explode('.', $permission->name)[0]);
+            ->groupBy(fn ($permission) => explode('.', $permission->name)[0]);
 
         $role = Role::findOrFail($roleId);
 
@@ -145,7 +145,7 @@ class RolePermissionController extends Controller
         /** @var \App\Models\User $user */
         $user = Auth::user();
 
-        if (!$user) {
+        if (! $user) {
             return; // no logging if no user context
         }
 
@@ -172,6 +172,7 @@ class RolePermissionController extends Controller
     public function getRolesByDepartment($departmentId)
     {
         $department = Department::with('roles')->findOrFail($departmentId);
+
         return response()->json(
             $department->roles()->select('roles.id', 'roles.name')->get()
         );

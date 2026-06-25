@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
-use App\Traits\SendReminderTrait;
 use App\Services\AuditTrailService;
+use App\Traits\SendReminderTrait;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class ReminderController extends Controller
@@ -21,14 +21,14 @@ class ReminderController extends Controller
 
     /**
      * Sends a reminder to a user via SMS, Email, or both.
-     * * @param Request $request
+     *
      * @return \Illuminate\Http\JsonResponse
      */
     public function send(Request $request)
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'method'  => 'required|in:sms,email,both',
+            'method' => 'required|in:sms,email,both',
             'message' => 'required|string|max:500',
         ]);
 
@@ -70,7 +70,7 @@ class ReminderController extends Controller
                     // $result = $this->sendSmsViaOurSms(['0545232968'], $message);
 
                     if (isset($result['error'])) {
-                        $errors[] = 'SMS failed: ' . $result['error'];
+                        $errors[] = 'SMS failed: '.$result['error'];
 
                         // Log SMS failure
                         $this->auditTrailService->log([
@@ -104,7 +104,7 @@ class ReminderController extends Controller
                         'event_type' => 'sms_missing_phone',
                         'entity_type' => 'User',
                         'entity_id' => $user->id,
-                        'action_summary' => "Cannot send SMS - user has no phone number",
+                        'action_summary' => 'Cannot send SMS - user has no phone number',
                     ]);
                 }
             }
@@ -142,7 +142,7 @@ class ReminderController extends Controller
                         'event_type' => 'email_missing_address',
                         'entity_type' => 'User',
                         'entity_id' => $user->id,
-                        'action_summary' => "Cannot send email - user has no email address",
+                        'action_summary' => 'Cannot send email - user has no email address',
                     ]);
                 }
             }
@@ -150,7 +150,7 @@ class ReminderController extends Controller
             DB::commit();
 
             // 4. Handle Results and Respond
-            if (!empty($errors) && empty($sent_via)) {
+            if (! empty($errors) && empty($sent_via)) {
                 // Log complete failure
                 $this->auditTrailService->log([
                     'event_category' => 'communication',
@@ -165,13 +165,13 @@ class ReminderController extends Controller
 
                 return response()->json([
                     'status' => 'error',
-                    'message' => 'Failed to send reminder. ' . implode(' | ', $errors),
+                    'message' => 'Failed to send reminder. '.implode(' | ', $errors),
                 ], 400);
             }
 
-            if (!empty($errors) && !empty($sent_via)) {
-                $success_message = 'Reminder partially sent via ' . implode(' and ', $sent_via) . '.';
-                $error_message = 'However, ' . implode(' | ', $errors);
+            if (! empty($errors) && ! empty($sent_via)) {
+                $success_message = 'Reminder partially sent via '.implode(' and ', $sent_via).'.';
+                $error_message = 'However, '.implode(' | ', $errors);
 
                 // Log partial success
                 $this->auditTrailService->log([
@@ -188,7 +188,7 @@ class ReminderController extends Controller
 
                 return response()->json([
                     'status' => 'error',
-                    'message' => $success_message . ' ' . $error_message,
+                    'message' => $success_message.' '.$error_message,
                 ], 200);
             }
 
@@ -207,7 +207,7 @@ class ReminderController extends Controller
             // Fully successful
             return response()->json([
                 'status' => 'success',
-                'message' => 'Reminder sent successfully via ' . implode(' and ', $sent_via) . '!',
+                'message' => 'Reminder sent successfully via '.implode(' and ', $sent_via).'!',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -218,7 +218,7 @@ class ReminderController extends Controller
                 'event_type' => 'reminder_exception',
                 'entity_type' => 'User',
                 'entity_id' => $request->user_id ?? null,
-                'action_summary' => "Exception occurred while sending reminder",
+                'action_summary' => 'Exception occurred while sending reminder',
                 'properties' => [
                     'error' => $e->getMessage(),
                 ],
@@ -226,7 +226,7 @@ class ReminderController extends Controller
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Failed to send reminder. ' . $e->getMessage(),
+                'message' => 'Failed to send reminder. '.$e->getMessage(),
             ], 400);
         }
     }

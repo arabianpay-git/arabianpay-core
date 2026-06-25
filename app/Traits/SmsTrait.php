@@ -10,8 +10,6 @@ trait SmsTrait
     /**
      * Send SMS via OurSMS API
      *
-     * @param array|string $phones
-     * @param string $message
      * @return array
      */
     protected function sendSmsViaOurSms(array|string $phones, string $message)
@@ -21,9 +19,9 @@ trait SmsTrait
         }
 
         $postData = [
-            "src"   => "Arabianpay",
-            "dests" => $phones,
-            "body"  => $message,
+            'src' => 'Arabianpay',
+            'dests' => $phones,
+            'body' => $message,
         ];
 
         $response = Http::withToken('EGE4CF3dD_Q6yXGnnMRJ')
@@ -38,8 +36,6 @@ trait SmsTrait
     /**
      * Send order SMS notification
      *
-     * @param string $phoneNumber
-     * @param string $message
      * @return bool
      */
     protected function sendOrderSms(string $phoneNumber, string $message)
@@ -54,28 +50,27 @@ trait SmsTrait
             if (isset($result['error'])) {
                 Log::error("SMS send failed to {$formattedPhone}", [
                     'error' => $result['error'],
-                    'message' => $message
+                    'message' => $message,
                 ]);
+
                 return false;
             }
 
             Log::info("SMS sent successfully to {$formattedPhone}", [
                 'message_id' => $result['id'] ?? null,
-                'message' => $message
+                'message' => $message,
             ]);
 
             return true;
         } catch (\Throwable $e) {
-            Log::error("SMS send exception to {$phoneNumber}: " . $e->getMessage());
+            Log::error("SMS send exception to {$phoneNumber}: ".$e->getMessage());
+
             return false;
         }
     }
 
     /**
      * Format phone number for SMS API
-     *
-     * @param string $phoneNumber
-     * @return string
      */
     protected function formatPhoneNumber(string $phoneNumber): string
     {
@@ -84,7 +79,7 @@ trait SmsTrait
 
         // Handle Saudi numbers: convert 05xxxxxxxx to +9665xxxxxxxx
         if (strlen($phone) == 10 && str_starts_with($phone, '05')) {
-            return '+966' . substr($phone, 1);
+            return '+966'.substr($phone, 1);
         }
 
         // If already starts with +, return as is
@@ -94,7 +89,7 @@ trait SmsTrait
 
         // If no country code, assume Saudi
         if (strlen($phone) == 9 && str_starts_with($phone, '5')) {
-            return '+966' . $phone;
+            return '+966'.$phone;
         }
 
         // Default: return as is
@@ -103,10 +98,6 @@ trait SmsTrait
 
     /**
      * Send bulk SMS to multiple numbers
-     *
-     * @param array $phoneNumbers
-     * @param string $message
-     * @return array
      */
     protected function sendBulkSms(array $phoneNumbers, string $message): array
     {

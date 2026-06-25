@@ -3,11 +3,11 @@
 namespace Database\Seeders;
 
 use App\Models\InstalmentPlan;
-use App\Models\SchedulePayment;
 use App\Models\Order;
+use App\Models\SchedulePayment;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class SchedulePaymentSeeder extends Seeder
 {
@@ -19,7 +19,7 @@ class SchedulePaymentSeeder extends Seeder
         foreach ($orders as $order) {
             $plan = $plans->random();
 
-            if (!$plan || !$plan->installments || !$plan->patch_days) {
+            if (! $plan || ! $plan->installments || ! $plan->patch_days) {
                 continue;
             }
 

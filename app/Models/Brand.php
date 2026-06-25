@@ -9,7 +9,7 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Brand extends Model
 {
-    use LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, LogsModelActions;
 
     protected $encryptableAttributes = [
         'name',
@@ -32,7 +32,9 @@ class Brand extends Model
     ];
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'brand';
 
     protected static function booted()
@@ -44,7 +46,7 @@ class Brand extends Model
                 $counter = 1;
 
                 while (Brand::where('slug', $slug)->where('id', '!=', $brand->id)->exists()) {
-                    $slug = $originalSlug . '-' . $counter++;
+                    $slug = $originalSlug.'-'.$counter++;
                 }
 
                 $brand->slug = $slug;
@@ -61,7 +63,7 @@ class Brand extends Model
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, $this->translatable)) {
+        if (! in_array($key, $this->translatable)) {
             return $value;
         }
 

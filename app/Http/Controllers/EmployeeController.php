@@ -9,10 +9,8 @@ use App\Models\State;
 use App\Models\User;
 use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
-use Illuminate\Support\Str;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
 
@@ -39,6 +37,7 @@ class EmployeeController extends Controller
         );
 
         $employees = User::where('user_type', 'employee')->latest()->paginate(10);
+
         return view('admin.employees.index', compact('employees'));
     }
 
@@ -52,6 +51,7 @@ class EmployeeController extends Controller
         );
 
         $departments = Department::orderBy('name')->get();
+
         return view('admin.employees.create', compact('departments'));
     }
 
@@ -113,7 +113,7 @@ class EmployeeController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -129,6 +129,7 @@ class EmployeeController extends Controller
         ]);
 
         $departments = Department::orderBy('name')->get();
+
         return view('admin.employees.edit', compact('employee', 'departments'));
     }
 
@@ -141,9 +142,9 @@ class EmployeeController extends Controller
 
         // Validate manual permissions against department
         if ($request->filled('permission_ids') && $request->department_id) {
-            if (!$this->validatePermissionsBelongToDepartment($request->permission_ids, $request->department_id)) {
+            if (! $this->validatePermissionsBelongToDepartment($request->permission_ids, $request->department_id)) {
                 return back()->withErrors([
-                    'permission_ids' => 'Some selected permissions are not valid for the chosen department.'
+                    'permission_ids' => 'Some selected permissions are not valid for the chosen department.',
                 ])->withInput();
             }
         }
@@ -211,7 +212,7 @@ class EmployeeController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -265,7 +266,7 @@ class EmployeeController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -292,7 +293,7 @@ class EmployeeController extends Controller
                 return [
                     'id' => $role->id,
                     'name' => $role->name,
-                    'permissions' => $role->permissions->map(fn($p) => ['id' => $p->id, 'name' => $p->name])->values(),
+                    'permissions' => $role->permissions->map(fn ($p) => ['id' => $p->id, 'name' => $p->name])->values(),
                     'sensitive_permissions' => is_array($role->sensitive_permissions)
                         ? $role->sensitive_permissions
                         : (is_string($role->sensitive_permissions)
@@ -318,15 +319,15 @@ class EmployeeController extends Controller
     private function validateRequest(Request $request, ?int $userId = null): void
     {
         $rules = [
-            'first_name'      => 'required|string|max:255',
-            'last_name'       => 'required|string|max:255',
-            'email'           => 'required|email|unique:users,email' . ($userId ? ',' . $userId : ''),
-            'phone_number'    => 'required|string|max:20|unique:users,phone_number' . ($userId ? ',' . $userId : ''),
-            'department_id'   => 'nullable|exists:departments,id',
-            'is_manager'      => 'nullable|boolean',
-            'password'        => $userId ? 'nullable|string|min:6|max:18|confirmed' : 'required|string|min:6|max:18|confirmed',
-            'role_id'         => 'required|exists:roles,id',
-            'permission_ids'  => 'nullable|array',
+            'first_name' => 'required|string|max:255',
+            'last_name' => 'required|string|max:255',
+            'email' => 'required|email|unique:users,email'.($userId ? ','.$userId : ''),
+            'phone_number' => 'required|string|max:20|unique:users,phone_number'.($userId ? ','.$userId : ''),
+            'department_id' => 'nullable|exists:departments,id',
+            'is_manager' => 'nullable|boolean',
+            'password' => $userId ? 'nullable|string|min:6|max:18|confirmed' : 'required|string|min:6|max:18|confirmed',
+            'role_id' => 'required|exists:roles,id',
+            'permission_ids' => 'nullable|array',
             'permission_ids.*' => 'exists:permissions,id',
         ];
 
@@ -350,17 +351,17 @@ class EmployeeController extends Controller
     private function getUserDataFromRequest(Request $request): array
     {
         $data = [
-            'first_name'    => $request->first_name,
-            'last_name'     => $request->last_name,
-            'email'         => $request->email,
-            'phone_number'  => $request->phone_number,
-            'business_name' => $request->first_name . $request->email,
-            'country_id'    => Country::first()?->id,
-            'state_id'      => State::first()?->id,
-            'city_id'       => City::first()?->id,
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'email' => $request->email,
+            'phone_number' => $request->phone_number,
+            'business_name' => $request->first_name.$request->email,
+            'country_id' => Country::first()?->id,
+            'state_id' => State::first()?->id,
+            'city_id' => City::first()?->id,
             'department_id' => $request->department_id,
-            'is_manager'    => $request->boolean('is_manager'),
-            'sensitive_permissions' => $request->has('sensitive_permissions') ? $request->sensitive_permissions : false
+            'is_manager' => $request->boolean('is_manager'),
+            'sensitive_permissions' => $request->has('sensitive_permissions') ? $request->sensitive_permissions : false,
         ];
 
         if ($request->filled('password')) {
@@ -387,15 +388,10 @@ class EmployeeController extends Controller
 
     /**
      * Get valid permissions intersection of department and role, merged with manual valid permissions.
-     *
-     * @param int|null $departmentId
-     * @param Role $role
-     * @param array $manualPermissionIds
-     * @return array
      */
     private function getValidPermissions(?int $departmentId, Role $role, array $manualPermissionIds): array
     {
-        if (!$departmentId) {
+        if (! $departmentId) {
             return [];
         }
 

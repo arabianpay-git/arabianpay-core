@@ -4,15 +4,13 @@ namespace App\Services;
 
 use App\Models\Customer;
 use App\Models\Order;
-use App\Models\User;
 use App\Models\SchedulePayment;
-use App\Services\CreditAssessmentService;
-use App\Services\RiskAnalyticsService;
 use Carbon\Carbon;
 
 class PortfolioPerformanceService
 {
     protected CreditAssessmentService $creditAssessmentService;
+
     protected RiskAnalyticsService $riskAnalyticsService;
 
     public function __construct(
@@ -26,17 +24,17 @@ class PortfolioPerformanceService
     public function getReport(array $filters = []): array
     {
         $utilizedAmount = $this->calculateOrderAmount('completed', $filters);
-        $totalIssued    = $this->calculateTotalCreditLimitFromUsers();
-        $unusedAmount   = max(0, $totalIssued - $utilizedAmount);
+        $totalIssued = $this->calculateTotalCreditLimitFromUsers();
+        $unusedAmount = max(0, $totalIssued - $utilizedAmount);
 
         $utilizedPercent = $totalIssued > 0 ? round(($utilizedAmount / $totalIssued) * 100, 2) : 0;
-        $unusedPercent   = $totalIssued > 0 ? round(($unusedAmount / $totalIssued) * 100, 2) : 0;
+        $unusedPercent = $totalIssued > 0 ? round(($unusedAmount / $totalIssued) * 100, 2) : 0;
 
         $currentFrom = $filters['from'] ?? Carbon::now()->startOfMonth()->toDateString();
-        $currentTo   = $filters['to'] ?? Carbon::now()->endOfMonth()->toDateString();
+        $currentTo = $filters['to'] ?? Carbon::now()->endOfMonth()->toDateString();
 
         $previousFrom = Carbon::parse($currentFrom)->subMonth()->startOfMonth()->toDateString();
-        $previousTo   = Carbon::parse($currentTo)->subMonth()->endOfMonth()->toDateString();
+        $previousTo = Carbon::parse($currentTo)->subMonth()->endOfMonth()->toDateString();
 
         $currentRepaymentRate = $this->calculateRepaymentRate($currentFrom, $currentTo, $filters);
         $previousRepaymentRate = $this->calculateRepaymentRate($previousFrom, $previousTo, $filters);
@@ -50,30 +48,30 @@ class PortfolioPerformanceService
         $monthlyData = $this->getMonthlyCredits($filters);
 
         return [
-            'total_credit_issued'      => round($totalIssued, 2),
-            'utilized_amount'          => round($utilizedAmount, 2),
-            'unused_amount'            => round($unusedAmount, 2),
-            'utilized_percent'         => $utilizedPercent,
-            'unused_percent'           => $unusedPercent,
+            'total_credit_issued' => round($totalIssued, 2),
+            'utilized_amount' => round($utilizedAmount, 2),
+            'unused_amount' => round($unusedAmount, 2),
+            'utilized_percent' => $utilizedPercent,
+            'unused_percent' => $unusedPercent,
 
-            'current_repayment_rate'   => $currentRepaymentRate,
-            'previous_repayment_rate'  => $previousRepaymentRate,
+            'current_repayment_rate' => $currentRepaymentRate,
+            'previous_repayment_rate' => $previousRepaymentRate,
 
-            'current_average_dpd'      => $currentAverageDpd,
-            'avg_dpd_change'           => round($currentAverageDpd - $previousAverageDpd, 2),
+            'current_average_dpd' => $currentAverageDpd,
+            'avg_dpd_change' => round($currentAverageDpd - $previousAverageDpd, 2),
 
-            'current_npl_ratio'        => $currentNplRatio,
-            'previous_npl_ratio'       => $previousNplRatio,
+            'current_npl_ratio' => $currentNplRatio,
+            'previous_npl_ratio' => $previousNplRatio,
 
-            'monthly_credits'          => $monthlyData['credits'],
-            'monthly_labels'           => $monthlyData['labels'],
+            'monthly_credits' => $monthlyData['credits'],
+            'monthly_labels' => $monthlyData['labels'],
         ];
     }
 
     private function calculateRepaymentRate(string $from, string $to, array $filters = []): float
     {
         $query = SchedulePayment::whereBetween('due_date', [$from, $to]);
-        if (!empty($filters['merchant_id'])) {
+        if (! empty($filters['merchant_id'])) {
             $query->where('seller_id', $filters['merchant_id']);
         }
         $scheduled = (clone $query)->sum('instalment_amount');
@@ -90,7 +88,7 @@ class PortfolioPerformanceService
             ->where('is_late', true)
             ->where('payment_status', 'paid');
 
-        if (!empty($filters['merchant_id'])) {
+        if (! empty($filters['merchant_id'])) {
             $query->where('seller_id', $filters['merchant_id']);
         }
 
@@ -108,7 +106,7 @@ class PortfolioPerformanceService
     private function calculateNplRatio(string $from, string $to, array $filters = []): float
     {
         $query = SchedulePayment::whereBetween('due_date', [$from, $to]);
-        if (!empty($filters['merchant_id'])) {
+        if (! empty($filters['merchant_id'])) {
             $query->where('seller_id', $filters['merchant_id']);
         }
 
@@ -131,13 +129,13 @@ class PortfolioPerformanceService
     {
         $query = Order::where('payment_status', $status);
 
-        if (!empty($filters['from'])) {
+        if (! empty($filters['from'])) {
             $query->whereDate('created_at', '>=', $filters['from']);
         }
-        if (!empty($filters['to'])) {
+        if (! empty($filters['to'])) {
             $query->whereDate('created_at', '<=', $filters['to']);
         }
-        if (!empty($filters['merchant_id'])) {
+        if (! empty($filters['merchant_id'])) {
             $query->where('seller_id', $filters['merchant_id']);
         }
 
@@ -146,7 +144,7 @@ class PortfolioPerformanceService
             $items = map_product_details($order->product_details);
 
             foreach ($items as $item) {
-                if (!$item || !isset($item->total)) {
+                if (! $item || ! isset($item->total)) {
                     continue;
                 }
                 $total += $item->total;
@@ -169,13 +167,13 @@ class PortfolioPerformanceService
         foreach ($users as $user) {
             try {
                 $creditScoreData = $this->creditAssessmentService->assess($user->user_id);
-                $riskScoreData   = $this->riskAnalyticsService->calculateForUser($user->user);
+                $riskScoreData = $this->riskAnalyticsService->calculateForUser($user->user);
 
                 $creditScore = $creditScoreData['creditScore']['compositeScore'] ?? 0;
-                $riskScore   = $riskScoreData->total_score ?? 0;
+                $riskScore = $riskScoreData->total_score ?? 0;
 
                 $oldCreditLimit = 20000;
-                $finalScore     = $creditScore * ($riskScore / 100);
+                $finalScore = $creditScore * ($riskScore / 100);
                 $newCreditLimit = $oldCreditLimit * ($finalScore / 100);
 
                 $total += $newCreditLimit;
@@ -200,7 +198,7 @@ class PortfolioPerformanceService
             $query = Order::where('payment_status', 'completed')
                 ->whereBetween('created_at', [$monthStart, $monthEnd]);
 
-            if (!empty($filters['merchant_id'])) {
+            if (! empty($filters['merchant_id'])) {
                 $query->where('seller_id', $filters['merchant_id']);
             }
 
@@ -210,7 +208,7 @@ class PortfolioPerformanceService
                     $items = map_product_details($order->product_details);
 
                     foreach ($items as $item) {
-                        if (!$item || !isset($item->total)) {
+                        if (! $item || ! isset($item->total)) {
                             continue;
                         }
                         $total += $item->total;

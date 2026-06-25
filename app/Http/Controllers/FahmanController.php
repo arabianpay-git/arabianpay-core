@@ -19,7 +19,6 @@ class FahmanController extends Controller
         $creditScore = $creditService->assess($customer->user_id);
         $creditScore = $creditScore['creditScore']['compositeScore'];
 
-
         // التصنيفات بناءً على الدرجة
         if ($creditScore >= 90) {
             $fahman = [
@@ -108,7 +107,7 @@ class FahmanController extends Controller
 
         $PayDate = $average->avg_shipping_days ?? 0 + (100 - $score) * 0.1;
 
-        return view('admin.accounts.partials.fahamn_supplier_results', compact('riskScore',  'fahmanAdvice', 'sectorAvg', 'PayDate'));
+        return view('admin.accounts.partials.fahamn_supplier_results', compact('riskScore', 'fahmanAdvice', 'sectorAvg', 'PayDate'));
     }
 
     public function fahmanDetails($id, CreditAssessmentService $creditService)
@@ -117,23 +116,23 @@ class FahmanController extends Controller
         $orders = Order::where('user_id', $customer->id)->orderBy('created_at')->get();
         $creditScore = $creditService->assess($customer->user_id);
         $scoreComponents = [
-            'POS Revenue'       => $creditScore['creditScore']['monthlyPOSScore'],
-            'Industry Risk'     => $creditScore['creditScore']['industryRiskScore'],
-            'Repayment'         => $creditScore['creditScore']['repaymentScore'],
-            'Business Age'      => $creditScore['creditScore']['businessAgeScore'],
-            'Obligations'       => $creditScore['creditScore']['obligationsScore'],
-            'Liquidity'         => $creditScore['creditScore']['liquidityScore'],
-            'Supplier Ratings'  => $creditScore['creditScore']['supplierScore'],
+            'POS Revenue' => $creditScore['creditScore']['monthlyPOSScore'],
+            'Industry Risk' => $creditScore['creditScore']['industryRiskScore'],
+            'Repayment' => $creditScore['creditScore']['repaymentScore'],
+            'Business Age' => $creditScore['creditScore']['businessAgeScore'],
+            'Obligations' => $creditScore['creditScore']['obligationsScore'],
+            'Liquidity' => $creditScore['creditScore']['liquidityScore'],
+            'Supplier Ratings' => $creditScore['creditScore']['supplierScore'],
         ];
 
         $scoreMaxValues = [
-            'POS Revenue'       => 25,
-            'Industry Risk'     => 15,
-            'Repayment'         => 20,
-            'Business Age'      => 10,
-            'Obligations'       => 10,
-            'Liquidity'         => 10,
-            'Supplier Ratings'  => 10,
+            'POS Revenue' => 25,
+            'Industry Risk' => 15,
+            'Repayment' => 20,
+            'Business Age' => 10,
+            'Obligations' => 10,
+            'Liquidity' => 10,
+            'Supplier Ratings' => 10,
         ];
 
         $interpretations = [];
@@ -142,8 +141,8 @@ class FahmanController extends Controller
                 $value >= 20 => 'Excellent — this boosts Fahman’s confidence.',
                 $value >= 15 => 'Good performance, but could still be improved.',
                 $value >= 10 => 'Some instability detected — better to monitor closely.',
-                $value >= 5  => 'Moderate risk — caution is advised.',
-                default      => 'Very weak — this raises serious concern.',
+                $value >= 5 => 'Moderate risk — caution is advised.',
+                default => 'Very weak — this raises serious concern.',
             };
         }
 

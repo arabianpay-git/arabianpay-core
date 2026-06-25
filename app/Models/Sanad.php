@@ -20,7 +20,7 @@ class Sanad extends Model
     ];
 
     protected $casts = [
-        'issued_at'   => 'datetime',
+        'issued_at' => 'datetime',
         'approved_at' => 'datetime',
         'raw_response' => 'array',
     ];

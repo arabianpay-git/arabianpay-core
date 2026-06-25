@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\Customer;
 use App\Services\LeanService;
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class LeanController extends Controller
@@ -22,7 +22,7 @@ class LeanController extends Controller
      */
     public function index($id)
     {
-        if (!hasSensitivePermission('transaction_references')) {
+        if (! hasSensitivePermission('transaction_references')) {
             return back()->with('error', translate('Access Restricted'));
         }
 
@@ -31,7 +31,7 @@ class LeanController extends Controller
             ->where('user_id', $id)
             ->first();
 
-        if (!$customer) {
+        if (! $customer) {
             abort(404, 'Customer not found');
         }
 
@@ -78,7 +78,7 @@ class LeanController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch banks: ' . $e->getMessage(),
+                'message' => 'Failed to fetch banks: '.$e->getMessage(),
                 'data' => [],
             ], 500);
         }
@@ -111,7 +111,7 @@ class LeanController extends Controller
             $page = (int) $request->query('page', 0);
             $size = (int) $request->query('size', 50);
 
-            $customerId = "d6933bfe-4fad-4d98-a1cc-67a382f507a6";
+            $customerId = 'd6933bfe-4fad-4d98-a1cc-67a382f507a6';
             // Fetch entities
             $entities = $this->leanService->getEntitiesByCustomerId($customerId, $page, $size);
             // $entities = $this->leanService->getEntities($startDate, $endDate, $page, $size);
@@ -136,7 +136,7 @@ class LeanController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch entities: ' . $e->getMessage(),
+                'message' => 'Failed to fetch entities: '.$e->getMessage(),
                 'data' => [],
             ], 500);
         }
@@ -160,7 +160,7 @@ class LeanController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Connection test failed: ' . $e->getMessage(),
+                'message' => 'Connection test failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -182,7 +182,7 @@ class LeanController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Cache clear failed: ' . $e->getMessage(),
+                'message' => 'Cache clear failed: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -213,7 +213,7 @@ class LeanController extends Controller
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to fetch bank statement report: ' . $e->getMessage(),
+                'message' => 'Failed to fetch bank statement report: '.$e->getMessage(),
                 'data' => [],
             ], 500);
         }

@@ -10,7 +10,6 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Str;
 
 class CouponController extends Controller
 {
@@ -35,6 +34,7 @@ class CouponController extends Controller
         );
 
         $coupons = Coupon::latest()->paginate(15);
+
         return view('admin.coupons.index', compact('coupons'));
     }
 
@@ -153,7 +153,7 @@ class CouponController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Something went wrong: '.$e->getMessage())->withInput();
         }
     }
 
@@ -192,7 +192,7 @@ class CouponController extends Controller
         $validator = Validator::make($request->all(), [
             'user_id' => 'nullable|exists:users,id',
             'type' => 'required|in:product_base,total_order',
-            'code' => 'required|regex:/^[a-zA-Z\s]*$/|unique:coupons,code,' . $coupon->id,
+            'code' => 'required|regex:/^[a-zA-Z\s]*$/|unique:coupons,code,'.$coupon->id,
             'discount' => 'required|numeric',
             'discount_type' => 'required|in:percent,amount',
             'start_date' => 'nullable|date',
@@ -227,7 +227,7 @@ class CouponController extends Controller
 
             // Handle details properly - check if it's already an array or needs decoding
             $oldDetails = [];
-            if (!empty($coupon->details)) {
+            if (! empty($coupon->details)) {
                 if (is_array($coupon->details)) {
                     $oldDetails = $coupon->details;
                 } else {
@@ -326,7 +326,7 @@ class CouponController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage())->withInput();
+            return back()->with('error', 'Something went wrong: '.$e->getMessage())->withInput();
         }
     }
 
@@ -340,7 +340,7 @@ class CouponController extends Controller
 
             // Handle details properly
             $couponDetails = [];
-            if (!empty($coupon->details)) {
+            if (! empty($coupon->details)) {
                 if (is_array($coupon->details)) {
                     $couponDetails = $coupon->details;
                 } else {
@@ -392,7 +392,7 @@ class CouponController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 

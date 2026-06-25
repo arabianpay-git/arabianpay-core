@@ -34,7 +34,7 @@ class AuditLog extends Model
     ];
 
     protected $casts = [
-        'timestamp'  => 'datetime',
+        'timestamp' => 'datetime',
         'properties' => 'array',
     ];
 
@@ -51,24 +51,24 @@ class AuditLog extends Model
             $request = Request::instance();
 
             $log->properties = [
-                'ip'           => $request->ip(),
-                'user_agent'   => $request->userAgent(),
-                'method'       => $request->method(),
-                'url'          => $request->fullUrl(),
-                'path'         => $request->path(),
-                'referrer'     => $request->headers->get('referer'),
+                'ip' => $request->ip(),
+                'user_agent' => $request->userAgent(),
+                'method' => $request->method(),
+                'url' => $request->fullUrl(),
+                'path' => $request->path(),
+                'referrer' => $request->headers->get('referer'),
 
                 'device' => [
                     'platform' => php_uname('s'),
-                    'browser'  => $request->header('sec-ch-ua'),
-                    'mobile'   => $request->header('sec-ch-ua-mobile'),
+                    'browser' => $request->header('sec-ch-ua'),
+                    'mobile' => $request->header('sec-ch-ua-mobile'),
                 ],
 
                 // SAFE headers only (PDPL compliant)
                 'headers' => [
-                    'accept'        => $request->header('accept'),
-                    'accept_lang'   => $request->header('accept-language'),
-                    'content_type'  => $request->header('content-type'),
+                    'accept' => $request->header('accept'),
+                    'accept_lang' => $request->header('accept-language'),
+                    'content_type' => $request->header('content-type'),
                 ],
             ];
         });

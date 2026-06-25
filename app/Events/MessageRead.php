@@ -12,7 +12,9 @@ class MessagesRead implements ShouldBroadcastNow
     use InteractsWithSockets, SerializesModels;
 
     public $readerId;
+
     public $senderId;
+
     public $updatedCount;
 
     /**
@@ -39,8 +41,8 @@ class MessagesRead implements ShouldBroadcastNow
     {
         // Notify both users about the read status
         return [
-            new PrivateChannel('chat.' . $this->senderId),  // Notify sender
-            new PrivateChannel('chat.' . $this->readerId),  // Notify reader
+            new PrivateChannel('chat.'.$this->senderId),  // Notify sender
+            new PrivateChannel('chat.'.$this->readerId),  // Notify reader
         ];
     }
 

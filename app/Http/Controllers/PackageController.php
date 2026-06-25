@@ -13,6 +13,7 @@ class PackageController extends Controller
     public function index()
     {
         $packages = Package::latest()->paginate(10);
+
         return view('admin.packages.index', compact('packages'));
     }
 
@@ -25,26 +26,25 @@ class PackageController extends Controller
     {
         $request->validate([
             'name' => ['required', 'string', 'max:255', 'regex:/^[a-zA-Z\s]*$/', 'unique:packages,name'],
-            'min_score'  => 'required|integer',
-            'max_score'  => 'required|integer|gte:min_score',
+            'min_score' => 'required|integer',
+            'max_score' => 'required|integer|gte:min_score',
         ]);
 
         $data = $request->only(['name', 'min_score', 'max_score', 'logo']);
 
         Package::create($data);
 
-        //log the creation of the package
+        // log the creation of the package
         $package = Package::where('name', $data['name'])->first();
         $batchUuid = (string) Str::uuid();
         $package->logModelAction(
             event: 'create',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created package: {$package->name} [$package->id]",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." created package: {$package->name} [$package->id]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,
             ],
         );
-
 
         return redirect()->route('packages.index')->with('success', 'Package created successfully.');
     }
@@ -64,8 +64,8 @@ class PackageController extends Controller
                 'regex:/^[a-zA-Z\s]*$/',
                 Rule::unique('packages', 'name')->ignore($package->id),
             ],
-            'min_score'  => 'required|integer',
-            'max_score'  => 'required|integer|gte:min_score',
+            'min_score' => 'required|integer',
+            'max_score' => 'required|integer|gte:min_score',
         ]);
 
         $data = [
@@ -77,13 +77,12 @@ class PackageController extends Controller
 
         $package->update($data);
 
-
         $package->update($data);
         // Log the update of the package
         $batchUuid = (string) Str::uuid();
         $package->logModelAction(
             event: 'update',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated package: {$package->name} [$package->id]",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." updated package: {$package->name} [$package->id]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,
@@ -101,7 +100,7 @@ class PackageController extends Controller
         $batchUuid = (string) Str::uuid();
         $package->logModelAction(
             event: 'delete',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted package: {$package->name} [$package->id]",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." deleted package: {$package->name} [$package->id]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid,
@@ -109,6 +108,7 @@ class PackageController extends Controller
         );
         // Delete the package
         $package->delete();
+
         return redirect()->route('packages.index')->with('success', 'Package deleted successfully.');
     }
 

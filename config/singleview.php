@@ -9,21 +9,21 @@ return [
     | All required credentials and settings for SingleView APIs
     */
 
-    'domain'       => env('SINGLEVIEW_DOMAIN', 'https://core.arabinapay.net'),
+    'domain' => env('SINGLEVIEW_DOMAIN', 'https://core.arabinapay.net'),
 
-    'client_id'    => env('SINGLEVIEW_CLIENT_ID'),
-    'client_code'  => env('SINGLEVIEW_CLIENT_CODE'),
-    'merchant_id'  => env('SINGLEVIEW_MERCHANT_ID'),
+    'client_id' => env('SINGLEVIEW_CLIENT_ID'),
+    'client_code' => env('SINGLEVIEW_CLIENT_CODE'),
+    'merchant_id' => env('SINGLEVIEW_MERCHANT_ID'),
 
     // API Endpoints (in case they change later, just update here)
     'endpoints' => [
-        'signature'         => '/v1/api/observice/signature',
-        'token'             => '/v1/api/observice/token',
-        'consent'           => '/v1/api/observice/connect',
-        'consent_details'   => '/v1/api/observice/consent/details',
-        'accounts'          => '/v1/api/observice/accounts',
-        'e_statement'       => '/v1/api/observice/allAccountsTransactions',
-        'all_accounts'      => '/v1/api/observice/accounts',
+        'signature' => '/v1/api/observice/signature',
+        'token' => '/v1/api/observice/token',
+        'consent' => '/v1/api/observice/connect',
+        'consent_details' => '/v1/api/observice/consent/details',
+        'accounts' => '/v1/api/observice/accounts',
+        'e_statement' => '/v1/api/observice/allAccountsTransactions',
+        'all_accounts' => '/v1/api/observice/accounts',
         'parties' => '/v1/api/observice/parties',
         'account_by_id' => '/v1/api/observice/accountsById',
         'parties_by_id' => '/v1/api/observice/partiesById',

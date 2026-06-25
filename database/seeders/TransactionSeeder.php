@@ -2,10 +2,9 @@
 
 namespace Database\Seeders;
 
-use App\Models\Transaction;
-use App\Models\User;
-use App\Models\Order;
 use App\Models\InstalmentPlan;
+use App\Models\Order;
+use App\Models\Transaction;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -16,7 +15,7 @@ class TransactionSeeder extends Seeder
         $orders = Order::all();
         $plan = InstalmentPlan::first();
 
-        if (!$plan) {
+        if (! $plan) {
             return; // skip if no plan
         }
 
@@ -35,7 +34,7 @@ class TransactionSeeder extends Seeder
 
             Transaction::create([
                 'uuid' => Str::uuid(),
-                'refrence_payment' => 'TXN-' . strtoupper(Str::random(6)) . '-' . $order->id,
+                'refrence_payment' => 'TXN-'.strtoupper(Str::random(6)).'-'.$order->id,
                 'user_id' => $order->user_id,
                 'seller_id' => $order->seller_id,
                 'order_id' => $order->id,

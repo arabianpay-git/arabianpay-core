@@ -4,10 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Models\SimahReport;
 use App\Services\SimahService;
+use Illuminate\Http\Client\RequestException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Client\RequestException;
 
 class SimahController extends Controller
 {
@@ -21,23 +21,23 @@ class SimahController extends Controller
             ->where('type', 'silverReport')
             ->first();
 
-        if ($existingReport && !$latest) {
+        if ($existingReport && ! $latest) {
             return response()->json([
                 'success' => true,
                 'payload' => $existingReport->report_json,
-                'source'  => 'database',
+                'source' => 'database',
             ]);
         }
 
         $data = [
-            'idNumber'    => $idNumber,
+            'idNumber' => $idNumber,
             'nationality' => $request->input('nationality', 196),
-            'familyName'  => $request->input('familyName', 'ABC'),
-            'firstName'   => $request->input('firstName', 'ABB'),
-            'secondName'  => $request->input('secondName', 'BBC'),
-            'thirdName'   => $request->input('thirdName', 'CCD'),
-            'expiryDate'  => $request->input('expiryDate', '30/10/2040'),
-            'gender'      => $request->input('gender', 1),
+            'familyName' => $request->input('familyName', 'ABC'),
+            'firstName' => $request->input('firstName', 'ABB'),
+            'secondName' => $request->input('secondName', 'BBC'),
+            'thirdName' => $request->input('thirdName', 'CCD'),
+            'expiryDate' => $request->input('expiryDate', '30/10/2040'),
+            'gender' => $request->input('gender', 1),
             'dateOfBirth' => $request->input('dateOfBirth', '30/11/1970'),
             'memberRefNo' => $request->input('memberRefNo'),
         ];
@@ -53,13 +53,13 @@ class SimahController extends Controller
             return response()->json([
                 'success' => true,
                 'payload' => $response,
-                'source'  => 'simah',
+                'source' => 'simah',
             ]);
         } catch (RequestException $e) {
             // Laravel 12: access response via $e->response property
             $rawBody = $e->response ? (string) $e->response->body() : null;
 
-            Log::error('SIMAH HTTP Client Error (Silver): ' . $e->getMessage(), [
+            Log::error('SIMAH HTTP Client Error (Silver): '.$e->getMessage(), [
                 'exception' => $e,
                 'simah_response' => $rawBody,
             ]);
@@ -67,13 +67,13 @@ class SimahController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'SIMAH API Error',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'simah_raw' => $rawBody,
             ], 500);
         } catch (\GuzzleHttp\Exception\RequestException $e) {
             $rawBody = $e->getResponse() ? (string) $e->getResponse()->getBody() : null;
 
-            Log::error('SIMAH Guzzle Error (Silver): ' . $e->getMessage(), [
+            Log::error('SIMAH Guzzle Error (Silver): '.$e->getMessage(), [
                 'exception' => $e,
                 'simah_response' => $rawBody,
             ]);
@@ -81,18 +81,18 @@ class SimahController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'SIMAH API Error',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'simah_raw' => $rawBody,
             ], 500);
         } catch (\Throwable $e) {
-            Log::error('Fetch SIMAH (Silver) failed: ' . $e->getMessage(), [
+            Log::error('Fetch SIMAH (Silver) failed: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch SIMAH data.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }
@@ -107,23 +107,23 @@ class SimahController extends Controller
             ->where('type', 'consumerScore')
             ->first();
 
-        if ($existingReport && !$latest) {
+        if ($existingReport && ! $latest) {
             return response()->json([
                 'success' => true,
                 'payload' => $existingReport->report_json,
-                'source'  => 'database',
+                'source' => 'database',
             ]);
         }
 
         $data = [
             'language' => $request->input('language', 'en'),
             'identityInfo' => [
-                'idType'   => $request->input('idType', 2),
+                'idType' => $request->input('idType', 2),
                 'idNumber' => $request->input('idNumber', '2583103284'),
                 'productId' => $request->input('productId', 23),
             ],
             'applicationDetails' => [
-                'amount'      => $request->input('amount', 100),
+                'amount' => $request->input('amount', 100),
                 'productType' => $request->input('productType', 23),
             ],
             'demographicInfo' => [
@@ -154,12 +154,12 @@ class SimahController extends Controller
             return response()->json([
                 'success' => true,
                 'payload' => $response,
-                'source'  => 'simah',
+                'source' => 'simah',
             ]);
         } catch (RequestException $e) {
             $rawBody = $e->response ? (string) $e->response->body() : null;
 
-            Log::error('SIMAH HTTP Client Error (ConsumerScore): ' . $e->getMessage(), [
+            Log::error('SIMAH HTTP Client Error (ConsumerScore): '.$e->getMessage(), [
                 'exception' => $e,
                 'simah_response' => $rawBody,
             ]);
@@ -167,13 +167,13 @@ class SimahController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'SIMAH API Error',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'simah_raw' => $rawBody,
             ], 500);
         } catch (\GuzzleHttp\Exception\RequestException $e) {
             $rawBody = $e->getResponse() ? (string) $e->getResponse()->getBody() : null;
 
-            Log::error('SIMAH Guzzle Error (ConsumerScore): ' . $e->getMessage(), [
+            Log::error('SIMAH Guzzle Error (ConsumerScore): '.$e->getMessage(), [
                 'exception' => $e,
                 'simah_response' => $rawBody,
             ]);
@@ -181,18 +181,18 @@ class SimahController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'SIMAH API Error',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
                 'simah_raw' => $rawBody,
             ], 500);
         } catch (\Throwable $e) {
-            Log::error('Fetch SIMAH Consumer Score failed: ' . $e->getMessage(), [
+            Log::error('Fetch SIMAH Consumer Score failed: '.$e->getMessage(), [
                 'exception' => $e,
             ]);
 
             return response()->json([
                 'success' => false,
                 'message' => 'Failed to fetch SIMAH consumer score.',
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 500);
         }
     }

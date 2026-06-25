@@ -4,9 +4,9 @@ namespace Database\Seeders;
 
 use App\Models\SupportTicket;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class SupportTicketSeeder extends Seeder
 {
@@ -18,6 +18,7 @@ class SupportTicketSeeder extends Seeder
 
         if (empty($merchants) || empty($users)) {
             $this->command->info('No merchants or customers found. Please seed users first.');
+
             return;
         }
 
@@ -41,7 +42,7 @@ class SupportTicketSeeder extends Seeder
                 'user_id' => $users[array_rand($users)],
                 'assigned_to' => $merchants[array_rand($merchants)],
                 'ticket_number' => strtoupper(Str::random(8)),
-                'subject' => 'Issue with Order #' . rand(1000, 9999),
+                'subject' => 'Issue with Order #'.rand(1000, 9999),
                 'details' => 'Customer reported an issue with their order. Needs assistance.',
                 'files' => [], // empty array, can be populated if needed
                 'reply' => null,

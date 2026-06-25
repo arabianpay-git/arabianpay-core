@@ -28,7 +28,7 @@ class NafathVerification extends Model
     // Encrypt national_id, hash separate column
     public function setNationalIdAttribute($value)
     {
-        $this->attributes['iqama_hash']  = Hash::make($value);
+        $this->attributes['iqama_hash'] = Hash::make($value);
         $this->attributes['national_id'] = encrypt($value);
     }
 

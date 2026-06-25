@@ -17,9 +17,9 @@ trait OtpSenderTrait
         $message = $message ?? "Your OTP is: {$otp}";
 
         $postData = [
-            "src"   => "Arabianpay",
-            "dests" => $phones,
-            "body"  => $message,
+            'src' => 'Arabianpay',
+            'dests' => $phones,
+            'body' => $message,
         ];
 
         try {
@@ -27,9 +27,9 @@ trait OtpSenderTrait
                 ->acceptJson()
                 ->post('https://api.oursms.com/msgs/sms', $postData);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('SMS OTP sending failed', ['response' => $response->body()]);
-                throw new \RuntimeException('SMS OTP sending failed: ' . substr($response->body(), 0, 500));
+                throw new \RuntimeException('SMS OTP sending failed: '.substr($response->body(), 0, 500));
             }
 
             return [
@@ -39,7 +39,7 @@ trait OtpSenderTrait
         } catch (\Throwable $e) {
             Log::error('SMS OTP sending exception', [
                 'error' => $e->getMessage(),
-                'phones' => $phones
+                'phones' => $phones,
             ]);
             throw $e;
         }
@@ -61,10 +61,10 @@ trait OtpSenderTrait
                     <div style='font-size: 24px; font-weight: bold; margin: 10px 0; color: #1a73e8;'>{$otp}</div>
                     <p>If you did not request this code, please ignore this email.</p>
                     <hr style='margin: 20px 0; border-color: #eee;'>
-                    <p style='font-size: 12px; color: #999;'>Arabianpay &copy; " . date('Y') . "</p>
+                    <p style='font-size: 12px; color: #999;'>Arabianpay &copy; ".date('Y').'</p>
                 </div>
             </div>
-        ";
+        ';
 
         try {
             Mail::html($html, function ($messageMail) use ($email, $subject) {
@@ -77,7 +77,7 @@ trait OtpSenderTrait
         } catch (\Throwable $e) {
             Log::error('Email OTP sending failed', [
                 'error' => $e->getMessage(),
-                'email' => $email
+                'email' => $email,
             ]);
             throw $e;
         }

@@ -4,12 +4,13 @@ namespace App\Models;
 
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class TransferRequest extends Model
 {
     use LogsModelActions;
+
     protected $fillable = [
         'from_user_id',
         'to_user_id',

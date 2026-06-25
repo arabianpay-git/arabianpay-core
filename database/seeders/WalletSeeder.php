@@ -2,13 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\Wallet;
-use App\Models\User;
 use App\Models\Order;
 use App\Models\Payment;
 use App\Models\Transaction;
+use App\Models\Wallet;
 use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
 
 class WalletSeeder extends Seeder
 {
@@ -26,7 +25,7 @@ class WalletSeeder extends Seeder
             $transaction = Transaction::where('order_id', $order->id)->first();
 
             // Skip if either is missing
-            if (!$payment || !$transaction) {
+            if (! $payment || ! $transaction) {
                 continue;
             }
 

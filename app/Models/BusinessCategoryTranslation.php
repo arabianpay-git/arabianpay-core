@@ -8,7 +8,7 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class BusinessCategoryTranslation extends Model
 {
-    use HasFactory, EncryptsAttributes;
+    use EncryptsAttributes, HasFactory;
 
     protected $encryptableAttributes = [
         'name',

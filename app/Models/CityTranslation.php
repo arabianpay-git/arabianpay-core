@@ -12,6 +12,7 @@ class CityTranslation extends Model
     public $timestamps = false;
 
     protected $fillable = ['locale', 'name'];
+
     protected $encryptableAttributes = ['name'];
 
     public function city()

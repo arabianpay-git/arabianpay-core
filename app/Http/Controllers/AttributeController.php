@@ -5,11 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Attribute;
 use App\Rules\NoHtml;
 use App\Services\AuditTrailService;
-use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class AttributeController extends Controller
 {
@@ -82,7 +80,7 @@ class AttributeController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -112,6 +110,7 @@ class AttributeController extends Controller
         ]);
 
         $attribute->load(['values', 'values.translations']);
+
         return view('admin.attributes.attribute-value-create', compact('attribute'));
     }
 
@@ -127,7 +126,7 @@ class AttributeController extends Controller
             'name.ar' => [
                 'nullable',
                 new NoHtml,
-            ]
+            ],
         ]);
 
         DB::beginTransaction();
@@ -175,7 +174,7 @@ class AttributeController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -220,7 +219,7 @@ class AttributeController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 

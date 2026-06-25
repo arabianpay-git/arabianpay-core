@@ -23,18 +23,18 @@ class PortfolioReportService
 
             $months->push([
                 'label' => $month->format('M'),
-                'total' => $sum
+                'total' => $sum,
             ]);
         }
 
         $monthly_labels = $months->pluck('label')->toArray();
         $monthly_credits = $months->pluck('total')->toArray();
 
-        //**************************************************** */
+        // **************************************************** */
         $currentMontH = Carbon::now();
         $previousMonth = Carbon::now()->subMonth();
 
-        //**************** For Current Month ***************** */
+        // **************** For Current Month ***************** */
         $currentQuery = DB::table('schedule_payments')
             ->whereYear('due_date', $currentMontH->year)
             ->whereMonth('due_date', $currentMontH->month);
@@ -45,7 +45,7 @@ class PortfolioReportService
         $totalInstallmentsCurrent = (clone $currentQuery)->count();
         $nplInstallmentsCurrent = (clone $currentQuery)->where('late_days', '>', 90)->count();
 
-        //**************** For Previous Month ***************** */
+        // **************** For Previous Month ***************** */
         $previousQuery = DB::table('schedule_payments')
             ->whereYear('due_date', $previousMonth->year)
             ->whereMonth('due_date', $previousMonth->month);
@@ -65,7 +65,7 @@ class PortfolioReportService
         $previousAvgDPD = round($avgDPDPrevious ?? 0, 2);
         $previousNPLRatio = $totalInstallmentsPrevious > 0 ? round(($nplInstallmentsPrevious / $totalInstallmentsPrevious) * 100, 2) : 0;
 
-        //**************************************************** */
+        // **************************************************** */
 
         $queryDate = function ($query) use ($from, $to) {
             if ($from && $to) {
@@ -176,12 +176,13 @@ class PortfolioReportService
 
         $payments = SchedulePayment::when($from && $to, $queryDate)
             ->get();
+
         return [
             'total_credit_issued' => $totalCredit,
             'utilized_amount' => $utilizedAmount,
             'unused_amount' => $totalCredit - $utilizedAmount,
             'utilized_percent' => $utilizedPercent,
-            'unused_percent' =>  $unusedPercent,
+            'unused_percent' => $unusedPercent,
             'current_repayment_rate' => $currentRepaymentRate,
             'current_average_dpd' => $currentAvgDPD,
             'current_npl_ratio' => $currentNPLRatio,
@@ -212,6 +213,7 @@ class PortfolioReportService
         };
         $payments = SchedulePayment::when($from && $to, $queryDate)
             ->get();
+
         return $payments;
     }
 }

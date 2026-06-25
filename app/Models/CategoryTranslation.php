@@ -10,7 +10,9 @@ class CategoryTranslation extends Model
     use EncryptsAttributes;
 
     public $timestamps = false;
+
     protected $fillable = ['locale', 'name', 'meta_title', 'meta_description'];
+
     protected $encryptableAttributes = ['name'];
 
     public function category()

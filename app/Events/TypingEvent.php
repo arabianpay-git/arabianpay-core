@@ -2,17 +2,18 @@
 
 namespace App\Events;
 
-use Illuminate\Broadcasting\PrivateChannel;
-use Illuminate\Queue\SerializesModels;
-use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Foundation\Events\Dispatchable;
+use Illuminate\Queue\SerializesModels;
 
 class TypingEvent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     public int $senderId;
+
     public int $receiverId;
 
     public function __construct(int $senderId, int $receiverId)
@@ -25,8 +26,8 @@ class TypingEvent implements ShouldBroadcastNow
     {
         // Broadcast to both users
         return [
-            new PrivateChannel('chat.' . $this->senderId),
-            new PrivateChannel('chat.' . $this->receiverId)
+            new PrivateChannel('chat.'.$this->senderId),
+            new PrivateChannel('chat.'.$this->receiverId),
         ];
     }
 
@@ -34,7 +35,7 @@ class TypingEvent implements ShouldBroadcastNow
     {
         return [
             'senderId' => $this->senderId,
-            'receiverId' => $this->receiverId
+            'receiverId' => $this->receiverId,
         ];
     }
 }

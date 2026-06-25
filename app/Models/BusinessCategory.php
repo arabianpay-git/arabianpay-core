@@ -10,7 +10,7 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class BusinessCategory extends Model
 {
-    use HasFactory, LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, HasFactory, LogsModelActions;
 
     protected $encryptableAttributes = [
         'name',
@@ -30,7 +30,9 @@ class BusinessCategory extends Model
     protected array $translatable = ['name'];
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'business_category';
 
     public function translations()
@@ -52,7 +54,7 @@ class BusinessCategory extends Model
                 $counter = 1;
 
                 while (self::where('slug', $slug)->where('id', '!=', $businessCategory->id)->exists()) {
-                    $slug = $originalSlug . '-' . $counter++;
+                    $slug = $originalSlug.'-'.$counter++;
                 }
 
                 $businessCategory->slug = $slug;
@@ -64,7 +66,7 @@ class BusinessCategory extends Model
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, $this->translatable)) {
+        if (! in_array($key, $this->translatable)) {
             return $value;
         }
 

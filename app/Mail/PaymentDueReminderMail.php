@@ -11,7 +11,9 @@ class PaymentDueReminderMail extends Mailable
     use Queueable, SerializesModels;
 
     public $user;
+
     public $schedule;
+
     public $attemptNumber;
 
     public function __construct($user, $schedule, $attemptNumber = 1)

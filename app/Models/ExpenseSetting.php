@@ -39,8 +39,9 @@ class ExpenseSetting extends Model
     public function getFormattedAmountAttribute()
     {
         if ($this->amount_type === 'percent') {
-            return number_format((float)$this->amount, 2) . '%';
+            return number_format((float) $this->amount, 2).'%';
         }
-        return number_format((float)$this->amount, 2);
+
+        return number_format((float) $this->amount, 2);
     }
 }

@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
+use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use App\Models\User;
 
 class RiskManagementSeeder extends Seeder
 {
@@ -15,17 +15,17 @@ class RiskManagementSeeder extends Seeder
 
             $user = User::where('user_type', 'user')->inRandomOrder()->first();
 
-            if (!$user) {
+            if (! $user) {
                 continue;
             }
 
             DB::table('risk_management')->insert([
                 'user_id' => $user->id,
-                'creditor_id' => 'CRD' . str_pad($i, 5, '0', STR_PAD_LEFT),
-                'name' => 'Seller ' . $i,
+                'creditor_id' => 'CRD'.str_pad($i, 5, '0', STR_PAD_LEFT),
+                'name' => 'Seller '.$i,
                 'registration_date' => Carbon::now()->subYears(rand(1, 5))->subDays(rand(1, 365)),
                 'contact_email' => "seller{$i}@example.com",
-                'contact_phone' => '00966' . rand(500000000, 599999999),
+                'contact_phone' => '00966'.rand(500000000, 599999999),
                 'business_type' => ['Retail', 'Wholesale', 'Services'][rand(0, 2)],
                 'kyc_status' => rand(0, 1),
                 'compliance_status' => ['Pending', 'Approved', 'Rejected'][rand(0, 2)],
@@ -39,15 +39,15 @@ class RiskManagementSeeder extends Seeder
                     'Mar' => rand(0, 1),
                     'Apr' => rand(0, 1),
                     'May' => rand(0, 1),
-                    'Jun' => rand(0, 1)
+                    'Jun' => rand(0, 1),
                 ]),
                 'previous_enquiries' => json_encode([
                     'count' => rand(1, 10),
-                    'last_enquiry' => Carbon::now()->subDays(rand(1, 180))->toDateString()
+                    'last_enquiry' => Carbon::now()->subDays(rand(1, 180))->toDateString(),
                 ]),
                 'credit_instruments' => json_encode([
                     'loans' => rand(0, 5),
-                    'credit_cards' => rand(0, 3)
+                    'credit_cards' => rand(0, 3),
                 ]),
 
                 'total_transactions' => rand(50, 500),

@@ -14,6 +14,7 @@ class SupplierRoleController extends Controller
     public function index()
     {
         $roles = SupplierRole::latest()->paginate(10); // paginate 10 per page
+
         return view('admin.supplier-roles.index', compact('roles'));
     }
 

@@ -3,13 +3,13 @@
 namespace App\Http\Controllers\Financial;
 
 use App\Http\Controllers\Controller;
-use App\Models\FTransaction;
-use App\Models\FAccounts;
 use App\Models\Customer;
+use App\Models\FAccounts;
+use App\Models\FTransaction;
 use App\Models\Merchant;
-use App\Models\User;
 use App\Models\Order;
 use App\Models\Payment;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -23,6 +23,7 @@ class FinancialTransactions extends Controller
         $transactions = FTransaction::with(['user', 'customer', 'supplier', 'order', 'payment'])
             ->orderBy('transaction_date', 'desc')
             ->paginate(15);
+
         return view('admin.financial.transactions.index', compact('transactions'));
     }
 
@@ -37,7 +38,7 @@ class FinancialTransactions extends Controller
         $suppliers = Merchant::orderBy('name')->get();
         $orders = Order::orderBy('id', 'desc')->limit(100)->get();
         $payments = Payment::orderBy('id', 'desc')->limit(100)->get();
-        
+
         return view('admin.financial.transactions.create', compact('accounts', 'users', 'customers', 'suppliers', 'orders', 'payments'));
     }
 
@@ -76,12 +77,12 @@ class FinancialTransactions extends Controller
     {
         $fTransaction = FTransaction::with(['user', 'customer', 'supplier', 'order', 'payment'])
             ->findOrFail($id);
-        
+
         // Get related entries for this transaction
         $entries = $fTransaction->entries()->with(['account', 'user'])
             ->orderBy('entry_date', 'desc')
             ->paginate(50);
-        
+
         return view('admin.financial.transactions.show', compact('fTransaction', 'entries'));
     }
 
@@ -97,7 +98,7 @@ class FinancialTransactions extends Controller
         $suppliers = Merchant::orderBy('name')->get();
         $orders = Order::orderBy('id', 'desc')->limit(100)->get();
         $payments = Payment::orderBy('id', 'desc')->limit(100)->get();
-        
+
         return view('admin.financial.transactions.edit', compact('fTransaction', 'accounts', 'users', 'customers', 'suppliers', 'orders', 'payments'));
     }
 
@@ -107,7 +108,7 @@ class FinancialTransactions extends Controller
     public function update(Request $request, $id)
     {
         $fTransaction = FTransaction::findOrFail($id);
-        
+
         $validated = $request->validate([
             'reference_id' => 'nullable|string|max:255',
             'customer_id' => 'nullable|exists:customers,id',
@@ -134,7 +135,7 @@ class FinancialTransactions extends Controller
     public function destroy($id)
     {
         $fTransaction = FTransaction::findOrFail($id);
-        
+
         // Check if transaction has entries before deletion
         if ($fTransaction->entries()->count() > 0) {
             return redirect()->route('financial.transactions.index')
@@ -154,13 +155,13 @@ class FinancialTransactions extends Controller
     {
         $fTransaction = FTransaction::with(['user', 'customer', 'supplier', 'order', 'payment'])
             ->findOrFail($id);
-        
+
         $entries = $fTransaction->entries()->with(['account', 'user'])->get();
-        
+
         return response()->json([
             'success' => true,
             'transaction' => $fTransaction,
-            'entries' => $entries
+            'entries' => $entries,
         ]);
     }
 }

@@ -11,7 +11,9 @@ class PaymentUpcomingReminderMail extends Mailable
     use Queueable, SerializesModels;
 
     public $user;
+
     public $schedule;
+
     public $daysLeft;
 
     public function __construct($user, $schedule, int $daysLeft)

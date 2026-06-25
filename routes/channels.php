@@ -11,6 +11,7 @@ Broadcast::channel('chat.{userId}', function ($user, $userId) {
 // Conversation channel for two users (e.g. 1-5)
 Broadcast::channel('conversation.{userIds}', function ($user, $userIds) {
     $ids = explode('-', $userIds);
+
     return in_array($user->id, $ids);
 });
 
@@ -18,8 +19,8 @@ Broadcast::channel('conversation.{userIds}', function ($user, $userIds) {
 Broadcast::channel('presence.chat', function (User $user) {
     return [
         'id' => $user->id,
-        'name' => $user->first_name . ' ' . $user->last_name,
-        'avatar' => $user->profile_photo_path ? asset('storage/' . $user->profile_photo_path) : $user->profile_photo_url,
+        'name' => $user->first_name.' '.$user->last_name,
+        'avatar' => $user->profile_photo_path ? asset('storage/'.$user->profile_photo_path) : $user->profile_photo_url,
     ];
 });
 

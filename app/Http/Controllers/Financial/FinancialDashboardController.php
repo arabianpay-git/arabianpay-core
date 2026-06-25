@@ -4,13 +4,12 @@ namespace App\Http\Controllers\Financial;
 
 use App\Http\Controllers\Controller;
 use App\Models\FAccounts;
-use App\Models\FTransaction;
 use App\Models\FEntry;
+use App\Models\FTransaction;
 use App\Models\InvestmentPool;
-use App\Services\PoolService;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
 
 class FinancialDashboardController extends Controller
 {
@@ -23,7 +22,7 @@ class FinancialDashboardController extends Controller
             'recentActivities' => $this->getRecentActivities(),
             'accountsSummary' => $this->getAccountsSummary(),
             'trialBalance' => $this->trialBalance($request),
-            'investmentPools' => $this->getInvestmentPoolsSummary()
+            'investmentPools' => $this->getInvestmentPoolsSummary(),
         ];
 
         return view('admin.financial.dashboard', $data);
@@ -156,6 +155,7 @@ class FinancialDashboardController extends Controller
         if ($previous == 0) {
             return $current > 0 ? 100 : 0;
         }
+
         return (($current - $previous) / abs($previous)) * 100;
     }
 
@@ -180,6 +180,7 @@ class FinancialDashboardController extends Controller
 
             $data[] = $assets - $liabilities;
         }
+
         return $data;
     }
 
@@ -209,6 +210,7 @@ class FinancialDashboardController extends Controller
 
             $data[] = $revenue - $expenses;
         }
+
         return $data;
     }
 
@@ -227,6 +229,7 @@ class FinancialDashboardController extends Controller
 
             $data[] = $value;
         }
+
         return $data;
     }
 
@@ -245,6 +248,7 @@ class FinancialDashboardController extends Controller
 
             $data[] = $value;
         }
+
         return $data;
     }
 
@@ -277,7 +281,7 @@ class FinancialDashboardController extends Controller
                 'month' => $month->format('M Y'),
                 'revenue' => $revenue,
                 'expenses' => $expenses,
-                'net' => $revenue - $expenses
+                'net' => $revenue - $expenses,
             ];
         }
 
@@ -288,7 +292,7 @@ class FinancialDashboardController extends Controller
 
         return [
             'monthly_data' => $monthlyData,
-            'account_types' => $accountTypes
+            'account_types' => $accountTypes,
         ];
     }
 
@@ -335,7 +339,7 @@ class FinancialDashboardController extends Controller
             'trialBalance' => $this->getTrialBalance($request),
             'balanceDate' => $request->get('date', Carbon::now()->format(dateFormat())),
             'totalDebits' => 0,
-            'totalCredits' => 0
+            'totalCredits' => 0,
         ];
 
         // Calculate totals for validation
@@ -343,6 +347,7 @@ class FinancialDashboardController extends Controller
             $data['totalDebits'] += $account->total_debit;
             $data['totalCredits'] += $account->total_credit;
         }
+
         return $data;
     }
 
@@ -361,7 +366,7 @@ class FinancialDashboardController extends Controller
             DB::raw('CASE 
                 WHEN f_accounts.account_type2 = 1 THEN COALESCE(SUM(f_entries.debit), 0) - COALESCE(SUM(f_entries.credit), 0)
                 ELSE COALESCE(SUM(f_entries.credit), 0) - COALESCE(SUM(f_entries.debit), 0)
-                END as balance')
+                END as balance'),
         ])
             ->leftJoin('f_entries', 'f_accounts.id', '=', 'f_entries.account_id')
             //  ->where(function($query) use ($date) {
@@ -373,7 +378,7 @@ class FinancialDashboardController extends Controller
                 'f_accounts.id',
                 'f_accounts.account_name',
                 'f_accounts.account_type1',
-                'f_accounts.account_type2'
+                'f_accounts.account_type2',
             ])
             ->orderBy('f_accounts.id')
             ->get();
@@ -386,18 +391,18 @@ class FinancialDashboardController extends Controller
         $trialBalance = $this->getTrialBalance($request);
         $date = $request->get('date', Carbon::now()->format(dateFormat()));
 
-        $filename = 'trial_balance_' . $date . '.csv';
+        $filename = 'trial_balance_'.$date.'.csv';
 
         $headers = [
             'Content-Type' => 'text/csv',
-            'Content-Disposition' => 'attachment; filename="' . $filename . '"',
+            'Content-Disposition' => 'attachment; filename="'.$filename.'"',
         ];
 
         $callback = function () use ($trialBalance, $date) {
             $file = fopen('php://output', 'w');
 
             // Add headers
-            fputcsv($file, ['Trial Balance as of ' . Carbon::parse($date)->format('F d, Y')]);
+            fputcsv($file, ['Trial Balance as of '.Carbon::parse($date)->format('F d, Y')]);
             fputcsv($file, []);
             fputcsv($file, ['Account Code', 'Account Name', 'Account Type', 'Debit', 'Credit', 'Balance']);
 
@@ -406,7 +411,7 @@ class FinancialDashboardController extends Controller
 
             foreach ($trialBalance as $account) {
                 $accountType = $account->account_type1 == 1 ? 'Budget' : 'Non-Budget';
-                $accountType .= ' - ' . ($account->account_type2 == 1 ? 'Debit' : 'Credit');
+                $accountType .= ' - '.($account->account_type2 == 1 ? 'Debit' : 'Credit');
 
                 fputcsv($file, [
                     $account->account_code,
@@ -414,7 +419,7 @@ class FinancialDashboardController extends Controller
                     $accountType,
                     number_format($account->total_debit, 2),
                     number_format($account->total_credit, 2),
-                    number_format($account->balance, 2)
+                    number_format($account->balance, 2),
                 ]);
 
                 $totalDebits += $account->total_debit;
@@ -470,7 +475,7 @@ class FinancialDashboardController extends Controller
                     'total_collected' => $totalCollected,
                     'avg_collection_rate' => round($avgCollectionRate, 2),
                     'total_outstanding' => $totalDisbursed - $totalCollected,
-                ]
+                ],
             ];
         } catch (\Exception $e) {
             // Return empty data if pools don't exist yet
@@ -483,7 +488,7 @@ class FinancialDashboardController extends Controller
                     'total_collected' => 0,
                     'avg_collection_rate' => 0,
                     'total_outstanding' => 0,
-                ]
+                ],
             ];
         }
     }

@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Spatie\Permission\Contracts\Role as RoleContract;
 use Spatie\Permission\Exceptions\GuardDoesNotMatch;
-use Spatie\Permission\Exceptions\PermissionDoesNotExist;
 use Spatie\Permission\Exceptions\RoleAlreadyExists;
 use Spatie\Permission\Exceptions\RoleDoesNotExist;
 use Spatie\Permission\Guard;
@@ -57,7 +56,7 @@ class Role extends Model implements RoleContract
         $attributes['guard_name'] ??= Guard::getDefaultName(static::class);
 
         $params = [
-            'name'       => $attributes['name'],
+            'name' => $attributes['name'],
             'guard_name' => $attributes['guard_name'],
         ];
 
@@ -70,7 +69,7 @@ class Role extends Model implements RoleContract
                 $params[$teamsKey] = $attributes[$teamsKey];
             } else {
                 $attributes[$teamsKey] = getPermissionsTeamId();
-                $params[$teamsKey]     = $attributes[$teamsKey];
+                $params[$teamsKey] = $attributes[$teamsKey];
             }
         }
 
@@ -129,7 +128,7 @@ class Role extends Model implements RoleContract
         $guardName ??= Guard::getDefaultName(static::class);
 
         $role = static::findByParam([
-            'name'       => $name,
+            'name' => $name,
             'guard_name' => $guardName,
         ]);
 
@@ -149,7 +148,7 @@ class Role extends Model implements RoleContract
 
         $role = static::findByParam([
             (new static)->getKeyName() => $id,
-            'guard_name'              => $guardName,
+            'guard_name' => $guardName,
         ]);
 
         if (! $role) {
@@ -167,7 +166,7 @@ class Role extends Model implements RoleContract
         $guardName ??= Guard::getDefaultName(static::class);
 
         $attributes = [
-            'name'       => $name,
+            'name' => $name,
             'guard_name' => $guardName,
         ];
 
@@ -200,8 +199,7 @@ class Role extends Model implements RoleContract
             $teamsKey = $registrar->teamsKey;
 
             $query->where(
-                fn($q) =>
-                $q->whereNull($teamsKey)
+                fn ($q) => $q->whereNull($teamsKey)
                     ->orWhere($teamsKey, $params[$teamsKey] ?? getPermissionsTeamId())
             );
 

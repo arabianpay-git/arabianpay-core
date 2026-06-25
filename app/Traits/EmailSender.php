@@ -9,9 +9,9 @@ trait EmailSender
     /**
      * Send a simple raw email.
      *
-     * @param string $to
-     * @param string $subject
-     * @param string $body
+     * @param  string  $to
+     * @param  string  $subject
+     * @param  string  $body
      * @return void
      */
     protected function sendEmail($view, $to, $subject, $data = [])

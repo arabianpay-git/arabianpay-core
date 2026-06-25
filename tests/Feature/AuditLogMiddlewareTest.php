@@ -88,7 +88,7 @@ class AuditLogMiddlewareTest extends TestCase
     public function test_pii_fields_are_masked_in_audit_log(): void
     {
         $this->post('/login', [
-            'email'    => 'user@example.com',
+            'email' => 'user@example.com',
             'password' => 'secret123',
         ]);
 

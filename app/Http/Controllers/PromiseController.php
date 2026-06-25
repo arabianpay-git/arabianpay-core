@@ -23,7 +23,7 @@ class PromiseController extends Controller
             'user_id' => 'required|exists:users,id',
             'schedule_payment_id' => 'required|exists:schedule_payments,id',
             'method' => 'required|string|in:call,email',
-            'promise_date' => 'required|date|after_or_equal:today'
+            'promise_date' => 'required|date|after_or_equal:today',
         ]);
 
         // Check if a promise already exists for this schedule_payment_id
@@ -45,7 +45,7 @@ class PromiseController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'A promise already exists for this installment.'
+                'message' => 'A promise already exists for this installment.',
             ], 422);
         }
 
@@ -77,7 +77,7 @@ class PromiseController extends Controller
                     'schedule_payment_id' => $request->schedule_payment_id,
                     'promise_date' => $request->promise_date,
                     'method' => $request->method,
-                    'employee_name' => Auth::user()->first_name . ' ' . Auth::user()->last_name,
+                    'employee_name' => Auth::user()->first_name.' '.Auth::user()->last_name,
                 ], $justificationData)
             );
 
@@ -86,11 +86,11 @@ class PromiseController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => true,
-                    'message' => "Promise recorded successfully."
+                    'message' => 'Promise recorded successfully.',
                 ]);
             }
 
-            return back()->with('success', "Promise recorded successfully.");
+            return back()->with('success', 'Promise recorded successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
 
@@ -111,11 +111,11 @@ class PromiseController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to record promise: ' . $e->getMessage()
+                    'message' => 'Failed to record promise: '.$e->getMessage(),
                 ], 500);
             }
 
-            return back()->with('error', 'Failed to record promise: ' . $e->getMessage());
+            return back()->with('error', 'Failed to record promise: '.$e->getMessage());
         }
     }
 
@@ -153,7 +153,7 @@ class PromiseController extends Controller
                     'schedule_payment_id' => $promise->schedule_payment_id,
                     'user_id' => $promise->user_id,
                     'employee_id' => Auth::id(),
-                    'employee_name' => Auth::user()->first_name . ' ' . Auth::user()->last_name,
+                    'employee_name' => Auth::user()->first_name.' '.Auth::user()->last_name,
                 ], $justificationData)
             );
 
@@ -184,11 +184,11 @@ class PromiseController extends Controller
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to update promise: ' . $e->getMessage()
+                    'message' => 'Failed to update promise: '.$e->getMessage(),
                 ], 500);
             }
 
-            return back()->with('error', 'Failed to update promise: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update promise: '.$e->getMessage());
         }
     }
 
@@ -216,7 +216,7 @@ class PromiseController extends Controller
                     'promise_date' => $promise->promise_date,
                     'method' => $promise->method,
                     'employee_id' => Auth::id(),
-                    'employee_name' => Auth::user()->first_name . ' ' . Auth::user()->last_name,
+                    'employee_name' => Auth::user()->first_name.' '.Auth::user()->last_name,
                 ], $justificationData)
             );
 
@@ -249,11 +249,11 @@ class PromiseController extends Controller
             if (request()->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Failed to delete promise: ' . $e->getMessage()
+                    'message' => 'Failed to delete promise: '.$e->getMessage(),
                 ], 500);
             }
 
-            return back()->with('error', 'Failed to delete promise: ' . $e->getMessage());
+            return back()->with('error', 'Failed to delete promise: '.$e->getMessage());
         }
     }
 }

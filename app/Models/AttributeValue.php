@@ -33,7 +33,7 @@ class AttributeValue extends Model
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, $this->translatable)) {
+        if (! in_array($key, $this->translatable)) {
             return $value;
         }
 

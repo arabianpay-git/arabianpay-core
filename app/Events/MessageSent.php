@@ -3,10 +3,10 @@
 namespace App\Events;
 
 use App\Models\ChatMessage;
+use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Broadcasting\PrivateChannel;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Queue\SerializesModels;
-use Illuminate\Broadcasting\InteractsWithSockets;
 
 class MessageSent implements ShouldBroadcastNow
 {
@@ -17,7 +17,6 @@ class MessageSent implements ShouldBroadcastNow
     /**
      * Create a new event instance.
      *
-     * @param  \App\Models\ChatMessage  $message
      * @return void
      */
     public function __construct(ChatMessage $message)
@@ -34,8 +33,8 @@ class MessageSent implements ShouldBroadcastNow
     {
         // Broadcast to both sender and receiver's private channels
         return [
-            new PrivateChannel('chat.' . $this->message->sender_id),
-            new PrivateChannel('chat.' . $this->message->receiver_id),
+            new PrivateChannel('chat.'.$this->message->sender_id),
+            new PrivateChannel('chat.'.$this->message->receiver_id),
         ];
     }
 

@@ -176,7 +176,7 @@ class CustomerAndSalesController extends Controller
             });
 
             $remaining = $totalInvoices - $collected;
-            $customerName = trim(optional($customer)->first_name . ' ' . optional($customer)->last_name);
+            $customerName = trim(optional($customer)->first_name.' '.optional($customer)->last_name);
 
             return [
                 'customer_name' => $customerName,

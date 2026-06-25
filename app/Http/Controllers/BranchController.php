@@ -13,6 +13,7 @@ class BranchController extends Controller
     public function index()
     {
         $branches = Branch::with(['merchant', 'user'])->latest()->paginate(10);
+
         return view('branches.index', compact('branches'));
     }
 
@@ -20,6 +21,7 @@ class BranchController extends Controller
     {
         $merchants = Merchant::all();
         $users = User::all();
+
         return view('branches.create', compact('merchants', 'users'));
     }
 
@@ -36,9 +38,11 @@ class BranchController extends Controller
 
         try {
             Branch::create($data);
+
             return redirect()->route('branches.index')->with('success', 'Branch created successfully.');
         } catch (\Exception $e) {
-            Log::error('Branch creation failed: ' . $e->getMessage());
+            Log::error('Branch creation failed: '.$e->getMessage());
+
             return redirect()->back()->withInput()->with('error', 'Failed to create branch.');
         }
     }
@@ -47,6 +51,7 @@ class BranchController extends Controller
     {
         $merchants = Merchant::all();
         $users = User::all();
+
         return view('branches.edit', compact('branch', 'merchants', 'users'));
     }
 
@@ -63,9 +68,11 @@ class BranchController extends Controller
 
         try {
             $branch->update($data);
+
             return redirect()->route('branches.index')->with('success', 'Branch updated successfully.');
         } catch (\Exception $e) {
-            Log::error('Branch update failed: ' . $e->getMessage());
+            Log::error('Branch update failed: '.$e->getMessage());
+
             return redirect()->back()->withInput()->with('error', 'Failed to update branch.');
         }
     }
@@ -74,9 +81,11 @@ class BranchController extends Controller
     {
         try {
             $branch->delete();
+
             return redirect()->route('branches.index')->with('success', 'Branch deleted successfully.');
         } catch (\Exception $e) {
-            Log::error('Branch deletion failed: ' . $e->getMessage());
+            Log::error('Branch deletion failed: '.$e->getMessage());
+
             return redirect()->route('branches.index')->with('error', 'Failed to delete branch.');
         }
     }

@@ -2,23 +2,24 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\DB;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
+use Illuminate\Support\Facades\DB;
 
 class CustomLoginRateLimiter
 {
     protected $maxAttemptsFirstStage = 5;  // 5 attempts before 5 minutes cooldown
+
     protected $maxAttemptsSecondStage = 3; // 3 more attempts before 15 minutes cooldown
+
     protected $maxAttemptsThirdStage = 2;  // 2 more attempts before blocking the IP
 
     protected $blockDurationFirstStage = 5; // in minutes
+
     protected $blockDurationSecondStage = 15; // in minutes
 
     /**
      * Increment the login attempts for the user.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return void
      */
     public function increment(Request $request)
@@ -50,7 +51,6 @@ class CustomLoginRateLimiter
     /**
      * Check if the user has too many failed login attempts.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return bool
      */
     public function tooManyAttempts(Request $request)
@@ -58,16 +58,16 @@ class CustomLoginRateLimiter
         $ip = $request->ip();
         $attempt = DB::table('login_attempts')->where('ip_address', $ip)->first();
 
-        if (!$attempt) {
+        if (! $attempt) {
             return false;
         }
 
         // Check stages
-        if ($attempt->attempts >= $this->maxAttemptsFirstStage && !$attempt->locked_until) {
+        if ($attempt->attempts >= $this->maxAttemptsFirstStage && ! $attempt->locked_until) {
             return true;  // Give 5 minutes after 5 wrong attempts
         }
 
-        if ($attempt->attempts >= $this->maxAttemptsFirstStage + $this->maxAttemptsSecondStage && !$attempt->locked_until) {
+        if ($attempt->attempts >= $this->maxAttemptsFirstStage + $this->maxAttemptsSecondStage && ! $attempt->locked_until) {
             return true;  // Give 15 minutes after 8 wrong attempts
         }
 
@@ -81,7 +81,6 @@ class CustomLoginRateLimiter
     /**
      * Lock the IP for a certain duration.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return void
      */
     public function lock(Request $request)
@@ -106,7 +105,6 @@ class CustomLoginRateLimiter
     /**
      * Check if the user is currently blocked.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return bool
      */
     public function isBlocked(Request $request)
@@ -124,7 +122,6 @@ class CustomLoginRateLimiter
     /**
      * Clear the login attempts for the given IP.
      *
-     * @param  \Illuminate\Http\Request  $request
      * @return void
      */
     public function clear(Request $request)

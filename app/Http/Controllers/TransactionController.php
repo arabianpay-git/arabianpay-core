@@ -29,13 +29,14 @@ class TransactionController extends Controller
     protected function getTransactionsByStatus($status)
     {
         $user = currentUser();
+
         return Transaction::select($this->selectFields)
             ->with([
                 'order' => function ($query) {
                     $query->select('id', 'grand_total', 'shipping_city', 'general_status');
                 },
                 'user',
-                'assigned'
+                'assigned',
             ])
             ->where('payment_status', $status)
             ->when($user->user_type !== 'admin', function ($query) use ($user) {
@@ -53,7 +54,7 @@ class TransactionController extends Controller
                     $query->select('id', 'grand_total', 'shipping_city', 'general_status');
                 },
                 'user',
-                'assigned'
+                'assigned',
             ])
             ->when($user->user_type !== 'admin', function ($query) use ($user) {
                 $query->where('assigned_to', $user->id);
@@ -61,6 +62,7 @@ class TransactionController extends Controller
             ->paginate(10);
 
         $type = 'All';
+
         return view('admin.transactions.index', compact('transactions', 'type'));
     }
 
@@ -68,6 +70,7 @@ class TransactionController extends Controller
     {
         $transactions = $this->getTransactionsByStatus('pending');
         $type = 'Pending';
+
         return view('admin.transactions.index', compact('transactions', 'type'));
     }
 
@@ -75,6 +78,7 @@ class TransactionController extends Controller
     {
         $transactions = $this->getTransactionsByStatus('due');
         $type = 'Due';
+
         return view('admin.transactions.index', compact('transactions', 'type'));
     }
 
@@ -82,6 +86,7 @@ class TransactionController extends Controller
     {
         $transactions = $this->getTransactionsByStatus('late');
         $type = 'Late';
+
         return view('admin.transactions.index', compact('transactions', 'type'));
     }
 
@@ -89,6 +94,7 @@ class TransactionController extends Controller
     {
         $transactions = $this->getTransactionsByStatus('paid');
         $type = 'Paid';
+
         return view('admin.transactions.index', compact('transactions', 'type'));
     }
 
@@ -96,6 +102,7 @@ class TransactionController extends Controller
     {
         $transactions = $this->getTransactionsByStatus('failed');
         $type = 'Failed';
+
         return view('admin.transactions.index', compact('transactions', 'type'));
     }
 
@@ -108,17 +115,16 @@ class TransactionController extends Controller
                     $query->select('id', 'grand_total', 'shipping_city', 'general_status');
                 },
                 'user',
-                'assigned'
+                'assigned',
             ])
             ->when($user->user_type !== 'admin', function ($query) use ($user) {
                 $query->where('assigned_to', $user->id);
             })->orderByRaw('assigned_to IS NULL DESC')
             ->paginate(10);
         $type = 'All';
+
         return view('admin.transactions.index', compact('transactions', 'type'));
     }
-
-
 
     public function wallet()
     {
@@ -129,7 +135,7 @@ class TransactionController extends Controller
             'balance_after',
             'transaction_type',
             'status',
-            'created_at'
+            'created_at',
         ])
             ->where('seller_id', Auth::id())
             ->with([
@@ -140,7 +146,6 @@ class TransactionController extends Controller
 
         return view('admin.transactions.wallet', compact('wallets'));
     }
-
 
     public function generate($order)
     {
@@ -161,8 +166,9 @@ class TransactionController extends Controller
                 ])
                 ->first();
 
-            if (!$transaction) {
+            if (! $transaction) {
                 Log::error("No transaction found with order_id: {$orderId}");
+
                 return abort(404, 'Transaction not found for this order ID');
             }
 
@@ -183,11 +189,12 @@ class TransactionController extends Controller
                     'isFontSubsettingEnabled' => true,
                 ]);
 
-            $fileName = 'Invoice-' . $transaction->uuid . '.pdf';
+            $fileName = 'Invoice-'.$transaction->uuid.'.pdf';
 
             return $pdf->stream($fileName);
         } catch (\Exception $e) {
-            Log::error("PDF generation failed for order_id {$order}: " . $e->getMessage());
+            Log::error("PDF generation failed for order_id {$order}: ".$e->getMessage());
+
             return back()->with('error', 'Invoice PDF generation failed. Please try again later.');
         }
     }

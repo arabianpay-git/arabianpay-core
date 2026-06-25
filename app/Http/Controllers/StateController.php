@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\State;
 use App\Models\Country;
-use Illuminate\Validation\Rule;
+use App\Models\State;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class StateController extends Controller
 {
@@ -21,6 +21,7 @@ class StateController extends Controller
     public function create()
     {
         $countries = Country::all();
+
         return view('admin.locations.states.create', compact('countries'));
     }
 
@@ -47,7 +48,7 @@ class StateController extends Controller
         // log the creation of the state
         $state->logModelAction(
             event: 'create',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new state: {$state->name} in country ID {$state->country_id}",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." created a new state: {$state->name} in country ID {$state->country_id}",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),
@@ -59,10 +60,10 @@ class StateController extends Controller
         return redirect()->route('states.index')->with('success', 'State created successfully.');
     }
 
-
     public function edit(State $state)
     {
         $countries = Country::all();
+
         return view('admin.locations.states.edit', compact('state', 'countries'));
     }
 
@@ -87,7 +88,7 @@ class StateController extends Controller
         // log the update of the state
         $state->logModelAction(
             event: 'update',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated state: {$state->name} in country ID {$state->country_id}",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." updated state: {$state->name} in country ID {$state->country_id}",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),
@@ -99,13 +100,12 @@ class StateController extends Controller
         return redirect()->route('states.index')->with('success', 'State updated successfully.');
     }
 
-
     public function destroy(State $state)
     {
         // log the deletion of the state
         $state->logModelAction(
             event: 'delete',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted state: {$state->name} in country ID {$state->country_id}",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." deleted state: {$state->name} in country ID {$state->country_id}",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),

@@ -10,10 +10,12 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Merchant extends Model
 {
-    use LogsModelActions, EncryptsAttributes, SoftDeletes;
+    use EncryptsAttributes, LogsModelActions, SoftDeletes;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'merchant';
 
     protected $fillable = [
@@ -65,8 +67,9 @@ class Merchant extends Model
     protected $casts = [
         'payment_history' => 'array',
         'simah_api_response' => 'array',
-        'external_credit_data' => 'array'
+        'external_credit_data' => 'array',
     ];
+
     /**
      * User relation
      */
@@ -110,6 +113,7 @@ class Merchant extends Model
     {
         return $this->hasMany(\App\Models\SchedulePayment::class, 'seller_id', 'user_id');
     }
+
     public function checkouts()
     {
         return $this->hasMany(\App\Models\Checkout::class, 'user_id', 'id');

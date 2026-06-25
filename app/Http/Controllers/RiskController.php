@@ -11,6 +11,7 @@ class RiskController extends Controller
     public function index()
     {
         $risks = Risk::with('user')->latest()->paginate(10);
+
         return view('admin.register.index', compact('risks'));
     }
 
@@ -39,6 +40,7 @@ class RiskController extends Controller
     public function edit($id)
     {
         $risk = Risk::findorFail($id);
+
         return view('admin.register.edit', compact('risk'));
     }
 
@@ -65,6 +67,7 @@ class RiskController extends Controller
     {
         $risk = Risk::findOrFail($risk_register);
         $risk->delete();
+
         return redirect()->route('risk-register.index')->with('success', 'Risk deleted successfully.');
     }
 }

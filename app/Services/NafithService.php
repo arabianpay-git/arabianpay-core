@@ -2,17 +2,20 @@
 
 namespace App\Services;
 
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class NafithService
 {
     protected $baseUrl;
+
     protected $authBasicToken;
+
     protected $signSecret;
+
     protected $cacheKey = 'nafith_auth_token';
 
     /**
@@ -47,6 +50,7 @@ class NafithService
     public function clearCachedToken()
     {
         Cache::forget($this->cacheKey);
+
         return true;
     }
 
@@ -58,7 +62,7 @@ class NafithService
         try {
             $response = Http::withHeaders([
                 'Content-Type' => 'application/x-www-form-urlencoded',
-                'Authorization' => 'Basic ' . $this->authBasicToken,
+                'Authorization' => 'Basic '.$this->authBasicToken,
             ])->asForm()->post(config('nafith.auth_url'), [
                 'grant_type' => config('nafith.defaults.grant_type'),
                 'scope' => config('nafith.defaults.scope'),
@@ -75,11 +79,13 @@ class NafithService
 
             Log::error('Nafith Auth Failed', [
                 'status' => $response->status(),
-                'response' => $response->body()
+                'response' => $response->body(),
             ]);
+
             return null;
         } catch (\Exception $e) {
             Log::error('Nafith Auth Exception', ['error' => $e->getMessage()]);
+
             return null;
         }
     }
@@ -100,17 +106,17 @@ class NafithService
      */
     protected function normalizeNumber($value)
     {
-        if (!is_numeric($value)) {
+        if (! is_numeric($value)) {
             return $value;
         }
 
-        $floatValue = (float)$value;
+        $floatValue = (float) $value;
 
-        if ($floatValue == (int)$floatValue) {
-            return (int)$floatValue;
+        if ($floatValue == (int) $floatValue) {
+            return (int) $floatValue;
         }
 
-        return (float)$floatValue;
+        return (float) $floatValue;
     }
 
     /**
@@ -146,19 +152,19 @@ class NafithService
         $endpointPath = parse_url($endpoint, PHP_URL_PATH);
 
         // JSON encode the data. JSON_UNESCAPED_SLASHES is crucial for matching Nafith's signature process.
-        $jsonData = !empty($data) ? json_encode($data, JSON_UNESCAPED_SLASHES) : '{}';
+        $jsonData = ! empty($data) ? json_encode($data, JSON_UNESCAPED_SLASHES) : '{}';
 
         $ed = base64_encode($jsonData);
 
         // Build the string-to-sign (Host is static: nafith.sa)
         // If objectId is empty (e.g., for POST), 'id=' becomes 'id='
         // If objectId is present (e.g., for PATCH), 'id=' becomes 'id={sanadGroupId}'
-        $stringToSign = $method . "\nnafith.sa\n" . $endpointPath . "\nid=" . $objectId . "&t=" . $timestamp . '&ed=' . $ed;
+        $stringToSign = $method."\nnafith.sa\n".$endpointPath."\nid=".$objectId.'&t='.$timestamp.'&ed='.$ed;
 
         Log::debug('Nafith Signature Generation', [
             'string_to_sign' => $stringToSign,
             'json_data' => $jsonData,
-            'timestamp' => $timestamp
+            'timestamp' => $timestamp,
         ]);
 
         // Generate HMAC SHA256 signature and Base64 encode
@@ -175,13 +181,13 @@ class NafithService
     {
         try {
             $token = $this->getAuthToken();
-            if (!$token) {
+            if (! $token) {
                 throw new \Exception('Unable to get authentication token');
             }
 
             $timestamp = $this->getTimestamp();
 
-            $endpoint = $this->baseUrl . config('nafith.endpoints.sanad_group');
+            $endpoint = $this->baseUrl.config('nafith.endpoints.sanad_group');
 
             $normalizedSanadData = $this->normalizeSanadData($sanadData);
 
@@ -189,7 +195,7 @@ class NafithService
 
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
                 'X-Nafith-Timestamp' => $timestamp,
                 'X-Nafith-Tracking-Id' => $this->generateTrackingId(),
                 'X-Nafith-Signature' => $signature,
@@ -204,31 +210,31 @@ class NafithService
                 'response' => $response->body(),
                 'request_data' => $normalizedSanadData,
                 'signature' => $signature,
-                'timestamp' => $timestamp
+                'timestamp' => $timestamp,
             ]);
 
             return [
                 'success' => false,
                 'error' => $response->body(),
-                'status_code' => $response->status()
+                'status_code' => $response->status(),
             ];
         } catch (\Exception $e) {
             Log::error('Nafith Create SANAD Exception', [
                 'error' => $e->getMessage(),
-                'data' => $sanadData
+                'data' => $sanadData,
             ]);
 
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
 
     public function createSingleSanad(array $debtorData, array $sanadItems, $referenceId, $cityOfIssuance = 1)
     {
-        $debtorNationalId = (string)Arr::get($debtorData, 'national_id');
-        $debtorPhoneNumber = (string)Arr::get($debtorData, 'phone_number');
+        $debtorNationalId = (string) Arr::get($debtorData, 'national_id');
+        $debtorPhoneNumber = (string) Arr::get($debtorData, 'phone_number');
 
         $normalizedSanadItems = [];
         $totalValue = 0;
@@ -259,9 +265,9 @@ class NafithService
 
     public function createMultipleSanads(array $debtorData, array $sanadItems, $referenceId, $cityOfIssuance, $totalValue = null)
     {
-        $debtorNationalId = (string)Arr::get($debtorData, 'national_id');
-        $debtorPhoneNumber = (string)Arr::get($debtorData, 'phone_number');
-        $cityOfIssuanceName = (string)$cityOfIssuance;
+        $debtorNationalId = (string) Arr::get($debtorData, 'national_id');
+        $debtorPhoneNumber = (string) Arr::get($debtorData, 'phone_number');
+        $cityOfIssuanceName = (string) $cityOfIssuance;
 
         $calculatedTotalValue = 0;
         $normalizedSanadItems = [];
@@ -304,9 +310,9 @@ class NafithService
         $countryOfIssuance = 'SA',
         $countryOfPayment = 'SA'
     ) {
-        $creditorNationalId = (string)Arr::get($creditorData, 'national_id');
-        $debtorNationalId = (string)Arr::get($debtorData, 'national_id');
-        $debtorPhoneNumber = (string)Arr::get($debtorData, 'phone_number');
+        $creditorNationalId = (string) Arr::get($creditorData, 'national_id');
+        $debtorNationalId = (string) Arr::get($debtorData, 'national_id');
+        $debtorPhoneNumber = (string) Arr::get($debtorData, 'phone_number');
 
         $calculatedTotalValue = 0;
         $normalizedSanadItems = [];
@@ -329,15 +335,15 @@ class NafithService
             'debtor' => [
                 'national_id' => $debtorNationalId,
             ],
-            'city_of_issuance' => (string)$cityOfIssuance,
+            'city_of_issuance' => (string) $cityOfIssuance,
             'debtor_phone_number' => $debtorPhoneNumber,
             'total_value' => $this->normalizeNumber($finalTotalValue),
-            'city_of_payment' => (string)$cityOfPayment,
+            'city_of_payment' => (string) $cityOfPayment,
             'currency' => config('nafith.defaults.currency'),
             'max_approve_duration' => config('nafith.defaults.max_approve_duration'),
-            'reference_id' => (string)$referenceId,
-            'country_of_issuance' => (string)$countryOfIssuance,
-            'country_of_payment' => (string)$countryOfPayment,
+            'reference_id' => (string) $referenceId,
+            'country_of_issuance' => (string) $countryOfIssuance,
+            'country_of_payment' => (string) $countryOfPayment,
             'sanad' => $normalizedSanadItems,
         ];
 
@@ -351,19 +357,19 @@ class NafithService
     {
         try {
             $token = $this->getAuthToken();
-            if (!$token) {
+            if (! $token) {
                 throw new \Exception('Unable to get authentication token');
             }
 
             $timestamp = $this->getTimestamp();
 
             // 1. Define the full endpoint URL for the HTTP request (e.g., /api/sanad-group/{id}/)
-            $requestEndpointPath = '/api/sanad-group/' . $sanadGroupId . '/';
-            $requestEndpointUrl = $this->baseUrl . $requestEndpointPath;
+            $requestEndpointPath = '/api/sanad-group/'.$sanadGroupId.'/';
+            $requestEndpointUrl = $this->baseUrl.$requestEndpointPath;
 
             // 2. Define the base endpoint URL for signature generation (e.g., /api/sanad-group/)
             // Nafith requires the base path in the signature string when an object ID is provided.
-            $signatureBaseUrl = $this->baseUrl . config('nafith.endpoints.sanad_group');
+            $signatureBaseUrl = $this->baseUrl.config('nafith.endpoints.sanad_group');
 
             $requestData = $data;
 
@@ -372,7 +378,7 @@ class NafithService
 
             $response = Http::withHeaders([
                 'Content-Type' => 'application/json',
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
                 'X-Nafith-Timestamp' => $timestamp,
                 'X-Nafith-Tracking-Id' => $this->generateTrackingId(),
                 'X-Nafith-Signature' => $signature,
@@ -396,18 +402,18 @@ class NafithService
             return [
                 'success' => false,
                 'error' => $response->body(),
-                'status_code' => $response->status()
+                'status_code' => $response->status(),
             ];
         } catch (\Exception $e) {
             Log::error('Nafith Update SANAD Status Exception', [
                 'error' => $e->getMessage(),
                 'group_id' => $sanadGroupId,
-                'data' => $data
+                'data' => $data,
             ]);
 
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -418,7 +424,7 @@ class NafithService
     public function cancelSanadGroup(string $sanadGroupId)
     {
         return $this->updateSanadStatus($sanadGroupId, [
-            'status' => 'cancelled_by_creditor'
+            'status' => 'cancelled_by_creditor',
         ]);
     }
 
@@ -428,7 +434,7 @@ class NafithService
     public function closeSingleSanadGroup(string $sanadGroupId)
     {
         return $this->updateSanadStatus($sanadGroupId, [
-            'status' => 'closed'
+            'status' => 'closed',
         ]);
     }
 
@@ -442,9 +448,9 @@ class NafithService
             'sanad' => [
                 [
                     'id' => $sanadId,
-                    'status' => 'closed'
-                ]
-            ]
+                    'status' => 'closed',
+                ],
+            ],
         ]);
     }
 
@@ -455,22 +461,22 @@ class NafithService
     {
         try {
             $token = $this->getAuthToken();
-            if (!$token) {
+            if (! $token) {
                 throw new \Exception('Unable to get authentication token');
             }
 
             $timestamp = $this->getTimestamp();
 
             // API endpoint
-            $endpointPath = '/api/sanad/by-number/' . $sanadNumber . '/';
-            $endpointUrl = $this->baseUrl . $endpointPath;
+            $endpointPath = '/api/sanad/by-number/'.$sanadNumber.'/';
+            $endpointUrl = $this->baseUrl.$endpointPath;
 
             // For signature generation, use the same base path
-            $signatureBaseUrl = $this->baseUrl . '/api/sanad/by-number/';
+            $signatureBaseUrl = $this->baseUrl.'/api/sanad/by-number/';
             $signature = $this->generateSignature('GET', $signatureBaseUrl, $timestamp, [], $sanadNumber);
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
                 'Content-Type' => 'application/json',
                 'X-Nafith-Timestamp' => $timestamp,
                 'X-Nafith-Tracking-Id' => $this->generateTrackingId(),
@@ -487,23 +493,23 @@ class NafithService
                 'sanad_number' => $sanadNumber,
                 'signature' => $signature,
                 'timestamp' => $timestamp,
-                'endpoint' => $endpointUrl
+                'endpoint' => $endpointUrl,
             ]);
 
             return [
                 'success' => false,
                 'error' => $response->body(),
-                'status_code' => $response->status()
+                'status_code' => $response->status(),
             ];
         } catch (\Exception $e) {
             Log::error('Nafith Get SANAD by Number Exception', [
                 'error' => $e->getMessage(),
-                'sanad_number' => $sanadNumber
+                'sanad_number' => $sanadNumber,
             ]);
 
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }
@@ -515,22 +521,22 @@ class NafithService
     {
         try {
             $token = $this->getAuthToken();
-            if (!$token) {
+            if (! $token) {
                 throw new \Exception('Unable to get authentication token');
             }
 
             $timestamp = $this->getTimestamp();
 
             // Actual endpoint for the API call
-            $endpointPath = '/api/sanad-group/download/' . $sanadGroupId . '/';
-            $endpointUrl = $this->baseUrl . $endpointPath;
+            $endpointPath = '/api/sanad-group/download/'.$sanadGroupId.'/';
+            $endpointUrl = $this->baseUrl.$endpointPath;
 
             // For signature generation, use the same base path without the group ID
-            $signatureBaseUrl = $this->baseUrl . '/api/sanad-group/download/';
+            $signatureBaseUrl = $this->baseUrl.'/api/sanad-group/download/';
             $signature = $this->generateSignature('GET', $signatureBaseUrl, $timestamp, [], $sanadGroupId);
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
                 'Content-Type' => 'application/json',
                 'X-Nafith-Timestamp' => $timestamp,
                 'X-Nafith-Tracking-Id' => $this->generateTrackingId(),
@@ -555,23 +561,23 @@ class NafithService
                 'group_id' => $sanadGroupId,
                 'signature' => $signature,
                 'timestamp' => $timestamp,
-                'endpoint' => $endpointUrl
+                'endpoint' => $endpointUrl,
             ]);
 
             return [
                 'success' => false,
                 'error' => $response->body(),
-                'status_code' => $response->status()
+                'status_code' => $response->status(),
             ];
         } catch (\Exception $e) {
             Log::error('Nafith Download SANAD Group Exception', [
                 'error' => $e->getMessage(),
-                'group_id' => $sanadGroupId
+                'group_id' => $sanadGroupId,
             ]);
 
             return [
                 'success' => false,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ];
         }
     }

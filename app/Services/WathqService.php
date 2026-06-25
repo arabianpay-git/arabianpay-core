@@ -23,13 +23,14 @@ class WathqService
                 return $response->json();
             }
 
-            Log::error('Wathq API Error: ' . $response->status(), [
+            Log::error('Wathq API Error: '.$response->status(), [
                 'response' => $response->body(),
             ]);
 
             return null;
         } catch (\Exception $e) {
-            Log::error('Wathq API Exception: ' . $e->getMessage());
+            Log::error('Wathq API Exception: '.$e->getMessage());
+
             return null;
         }
     }

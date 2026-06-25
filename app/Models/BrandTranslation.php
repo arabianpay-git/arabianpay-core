@@ -8,6 +8,7 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 class BrandTranslation extends Model
 {
     use EncryptsAttributes;
+
     public $timestamps = false;
 
     protected $encryptableAttributes = [

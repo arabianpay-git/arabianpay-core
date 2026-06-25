@@ -21,55 +21,55 @@ class SettingController extends Controller
                     'title' => 'General',
                     'description' => 'Manage core system settings, site information, and basic configurations.',
                     'icon' => 'ki-setting-2',
-                    'route' => route('settings.general')
+                    'route' => route('settings.general'),
                 ],
                 [
                     'title' => 'Email Rules',
                     'description' => 'Configure email validation, templates, and delivery settings.',
                     'icon' => 'ki-shield-tick',
-                    'route' => route('settings.email')
+                    'route' => route('settings.email'),
                 ],
                 [
                     'title' => 'Media & Storage',
                     'description' => 'Manage file uploads, storage drivers, and media configurations.',
                     'icon' => 'ki-folder',
-                    'route' => route('settings.media')
+                    'route' => route('settings.media'),
                 ],
                 [
                     'title' => 'API Settings',
                     'description' => 'Configure API keys, webhooks, and external integrations.',
                     'icon' => 'ki-code',
-                    'route' => route('settings.api')
+                    'route' => route('settings.api'),
                 ],
                 [
                     'title' => 'Cache & Performance',
                     'description' => 'Optimize system performance and caching mechanisms.',
                     'icon' => 'ki-rocket',
-                    'route' => route('settings.cache')
+                    'route' => route('settings.cache'),
                 ],
                 [
                     'title' => 'Datatables',
                     'description' => 'Configure default sorting, pagination, and display options.',
                     'icon' => 'ki-graph-3',
-                    'route' => route('settings.datatables')
+                    'route' => route('settings.datatables'),
                 ],
                 [
                     'title' => 'Analytics & Tracking',
                     'description' => 'Setup analytics, tracking codes, and monitoring tools.',
                     'icon' => 'ki-chart',
-                    'route' => route('settings.analytics')
+                    'route' => route('settings.analytics'),
                 ],
                 [
                     'title' => 'Optimization',
                     'description' => 'Configure asset optimization and compression settings.',
                     'icon' => 'ki-arrows-circle',
-                    'route' => route('settings.optimization')
+                    'route' => route('settings.optimization'),
                 ],
                 [
                     'title' => 'Sitemap',
                     'description' => 'Manage XML sitemap generation and configuration.',
                     'icon' => 'ki-map',
-                    'route' => route('settings.sitemap')
+                    'route' => route('settings.sitemap'),
                 ],
             ],
 
@@ -79,31 +79,31 @@ class SettingController extends Controller
                     'title' => 'Financial Settings',
                     'description' => 'Configure financial accounts, currencies, and transaction settings.',
                     'icon' => 'ki-wallet',
-                    'route' => route('settings.financial')
+                    'route' => route('settings.financial'),
                 ],
                 [
                     'title' => 'Payout Settings',
                     'description' => 'Manage payout schedules, methods, and thresholds.',
                     'icon' => 'ki-bank',
-                    'route' => route('settings.payout')
+                    'route' => route('settings.payout'),
                 ],
                 [
                     'title' => 'Tax Settings',
                     'description' => 'Configure tax rates, rules, and calculations.',
                     'icon' => 'ki-calculator',
-                    'route' => route('settings.tax')
+                    'route' => route('settings.tax'),
                 ],
                 [
                     'title' => 'Currency Settings',
                     'description' => 'Manage currencies, exchange rates, and conversions.',
                     'icon' => 'ki-dollar',
-                    'route' => route('settings.currency')
+                    'route' => route('settings.currency'),
                 ],
                 [
                     'title' => 'Payment Gateways',
                     'description' => 'Configure payment processors and gateway settings.',
                     'icon' => 'ki-credit-cart',
-                    'route' => route('settings.payment-gateways')
+                    'route' => route('settings.payment-gateways'),
                 ],
             ],
 
@@ -113,31 +113,31 @@ class SettingController extends Controller
                     'title' => 'Risk Weights',
                     'description' => 'Define risk scoring rules and weight configurations.',
                     'icon' => 'ki-abstract-22',
-                    'route' => route('settings.risk-weights')
+                    'route' => route('settings.risk-weights'),
                 ],
                 [
                     'title' => 'Compliance Rules',
                     'description' => 'Configure compliance checks and regulatory settings.',
                     'icon' => 'ki-security-check-shield',
-                    'route' => route('settings.compliance-rules')
+                    'route' => route('settings.compliance-rules'),
                 ],
                 [
                     'title' => 'Fraud Detection',
                     'description' => 'Setup fraud detection rules and monitoring.',
                     'icon' => 'ki-shield-tick',
-                    'route' => route('settings.fraud-detection')
+                    'route' => route('settings.fraud-detection'),
                 ],
                 [
                     'title' => 'AML Settings',
                     'description' => 'Configure Anti-Money Laundering rules and monitoring.',
                     'icon' => 'ki-shield-search',
-                    'route' => route('settings.aml')
+                    'route' => route('settings.aml'),
                 ],
                 [
                     'title' => 'KYC Settings',
                     'description' => 'Manage Know Your Customer verification settings.',
                     'icon' => 'ki-user-check',
-                    'route' => route('settings.kyc')
+                    'route' => route('settings.kyc'),
                 ],
             ],
 
@@ -147,37 +147,37 @@ class SettingController extends Controller
                     'title' => 'Credit Scoring',
                     'description' => 'Configure credit scoring models and algorithms.',
                     'icon' => 'ki-chart-line',
-                    'route' => route('settings.credit-scoring')
+                    'route' => route('settings.credit-scoring'),
                 ],
                 [
                     'title' => 'Credit Limits',
                     'description' => 'Manage credit limit rules and calculations.',
                     'icon' => 'ki-dollar-circle',
-                    'route' => route('settings.credit-limits')
+                    'route' => route('settings.credit-limits'),
                 ],
                 [
                     'title' => 'Repayment Rules',
                     'description' => 'Configure repayment schedules and rules.',
                     'icon' => 'ki-calendar-tick',
-                    'route' => route('settings.repayment-rules')
+                    'route' => route('settings.repayment-rules'),
                 ],
                 [
                     'title' => 'Collection Rules',
                     'description' => 'Manage collection processes and rules.',
                     'icon' => 'ki-call',
-                    'route' => route('settings.collection-rules')
+                    'route' => route('settings.collection-rules'),
                 ],
                 [
                     'title' => 'Dunning Settings',
                     'description' => 'Configure dunning process and escalation rules.',
                     'icon' => 'ki-notification-status',
-                    'route' => route('settings.dunning')
+                    'route' => route('settings.dunning'),
                 ],
                 [
                     'title' => 'Late Fees & Penalties',
                     'description' => 'Manage late payment fees and penalty rules.',
                     'icon' => 'ki-money-time',
-                    'route' => route('settings.late-fees')
+                    'route' => route('settings.late-fees'),
                 ],
             ],
 
@@ -187,25 +187,25 @@ class SettingController extends Controller
                     'title' => 'Order Settings',
                     'description' => 'Configure order processing and workflow settings.',
                     'icon' => 'ki-shopping-bag',
-                    'route' => route('settings.order')
+                    'route' => route('settings.order'),
                 ],
                 [
                     'title' => 'Shipping Settings',
                     'description' => 'Manage shipping methods, rates, and configurations.',
                     'icon' => 'ki-delivery',
-                    'route' => route('settings.shipping')
+                    'route' => route('settings.shipping'),
                 ],
                 [
                     'title' => 'Delivery Settings',
                     'description' => 'Configure delivery options and timeframes.',
                     'icon' => 'ki-truck',
-                    'route' => route('settings.delivery')
+                    'route' => route('settings.delivery'),
                 ],
                 [
                     'title' => 'Refund Settings',
                     'description' => 'Manage refund policies and processing rules.',
                     'icon' => 'ki-rotate',
-                    'route' => route('settings.refund')
+                    'route' => route('settings.refund'),
                 ],
             ],
 
@@ -215,25 +215,25 @@ class SettingController extends Controller
                     'title' => 'Product Settings',
                     'description' => 'Configure product catalog and display settings.',
                     'icon' => 'ki-box',
-                    'route' => route('settings.product')
+                    'route' => route('settings.product'),
                 ],
                 [
                     'title' => 'Inventory Settings',
                     'description' => 'Manage inventory tracking and stock settings.',
                     'icon' => 'ki-shop',
-                    'route' => route('settings.inventory')
+                    'route' => route('settings.inventory'),
                 ],
                 [
                     'title' => 'Attribute Settings',
                     'description' => 'Configure product attributes and variations.',
                     'icon' => 'ki-tag',
-                    'route' => route('settings.attributes')
+                    'route' => route('settings.attributes'),
                 ],
                 [
                     'title' => 'Review Settings',
                     'description' => 'Manage product review rules and moderation.',
                     'icon' => 'ki-star',
-                    'route' => route('settings.reviews')
+                    'route' => route('settings.reviews'),
                 ],
             ],
 
@@ -243,19 +243,19 @@ class SettingController extends Controller
                     'title' => 'Supplier Settings',
                     'description' => 'Configure supplier management and onboarding.',
                     'icon' => 'ki-people',
-                    'route' => route('settings.supplier')
+                    'route' => route('settings.supplier'),
                 ],
                 [
                     'title' => 'Commission Settings',
                     'description' => 'Manage commission rates and calculations.',
                     'icon' => 'ki-percentage',
-                    'route' => route('settings.commission')
+                    'route' => route('settings.commission'),
                 ],
                 [
                     'title' => 'Payout Schedule',
                     'description' => 'Configure supplier payout schedules.',
                     'icon' => 'ki-calendar-2',
-                    'route' => route('settings.payout-schedule')
+                    'route' => route('settings.payout-schedule'),
                 ],
             ],
 
@@ -265,25 +265,25 @@ class SettingController extends Controller
                     'title' => 'Customer Settings',
                     'description' => 'Configure customer management and profiles.',
                     'icon' => 'ki-user',
-                    'route' => route('settings.customer')
+                    'route' => route('settings.customer'),
                 ],
                 [
                     'title' => 'Onboarding Settings',
                     'description' => 'Manage customer onboarding flow and requirements.',
                     'icon' => 'ki-user-square',
-                    'route' => route('settings.onboarding')
+                    'route' => route('settings.onboarding'),
                 ],
                 [
                     'title' => 'Verification Settings',
                     'description' => 'Configure customer verification processes.',
                     'icon' => 'ki-shield-user',
-                    'route' => route('settings.verification')
+                    'route' => route('settings.verification'),
                 ],
                 [
                     'title' => 'Package Settings',
                     'description' => 'Manage customer package configurations.',
                     'icon' => 'ki-badge',
-                    'route' => route('settings.packages')
+                    'route' => route('settings.packages'),
                 ],
             ],
 
@@ -293,31 +293,31 @@ class SettingController extends Controller
                     'title' => 'Marketing Settings',
                     'description' => 'Configure marketing campaigns and promotions.',
                     'icon' => 'ki-megaphone',
-                    'route' => route('settings.marketing')
+                    'route' => route('settings.marketing'),
                 ],
                 [
                     'title' => 'Notification Settings',
                     'description' => 'Manage notification rules and templates.',
                     'icon' => 'ki-notification',
-                    'route' => route('settings.notifications')
+                    'route' => route('settings.notifications'),
                 ],
                 [
                     'title' => 'Email Templates',
                     'description' => 'Configure system email templates.',
                     'icon' => 'ki-message-text',
-                    'route' => route('settings.email-templates')
+                    'route' => route('settings.email-templates'),
                 ],
                 [
                     'title' => 'SMS Settings',
                     'description' => 'Manage SMS gateway and templates.',
                     'icon' => 'ki-message',
-                    'route' => route('settings.sms')
+                    'route' => route('settings.sms'),
                 ],
                 [
                     'title' => 'Push Notifications',
                     'description' => 'Configure mobile push notifications.',
                     'icon' => 'ki-notification-bing',
-                    'route' => route('settings.push-notifications')
+                    'route' => route('settings.push-notifications'),
                 ],
             ],
 
@@ -327,19 +327,19 @@ class SettingController extends Controller
                     'title' => 'Support Settings',
                     'description' => 'Configure support system and help center.',
                     'icon' => 'ki-support',
-                    'route' => route('settings.support')
+                    'route' => route('settings.support'),
                 ],
                 [
                     'title' => 'Ticket Settings',
                     'description' => 'Manage ticket workflow and categorization.',
                     'icon' => 'ki-ticket',
-                    'route' => route('settings.ticket')
+                    'route' => route('settings.ticket'),
                 ],
                 [
                     'title' => 'SLA Settings',
                     'description' => 'Configure Service Level Agreements.',
                     'icon' => 'ki-clock',
-                    'route' => route('settings.sla')
+                    'route' => route('settings.sla'),
                 ],
             ],
 
@@ -349,25 +349,25 @@ class SettingController extends Controller
                     'title' => 'Employee Settings',
                     'description' => 'Configure employee management and permissions.',
                     'icon' => 'ki-profile-user',
-                    'route' => route('settings.employee')
+                    'route' => route('settings.employee'),
                 ],
                 [
                     'title' => 'Department Settings',
                     'description' => 'Manage departments and team structures.',
                     'icon' => 'ki-building',
-                    'route' => route('settings.departments')
+                    'route' => route('settings.departments'),
                 ],
                 [
                     'title' => 'Permission Settings',
                     'description' => 'Configure role-based access controls.',
                     'icon' => 'ki-shield-security',
-                    'route' => route('settings.permissions')
+                    'route' => route('settings.permissions'),
                 ],
                 [
                     'title' => 'Workflow Settings',
                     'description' => 'Manage approval workflows and processes.',
                     'icon' => 'ki-diagram',
-                    'route' => route('settings.workflow')
+                    'route' => route('settings.workflow'),
                 ],
             ],
 
@@ -377,31 +377,31 @@ class SettingController extends Controller
                     'title' => 'System Settings',
                     'description' => 'Configure system-wide settings and configurations.',
                     'icon' => 'ki-monitor',
-                    'route' => route('settings.system')
+                    'route' => route('settings.system'),
                 ],
                 [
                     'title' => 'Security Settings',
                     'description' => 'Manage security policies and access controls.',
                     'icon' => 'ki-lock',
-                    'route' => route('settings.security')
+                    'route' => route('settings.security'),
                 ],
                 [
                     'title' => 'Maintenance Settings',
                     'description' => 'Configure maintenance mode and schedules.',
                     'icon' => 'ki-setting',
-                    'route' => route('settings.maintenance')
+                    'route' => route('settings.maintenance'),
                 ],
                 [
                     'title' => 'Backup Settings',
                     'description' => 'Manage backup schedules and configurations.',
                     'icon' => 'ki-data-backup',
-                    'route' => route('settings.backup')
+                    'route' => route('settings.backup'),
                 ],
                 [
                     'title' => 'Log Settings',
                     'description' => 'Configure logging levels and retention.',
                     'icon' => 'ki-document',
-                    'route' => route('settings.logs')
+                    'route' => route('settings.logs'),
                 ],
             ],
 
@@ -411,31 +411,31 @@ class SettingController extends Controller
                     'title' => 'Third Party Services',
                     'description' => 'Manage integrations with external services.',
                     'icon' => 'ki-puzzle',
-                    'route' => route('settings.third-party')
+                    'route' => route('settings.third-party'),
                 ],
                 [
                     'title' => 'SMS Gateway',
                     'description' => 'Configure SMS service providers.',
                     'icon' => 'ki-messages',
-                    'route' => route('settings.sms-gateway')
+                    'route' => route('settings.sms-gateway'),
                 ],
                 [
                     'title' => 'Email Service',
                     'description' => 'Configure email service providers.',
                     'icon' => 'ki-message-text-2',
-                    'route' => route('settings.email-service')
+                    'route' => route('settings.email-service'),
                 ],
                 [
                     'title' => 'Payment Processors',
                     'description' => 'Manage payment gateway integrations.',
                     'icon' => 'ki-card',
-                    'route' => route('settings.payment-processors')
+                    'route' => route('settings.payment-processors'),
                 ],
                 [
                     'title' => 'Shipping Services',
                     'description' => 'Configure shipping carrier integrations.',
                     'icon' => 'ki-ship',
-                    'route' => route('settings.shipping-services')
+                    'route' => route('settings.shipping-services'),
                 ],
             ],
         ];
@@ -452,21 +452,21 @@ class SettingController extends Controller
     public function generalUpdate(Request $request)
     {
         $data = [
-            'site_name'         => $request->site_name,
-            'site_title'        => $request->site_title,
-            'site_description'  => $request->site_description,
+            'site_name' => $request->site_name,
+            'site_title' => $request->site_title,
+            'site_description' => $request->site_description,
 
-            'contact_email'     => $request->contact_email,
-            'contact_phone'     => $request->contact_phone,
-            'address_line'      => $request->address_line,
+            'contact_email' => $request->contact_email,
+            'contact_phone' => $request->contact_phone,
+            'address_line' => $request->address_line,
 
-            'default_language'  => $request->default_language,
-            'timezone'          => $request->timezone,
-            'date_format'       => $request->date_format,
-            'time_format'       => $request->time_format,
+            'default_language' => $request->default_language,
+            'timezone' => $request->timezone,
+            'date_format' => $request->date_format,
+            'time_format' => $request->time_format,
 
-            'logo'              => $request->logo,
-            'favicon'           => $request->favicon,
+            'logo' => $request->logo,
+            'favicon' => $request->favicon,
         ];
 
         Setting::setByKey('general', $data, 'general');
@@ -519,7 +519,6 @@ class SettingController extends Controller
         return redirect()->route('settings.email')
             ->with('success', 'Email settings updated successfully!');
     }
-
 
     /**
      * Validate email settings
@@ -577,7 +576,7 @@ class SettingController extends Controller
                     'MAIL_PASSWORD' => $settings['mail_password'] ?? '',
                     'MAIL_ENCRYPTION' => $settings['mail_encryption'] ?? 'tls',
                     'MAIL_FROM_ADDRESS' => $settings['from_address'] ?? 'hello@example.com',
-                    'MAIL_FROM_NAME' => '"' . addslashes($settings['from_name'] ?? 'Laravel') . '"',
+                    'MAIL_FROM_NAME' => '"'.addslashes($settings['from_name'] ?? 'Laravel').'"',
                     'MAILGUN_DOMAIN' => $settings['mailgun_domain'] ?? '',
                     'MAILGUN_SECRET' => $settings['mailgun_secret'] ?? '',
                     'AWS_ACCESS_KEY_ID' => $settings['ses_key'] ?? '',
@@ -599,7 +598,7 @@ class SettingController extends Controller
             }
         } catch (\Exception $e) {
             // Log error but don't break the flow
-            Log::error('Failed to update .env file: ' . $e->getMessage());
+            Log::error('Failed to update .env file: '.$e->getMessage());
         }
     }
 
@@ -609,13 +608,13 @@ class SettingController extends Controller
     public function emailTest(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'email' => 'required|email'
+            'email' => 'required|email',
         ]);
 
         if ($validator->fails()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Invalid email address'
+                'message' => 'Invalid email address',
             ], 422);
         }
 
@@ -623,19 +622,19 @@ class SettingController extends Controller
             $email = $request->email;
 
             // Send test email
-            Mail::raw('This is a test email from ' . config('app.name') . '. If you received this, your email configuration is working correctly.', function ($message) use ($email) {
+            Mail::raw('This is a test email from '.config('app.name').'. If you received this, your email configuration is working correctly.', function ($message) use ($email) {
                 $message->to($email)
-                    ->subject('Test Email from ' . config('app.name'));
+                    ->subject('Test Email from '.config('app.name'));
             });
 
             return response()->json([
                 'success' => true,
-                'message' => 'Test email sent successfully!'
+                'message' => 'Test email sent successfully!',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to send test email: ' . $e->getMessage()
+                'message' => 'Failed to send test email: '.$e->getMessage(),
             ], 500);
         }
     }

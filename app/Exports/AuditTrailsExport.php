@@ -2,18 +2,17 @@
 
 namespace App\Exports;
 
-use App\Models\AuditTrail;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle
+class AuditTrailsExport implements FromQuery, WithColumnWidths, WithHeadings, WithMapping, WithStyles, WithTitle
 {
     protected $query;
 
@@ -50,14 +49,14 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
             'Request ID',
             'Correlation ID',
             'Created At',
-            'Updated At'
+            'Updated At',
         ];
     }
 
     public function map($trail): array
     {
         $actorName = $trail->actorUser
-            ? $trail->actorUser->first_name . ' ' . $trail->actorUser->last_name
+            ? $trail->actorUser->first_name.' '.$trail->actorUser->last_name
             : 'System';
 
         $piiFields = '';
@@ -73,7 +72,7 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
 
         return [
             $trail->id,
-            $trail->timestamp ? "'" . $trail->timestamp->format('Y-m-d H:i:s') : '',
+            $trail->timestamp ? "'".$trail->timestamp->format('Y-m-d H:i:s') : '',
             strtoupper($trail->environment),
             $trail->event_category,
             $trail->event_type,
@@ -91,8 +90,8 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
             $trail->masking_state,
             $trail->request_id,
             $trail->correlation_id,
-            "'" . $trail->created_at->format('Y-m-d H:i:s'),
-            "'" . $trail->updated_at->format('Y-m-d H:i:s'),
+            "'".$trail->created_at->format('Y-m-d H:i:s'),
+            "'".$trail->updated_at->format('Y-m-d H:i:s'),
         ];
     }
 
@@ -162,7 +161,7 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
 
         $pdplColumn = 'O';
         for ($row = 2; $row <= $lastRow; $row++) {
-            $category = $sheet->getCell($pdplColumn . $row)->getValue();
+            $category = $sheet->getCell($pdplColumn.$row)->getValue();
 
             $color = match ($category) {
                 'Highly Sensitive' => 'FF0000',
@@ -174,7 +173,7 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
                 default => '000000'
             };
 
-            $sheet->getStyle($pdplColumn . $row)->getFont()->setBold(true)->getColor()->setRGB($color);
+            $sheet->getStyle($pdplColumn.$row)->getFont()->setBold(true)->getColor()->setRGB($color);
         }
 
         return [];
@@ -182,26 +181,28 @@ class AuditTrailsExport implements FromQuery, WithHeadings, WithMapping, WithSty
 
     private function maskEmail(?string $email): ?string
     {
-        if (!$email || !str_contains($email, '@')) {
+        if (! $email || ! str_contains($email, '@')) {
             return $email;
         }
 
         [$name, $domain] = explode('@', $email);
-        return substr($name, 0, 1) . '***@' . $domain;
+
+        return substr($name, 0, 1).'***@'.$domain;
     }
 
     private function maskIp(?string $ip): ?string
     {
-        if (!$ip || !str_contains($ip, '.')) {
+        if (! $ip || ! str_contains($ip, '.')) {
             return $ip;
         }
 
         $parts = explode('.', $ip);
-        return $parts[0] . '.***.***.' . end($parts);
+
+        return $parts[0].'.***.***.'.end($parts);
     }
 
     private function maskFingerprint(?string $fp): ?string
     {
-        return $fp ? 'fp-****' . substr($fp, -3) : null;
+        return $fp ? 'fp-****'.substr($fp, -3) : null;
     }
 }

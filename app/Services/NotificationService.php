@@ -3,17 +3,13 @@
 namespace App\Services;
 
 use App\Models\Notification;
-use Illuminate\Support\Facades\Log;
 
 class NotificationService
 {
     /**
      * Create and save a notification.
      *
-     * @param int|null $userId
-     * @param string|null $type
-     * @param string|array $data
-     * @return Notification
+     * @param  string|array  $data
      */
     public function createNotification(?int $userId, ?string $type, $data): Notification
     {

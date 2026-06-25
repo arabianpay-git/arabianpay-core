@@ -14,7 +14,7 @@ class Promise extends Model
         'employee_id',
         'schedule_payment_id',
         'promise_date',
-        'method'
+        'method',
     ];
 
     public function user()

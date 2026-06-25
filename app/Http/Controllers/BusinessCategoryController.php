@@ -33,6 +33,7 @@ class BusinessCategoryController extends Controller
         );
 
         $businessCategories = BusinessCategory::OrderBy('id', 'desc')->paginate(10);
+
         return view('admin.business_categories.index', compact('businessCategories'));
     }
 
@@ -46,6 +47,7 @@ class BusinessCategoryController extends Controller
         );
 
         $businessTypes = BusinessType::orderBy('name', 'ASC')->get();
+
         return view('admin.business_categories.create', compact('businessTypes'));
     }
 
@@ -105,7 +107,7 @@ class BusinessCategoryController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -127,6 +129,7 @@ class BusinessCategoryController extends Controller
         ]);
 
         $businessTypes = BusinessType::orderBy('name', 'ASC')->get();
+
         return view('admin.business_categories.edit', compact('businessCategory', 'businessTypes'));
     }
 
@@ -168,11 +171,11 @@ class BusinessCategoryController extends Controller
             if ($oldData['name'] !== $businessCategory->name) {
                 $changes[] = "name: '{$oldData['name']}' to '{$businessCategory->name}'";
             }
-            if ($oldBusinessTypeId !== (int)$request->business_type_id) {
+            if ($oldBusinessTypeId !== (int) $request->business_type_id) {
                 $oldBusinessType = BusinessType::find($oldBusinessTypeId);
                 $newBusinessType = BusinessType::find($request->business_type_id);
-                $oldName = $oldBusinessType ? $oldBusinessType->name : 'ID ' . $oldBusinessTypeId;
-                $newName = $newBusinessType ? $newBusinessType->name : 'ID ' . $request->business_type_id;
+                $oldName = $oldBusinessType ? $oldBusinessType->name : 'ID '.$oldBusinessTypeId;
+                $newName = $newBusinessType ? $newBusinessType->name : 'ID '.$request->business_type_id;
                 $changes[] = "business type: '{$oldName}' to '{$newName}'";
             }
             if ($oldData['risk'] != $request->risk) {
@@ -187,7 +190,7 @@ class BusinessCategoryController extends Controller
                 $changes[] = "featured status: {$oldStatus} to {$newStatus}";
             }
 
-            $changeSummary = !empty($changes) ? ' (' . implode(', ', $changes) . ')' : '';
+            $changeSummary = ! empty($changes) ? ' ('.implode(', ', $changes).')' : '';
 
             // Log business category update with justification
             $justificationData = $this->auditTrailService->withJustification(
@@ -223,7 +226,7 @@ class BusinessCategoryController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -236,7 +239,7 @@ class BusinessCategoryController extends Controller
             $categoryData = $businessCategory->toArray();
 
             // Check if category is being used by any merchants
-            $merchantCount = \App\Models\Merchant::where('business_category_id', 'LIKE', '%' . $businessCategory->id . '%')->count();
+            $merchantCount = \App\Models\Merchant::where('business_category_id', 'LIKE', '%'.$businessCategory->id.'%')->count();
             $usageWarning = $merchantCount > 0 ? " (Warning: Used by {$merchantCount} merchant(s))" : '';
 
             // Log before deletion with justification
@@ -275,7 +278,7 @@ class BusinessCategoryController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -298,7 +301,7 @@ class BusinessCategoryController extends Controller
 
                 $this->auditTrailService->log([
                     'event_category' => 'localization',
-                    'event_type' => 'business_category_translation_' . $action,
+                    'event_type' => 'business_category_translation_'.$action,
                     'entity_type' => 'BusinessCategory',
                     'entity_id' => $businessCategory->id,
                     'action_summary' => "{$action} Arabic translation for business category '{$businessCategory->name}'",

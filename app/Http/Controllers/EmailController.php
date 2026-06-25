@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
 use Exception;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class EmailController extends Controller
 {
@@ -23,7 +23,7 @@ class EmailController extends Controller
     public function send(Request $request)
     {
         $validated = $request->validate([
-            'email'   => ['required', 'email'],
+            'email' => ['required', 'email'],
             'subject' => ['required', 'string', 'max:255'],
             'message' => ['required', 'string'],
         ]);
@@ -43,13 +43,13 @@ class EmailController extends Controller
 
             return back()->with('status', 'Email sent successfully.');
         } catch (Exception $e) {
-            Log::error('Email sending failed: ' . $e->getMessage(), [
+            Log::error('Email sending failed: '.$e->getMessage(), [
                 'to' => $validated['email'],
                 'subject' => $validated['subject'],
             ]);
 
             return back()->withErrors([
-                'email_error' => 'Failed to send email. Please try again later.' . $e->getMessage()
+                'email_error' => 'Failed to send email. Please try again later.'.$e->getMessage(),
             ]);
         }
     }
