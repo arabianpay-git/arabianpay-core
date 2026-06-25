@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateSupplierDocumentRequest;
 use App\Models\Approval;
 use App\Models\Merchant;
 use App\Models\SupplierBank;
 use App\Services\AuditTrailService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -19,14 +19,14 @@ class ComplianceController extends Controller
         $this->auditTrailService = $auditTrailService;
     }
 
-    public function updateDocument(Request $request, $id)
+    public function updateDocument(UpdateSupplierDocumentRequest $request, $id)
     {
         $user = currentUser();
 
         $merchant = Merchant::where('id', $id)
             ->with('user')
             ->when(
-                !(
+                ! (
                     ($user->user_type === 'employee' && $user->is_manager) || $user->user_type === 'admin'
                 ),
                 function ($query) use ($user) {
@@ -35,24 +35,11 @@ class ComplianceController extends Controller
             )
             ->first();
 
-        if (!$merchant) {
+        if (! $merchant) {
             return response()->json([
                 'success' => false,
-                'message' => __('Supplier not found or not assigned to you.')
+                'message' => __('Supplier not found or not assigned to you.'),
             ], 403);
-        }
-
-        $request->validate([
-            'document_type' => 'required|string',
-            'file' => 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120',
-        ]);
-
-        if ($request->document_type === 'iban_certificate') {
-            $validationRules['bank_name'] = 'required|string|max:255';
-            $validationRules['account_name'] = 'required|string|max:255';
-            $validationRules['iban'] = 'required|string|max:34';
-            $validationRules['bank_id'] = 'required';
-            $validationRules['file'] = 'required|file|mimes:pdf,jpg,jpeg,png,doc,docx|max:5120';
         }
 
         try {
@@ -67,22 +54,22 @@ class ComplianceController extends Controller
             if ($request->hasFile('file')) {
                 $file = $request->file('file');
                 $extension = strtolower($file->getClientOriginalExtension());
-                $fileName = Str::random(40) . '.' . $extension;
+                $fileName = Str::random(40).'.'.$extension;
 
                 // Store based on document type
                 if ($request->document_type === 'contract') {
                     // Store contract in storage/contracts
                     $filePath = $file->storeAs('contracts', $fileName, 'public');
                     // For contract, we store the full URL in database
-                    $fullUrl = url('storage/contracts/' . $fileName);
+                    $fullUrl = url('storage/contracts/'.$fileName);
                 } else {
                     // Store other documents in storage/media
                     $filePath = $file->storeAs('media', $fileName, 'public');
                     // For other docs, we just store filename in database
-                    $fullUrl = url('storage/media/' . $fileName);
+                    $fullUrl = url('storage/media/'.$fileName);
                 }
 
-                if (!$filePath) {
+                if (! $filePath) {
                     throw new \Exception('File upload failed');
                 }
             }
@@ -162,8 +149,8 @@ class ComplianceController extends Controller
                     $approval = Approval::where('user_id', $merchant->user_id)->first();
                     $isNew = false;
 
-                    if (!$approval) {
-                        $approval = new Approval();
+                    if (! $approval) {
+                        $approval = new Approval;
                         $approval->user_id = $merchant->user_id;
                         $approval->employee_id = $user->id;
                         $isNew = true;
@@ -175,7 +162,7 @@ class ComplianceController extends Controller
                     $approval->commission = $request->commission;
                     $approval->contract_end_date = $request->contract_end_date;
                     // For contract, store the full URL path
-                    $approval->contract = 'storage/contracts/' . $fileName;
+                    $approval->contract = 'storage/contracts/'.$fileName;
                     $approval->save();
 
                     $entityType = 'Approval';
@@ -196,7 +183,7 @@ class ComplianceController extends Controller
                                 'document_type' => 'contract',
                                 'justification' => 'Supplier contract agreement',
                                 'pdpl_category' => 'legitimate_interest',
-                                'pii_fields_involved' => []
+                                'pii_fields_involved' => [],
                             ]
                         );
                     } else {
@@ -213,7 +200,7 @@ class ComplianceController extends Controller
                                 'document_type' => 'contract',
                                 'justification' => 'Supplier contract renewal/update',
                                 'pdpl_category' => 'legitimate_interest',
-                                'pii_fields_involved' => []
+                                'pii_fields_involved' => [],
                             ]
                         );
                     }
@@ -257,7 +244,7 @@ class ComplianceController extends Controller
                 default:
                     return response()->json([
                         'success' => false,
-                        'message' => __('Invalid document type.')
+                        'message' => __('Invalid document type.'),
                     ], 400);
             }
 
@@ -290,7 +277,7 @@ class ComplianceController extends Controller
                             'bank_id' => $bank->id,
                             'justification' => 'Bank verification document update',
                             'pdpl_category' => 'legitimate_interest',
-                            'pii_fields_involved' => ['iban', 'account_name']
+                            'pii_fields_involved' => ['iban', 'account_name'],
                         ]
                     );
                 } else {
@@ -311,17 +298,17 @@ class ComplianceController extends Controller
                                 'id_image' => [
                                     'justification' => 'Identity verification',
                                     'pdpl_category' => 'legal_obligation',
-                                    'pii_fields_involved' => ['owner_iqama_number', 'owner_name']
+                                    'pii_fields_involved' => ['owner_iqama_number', 'owner_name'],
                                 ],
                                 'cr_file' => [
                                     'justification' => 'Business registration verification',
                                     'pdpl_category' => 'legal_obligation',
-                                    'pii_fields_involved' => ['cr_number']
+                                    'pii_fields_involved' => ['cr_number'],
                                 ],
                                 default => [
                                     'justification' => 'Compliance document update',
                                     'pdpl_category' => 'legitimate_interest',
-                                    'pii_fields_involved' => []
+                                    'pii_fields_involved' => [],
                                 ]
                             }
                         )
@@ -335,7 +322,7 @@ class ComplianceController extends Controller
                 'file_name' => $fileName,
                 'file_path' => $filePath,
                 'document_type' => $request->document_type,
-                'full_url' => $fullUrl
+                'full_url' => $fullUrl,
             ]);
         } catch (\Exception $e) {
             // Log error in audit trail
@@ -344,7 +331,7 @@ class ComplianceController extends Controller
                 'event_type' => 'document_update_failed',
                 'entity_type' => 'Supplier',
                 'entity_id' => $merchant->id ?? null,
-                'action_summary' => "Failed to update document for supplier",
+                'action_summary' => 'Failed to update document for supplier',
                 'properties' => [
                     'document_type' => $request->document_type ?? 'unknown',
                     'error_message' => $e->getMessage(),
@@ -354,7 +341,7 @@ class ComplianceController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 500);
         }
     }
@@ -365,7 +352,7 @@ class ComplianceController extends Controller
 
         $merchant = Merchant::where('id', $id)
             ->when(
-                !(
+                ! (
                     ($user->user_type === 'employee' && $user->is_manager) || $user->user_type === 'admin'
                 ),
                 function ($query) use ($user) {
@@ -374,10 +361,10 @@ class ComplianceController extends Controller
             )
             ->first();
 
-        if (!$merchant) {
+        if (! $merchant) {
             return response()->json([
                 'success' => false,
-                'message' => __('Supplier not found or not assigned to you.')
+                'message' => __('Supplier not found or not assigned to you.'),
             ], 403);
         }
 
@@ -402,9 +389,9 @@ class ComplianceController extends Controller
             $contractUrl = $approval->contract;
 
             // If it's just a filename, build the full URL
-            if ($contractUrl && !str_contains($contractUrl, '/')) {
-                $contractUrl = url('storage/contracts/' . $contractUrl);
-            } elseif ($contractUrl && !str_starts_with($contractUrl, 'http')) {
+            if ($contractUrl && ! str_contains($contractUrl, '/')) {
+                $contractUrl = url('storage/contracts/'.$contractUrl);
+            } elseif ($contractUrl && ! str_starts_with($contractUrl, 'http')) {
                 // If it has path but not full URL, make it a full URL
                 $contractUrl = url($contractUrl);
             }
@@ -422,7 +409,7 @@ class ComplianceController extends Controller
         return response()->json([
             'success' => true,
             'contract' => $contractData,
-            'has_contract' => !empty($approval?->contract)
+            'has_contract' => ! empty($approval?->contract),
         ]);
     }
 }

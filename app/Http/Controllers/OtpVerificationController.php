@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Otp;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\RateLimiter;
@@ -12,23 +13,33 @@ use Illuminate\Validation\ValidationException;
 
 class OtpVerificationController extends Controller
 {
-    const PHONE = '0506879195';
     const COOLDOWN_SECONDS = 60;
+
     const MAX_ATTEMPTS = 5;
 
     public function send()
     {
-        $key = 'send-otp:' . self::PHONE;
+        $user = Auth::user();
+        if (! $user) {
+            return redirect()->route('login')->with('error', 'Authentication required.');
+        }
+
+        $phone = $user->phone_number;
+        if (empty($phone)) {
+            return redirect()->back()->with('error', 'Your account does not have a verified phone number.');
+        }
+
+        $key = 'send-otp:'.$phone;
         if (RateLimiter::tooManyAttempts($key, 1)) {
             $seconds = RateLimiter::availableIn($key);
             throw ValidationException::withMessages([
-                'otp' => "Please wait {$seconds}s before requesting another OTP."
+                'otp' => "Please wait {$seconds}s before requesting another OTP.",
             ]);
         }
 
         RateLimiter::hit($key, self::COOLDOWN_SECONDS);
 
-        $activeOtp = Otp::where('phone', self::PHONE)
+        $activeOtp = Otp::where('phone', $phone)
             ->where('used', false)
             ->where('expires_at', '>', now())
             ->latest()
@@ -38,23 +49,23 @@ class OtpVerificationController extends Controller
             return redirect()->route('risk.merchantScore')->with('error', 'An active OTP is already pending. Please wait or use that one.');
         }
 
-        Otp::where('phone', self::PHONE)->update(['used' => true]);
+        Otp::where('phone', $phone)->update(['used' => true]);
 
         $code = rand(100000, 999999);
         $expiresAt = now()->addMinutes(12);
 
         Otp::create([
-            'phone' => self::PHONE,
+            'phone' => $phone,
             'code' => $code,
             'expires_at' => $expiresAt,
             'sends' => 1,
         ]);
 
-        $this->sendSmsOtp(self::PHONE, $code, "Your OTP code is: {$code}");
+        $this->sendSmsOtp($phone, $code, "Your OTP code is: {$code}");
 
         return redirect()
-            ->route('otp.verify.form', ['phone' => self::PHONE])
-            ->with('status', 'OTP sent to ' . self::PHONE);
+            ->route('otp.verify.form', ['phone' => $phone])
+            ->with('status', 'OTP sent to '.$phone);
     }
 
     public function showVerifyForm(Request $request)
@@ -66,7 +77,7 @@ class OtpVerificationController extends Controller
 
         if (! $otp) {
             throw ValidationException::withMessages([
-                'code' => 'Your OTP expired. Please request a new one.'
+                'code' => 'Your OTP expired. Please request a new one.',
             ]);
         }
 
@@ -80,10 +91,17 @@ class OtpVerificationController extends Controller
 
     public function verifyOtp(Request $request)
     {
+        $user = Auth::user();
         $request->validate([
             'phone' => 'required|digits_between:8,15',
-            'code'  => 'required|digits:6'
+            'code' => 'required|digits:6',
         ]);
+
+        if ($user && $request->phone !== $user->phone_number) {
+            throw ValidationException::withMessages([
+                'phone' => 'The phone number does not match your account.',
+            ]);
+        }
 
         $otp = Otp::active()
             ->where('phone', $request->phone)
@@ -92,7 +110,7 @@ class OtpVerificationController extends Controller
 
         if (! $otp) {
             throw ValidationException::withMessages([
-                'code' => 'OTP expired or invalid'
+                'code' => 'OTP expired or invalid',
             ]);
         }
 
@@ -100,13 +118,13 @@ class OtpVerificationController extends Controller
 
         if ($otp->attempts > self::MAX_ATTEMPTS) {
             throw ValidationException::withMessages([
-                'code' => 'Too many wrong attempts. Please request a new OTP.'
+                'code' => 'Too many wrong attempts. Please request a new OTP.',
             ]);
         }
 
         if ($otp->code !== $request->code) {
             throw ValidationException::withMessages([
-                'code' => 'Incorrect OTP'
+                'code' => 'Incorrect OTP',
             ]);
         }
 
@@ -118,20 +136,20 @@ class OtpVerificationController extends Controller
     protected function sendSms($phone, $message)
     {
         $post = [
-            "userName"   => "Arabianpay",
-            "apiKey"     => "d99970b46c8430547b33815c20b68d41",
-            "userSender" => "Arabianpay",
-            "msg"        => $message,
-            "numbers"    => $phone,
+            'userName' => 'Arabianpay',
+            'apiKey' => 'd99970b46c8430547b33815c20b68d41',
+            'userSender' => 'Arabianpay',
+            'msg' => $message,
+            'numbers' => $phone,
         ];
 
         $curl = curl_init();
         curl_setopt_array($curl, [
-            CURLOPT_URL            => 'https://www.msegat.com/gw/sendsms.php',
+            CURLOPT_URL => 'https://www.msegat.com/gw/sendsms.php',
             CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST           => true,
-            CURLOPT_POSTFIELDS     => json_encode($post),
-            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => json_encode($post),
+            CURLOPT_HTTPHEADER => ['Content-Type: application/json'],
         ]);
         curl_exec($curl);
         curl_close($curl);
@@ -143,9 +161,9 @@ class OtpVerificationController extends Controller
         $message = $message ?? "Your OTP is: {$otp}";
 
         $postData = [
-            "src"   => "Arabianpay",
-            "dests" => $phones,
-            "body"  => $message,
+            'src' => 'Arabianpay',
+            'dests' => $phones,
+            'body' => $message,
         ];
 
         try {
@@ -153,9 +171,9 @@ class OtpVerificationController extends Controller
                 ->acceptJson()
                 ->post('https://api.oursms.com/msgs/sms', $postData);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('SMS OTP sending failed', ['response' => $response->body()]);
-                throw new \RuntimeException('SMS OTP sending failed: ' . substr($response->body(), 0, 500));
+                throw new \RuntimeException('SMS OTP sending failed: '.substr($response->body(), 0, 500));
             }
 
             return [
@@ -165,7 +183,7 @@ class OtpVerificationController extends Controller
         } catch (\Throwable $e) {
             Log::error('SMS OTP sending exception', [
                 'error' => $e->getMessage(),
-                'phones' => $phones
+                'phones' => $phones,
             ]);
             throw $e;
         }

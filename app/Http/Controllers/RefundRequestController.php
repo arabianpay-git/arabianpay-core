@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateRefundStatusRequest;
 use App\Models\RefundRequest;
 use App\Services\Finance\RefundApprovalService;
 use App\Services\FirebaseService;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -14,15 +14,11 @@ class RefundRequestController extends Controller
 {
     public function __construct(private RefundApprovalService $refundApprovalService) {}
 
-    public function updateRefundStatus(Request $request, $id)
+    public function updateRefundStatus(UpdateRefundStatusRequest $request, $id)
     {
-        $request->validate([
-            'refund_status' => 'required|in:pending,approved,rejected',
-        ]);
-
         $refundRequest = RefundRequest::findOrFail($id);
 
-        // TODO: add $this->authorize('approve', $refundRequest) once RefundRequestPolicy is created
+        $this->authorize('approve', $refundRequest);
 
         $oldStatus = $refundRequest->refund_status;
         $newStatus = $request->input('refund_status');

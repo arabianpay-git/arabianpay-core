@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateCreditLimitRequest;
 use App\Models\SchedulePayment;
 use App\Models\User;
 use App\Services\AuditTrailService;
@@ -9,13 +10,17 @@ use App\Services\CreditAssessmentService;
 use App\Services\RiskAnalyticsService;
 use App\Services\RiskService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class CreditManagmentController extends Controller
 {
     protected $creditAssesmentService;
+
     protected $riskAnalyticsService;
+
     protected $riskService;
+
     protected $auditTrailService;
 
     public function __construct(
@@ -35,19 +40,19 @@ class CreditManagmentController extends Controller
         $total = 0;
 
         foreach ($orders as $order) {
-            $items    = map_product_details($order->product_details);
+            $items = map_product_details($order->product_details);
             $subTotal = $items->sum('total');
             $shipping = $order->shipping_cost ?? 0;
             $discount = $order->coupon_discount ?? 0;
-            $tax      = calculate_order_tax($order);
+            $tax = calculate_order_tax($order);
 
             $base = $subTotal + $tax + $shipping - $discount;
 
-            $commissionPct    = get_system_commission();
+            $commissionPct = get_system_commission();
             $commissionAmount = $base * ($commissionPct / 100);
 
-            $commissionTaxPct  = get_commission_tax();
-            $commissionTaxAmt  = $commissionAmount * ($commissionTaxPct / 100);
+            $commissionTaxPct = get_commission_tax();
+            $commissionTaxAmt = $commissionAmount * ($commissionTaxPct / 100);
 
             $total += $base + $commissionAmount + $commissionTaxAmt;
         }
@@ -130,7 +135,7 @@ class CreditManagmentController extends Controller
 
     public function creditProfile(Request $request)
     {
-        if (!hasSensitivePermission('credit_decision_output')) {
+        if (! hasSensitivePermission('credit_decision_output')) {
             // Log unauthorized access attempt to credit profiles
             $this->auditTrailService->log([
                 'event_category' => 'security_events',
@@ -162,6 +167,7 @@ class CreditManagmentController extends Controller
         );
 
         $customers = $this->getCustomersWithCreditData($search, 10);
+
         return view('admin.credit-managment.profiles', compact('customers'));
     }
 
@@ -194,7 +200,7 @@ class CreditManagmentController extends Controller
             'pii_fields_involved' => ['credit_limit', 'credit_score', 'financial_data'],
             'properties' => [
                 'total_customers_reviewed' => $creditLimits->total(),
-                'search_used' => !empty($search),
+                'search_used' => ! empty($search),
                 'average_credit_score' => $creditLimits->isNotEmpty() ?
                     round($creditLimits->avg('credit_score'), 2) : 0,
                 'total_credit_exposure' => $creditLimits->isNotEmpty() ?
@@ -254,7 +260,7 @@ class CreditManagmentController extends Controller
                 'total_payments' => $totalPayments,
                 'total_amount' => number_format($totalAmount, 2),
                 'status_breakdown' => $statusBreakdown,
-                'search_applied' => !empty($search),
+                'search_applied' => ! empty($search),
                 'search_term' => $search,
                 'date_range' => [
                     'earliest_due_date' => $schedulePayments->isNotEmpty() ?
@@ -273,7 +279,7 @@ class CreditManagmentController extends Controller
      */
     public function customerCreditAssessment($id)
     {
-        if (!hasSensitivePermission('credit_decision_output')) {
+        if (! hasSensitivePermission('credit_decision_output')) {
             // Log unauthorized access attempt
             $this->auditTrailService->log([
                 'event_category' => 'security_events',
@@ -317,8 +323,6 @@ class CreditManagmentController extends Controller
                 'pii_fields_involved' => ['credit_score', 'risk_score', 'personal_data', 'financial_history'],
                 'properties' => array_merge([
                     'customer_id' => $customer->id,
-                    'customer_name' => "{$customer->first_name} {$customer->last_name}",
-                    'customer_email' => $customer->email,
                     'credit_score' => round($creditScore, 2),
                     'risk_score' => round($riskScore, 2),
                     'assessment_timestamp' => now()->toISOString(),
@@ -350,36 +354,17 @@ class CreditManagmentController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Failed to perform credit assessment: ' . $e->getMessage());
+            Log::error('Credit assessment failed', ['error' => $e->getMessage(), 'customer_id' => $customer->id, 'user_id' => Auth::id()]);
+
+            return back()->with('error', __('Failed to perform credit assessment. Please try again or contact support.'));
         }
     }
 
     /**
      * Update credit limit for a customer
      */
-    public function updateCreditLimit(Request $request, $id)
+    public function updateCreditLimit(UpdateCreditLimitRequest $request, $id)
     {
-        if (!hasSensitivePermission('credit_decision_output')) {
-            $this->auditTrailService->log([
-                'event_category' => 'security_events',
-                'event_type' => 'unauthorized_credit_limit_update',
-                'entity_type' => 'CustomerCreditLimit',
-                'entity_id' => $id,
-                'action_summary' => "Attempted to update credit limit for customer ID: {$id} without permission",
-                'properties' => [
-                    'permission_required' => 'credit_decision_output',
-                    'customer_id' => $id,
-                    'requested_limit' => $request->input('credit_limit'),
-                ],
-            ]);
-
-            return back()->with('error', translate('Access Restricted'));
-        }
-
-        $request->validate([
-            'credit_limit' => 'required|numeric|min:0',
-            'reason' => 'required|string|max:500',
-        ]);
 
         $customer = User::with('customer')->findOrFail($id);
         $oldCreditLimit = $customer->customerCreditLimit->limit_arabianpay_after ?? 0;
@@ -402,8 +387,8 @@ class CreditManagmentController extends Controller
             $this->auditTrailService->logUpdated(
                 $customer, // or your credit limit model instance
                 ['credit_limit' => $oldCreditLimit],
-                "Updated credit limit for '{$customer->first_name} {$customer->last_name}' from SAR " .
-                    number_format($oldCreditLimit, 2) . " to SAR " . number_format($request->credit_limit, 2),
+                "Updated credit limit for '{$customer->first_name} {$customer->last_name}' from SAR ".
+                    number_format($oldCreditLimit, 2).' to SAR '.number_format($request->credit_limit, 2),
                 $justificationData
             );
 
@@ -425,7 +410,9 @@ class CreditManagmentController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Failed to update credit limit: ' . $e->getMessage());
+            Log::error('Credit limit update failed', ['error' => $e->getMessage(), 'customer_id' => $customer->id, 'user_id' => Auth::id()]);
+
+            return back()->with('error', __('Failed to update credit limit. Please try again or contact support.'));
         }
     }
 

@@ -8,6 +8,7 @@ use App\Models\RefundRequest;
 use App\Models\User;
 use App\Services\AuditTrailService;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class RefundApprovalService
 {
@@ -18,6 +19,12 @@ class RefundApprovalService
      */
     public function approve(RefundRequest $refund, User $actor): void
     {
+        if ($refund->refund_status !== 'pending') {
+            throw new \InvalidArgumentException("Refund #{$refund->id} is already {$refund->refund_status}");
+        }
+
+        Gate::authorize('approve', $refund);
+
         DB::transaction(function () use ($refund, $actor): void {
             $before = $refund->toArray();
 
@@ -26,7 +33,7 @@ class RefundApprovalService
             $this->auditTrail->logUpdated(
                 $refund->fresh(),
                 $before,
-                'Refund request approved by '.$actor->email,
+                'Refund request approved by user #'.$actor->id,
             );
         });
     }
@@ -36,12 +43,18 @@ class RefundApprovalService
      */
     public function reject(RefundRequest $refund, User $actor, string $reason = ''): void
     {
+        if ($refund->refund_status !== 'pending') {
+            throw new \InvalidArgumentException("Refund #{$refund->id} is already {$refund->refund_status}");
+        }
+
+        Gate::authorize('approve', $refund);
+
         DB::transaction(function () use ($refund, $actor, $reason): void {
             $before = $refund->toArray();
 
             $refund->update(['refund_status' => 'rejected']);
 
-            $summary = 'Refund request rejected by '.$actor->email;
+            $summary = 'Refund request rejected by user #'.$actor->id;
             if ($reason !== '') {
                 $summary .= '. Reason: '.$reason;
             }

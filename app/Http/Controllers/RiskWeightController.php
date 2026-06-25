@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreRiskWeightRequest;
 use App\Models\RiskWeight;
 use App\Models\Setting;
+use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use App\Services\AuditTrailService;
 
 class RiskWeightController extends Controller
 {
@@ -21,40 +22,9 @@ class RiskWeightController extends Controller
     /**
      * Store or update risk weights for a user
      */
-    public function store(Request $request)
+    public function store(StoreRiskWeightRequest $request)
     {
-        $validated = $request->validate([
-            'user_id' => 'required|integer|exists:users,id',
-
-            // Main weights
-            'lps_weight' => 'required|numeric|min:0|max:100',
-            'chs_weight' => 'required|numeric|min:0|max:100',
-            'bcs_weight' => 'required|numeric|min:0|max:100',
-            'bps_weight' => 'required|numeric|min:0|max:100',
-            'bes_weight' => 'required|numeric|min:0|max:100',
-            'caf_weight' => 'required|numeric|min:0|max:100',
-
-            // LPS sub-weights
-            'lps_age_weight' => 'required|numeric|min:0|max:100',
-            'lps_cr_weight' => 'required|numeric|min:0|max:100',
-            'lps_doc_weight' => 'required|numeric|min:0|max:100',
-
-            // BCS sub-weights
-            'bcs_turnover_weight' => 'required|numeric|min:0|max:100',
-            'bcs_volatility_weight' => 'required|numeric|min:0|max:100',
-            'bcs_returned_weight' => 'required|numeric|min:0|max:100',
-            'bcs_balance_weight' => 'required|numeric|min:0|max:100',
-
-            // BPS sub-weights
-            'bps_sector_weight' => 'required|numeric|min:0|max:100',
-            'bps_region_weight' => 'required|numeric|min:0|max:100',
-
-            // BES sub-weights
-            'bes_dpd_weight' => 'required|numeric|min:0|max:100',
-            'bes_utilization_weight' => 'required|numeric|min:0|max:100',
-            'bes_dispute_weight' => 'required|numeric|min:0|max:100',
-            'bes_trend_weight' => 'required|numeric|min:0|max:100',
-        ]);
+        $validated = $request->validated();
 
         // Validate main weights sum to 100
         $mainWeights = collect($validated)->only([
@@ -63,7 +33,7 @@ class RiskWeightController extends Controller
             'bcs_weight',
             'bps_weight',
             'bes_weight',
-            'caf_weight'
+            'caf_weight',
         ]);
         if (abs($mainWeights->sum() - 100) > 0.01) {
             // Log validation failure
@@ -72,7 +42,7 @@ class RiskWeightController extends Controller
                 'event_type' => 'weight_sum_invalid',
                 'entity_type' => 'RiskWeight',
                 'entity_id' => $validated['user_id'],
-                'action_summary' => "Failed to save risk weights - main weights sum invalid",
+                'action_summary' => 'Failed to save risk weights - main weights sum invalid',
                 'properties' => [
                     'user_id' => $validated['user_id'],
                     'actual_sum' => $mainWeights->sum(),
@@ -226,7 +196,7 @@ class RiskWeightController extends Controller
                 'event_type' => 'weights_save_failed',
                 'entity_type' => 'RiskWeight',
                 'entity_id' => $validated['user_id'] ?? null,
-                'action_summary' => "Failed to save risk weights",
+                'action_summary' => 'Failed to save risk weights',
                 'properties' => [
                     'user_id' => $validated['user_id'] ?? null,
                     'error_message' => $e->getMessage(),
@@ -236,7 +206,7 @@ class RiskWeightController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to save risk weights: ' . $e->getMessage(),
+                'message' => 'Failed to save risk weights: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -286,7 +256,7 @@ class RiskWeightController extends Controller
         // Get hardcoded defaults from RiskWeight model
         $hardcodedDefaults = RiskWeight::getDefaultWeights();
 
-        if (!empty($settingWeights) && is_array($settingWeights)) {
+        if (! empty($settingWeights) && is_array($settingWeights)) {
             // Merge settings weights with hardcoded defaults (settings take precedence)
             $finalWeights = array_merge($hardcodedDefaults, $settingWeights);
 

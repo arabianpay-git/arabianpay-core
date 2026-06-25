@@ -85,11 +85,13 @@ class ClaimsController extends Controller
             'user_id' => $schedulePayment->user_id,
             'assigned_to' => Auth::id(),
             'claim_type' => $request->claim_type,
-            'priority' => $request->priority,
-            'claim_status' => 'pending',
             'notes' => $request->notes,
             'next_follow_up' => $request->next_follow_up ? Carbon::parse($request->next_follow_up) : now()->addHours(2),
         ]);
+
+        $claim->priority = $request->priority;
+        $claim->claim_status = 'pending';
+        $claim->save();
 
         return response()->json([
             'success' => true,
@@ -131,9 +133,6 @@ class ClaimsController extends Controller
         // If customer was reached
         if (in_array($request->customer_response, ['answered', 'promised', 'disputed'])) {
             $updateData['contacted_at'] = now();
-            $updateData['claim_status'] = $request->customer_response === 'promised' ? 'promised' : 'contacted';
-        } else {
-            $updateData['claim_status'] = 'attempted';
         }
 
         // Handle promises
@@ -151,6 +150,14 @@ class ClaimsController extends Controller
 
         $claim->update($updateData);
 
+        // Update status separately as it is no longer mass-assignable
+        if (in_array($request->customer_response, ['answered', 'promised', 'disputed'])) {
+            $claim->claim_status = $request->customer_response === 'promised' ? 'promised' : 'contacted';
+        } else {
+            $claim->claim_status = 'attempted';
+        }
+        $claim->save();
+
         $this->auditTrail->logUpdated($claim->fresh(), $before, 'Claim attempt updated');
 
         return response()->json([
@@ -167,10 +174,9 @@ class ClaimsController extends Controller
     {
         $before = $claim->toArray();
 
-        $claim->update([
-            'claim_status' => 'resolved',
-            'next_follow_up' => null,
-        ]);
+        $claim->claim_status = 'resolved';
+        $claim->next_follow_up = null;
+        $claim->save();
 
         $this->auditTrail->logUpdated($claim->fresh(), $before, 'Claim resolved');
 

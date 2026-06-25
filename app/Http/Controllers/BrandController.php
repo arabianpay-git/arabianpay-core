@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreBrandRequest;
 use App\Models\Brand;
 use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
@@ -91,15 +92,8 @@ class BrandController extends Controller
         return view('admin.brands.create');
     }
 
-    public function store(Request $request)
+    public function store(StoreBrandRequest $request)
     {
-        $request->validate([
-            'name' => ['required', 'string', 'max:255', 'unique:brands,name'],
-            'logo' => ['required'],
-            'order_level' => ['required', 'numeric'],
-            'meta_title' => ['nullable', 'string', 'min:5', 'max:100'],
-            'meta_description' => ['nullable', 'string', 'min:10', 'max:255'],
-        ]);
 
         DB::beginTransaction();
 
@@ -144,7 +138,7 @@ class BrandController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -207,6 +201,7 @@ class BrandController extends Controller
             );
 
             DB::commit();
+
             return redirect()->route('brands.index')->with('success', 'Brand updated successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -224,7 +219,7 @@ class BrandController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -252,6 +247,7 @@ class BrandController extends Controller
             $brand->delete();
 
             DB::commit();
+
             return redirect()->route('brands.index')->with('success', 'Brand deleted successfully.');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -268,7 +264,7 @@ class BrandController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 

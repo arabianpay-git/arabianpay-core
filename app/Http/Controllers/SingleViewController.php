@@ -7,10 +7,10 @@ use App\Models\SupplierBank;
 use App\Models\UserConsent;
 use App\Services\SingleViewService;
 use Exception;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\JsonResponse;
 
 class SingleViewController extends Controller
 {
@@ -30,7 +30,7 @@ class SingleViewController extends Controller
 
         $merchant = Merchant::where('user_id', $id)
             ->when(
-                !(
+                ! (
                     ($user->user_type === 'employee' && $user->is_manager) || $user->user_type === 'admin'
                 ),
                 function ($query) use ($user) {
@@ -39,7 +39,7 @@ class SingleViewController extends Controller
             )
             ->first();
 
-        if (!$merchant) {
+        if (! $merchant) {
             abort(404, __('Supplier not found or not assigned to you.'));
         }
 
@@ -56,7 +56,7 @@ class SingleViewController extends Controller
         $supplierBank = SupplierBank::where('user_id', $merchant->user_id)->first();
 
         return view('admin.accounts.supplier-singleview', [
-            'merchant'     => $merchant,
+            'merchant' => $merchant,
             'supplierBank' => $supplierBank,
         ]);
     }
@@ -69,7 +69,7 @@ class SingleViewController extends Controller
         $merchant = $this->checkUser($id);
         $supplierBank = SupplierBank::where('user_id', $merchant->user_id)->first();
 
-        if (!$supplierBank) {
+        if (! $supplierBank) {
             return response()->json(['success' => false, 'payload' => []]);
         }
 
@@ -87,9 +87,11 @@ class SingleViewController extends Controller
      */
     private function getAccounts(?SupplierBank $bank, $userId): array
     {
-        if (!$bank) return [];
+        if (! $bank) {
+            return [];
+        }
 
-        $bankCode = $bank->code ?? 'SVMOB1';
+        $bankCode = $bank->code ?? settings('simah.bank_code', 'SVMOB1');
         $iban = $bank->iban ?? '';
         $ibanCheck = true;
 
@@ -105,6 +107,7 @@ class SingleViewController extends Controller
             ]);
 
             $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
             return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Failed to create consent.']];
         }
 
@@ -119,6 +122,7 @@ class SingleViewController extends Controller
                 ]);
 
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
             }
 
@@ -136,6 +140,7 @@ class SingleViewController extends Controller
             if (stripos($e->getMessage(), 'API call failed: accounts') !== false) {
                 Log::info('Caught Invalid Consent Data exception, attempting to create new consent.');
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
             }
 
@@ -151,7 +156,7 @@ class SingleViewController extends Controller
         $merchant = $this->checkUser($id);
         $supplierBank = SupplierBank::where('user_id', $merchant->user_id)->first();
 
-        if (!$supplierBank) {
+        if (! $supplierBank) {
             return response()->json(['success' => false, 'payload' => []]);
         }
 
@@ -169,9 +174,11 @@ class SingleViewController extends Controller
      */
     private function getAccountsBalance(?SupplierBank $bank, $userId): array
     {
-        if (!$bank) return [];
+        if (! $bank) {
+            return [];
+        }
 
-        $bankCode = $bank->code ?? 'SVMOB1';
+        $bankCode = $bank->code ?? settings('simah.bank_code', 'SVMOB1');
 
         $userConsent = UserConsent::where('user_id', $userId)
             ->where('bank_code', $bankCode)
@@ -185,6 +192,7 @@ class SingleViewController extends Controller
             ]);
 
             $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
             return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Failed to create consent.']];
         }
 
@@ -199,6 +207,7 @@ class SingleViewController extends Controller
                 ]);
 
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
             }
 
@@ -216,6 +225,7 @@ class SingleViewController extends Controller
             if (stripos($e->getMessage(), 'API call failed: all_accounts_balance') !== false) {
                 Log::info('Caught Invalid Consent Data exception, attempting to create new consent.');
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
             }
 
@@ -228,7 +238,7 @@ class SingleViewController extends Controller
         $merchant = $this->checkUser($id);
         $supplierBank = SupplierBank::where('user_id', $merchant->user_id)->first();
 
-        if (!$supplierBank) {
+        if (! $supplierBank) {
             return response()->json(['success' => false, 'payload' => []]);
         }
 
@@ -243,9 +253,11 @@ class SingleViewController extends Controller
 
     private function getCreditCheckBasic(?SupplierBank $bank, $userId): array
     {
-        if (!$bank) return [];
+        if (! $bank) {
+            return [];
+        }
 
-        $bankCode = $bank->code ?? 'SVMOB1';
+        $bankCode = $bank->code ?? settings('simah.bank_code', 'SVMOB1');
 
         $userConsent = UserConsent::where('user_id', $userId)
             ->where('bank_code', $bankCode)
@@ -259,12 +271,13 @@ class SingleViewController extends Controller
             ]);
 
             $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
             return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Failed to create consent.']];
         }
 
         try {
             $fromDate = request()->query('fromDate');
-            $toDate   = request()->query('toDate');
+            $toDate = request()->query('toDate');
             $creditCheck = filter_var(request()->query('creditCheck', true), FILTER_VALIDATE_BOOLEAN);
             $result = $this->singleViewService->creditCheckBasic($bankCode, $consentId, $fromDate, $toDate, $creditCheck);
 
@@ -276,6 +289,7 @@ class SingleViewController extends Controller
                 ]);
 
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
             }
 
@@ -293,6 +307,7 @@ class SingleViewController extends Controller
             if (stripos($e->getMessage(), 'API call failed: e_statement') !== false) {
                 Log::info('Caught Invalid Consent Data exception, attempting to create new consent.');
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
             }
 
@@ -305,21 +320,21 @@ class SingleViewController extends Controller
      */
     private function isConsentInvalid(array $result, string $bankCode): bool
     {
-        if (!isset($result['success']) || $result['success'] !== false) {
+        if (! isset($result['success']) || $result['success'] !== false) {
             return false;
         }
 
-        if (empty($result['payload']) || !is_array($result['payload'])) {
+        if (empty($result['payload']) || ! is_array($result['payload'])) {
             return false;
         }
 
         foreach ($result['payload'] as $p) {
-            if (!empty($p['message']) && stripos($p['message'], 'Invalid Consent Data') !== false) {
+            if (! empty($p['message']) && stripos($p['message'], 'Invalid Consent Data') !== false) {
                 return true;
             }
 
-            if (!empty($p['code']) && !empty($p['consentId']) && stripos($p['code'], $bankCode) !== false) {
-                if (!empty($p['message']) && stripos($p['message'], 'Invalid Consent') !== false) {
+            if (! empty($p['code']) && ! empty($p['consentId']) && stripos($p['code'], $bankCode) !== false) {
+                if (! empty($p['message']) && stripos($p['message'], 'Invalid Consent') !== false) {
                     return true;
                 }
             }
@@ -332,8 +347,10 @@ class SingleViewController extends Controller
      * Create consent via the SingleViewService, persist consent_id and return the bankRedirectUrl (string)
      * or null if creation failed or no redirect URL present.
      */
-    private function createConsentAndGetUrl(int $userId, string $bankCode = 'SVMOB1'): ?string
+    private function createConsentAndGetUrl(int $userId, ?string $bankCode = null): ?string
     {
+        $bankCode ??= settings('simah.bank_code', 'SVMOB1');
+
         try {
             Log::info('Attempting to create new consent', ['user_id' => $userId, 'bank_code' => $bankCode]);
             $redirectUrl = request()->headers->get('referer') ?? url()->current();
@@ -345,7 +362,7 @@ class SingleViewController extends Controller
             $consentId = $dataNode['consentId'] ?? $dataNode['consent_id'] ?? null;
             $bankRedirectUrl = $payloadItem['bankRedirectUrl'] ?? $payloadItem['bank_redirect_url'] ?? null;
 
-            if (!empty($consentId)) {
+            if (! empty($consentId)) {
                 Log::info('Consent ID found, attempting to update database.', ['consent_id' => $consentId]);
                 UserConsent::updateOrCreate(
                     ['user_id' => $userId, 'bank_code' => $bankCode],
@@ -354,8 +371,9 @@ class SingleViewController extends Controller
                 Log::info('Database updateOrCreate successful.');
             }
 
-            if (!empty($bankRedirectUrl)) {
+            if (! empty($bankRedirectUrl)) {
                 Log::info('Redirect URL found, returning.', ['url' => $bankRedirectUrl]);
+
                 return $bankRedirectUrl;
             }
 
@@ -382,8 +400,8 @@ class SingleViewController extends Controller
      */
     public function createConsent(Request $request, $userId): RedirectResponse
     {
-        $bankCode = $request->query('bankCode', 'SVMOB1');
-        $url = $this->createConsentAndGetUrl((int)$userId, $bankCode);
+        $bankCode = $request->query('bankCode', settings('simah.bank_code', 'SVMOB1'));
+        $url = $this->createConsentAndGetUrl((int) $userId, $bankCode);
 
         if ($url) {
             return redirect()->away($url);
@@ -391,16 +409,6 @@ class SingleViewController extends Controller
 
         return redirect()->back()->with('error', 'Could not create consent or no redirect URL provided by bank.');
     }
-
-
-
-
-
-
-
-
-
-
 
     /**
      * NEW: AJAX entry point called by blade to fetch Income Check Advanced (same semantics as other fetch* methods)
@@ -410,7 +418,7 @@ class SingleViewController extends Controller
         $merchant = $this->checkUser($id);
         $supplierBank = SupplierBank::where('user_id', $merchant->user_id)->first();
 
-        if (!$supplierBank) {
+        if (! $supplierBank) {
             return response()->json(['success' => false, 'payload' => []]);
         }
 
@@ -428,9 +436,11 @@ class SingleViewController extends Controller
      */
     private function getIncomeCheckAdvanced(?SupplierBank $bank, $userId): array
     {
-        if (!$bank) return [];
+        if (! $bank) {
+            return [];
+        }
 
-        $bankCode = $bank->code ?? 'SVMOB1';
+        $bankCode = $bank->code ?? settings('simah.bank_code', 'SVMOB1');
 
         $userConsent = UserConsent::where('user_id', $userId)
             ->where('bank_code', $bankCode)
@@ -444,12 +454,13 @@ class SingleViewController extends Controller
             ]);
 
             $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
             return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Failed to create consent.']];
         }
 
         try {
             $fromDate = request()->query('fromDate');
-            $toDate   = request()->query('toDate');
+            $toDate = request()->query('toDate');
             $timeLine = request()->query('timeLine', 'byDay');
             $incomeCheck = filter_var(request()->query('incomeCheck', true), FILTER_VALIDATE_BOOLEAN);
 
@@ -470,6 +481,7 @@ class SingleViewController extends Controller
                 ]);
 
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
             }
 
@@ -487,6 +499,7 @@ class SingleViewController extends Controller
             if (stripos($e->getMessage(), 'API call failed: e_statement') !== false) {
                 Log::info('Caught Invalid Consent Data exception (income check), attempting to create new consent.');
                 $url = $this->createConsentAndGetUrl($userId, $bankCode);
+
                 return $url ? ['redirect_url' => $url] : ['success' => false, 'payload' => ['message' => 'Invalid consent and failed to create new one.']];
             }
 
@@ -501,7 +514,7 @@ class SingleViewController extends Controller
     {
         // This is intentionally similar to the closure you provided — it directly returns service result.
         $fromDate = request()->query('fromDate'); // optional
-        $toDate   = request()->query('toDate');   // optional
+        $toDate = request()->query('toDate');   // optional
         $timeLine = request()->query('timeLine', 'byDay'); // optional
         $incomeCheck = filter_var(request()->query('incomeCheck', true), FILTER_VALIDATE_BOOLEAN);
 
@@ -527,12 +540,12 @@ class SingleViewController extends Controller
             Log::error('incomeCheckAdvanced error', [
                 'bankCode' => $bankCode,
                 'consentId' => $consentId,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'payload' => ['message' => 'Failed to fetch income data.']
+                'payload' => ['message' => 'Failed to fetch income data.'],
             ]);
         }
     }

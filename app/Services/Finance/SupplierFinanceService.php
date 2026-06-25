@@ -49,7 +49,7 @@ class SupplierFinanceService
                         'order_uuid' => $order->uuid,
                         'order_total' => (float) $order->grand_total,
                         'commission' => (float) $order->commission_amount,
-                        'payable' => (float) $order->grand_total - (float) $order->commission_amount,
+                        'payable' => (float) bcsub((string) $order->grand_total, (string) ($order->commission_amount ?? 0), 2),
                         'delivery_status' => $order->delivery_status,
                         'delivered_at' => $order->delivered_at,
                     ];
@@ -73,14 +73,14 @@ class SupplierFinanceService
 
         foreach ($deliveredOrders as $order) {
             // Calculate the amount owed to supplier (grand_total - commission)
-            $orderAmount = (float) $order->grand_total - (float) ($order->commission_amount ?? 0);
+            $orderAmount = bcsub((string) $order->grand_total, (string) ($order->commission_amount ?? 0), 2);
 
             // Check if partially paid (legacy support)
-            $paidAmount = $order->payouts()->sum('amount');
-            $remainingAmount = max(0, $orderAmount - $paidAmount);
+            $paidAmount = (string) $order->payouts()->sum('amount');
+            $remainingAmount = max(0, bcsub($orderAmount, $paidAmount, 2));
 
-            if ($remainingAmount > 0) {
-                $upcomingAmount += $remainingAmount;
+            if (bccomp($remainingAmount, '0', 2) === 1) {
+                $upcomingAmount = bcadd((string) $upcomingAmount, (string) $remainingAmount, 2);
                 $ordersData[] = [
                     'order_id' => $order->id,
                     'order_uuid' => $order->uuid,
@@ -133,7 +133,7 @@ class SupplierFinanceService
         $start = Carbon::parse($startDate)->startOfDay();
         $end = Carbon::parse($endDate)->endOfDay();
 
-        $accountId = 2400;
+        $accountId = settings('settlement.supplier_account_id', '2400');
         $account = FAccounts::find($accountId);
 
         if (! $account) {
@@ -156,8 +156,8 @@ class SupplierFinanceService
         $isDebitNormal = ((int) $account->account_type2) === 1;
 
         $openingBalance = $isDebitNormal
-            ? (float) $priorEntries->sum_debit - (float) $priorEntries->sum_credit
-            : (float) $priorEntries->sum_credit - (float) $priorEntries->sum_debit;
+            ? bcsub((string) $priorEntries->sum_debit, (string) $priorEntries->sum_credit, 2)
+            : bcsub((string) $priorEntries->sum_credit, (string) $priorEntries->sum_debit, 2);
 
         // Get entries within the period for this supplier
         $entries = FEntry::with(['user', 'order', 'transaction'])
@@ -176,18 +176,18 @@ class SupplierFinanceService
         $totalCredit = 0;
 
         foreach ($entries as $entry) {
-            $debit = (float) ($entry->debit ?? 0);
-            $credit = (float) ($entry->credit ?? 0);
+            $debit = (string) ($entry->debit ?? 0);
+            $credit = (string) ($entry->credit ?? 0);
 
-            $totalDebit += $debit;
-            $totalCredit += $credit;
+            $totalDebit = bcadd((string) $totalDebit, $debit, 2);
+            $totalCredit = bcadd((string) $totalCredit, $credit, 2);
 
             // Calculate balance change
             $delta = $isDebitNormal
-                ? $debit - $credit
-                : $credit - $debit;
+                ? bcsub($debit, $credit, 2)
+                : bcsub($credit, $debit, 2);
 
-            $runningBalance += $delta;
+            $runningBalance = bcadd((string) $runningBalance, $delta, 2);
 
             $formattedEntries[] = [
                 'entry_id' => $entry->id,
@@ -224,7 +224,7 @@ class SupplierFinanceService
             'period_totals' => [
                 'total_debit' => round($totalDebit, 2),
                 'total_credit' => round($totalCredit, 2),
-                'net_change' => round($closingBalance - $openingBalance, 2),
+                'net_change' => round(bcsub((string) $closingBalance, (string) $openingBalance, 2), 2),
             ],
             'entries_count' => $entries->count(),
             'entries' => $formattedEntries,
@@ -233,14 +233,28 @@ class SupplierFinanceService
 
     private function getNextTuesday()
     {
+        $payoutDay = settings('payout.day_of_week', 'Tuesday');
+
+        $days = [
+            'Sunday' => Carbon::SUNDAY,
+            'Monday' => Carbon::MONDAY,
+            'Tuesday' => Carbon::TUESDAY,
+            'Wednesday' => Carbon::WEDNESDAY,
+            'Thursday' => Carbon::THURSDAY,
+            'Friday' => Carbon::FRIDAY,
+            'Saturday' => Carbon::SATURDAY,
+        ];
+
+        $targetDay = $days[$payoutDay] ?? Carbon::TUESDAY;
+
         $now = Carbon::now();
 
-        // If today is Tuesday, get next Tuesday (7 days from now)
-        if ($now->dayOfWeek === Carbon::TUESDAY) {
+        // If today is the target day, get the same day next week
+        if ($now->dayOfWeek === $targetDay) {
             return $now->copy()->addWeek()->startOfDay();
         }
 
-        // Otherwise, get the next Tuesday
-        return $now->copy()->next(Carbon::TUESDAY)->startOfDay();
+        // Otherwise, get the next target day
+        return $now->copy()->next($targetDay)->startOfDay();
     }
 }

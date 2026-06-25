@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UploadMediaRequest;
 use App\Models\Media;
 use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
@@ -119,26 +120,13 @@ class MediaController extends Controller
         }
 
         $media = $mediaQuery->take($limit)->get();
-        $html  = view('media._grid', compact('media'))->render();
+        $html = view('media._grid', compact('media'))->render();
 
         return response()->json(['html' => $html]);
     }
 
-    public function upload(Request $request)
+    public function upload(UploadMediaRequest $request)
     {
-        $request->validate([
-            'files'   => 'required|array',
-            'files.*' => [
-                'file',
-                'mimes:jpeg,png,jpg,webp,gif,svg,pdf,mp4,mov,avi,mkv',
-                'max:5120', // 5MB max
-            ],
-        ], [
-            'files.required'   => 'Please select at least one file to upload.',
-            'files.*.file'     => 'Each item must be a valid file.',
-            'files.*.mimes'    => 'Only JPEG, PNG, JPG, WEBP, GIF, SVG, PDF, and video files (MP4, MOV, AVI, MKV) are allowed.',
-            'files.*.max'      => 'Video files must not be larger than 5MB.',
-        ]);
 
         DB::beginTransaction();
 
@@ -150,9 +138,9 @@ class MediaController extends Controller
 
             foreach ($request->file('files') as $file) {
                 $originalName = $file->getClientOriginalName();
-                $extension    = strtolower($file->getClientOriginalExtension());
-                $filename     = Str::random(40) . '.' . $extension;
-                $fullPath     = "$folder/$filename";
+                $extension = strtolower($file->getClientOriginalExtension());
+                $filename = Str::random(40).'.'.$extension;
+                $fullPath = "$folder/$filename";
 
                 if (in_array($extension, ['jpg', 'jpeg', 'png'])) {
                     // Compress images
@@ -220,9 +208,10 @@ class MediaController extends Controller
                             ]);
 
                             DB::rollBack();
+
                             return response()->json([
                                 'success' => false,
-                                'message' => 'Video "' . $originalName . '" is longer than 30 seconds.',
+                                'message' => 'Video "'.$originalName.'" is longer than 30 seconds.',
                             ], 422);
                         }
                     } catch (\Exception $e) {
@@ -239,9 +228,10 @@ class MediaController extends Controller
                         ]);
 
                         DB::rollBack();
+
                         return response()->json([
                             'success' => false,
-                            'message' => 'Failed to read video "' . $originalName . '".',
+                            'message' => 'Failed to read video "'.$originalName.'".',
                         ], 422);
                     }
 
@@ -252,13 +242,13 @@ class MediaController extends Controller
                     try {
                         $ffmpeg = \FFMpeg\FFMpeg::create();
                         $video = $ffmpeg->open($file->getPathname());
-                        $frameName = Str::random(40) . '.jpg';
+                        $frameName = Str::random(40).'.jpg';
                         $thumbnailPath = storage_path("app/public/{$folder}/$frameName");
 
                         $video->frame(\FFMpeg\Coordinate\TimeCode::fromSeconds(1))
                             ->save($thumbnailPath);
                     } catch (\Exception $e) {
-                        Log::error("FFMpeg failed to generate thumbnail: " . $e->getMessage());
+                        Log::error('FFMpeg failed to generate thumbnail: '.$e->getMessage());
                     }
                 } else {
                     // Store other file types
@@ -267,13 +257,13 @@ class MediaController extends Controller
 
                 // Store DB record
                 $media = Media::create([
-                    'user_id'   => Auth::id(),
-                    'name'      => $originalName,
+                    'user_id' => Auth::id(),
+                    'name' => $originalName,
                     'file_name' => $filename,
                     'mime_type' => $file->getMimeType(),
-                    'size'      => Storage::disk($disk)->size($fullPath),
-                    'disk'      => $disk,
-                    'folder'    => $folder,
+                    'size' => Storage::disk($disk)->size($fullPath),
+                    'disk' => $disk,
+                    'folder' => $folder,
                 ]);
 
                 // Log media creation with justification
@@ -304,7 +294,7 @@ class MediaController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Files uploaded successfully!',
-                'media'   => $uploadedMedia,
+                'media' => $uploadedMedia,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -321,11 +311,11 @@ class MediaController extends Controller
                 ],
             ]);
 
-            Log::error('Media upload error: ' . $e->getMessage());
+            Log::error('Media upload error: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong: ' . $e->getMessage(),
+                'message' => 'Something went wrong: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -334,7 +324,7 @@ class MediaController extends Controller
     {
         $request->validate([
             'ids' => 'required|array',
-            'ids.*' => 'exists:media,id'
+            'ids.*' => 'exists:media,id',
         ]);
 
         $ids = $request->input('ids');
@@ -343,7 +333,7 @@ class MediaController extends Controller
         if ($mediaItems->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No media files found to delete.'
+                'message' => 'No media files found to delete.',
             ], 404);
         }
 
@@ -370,12 +360,12 @@ class MediaController extends Controller
                         'mime_type' => $media->mime_type,
                         'batch_uuid' => $batchUuid,
                         'user_id' => $media->user_id,
-                        'storage_path' => $media->folder . '/' . $media->file_name,
+                        'storage_path' => $media->folder.'/'.$media->file_name,
                     ], $justificationData)
                 );
 
                 // Delete main file
-                $filePath = $media->folder . '/' . $media->file_name;
+                $filePath = $media->folder.'/'.$media->file_name;
                 $fileDeleted = false;
 
                 if (Storage::disk($media->disk)->exists($filePath)) {
@@ -385,7 +375,7 @@ class MediaController extends Controller
 
                 // Delete video thumbnail if exists
                 $thumbnailDeleted = false;
-                $possibleThumb = $media->folder . '/thumb_' . pathinfo($media->file_name, PATHINFO_FILENAME) . '.jpg';
+                $possibleThumb = $media->folder.'/thumb_'.pathinfo($media->file_name, PATHINFO_FILENAME).'.jpg';
                 if (Storage::disk($media->disk)->exists($possibleThumb)) {
                     Storage::disk($media->disk)->delete($possibleThumb);
                     $thumbnailDeleted = true;
@@ -424,15 +414,15 @@ class MediaController extends Controller
                 ],
             ]);
 
-            if (!empty($failedDeletions)) {
+            if (! empty($failedDeletions)) {
                 Log::warning('Some media files failed to delete completely', [
-                    'failed_deletions' => $failedDeletions
+                    'failed_deletions' => $failedDeletions,
                 ]);
             }
 
             return response()->json([
                 'success' => true,
-                'message' => "{$deletedCount} media file(s) have been deleted successfully." .
+                'message' => "{$deletedCount} media file(s) have been deleted successfully.".
                     (empty($failedDeletions) ? '' : ' Some files may not have been completely removed.'),
                 'deleted_count' => $deletedCount,
                 'failed_count' => count($failedDeletions),
@@ -453,11 +443,11 @@ class MediaController extends Controller
                 ],
             ]);
 
-            Log::error('Bulk media deletion error: ' . $e->getMessage());
+            Log::error('Bulk media deletion error: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete media files: ' . $e->getMessage(),
+                'message' => 'Failed to delete media files: '.$e->getMessage(),
             ], 500);
         }
     }

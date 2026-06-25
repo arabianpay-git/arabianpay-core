@@ -3,14 +3,15 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\BatchCancelSettlementRequest;
+use App\Http\Requests\BatchSettlementRequest;
+use App\Http\Requests\CancelSettlementRequest;
 use App\Models\Settlement;
 use App\Models\User;
 use App\Services\Finance\SettlementService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class SettlementController extends Controller
 {
@@ -147,6 +148,7 @@ class SettlementController extends Controller
     {
         try {
             $this->settlementService->approveSettlement($settlement, Auth::user());
+
             return back()->with('success', 'Settlement approved successfully.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -156,12 +158,8 @@ class SettlementController extends Controller
     /**
      * Batch approve settlements.
      */
-    public function batchApprove(Request $request)
+    public function batchApprove(BatchSettlementRequest $request)
     {
-        $request->validate([
-            'settlement_ids' => 'required|array',
-            'settlement_ids.*' => 'exists:settlements,id',
-        ]);
 
         $result = $this->settlementService->batchApprove($request->settlement_ids, Auth::user());
 
@@ -169,7 +167,7 @@ class SettlementController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Successfully approved {$result['processed']} settlements.",
-                'data' => $result
+                'data' => $result,
             ]);
         } else {
             return response()->json([
@@ -186,6 +184,7 @@ class SettlementController extends Controller
     {
         try {
             $this->settlementService->markSettlementAsPaid($settlement, Auth::user());
+
             return back()->with('success', 'Settlement marked as paid successfully.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -195,12 +194,12 @@ class SettlementController extends Controller
     /**
      * Cancel a settlement.
      */
-    public function cancel(Request $request, Settlement $settlement)
+    public function cancel(CancelSettlementRequest $request, Settlement $settlement)
     {
-        $request->validate(['reason' => 'required|string|max:255']);
 
         try {
             $this->settlementService->cancelSettlement($settlement, $request->reason, Auth::user());
+
             return back()->with('success', 'Settlement cancelled successfully.');
         } catch (\Exception $e) {
             return back()->with('error', $e->getMessage());
@@ -210,13 +209,8 @@ class SettlementController extends Controller
     /**
      * Batch cancel settlements.
      */
-    public function batchCancel(Request $request)
+    public function batchCancel(BatchCancelSettlementRequest $request)
     {
-        $request->validate([
-            'settlement_ids' => 'required|array',
-            'settlement_ids.*' => 'exists:settlements,id',
-            'reason' => 'required|string|max:255'
-        ]);
 
         $processed = 0;
         $failed = 0;
@@ -226,7 +220,7 @@ class SettlementController extends Controller
             try {
                 $settlement = Settlement::findOrFail($id);
                 if ($settlement->status === 'paid') {
-                    throw new \Exception("Cannot cancel paid settlement");
+                    throw new \Exception('Cannot cancel paid settlement');
                 }
                 $this->settlementService->cancelSettlement($settlement, $request->reason, Auth::user());
                 $processed++;
@@ -238,10 +232,10 @@ class SettlementController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => "Cancelled {$processed} settlements" . ($failed > 0 ? " ({$failed} failed)" : ""),
+            'message' => "Cancelled {$processed} settlements".($failed > 0 ? " ({$failed} failed)" : ''),
             'processed' => $processed,
             'failed' => $failed,
-            'errors' => $errors
+            'errors' => $errors,
         ]);
     }
 
@@ -261,7 +255,7 @@ class SettlementController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => "Successfully processed {$result['processed']} settlements.",
-                'data' => $result
+                'data' => $result,
             ]);
         } else {
             return response()->json([
@@ -270,6 +264,7 @@ class SettlementController extends Controller
             ], 400); // 400 Bad Request
         }
     }
+
     /**
      * Generate PDF/Summary report for settlements.
      */
@@ -326,7 +321,7 @@ class SettlementController extends Controller
                 fputcsv($fp, $row);
                 fclose($fp);
             }
-        }, 'transfer_' . now()->format('YmdHis') . '.csv', [
+        }, 'transfer_'.now()->format('YmdHis').'.csv', [
             'Content-Type' => 'text/csv; charset=UTF-8',
         ]);
     }

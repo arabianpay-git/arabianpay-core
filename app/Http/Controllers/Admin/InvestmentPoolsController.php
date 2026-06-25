@@ -3,12 +3,14 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\StoreInvestmentPoolRequest;
+use App\Http\Requests\UpdateInvestmentPoolRequest;
 use App\Models\InvestmentPool;
 use App\Services\PoolService;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Str;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class InvestmentPoolsController extends Controller
 {
@@ -77,8 +79,8 @@ class InvestmentPoolsController extends Controller
                         'expected_collections' => $pool->expected_collections,
                         'collection_rate' => $pool->collection_rate,
                         'total_checkouts' => $pool->total_checkouts,
-                    ]
-                ]
+                    ],
+                ],
             ];
         });
 
@@ -88,14 +90,8 @@ class InvestmentPoolsController extends Controller
     /**
      * Store a new investment pool
      */
-    public function store(Request $request): JsonResponse
+    public function store(StoreInvestmentPoolRequest $request): JsonResponse
     {
-        $request->validate([
-            'name' => 'required|string|max:255',
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-            'total_disbursed' => 'nullable|numeric|min:0',
-        ]);
 
         try {
             $pool = InvestmentPool::create([
@@ -103,23 +99,22 @@ class InvestmentPoolsController extends Controller
                 'name' => $request->name,
                 'start_date' => Carbon::parse($request->start_date),
                 'end_date' => Carbon::parse($request->end_date),
-                'total_disbursed' => $request->total_disbursed ?? 0,
-                'total_collected' => 0,
-                'expected_collections' => $request->total_disbursed ?? 0,
-                'collection_rate' => 0,
                 'status' => 'active',
-                'total_checkouts' => 0,
             ]);
+
+            // Compute metrics via the service/model method if available
+            $pool->updateMetrics();
+            $pool->refresh();
 
             return response()->json([
                 'success' => true,
                 'message' => 'Investment pool created successfully',
-                'pool' => $pool
+                'pool' => $pool,
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error creating investment pool: ' . $e->getMessage()
+                'message' => 'Error creating investment pool: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -265,7 +260,7 @@ class InvestmentPoolsController extends Controller
                 $totalAmount = $checkouts->sum('total_amount');
                 $collectionsPercent = $totalAmount > 0 ? round($paymentsSum / $totalAmount * 100, 2) : 0;
 
-                return (object)[
+                return (object) [
                     'id' => $customer->id,
                     'user_id' => $customer->user_id,
                     'user' => $customer->user,
@@ -294,12 +289,12 @@ class InvestmentPoolsController extends Controller
                     ->whereIn('checkout_id', $checkoutIds)
                     ->get();
 
-                return (object)[
+                return (object) [
                     'id' => $merchant->id,
                     'user_id' => $merchant->user_id,
                     'name' => $merchant->user->business_name ?? $merchant->user->name ?? 'N/A',
                     'orders_count' => $orders->count(),
-                    'orders_amount' => number_format($orders->sum('grand_total'), 2) . ' SR',
+                    'orders_amount' => number_format($orders->sum('grand_total'), 2).' SR',
                 ];
             });
 
@@ -320,23 +315,15 @@ class InvestmentPoolsController extends Controller
     /**
      * Update the specified investment pool
      */
-    public function update(Request $request, InvestmentPool $pool): JsonResponse
+    public function update(UpdateInvestmentPoolRequest $request, InvestmentPool $pool): JsonResponse
     {
-        $request->validate([
-            'name' => 'sometimes|required|string|max:255',
-            'start_date' => 'sometimes|required|date',
-            'end_date' => 'sometimes|required|date|after:start_date',
-            'total_disbursed' => 'sometimes|nullable|numeric|min:0',
-            'status' => 'sometimes|required|in:active,closed,planned',
-        ]);
 
         try {
             $pool->update($request->only([
                 'name',
                 'start_date',
                 'end_date',
-                'total_disbursed',
-                'status'
+                'status',
             ]));
 
             // Recalculate metrics if needed
@@ -345,12 +332,12 @@ class InvestmentPoolsController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Investment pool updated successfully',
-                'pool' => $pool->fresh()
+                'pool' => $pool->fresh(),
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error updating investment pool: ' . $e->getMessage()
+                'message' => 'Error updating investment pool: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -365,7 +352,7 @@ class InvestmentPoolsController extends Controller
             if ($pool->checkouts()->count() > 0) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Cannot delete pool with associated checkouts'
+                    'message' => 'Cannot delete pool with associated checkouts',
                 ], 400);
             }
 
@@ -373,12 +360,12 @@ class InvestmentPoolsController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Investment pool deleted successfully'
+                'message' => 'Investment pool deleted successfully',
             ]);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Error deleting investment pool: ' . $e->getMessage()
+                'message' => 'Error deleting investment pool: '.$e->getMessage(),
             ], 500);
         }
     }
