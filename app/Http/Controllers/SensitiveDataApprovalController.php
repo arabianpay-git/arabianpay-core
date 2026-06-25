@@ -2,12 +2,11 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Controllers\Controller;
 use App\Models\SensitiveDataApproval;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Carbon;
 use App\Services\AuditTrailService;
+use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Auth;
 
 class SensitiveDataApprovalController extends Controller
 {
@@ -59,7 +58,7 @@ class SensitiveDataApprovalController extends Controller
             'event_type' => 'sensitive_approval_viewed',
             'entity_type' => 'SensitiveDataApproval',
             'entity_id' => $approval->id,
-            'action_summary' => "Viewed sensitive data approval request",
+            'action_summary' => 'Viewed sensitive data approval request',
             'properties' => [
                 'approval_id' => $approval->id,
                 'requester_id' => $approval->requester_id,

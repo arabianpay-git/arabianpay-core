@@ -2,9 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
+use App\Http\Requests\StoreRoleRequest;
+use App\Http\Requests\UpdateRoleRequest;
 use App\Models\Role;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
 
 class RoleController extends Controller
@@ -12,6 +13,7 @@ class RoleController extends Controller
     public function index()
     {
         $roles = Role::latest()->paginate(10);
+
         return view('admin.roles.index', compact('roles'));
     }
 
@@ -29,23 +31,20 @@ class RoleController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(StoreRoleRequest $request)
     {
-        $request->validate([
-            'name' => 'required|string|max:255|unique:roles,name',
-        ]);
 
         Role::create([
             'name' => $request->name,
             'guard_name' => 'web',
-            'sensitive_permissions' => $request->sensitive_permissions
+            'sensitive_permissions' => $request->sensitive_permissions,
         ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $user->logModelAction(
             event: 'create',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new role: {$request->name}",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." created a new role: {$request->name}",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),
@@ -58,28 +57,25 @@ class RoleController extends Controller
     public function edit($id)
     {
         $role = Role::findOrFail($id);
+
         return view('admin.roles.edit', compact('role'));
     }
 
-    public function update(Request $request, $id)
+    public function update(UpdateRoleRequest $request, $id)
     {
         $role = Role::findOrFail($id);
-
-        $request->validate([
-            'name' => 'required|string|max:255|unique:roles,name,' . $role->id,
-        ]);
 
         $role->update([
             'name' => $request->name,
             'guard_name' => 'web',
-            'sensitive_permissions' => $request->sensitive_permissions
+            'sensitive_permissions' => $request->sensitive_permissions,
         ]);
 
         /** @var \App\Models\User $user */
         $user = Auth::user();
         $user->logModelAction(
             event: 'update',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated the role: {$role->name} [{$role->id}]",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." updated the role: {$role->name} [{$role->id}]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),
@@ -97,7 +93,7 @@ class RoleController extends Controller
         $user = Auth::user();
         $user->logModelAction(
             event: 'delete',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted the role: {$role->name} [{$role->id}]",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." deleted the role: {$role->name} [{$role->id}]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),

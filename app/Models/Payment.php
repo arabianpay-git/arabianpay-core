@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\WithApprovalContext;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Str;
 
 class Payment extends Model
 {
     use HasFactory;
+    use WithApprovalContext;
 
     protected $fillable = [
         'user_id',
@@ -23,6 +24,11 @@ class Payment extends Model
         'txn_code',
         'tax_number',
         'payment_status',
+    ];
+
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'paid_at' => 'datetime',
     ];
 
     // Generate a UUID when creating a new payment
@@ -40,21 +46,23 @@ class Payment extends Model
     {
         return $this->belongsTo(User::class);
     }
-    //get customer using user_id
+
+    // get customer using user_id
     public function customer()
     {
         return $this->hasOne(Customer::class, 'user_id', 'user_id');
     }
 
-
-    public function schedulePayment()  
+    public function schedulePayment()
     {
         return $this->belongsTo(SchedulePayment::class, 'schedule_payment_id');
     }
+
     public function checkout()
     {
         return $this->belongsTo(Checkout::class, 'checkout_id');
     }
+
     public function seller()
     {
         return $this->belongsTo(User::class, 'seller_id');

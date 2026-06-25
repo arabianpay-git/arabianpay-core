@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
+use Illuminate\Database\Eloquent\Model;
 
 class Otp extends Model
 {
@@ -11,7 +11,7 @@ class Otp extends Model
 
     protected $casts = [
         'expires_at' => 'datetime',
-        'used'       => 'boolean',
+        'used' => 'boolean',
     ];
 
     // scope: only active (not expired, not used)

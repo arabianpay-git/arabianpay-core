@@ -32,7 +32,7 @@ class RiskWeight extends Model
         'bes_dispute_weight',
         'bes_trend_weight',
         'last_weight',
-        'new_weight'
+        'new_weight',
     ];
 
     protected $casts = [

@@ -2,17 +2,18 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\Product;
-use App\Models\LowStockNotification;
 use App\Mail\LowStockAlertMail;
-use Illuminate\Support\Facades\Mail;
-use Illuminate\Support\Facades\Log;
+use App\Models\LowStockNotification;
+use App\Models\Product;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 
 class NotifyLowStockProducts extends Command
 {
     protected $signature = 'products:notify-low-stock';
+
     protected $description = 'Send email alerts for low-stock products (3-day alert system).';
 
     public function handle()
@@ -27,7 +28,9 @@ class NotifyLowStockProducts extends Command
             foreach ($products as $product) {
                 $user = $product->user;
 
-                if (!$user || !$user->email) continue; // false mean user and email exist
+                if (! $user || ! $user->email) {
+                    continue;
+                } // false mean user and email exist
 
                 // Check if an alert was already sent
                 $notification = LowStockNotification::firstOrCreate([
@@ -35,14 +38,18 @@ class NotifyLowStockProducts extends Command
                     'user_id' => $user->id,
                 ]);
 
-                if ($notification->emails_sent >= 3) continue; // Stop after 3 emails
+                if ($notification->emails_sent >= 3) {
+                    continue;
+                } // Stop after 3 emails
 
                 $lastSent = $notification->last_email_sent_at
                     ? Carbon::parse($notification->last_email_sent_at)
                     : null;
 
                 // Send once per day (1-day gap)
-                if ($lastSent && $lastSent->isToday()) continue;
+                if ($lastSent && $lastSent->isToday()) {
+                    continue;
+                }
 
                 Mail::to($user->email)->send(new LowStockAlertMail($product, $notification->emails_sent + 1));
 
@@ -53,7 +60,7 @@ class NotifyLowStockProducts extends Command
 
             Log::info('Low-stock cron completed successfully.');
         } catch (\Throwable $e) {
-            Log::error('Low-stock cron failed: ' . $e->getMessage());
+            Log::error('Low-stock cron failed: '.$e->getMessage());
         }
 
         return Command::SUCCESS;

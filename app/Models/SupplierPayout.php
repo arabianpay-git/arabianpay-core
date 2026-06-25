@@ -2,10 +2,13 @@
 
 namespace App\Models;
 
+use App\Traits\WithApprovalContext;
 use Illuminate\Database\Eloquent\Model;
 
 class SupplierPayout extends Model
 {
+    use WithApprovalContext;
+
     protected $table = 'supplier_payouts';
 
     protected $fillable = [
@@ -22,7 +25,7 @@ class SupplierPayout extends Model
 
     protected $casts = [
         'payout_date' => 'datetime',
-        'amount' => 'float',
+        'amount' => 'decimal:2',
     ];
 
     public function supplier()
@@ -39,6 +42,7 @@ class SupplierPayout extends Model
     {
         return $this->belongsTo(Settlement::class, 'settlement_id');
     }
+
     public function creator()
     {
         return $this->belongsTo(User::class, 'created_by');

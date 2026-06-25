@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\WithApprovalContext;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -11,6 +12,7 @@ use Illuminate\Support\Str;
 class SchedulePayment extends Model
 {
     use HasFactory;
+    use WithApprovalContext;
 
     protected $fillable = [
         'uuid',
@@ -41,6 +43,15 @@ class SchedulePayment extends Model
     protected $casts = [
         'due_date' => 'date',
         'is_late' => 'boolean',
+        'instalment_amount' => 'decimal:2',
+        'principle_amount' => 'decimal:2',
+        'late_fee' => 'decimal:2',
+        'subscription_fee' => 'decimal:2',
+        'shipping_amount' => 'decimal:2',
+        'additional_amount' => 'decimal:2',
+        'difference_amount' => 'decimal:2',
+        'deducted_amount' => 'decimal:2',
+        'paid_at' => 'datetime',
     ];
 
     protected static function boot()
@@ -71,10 +82,12 @@ class SchedulePayment extends Model
     {
         return $this->belongsTo(Order::class);
     }
+
     public function payment()
     {
         return $this->hasOne(Payment::class, 'schedule_payment_id');
     }
+
     public function partialPayments()
     {
         return $this->hasMany(PartialPayment::class, 'schedule_payment_id');
@@ -84,10 +97,12 @@ class SchedulePayment extends Model
     {
         return $this->hasOne(Promise::class, 'schedule_payment_id');
     }
+
     public function claims()
     {
         return $this->hasMany(Claim::class, 'schedule_payment_id');
     }
+
     /**
      * Payment status distribution.
      */
@@ -107,9 +122,9 @@ class SchedulePayment extends Model
      */
     public static function getOverdueTrend($range)
     {
-        $months = (int)$range;
-        $end    = Carbon::now();
-        $start  = $end->copy()->subMonths($months - 1)->startOfMonth();
+        $months = (int) $range;
+        $end = Carbon::now();
+        $start = $end->copy()->subMonths($months - 1)->startOfMonth();
 
         $labels = [];
         $series = [];
@@ -129,9 +144,9 @@ class SchedulePayment extends Model
             $series[] = $raw[$m] ?? 0;
         }
 
-        $total   = DB::table('schedule_payments')->count();
+        $total = DB::table('schedule_payments')->count();
         $overdue = DB::table('schedule_payments')->whereIn('payment_status', ['due', 'late'])->where('due_date', '<', $end)->count();
-        $rate    = $total ? round($overdue / $total * 100, 1) : 0;
+        $rate = $total ? round($overdue / $total * 100, 1) : 0;
 
         return ['months' => $labels, 'series' => $series, 'rate' => $rate];
     }

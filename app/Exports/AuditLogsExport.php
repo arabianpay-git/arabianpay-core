@@ -2,23 +2,21 @@
 
 namespace App\Exports;
 
-use App\Models\AuditLog;
 use App\Models\User;
-use Illuminate\Support\Str;
 use Maatwebsite\Excel\Concerns\FromQuery;
+use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithMapping;
 use Maatwebsite\Excel\Concerns\WithStyles;
-use Maatwebsite\Excel\Concerns\WithColumnWidths;
 use Maatwebsite\Excel\Concerns\WithTitle;
-use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
-use PhpOffice\PhpSpreadsheet\Style\Fill;
-use PhpOffice\PhpSpreadsheet\Style\Color;
 use PhpOffice\PhpSpreadsheet\Style\Border;
+use PhpOffice\PhpSpreadsheet\Style\Fill;
+use PhpOffice\PhpSpreadsheet\Worksheet\Worksheet;
 
-class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyles, WithColumnWidths, WithTitle
+class AuditLogsExport implements FromQuery, WithColumnWidths, WithHeadings, WithMapping, WithStyles, WithTitle
 {
     protected $query;
+
     protected $users = [];
 
     public function __construct($query)
@@ -106,29 +104,29 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
      */
     private function getUserDisplay(?string $subjectIdentifier, ?string $subjectType): array
     {
-        if (!$subjectIdentifier || $subjectType !== 'App\\Models\\User') {
+        if (! $subjectIdentifier || $subjectType !== 'App\\Models\\User') {
             return [
                 'name' => $this->maskEmail($subjectIdentifier),
-                'type' => $subjectType ? class_basename($subjectType) : 'System'
+                'type' => $subjectType ? class_basename($subjectType) : 'System',
             ];
         }
 
         // Check if user is already loaded to avoid N+1 queries
-        if (!isset($this->users[$subjectIdentifier])) {
+        if (! isset($this->users[$subjectIdentifier])) {
             $this->users[$subjectIdentifier] = User::find($subjectIdentifier);
         }
 
         $user = $this->users[$subjectIdentifier];
 
-        if (!$user) {
+        if (! $user) {
             return [
                 'name' => $this->maskEmail($subjectIdentifier),
-                'type' => 'Unknown User'
+                'type' => 'Unknown User',
             ];
         }
 
         // Build user name
-        $name = trim($user->first_name . ' ' . $user->last_name);
+        $name = trim($user->first_name.' '.$user->last_name);
         if (empty($name)) {
             $name = $this->maskEmail($user->email ?? $subjectIdentifier);
         }
@@ -143,7 +141,7 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
 
         return [
             'name' => $name,
-            'type' => $userType
+            'type' => $userType,
         ];
     }
 
@@ -231,7 +229,7 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
         // Style severity cells with colors
         $severityColumn = 'E';
         for ($row = 2; $row <= $lastRow; $row++) {
-            $severity = $sheet->getCell($severityColumn . $row)->getValue();
+            $severity = $sheet->getCell($severityColumn.$row)->getValue();
 
             $color = match ($severity) {
                 'Critical' => 'FF0000',
@@ -242,7 +240,7 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
                 default => '000000'
             };
 
-            $sheet->getStyle($severityColumn . $row)->applyFromArray([
+            $sheet->getStyle($severityColumn.$row)->applyFromArray([
                 'font' => [
                     'bold' => true,
                     'color' => ['rgb' => $color],
@@ -253,7 +251,7 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
         // Style status cells
         $statusColumn = 'F';
         for ($row = 2; $row <= $lastRow; $row++) {
-            $status = $sheet->getCell($statusColumn . $row)->getValue();
+            $status = $sheet->getCell($statusColumn.$row)->getValue();
 
             $color = match ($status) {
                 'success', 'Success' => '008000',
@@ -262,7 +260,7 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
                 default => '000000'
             };
 
-            $sheet->getStyle($statusColumn . $row)->applyFromArray([
+            $sheet->getStyle($statusColumn.$row)->applyFromArray([
                 'font' => [
                     'bold' => $status === 'Failed',
                     'color' => ['rgb' => $color],
@@ -278,12 +276,13 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
      */
     private function maskEmail(?string $email): ?string
     {
-        if (!$email || !str_contains($email, '@')) {
+        if (! $email || ! str_contains($email, '@')) {
             return $email;
         }
 
         [$name, $domain] = explode('@', $email);
-        return substr($name, 0, 1) . '***@' . $domain;
+
+        return substr($name, 0, 1).'***@'.$domain;
     }
 
     /**
@@ -291,12 +290,13 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
      */
     private function maskIp(?string $ip): ?string
     {
-        if (!$ip || !str_contains($ip, '.')) {
+        if (! $ip || ! str_contains($ip, '.')) {
             return $ip;
         }
 
         $parts = explode('.', $ip);
-        return $parts[0] . '.***.***.' . end($parts);
+
+        return $parts[0].'.***.***.'.end($parts);
     }
 
     /**
@@ -304,10 +304,10 @@ class AuditLogsExport implements FromQuery, WithHeadings, WithMapping, WithStyle
      */
     private function maskFingerprint(?string $fp): ?string
     {
-        if (!$fp) {
+        if (! $fp) {
             return null;
         }
 
-        return 'fp-****' . substr($fp, -3);
+        return 'fp-****'.substr($fp, -3);
     }
 }

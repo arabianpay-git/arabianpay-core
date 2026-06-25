@@ -2,15 +2,14 @@
 
 namespace App\Models;
 
+use App\Traits\EncryptsAttributes;
 use App\Traits\LogsModelActions;
-
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Customer extends Model
 {
-    use HasFactory, LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, HasFactory, LogsModelActions;
 
     protected $fillable = [
         'assigned_to',
@@ -50,7 +49,9 @@ class Customer extends Model
     ];
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'customer';
 
     public function businessType()
@@ -82,10 +83,12 @@ class Customer extends Model
     {
         return $this->hasMany(Order::class, 'user_id', 'user_id');
     }
+
     public function checkouts()
     {
         return $this->hasMany(Checkout::class, 'user_id', 'user_id');
     }
+
     public function getTotalOrderAmountAttribute()
     {
         $total = 0;
@@ -93,12 +96,14 @@ class Customer extends Model
         foreach ($this->orders as $order) {
             $details = json_decode($order->product_details, true);
 
-            if (!is_array($details)) continue;
+            if (! is_array($details)) {
+                continue;
+            }
 
             foreach ($details as $item) {
                 $itemTotal = 0;
 
-                if (!empty($item['attributes'])) {
+                if (! empty($item['attributes'])) {
                     foreach ($item['attributes'] as $attribute) {
                         $itemTotal += $attribute['price'] ?? 0;
                     }

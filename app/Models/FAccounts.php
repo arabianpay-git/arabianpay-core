@@ -3,11 +3,12 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+
 // Financial Accounts
 class FAccounts extends Model
 {
     protected $table = 'f_accounts';
-    
+
     protected $fillable = [
         'id',  // primary key, int
         'account_name',
@@ -19,6 +20,6 @@ class FAccounts extends Model
 
     public function entries()
     {
-        return $this->hasMany(FEntry::class, 'account_id','id');
+        return $this->hasMany(FEntry::class, 'account_id', 'id');
     }
 }

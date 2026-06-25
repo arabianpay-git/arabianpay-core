@@ -24,24 +24,23 @@ class ActivityLogsController extends Controller
             ->when($search, function ($query) use ($search) {
                 $query->where(function ($q) use ($search) {
                     $q->where('description', 'like', "%{$search}%")
-                    ->orWhereHas('causer', function ($q2) use ($search) {
-                        $q2->where('log_name', 'like', "%{$search}%");
-                    })
-                    ->orWhereHas('subject', function ($q3) use ($search) {
-                        $q3->where('log_name', 'like', "%{$search}%");
-                    });
+                        ->orWhereHas('causer', function ($q2) use ($search) {
+                            $q2->where('log_name', 'like', "%{$search}%");
+                        })
+                        ->orWhereHas('subject', function ($q3) use ($search) {
+                            $q3->where('log_name', 'like', "%{$search}%");
+                        });
                 });
             });
 
         // Ordering the logs
         $logs = $logs->orderBy('created_at', $order)
-                    ->paginate(10)
-                    ->appends(['search' => $search, 'order' => $order]);
+            ->paginate(10)
+            ->appends(['search' => $search, 'order' => $order]);
 
         return view('admin.logs.index', compact('logs'));
     }
 
-    
     public function exportCsv(Request $request)
     {
         $users = $this->getUsersWithFilters($request);
@@ -50,7 +49,7 @@ class ActivityLogsController extends Controller
             return $this->calculateRiskForUser($user);
         });
 
-        $filename = 'risk_scores_' . date('Ymd_His') . '.csv';
+        $filename = 'risk_scores_'.date('Ymd_His').'.csv';
 
         $response = new StreamedResponse(function () use ($risks) {
             $handle = fopen('php://output', 'w');
@@ -79,7 +78,7 @@ class ActivityLogsController extends Controller
                 'Economic Activity Score',
                 'Default Rate Score',
                 'Location Score',
-                'Total Score'
+                'Total Score',
             ]);
 
             foreach ($risks as $risk) {
@@ -144,10 +143,10 @@ class ActivityLogsController extends Controller
         // Ordering the logs
         $order = $request->input('order', 'desc');
         $logs = $logs->orderBy('created_at', $order)
-                    ->get();
+            ->get();
         $pdf = Pdf::loadView('admin.logs.pdf', ['logs' => $logs])
             ->setPaper('A4', 'landscape');
-        return $pdf->stream('activity_logs_' . date('Ymd_His') . '.pdf');
-    }
 
+        return $pdf->stream('activity_logs_'.date('Ymd_His').'.pdf');
+    }
 }

@@ -2,13 +2,13 @@
 
 namespace App\Services;
 
-use Carbon\Carbon;
-use App\Models\Order;
-use App\Models\Wallet;
-use App\Models\Product;
 use App\Models\Customer;
-use Illuminate\Support\Arr;
+use App\Models\Order;
+use App\Models\Product;
 use App\Models\Transaction;
+use App\Models\Wallet;
+use Carbon\Carbon;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 
 class CreditAssessmentService
@@ -89,12 +89,12 @@ class CreditAssessmentService
         $interval = $start->diffAsCarbonInterval(now());
 
         if ($interval->y > 0) {
-            return round($interval->y + ($interval->m / 12), 1) . ' Years';
+            return round($interval->y + ($interval->m / 12), 1).' Years';
         }
 
         return $interval->m > 0
-            ? $interval->m . ' Months'
-            : $interval->d . ' Days';
+            ? $interval->m.' Months'
+            : $interval->d.' Days';
     }
 
     private function calculateCreditScore(Collection $orders, Customer $customer): array
@@ -215,11 +215,11 @@ class CreditAssessmentService
 
     private function getPaymentTimeline(int $userId): array
     {
-        $monthlyData = Wallet::selectRaw("MONTH(created_at) as month, SUM(amount) as total")
+        $monthlyData = Wallet::selectRaw('MONTH(created_at) as month, SUM(amount) as total')
             ->where('user_id', $userId)
             ->where('transaction_type', 'user_repayment')
             ->whereYear('created_at', now()->year)
-            ->groupByRaw("MONTH(created_at)")
+            ->groupByRaw('MONTH(created_at)')
             ->pluck('total', 'month');
 
         $months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -263,17 +263,17 @@ class CreditAssessmentService
             [
                 'name' => 'KYC Verification',
                 'status' => ucfirst($customer->status),
-                'badge' => 'badge-sm badge-outline ' . ($statusBadgeMap[$customer->status] ?? 'badge-secondary')
+                'badge' => 'badge-sm badge-outline '.($statusBadgeMap[$customer->status] ?? 'badge-secondary'),
             ],
             [
                 'name' => 'SIMAH Integration',
                 'status' => 'Pending',
-                'badge' => 'badge-sm badge-outline badge-warning'
+                'badge' => 'badge-sm badge-outline badge-warning',
             ],
             [
                 'name' => 'CR Validation',
                 'status' => $crStatus,
-                'badge' => 'badge-sm badge-outline ' . (($crStatus === 'Valid') ? 'badge-success' : 'badge-danger')
+                'badge' => 'badge-sm badge-outline '.(($crStatus === 'Valid') ? 'badge-success' : 'badge-danger'),
             ],
         ];
     }

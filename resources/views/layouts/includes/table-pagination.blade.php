@@ -1,11 +1,13 @@
 @php
-    function appendQueryParams($url)
-    {
-        $query = request()->except('page');
-        if (count($query)) {
-            $url .= (str_contains($url, '?') ? '&' : '?') . http_build_query($query);
+    if (! function_exists('appendQueryParams')) {
+        function appendQueryParams($url)
+        {
+            $query = request()->except('page');
+            if (count($query)) {
+                $url .= (str_contains($url, '?') ? '&' : '?') . http_build_query($query);
+            }
+            return $url;
         }
-        return $url;
     }
 @endphp
 

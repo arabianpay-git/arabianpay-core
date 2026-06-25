@@ -2,9 +2,9 @@
 
 namespace Database\Seeders;
 
+use App\Models\Order;
 use App\Models\RefundRequest;
 use App\Models\User;
-use App\Models\Order;
 use Faker\Factory as Faker;
 use Illuminate\Database\Seeder;
 

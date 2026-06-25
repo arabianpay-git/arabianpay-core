@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Symfony\Component\Process\Process;
 use Symfony\Component\Process\Exception\ProcessFailedException;
+use Symfony\Component\Process\Process;
 
 class DatabaseSyncController extends Controller
 {
@@ -18,7 +18,7 @@ class DatabaseSyncController extends Controller
         echo "🚀 Starting backup sync...\n";
         flush();
 
-        $filename = 'backup_' . now()->format('Y_m_d_His') . '.sql.gz';
+        $filename = 'backup_'.now()->format('Y_m_d_His').'.sql.gz';
         $localPath = "/tmp/$filename";
 
         $db = config('database.connections.mysql');
@@ -52,7 +52,7 @@ class DatabaseSyncController extends Controller
             echo "✅ Sync complete.\n";
             flush();
         } catch (ProcessFailedException $e) {
-            echo "❌ Error: " . $e->getMessage() . "\n";
+            echo '❌ Error: '.$e->getMessage()."\n";
             flush();
         }
 
@@ -64,11 +64,11 @@ class DatabaseSyncController extends Controller
         $process = Process::fromShellCommandline($command);
         $process->setTimeout(300);
         $process->run(function ($type, $buffer) {
-            echo "  " . trim($buffer) . "\n";
+            echo '  '.trim($buffer)."\n";
             flush();
         });
 
-        if (!$process->isSuccessful()) {
+        if (! $process->isSuccessful()) {
             throw new ProcessFailedException($process);
         }
     }

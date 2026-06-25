@@ -2,7 +2,6 @@
 
 namespace App\Models;
 
-use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
@@ -17,8 +16,6 @@ class Claim extends Model
         'user_id',
         'assigned_to',
         'claim_type',
-        'claim_status',
-        'priority',
         'notes',
         'contact_method',
         'attempted_at',
@@ -97,15 +94,16 @@ class Claim extends Model
 
     public function getDaysOverdueAttribute()
     {
-        if (!$this->next_follow_up || !$this->next_follow_up->isPast()) {
+        if (! $this->next_follow_up || ! $this->next_follow_up->isPast()) {
             return 0;
         }
+
         return $this->next_follow_up->diffInDays(now());
     }
 
     public function getStatusColorAttribute()
     {
-        return match($this->claim_status) {
+        return match ($this->claim_status) {
             'pending' => 'warning',
             'attempted' => 'info',
             'contacted' => 'primary',
@@ -118,7 +116,7 @@ class Claim extends Model
 
     public function getPriorityColorAttribute()
     {
-        return match($this->priority) {
+        return match ($this->priority) {
             'low' => 'secondary',
             'medium' => 'info',
             'high' => 'warning',
@@ -141,12 +139,11 @@ class Claim extends Model
 
     public function markAsContacted($response = null, $notes = null)
     {
-        $this->update([
-            'claim_status' => 'contacted',
-            'contacted_at' => now(),
-            'customer_response' => $response,
-            'notes' => $notes,
-        ]);
+        $this->claim_status = 'contacted';
+        $this->contacted_at = now();
+        $this->customer_response = $response;
+        $this->notes = $notes;
+        $this->save();
     }
 
     public function scheduleFollowUp($date, $notes = null)
@@ -159,10 +156,9 @@ class Claim extends Model
 
     public function escalate($reason)
     {
-        $this->update([
-            'requires_escalation' => true,
-            'escalation_reason' => $reason,
-            'priority' => 'urgent',
-        ]);
+        $this->requires_escalation = true;
+        $this->escalation_reason = $reason;
+        $this->priority = 'urgent';
+        $this->save();
     }
 }

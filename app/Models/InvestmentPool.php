@@ -2,26 +2,23 @@
 
 namespace App\Models;
 
+use App\Traits\WithApprovalContext;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
 
 class InvestmentPool extends Model
 {
-    use HasFactory;
+    use HasFactory, WithApprovalContext;
 
     protected $fillable = [
         'name',
         'uuid',
         'start_date',
         'end_date',
-        'total_disbursed',
-        'total_collected',
         'expected_collections',
         'status',
-        'total_checkouts',
-        'collection_rate',
         'description',
     ];
 
@@ -38,7 +35,7 @@ class InvestmentPool extends Model
     protected static function boot()
     {
         parent::boot();
-        
+
         static::creating(function ($pool) {
             $pool->uuid = (string) Str::uuid();
         });
@@ -49,10 +46,11 @@ class InvestmentPool extends Model
     {
         return $this->hasMany(Checkout::class, 'pool_id');
     }
+
     // InvestmentPool->checkouts->schedulePayments->payments
     public function payments()
     {
-      return $this->hasManyThrough(Payment::class, Checkout::class, 'pool_id', 'checkout_id');
+        return $this->hasManyThrough(Payment::class, Checkout::class, 'pool_id', 'checkout_id');
     }
 
     public function schedulePayments()
@@ -88,9 +86,10 @@ class InvestmentPool extends Model
 
     public function getCurrentCollectionRateAttribute()
     {
-        if ($this->expected_collections == 0){
+        if ($this->expected_collections == 0) {
             return 0;
         }
+
         return ($this->total_collected / $this->expected_collections) * 100;
     }
 
@@ -113,15 +112,17 @@ class InvestmentPool extends Model
     public function scopeCurrent($query)
     {
         $now = Carbon::now();
+
         return $query->where('start_date', '<=', $now)
-                    ->where('end_date', '>=', $now);
+            ->where('end_date', '>=', $now);
     }
 
     public function scopeByMonth($query, $year, $month)
     {
         $startOfMonth = Carbon::create($year, $month, 1)->startOfMonth();
+
         return $query->whereYear('start_date', $year)
-                    ->whereMonth('start_date', $month);
+            ->whereMonth('start_date', $month);
     }
 
     // Helper Methods
@@ -129,9 +130,9 @@ class InvestmentPool extends Model
     {
         $startDate = Carbon::create($year, $month, 1)->startOfMonth();
         $endDate = $startDate->copy()->addDays(60); // 60-day lifecycle
-        
+
         return self::create([
-            'name' => $startDate->format('F Y') . ' Pool',
+            'name' => $startDate->format('F Y').' Pool',
             'start_date' => $startDate,
             'end_date' => $endDate,
             'description' => "Investment pool for checkouts created in {$startDate->format('F Y')}",
@@ -140,13 +141,13 @@ class InvestmentPool extends Model
 
     public function updateMetrics()
     {
-        $this->update([
+        $this->forceFill([
             'total_checkouts' => $this->checkouts()->count(),
             'total_disbursed' => $this->checkouts()->sum('total_amount') ?? 0,
             'total_collected' => $this->payments()->where('payment_status', 'paid')->sum('amount') ?? 0,
             'expected_collections' => $this->schedulePayments()->sum('instalment_amount') ?? 0,
             'collection_rate' => $this->getCurrentCollectionRateAttribute(),
-        ]);
+        ])->save();
     }
 
     public function closePool()

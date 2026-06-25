@@ -9,11 +9,11 @@ use App\Models\LeanReport;
 use App\Models\Merchant;
 use App\Models\Order;
 use App\Models\RefundRequest;
-use App\Models\SchedulePayment;
-use App\Models\User;
 use App\Models\RiskWeight;
+use App\Models\SchedulePayment;
+use App\Models\Setting;
 use App\Models\SimahReport;
-use App\Models\Setting; // Added Setting model
+use App\Models\User; // Added Setting model
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -30,8 +30,8 @@ class RiskService
         'default_chs' => 60,
 
         // BCS thresholds for turnover_score (SAR) - tune as per policy
-        'bcs_th_low'  => 5_000,
-        'bcs_th_mid'  => 50_000,
+        'bcs_th_low' => 5_000,
+        'bcs_th_mid' => 50_000,
         'bcs_th_high' => 200_000,
 
         // BCS default when no banking data
@@ -60,10 +60,10 @@ class RiskService
 
     /**
      * Public entry that returns everything
-     * @param int|Customer|Merchant $customerOrMerchantOrId
-     * @param string $type 'customer' or 'merchant'
-     * @param int|null $weightUserId Optional: user_id used to load RiskWeight (dynamic weights)
-     * @return array
+     *
+     * @param  int|Customer|Merchant  $customerOrMerchantOrId
+     * @param  string  $type  'customer' or 'merchant'
+     * @param  int|null  $weightUserId  Optional: user_id used to load RiskWeight (dynamic weights)
      */
     public function analyzeCustomer($customerOrMerchantOrId, string $type = 'customer', $weightUserId = null): array
     {
@@ -71,8 +71,8 @@ class RiskService
         $this->loadWeights($weightUserId);
 
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (!$entity) {
-            return ['error' => ucfirst($type) . ' not found'];
+        if (! $entity) {
+            return ['error' => ucfirst($type).' not found'];
         }
 
         $flags = [];
@@ -123,18 +123,18 @@ class RiskService
         $omrs = $this->computeOMRS(compact('lps', 'chs', 'bcs', 'bps', 'bes', 'caf'));
 
         return [
-            'lps'           => round($lps, 2),
-            'chs'           => round($chs, 2),
-            'bcs'           => round($bcs, 2),
-            'bps'           => round($bps, 2),
-            'bes'           => round($bes, 2),
-            'caf'           => round($caf, 2),
-            'omrs'          => round($omrs, 2),
-            'flags'         => array_values(array_unique($flags)),
-            'notes'         => $notes,
-            'components'    => $components,
-            'type'          => $type,
-            'weights_used'  => $this->weights,
+            'lps' => round($lps, 2),
+            'chs' => round($chs, 2),
+            'bcs' => round($bcs, 2),
+            'bps' => round($bps, 2),
+            'bes' => round($bes, 2),
+            'caf' => round($caf, 2),
+            'omrs' => round($omrs, 2),
+            'flags' => array_values(array_unique($flags)),
+            'notes' => $notes,
+            'components' => $components,
+            'type' => $type,
+            'weights_used' => $this->weights,
             'weights_source' => $this->weightsSource, // Added weights source
         ];
     }
@@ -146,6 +146,7 @@ class RiskService
     {
         $this->loadWeights($weightUserId);
         $res = $this->analyzeCustomer($customerOrMerchantOrId, $type, $weightUserId);
+
         return $res['omrs'] ?? 0;
     }
 
@@ -156,8 +157,11 @@ class RiskService
     {
         $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (!$entity) return 0;
+        if (! $entity) {
+            return 0;
+        }
         $res = $this->computeLPS($entity, $type);
+
         return round($res['score'], 2);
     }
 
@@ -168,9 +172,12 @@ class RiskService
     {
         $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (!$entity) return $this->policy['default_chs'];
+        if (! $entity) {
+            return $this->policy['default_chs'];
+        }
 
         $res = $this->computeCHS($entity, $type);
+
         return round($res['score'], 2);
     }
 
@@ -181,8 +188,11 @@ class RiskService
     {
         $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (!$entity) return $this->policy['default_bcs'];
+        if (! $entity) {
+            return $this->policy['default_bcs'];
+        }
         $res = $this->computeBCS($entity, $type);
+
         return round($res['score'], 2);
     }
 
@@ -193,8 +203,11 @@ class RiskService
     {
         $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (!$entity) return 0;
+        if (! $entity) {
+            return 0;
+        }
         $res = $this->computeBPS($entity, $type);
+
         return round($res['score'], 2);
     }
 
@@ -205,8 +218,11 @@ class RiskService
     {
         $this->loadWeights($weightUserId);
         $entity = $this->resolveEntity($customerOrMerchantOrId, $type);
-        if (!$entity) return $this->policy['default_bes'];
+        if (! $entity) {
+            return $this->policy['default_bes'];
+        }
         $res = $this->computeBES($entity, $type);
+
         return round($res['score'], 2);
     }
 
@@ -235,7 +251,7 @@ class RiskService
 
         // Determine T_business_months from cr_data.issueDateGregorian or status.confirmationDate.gregorian
         $tMonths = null;
-        if (is_array($crData) && !empty($crData)) {
+        if (is_array($crData) && ! empty($crData)) {
             $dateStr = $crData['issueDateGregorian'] ??
                 ($crData['status']['confirmationDate']['gregorian'] ?? null);
             if ($dateStr) {
@@ -250,18 +266,18 @@ class RiskService
 
         // CR_valid
         $crValid = false;
-        if (is_array($crData) && !empty($crData)) {
+        if (is_array($crData) && ! empty($crData)) {
             // if crNumber exists and status name is Active -> valid
             $crNumber = $crData['crNumber'] ?? null;
             $statusName = $crData['status']['name'] ?? null;
-            if (!empty($crNumber) && strtolower($statusName) === 'active') {
+            if (! empty($crNumber) && strtolower($statusName) === 'active') {
                 $crValid = true;
             }
         }
 
         // Docs completeness: check cr_data and nafath_data presence.
         $docScore = 0;
-        $hasCr = !empty($crData);
+        $hasCr = ! empty($crData);
 
         // CHANGED: For merchants, do NOT use $entity->nafath_data.
         // Instead check nafath_verifications table for an approved record for this entity's user_id.
@@ -276,7 +292,7 @@ class RiskService
                         ->where('user_id', $userId)
                         ->where('status', 'approved')
                         ->exists();
-                    $hasNafath = (bool)$nafathExists;
+                    $hasNafath = (bool) $nafathExists;
                 } else {
                     $hasNafath = false;
                     $flags[] = 'merchant_no_user_id_for_nafath_check';
@@ -286,12 +302,12 @@ class RiskService
                 // If DB fails for some reason, treat as not present but add a flag/note.
                 $hasNafath = false;
                 $flags[] = 'nafath_db_error';
-                $notes[] = 'Error checking nafath_verifications: ' . $e->getMessage();
+                $notes[] = 'Error checking nafath_verifications: '.$e->getMessage();
             }
         } else {
             // Non-merchant: use existing nafath_data field
             $nafath = $entity->nafath_data ?? null;
-            $hasNafath = !empty($nafath);
+            $hasNafath = ! empty($nafath);
         }
 
         if ($hasCr && $hasNafath) {
@@ -311,7 +327,7 @@ class RiskService
             $notes[] = 'T_business_months unknown; assuming low age score.';
             $flags[] = 'no_cr_issue_date';
         } else {
-            $T = (int)$tMonths;
+            $T = (int) $tMonths;
             if ($T >= 36) {
                 $ageScore = 100;
             } elseif ($T >= 12 && $T < 36) {
@@ -326,8 +342,8 @@ class RiskService
 
         // LPS formula uses dynamic weights
         $ageW = $this->weights['lps_age_weight'] ?? 40;
-        $crW   = $this->weights['lps_cr_weight'] ?? 30;
-        $docW  = $this->weights['lps_doc_weight'] ?? 30;
+        $crW = $this->weights['lps_cr_weight'] ?? 30;
+        $docW = $this->weights['lps_doc_weight'] ?? 30;
         $sum = ($ageW + $crW + $docW) ?: 1;
         $ageFrac = $ageW / $sum;
         $crFrac = $crW / $sum;
@@ -338,12 +354,12 @@ class RiskService
         $notes[] = "Age_score={$ageScore}, CR_score={$crScore}, Doc_score={$docScore}; weights(age,cr,doc)=({$ageW},{$crW},{$docW})";
 
         return [
-            'score' => (float)$lps,
+            'score' => (float) $lps,
             'notes' => implode('; ', $notes),
             'flags' => $flags,
             'components' => [
                 'age_score' => round($ageScore, 2),
-                'cr_score'  => round($crScore, 2),
+                'cr_score' => round($crScore, 2),
                 'doc_score' => round($docScore, 2),
                 't_business_months' => $tMonths,
                 'used_weights' => [
@@ -354,7 +370,6 @@ class RiskService
             ],
         ];
     }
-
 
     /**
      * Compute CHS per spec using SIMAH if available.
@@ -389,7 +404,7 @@ class RiskService
                     ->orderBy('created_at', 'desc')
                     ->first();
 
-                if ($simah && !empty($simah->report_json)) {
+                if ($simah && ! empty($simah->report_json)) {
                     $report = is_array($simah->report_json) ? $simah->report_json : json_decode($simah->report_json, true);
                     $components['raw_report'] = $report;
 
@@ -404,7 +419,7 @@ class RiskService
                         $RAW_MAX = 900.0;   // assumed maximum possible SIMAH score
                         $PART_MAX = 60.0;   // maximum points available for this CHS part
 
-                        $raw = (float)$bureauScore;
+                        $raw = (float) $bureauScore;
                         $components['bureau_rating_raw'] = $raw;
 
                         // compute normalized ratio and clamp to [0,1]
@@ -419,7 +434,7 @@ class RiskService
                         $scaled = round($ratio * $PART_MAX, 2);
                         $components['bureau_rating_score'] = $scaled;
 
-                        $notes[] = 'SIMAH consumerScore used from latest report and scaled to part max ' . $PART_MAX . '.';
+                        $notes[] = 'SIMAH consumerScore used from latest report and scaled to part max '.$PART_MAX.'.';
 
                         // detect non-scorable indicator
                         $scoreCardCode = $scoreEntry['scoreCard']['scoreCardCode'] ?? null;
@@ -444,7 +459,7 @@ class RiskService
                         $components['dpd_score'] = null;
 
                         return [
-                            'score' => (float)$scaled,
+                            'score' => (float) $scaled,
                             'notes' => implode('; ', $notes),
                             'flags' => array_values(array_unique($flags)),
                             'components' => $components,
@@ -463,13 +478,13 @@ class RiskService
                 $flags[] = 'no_bureau_data';
             }
         } catch (\Throwable $e) {
-            Log::warning('RiskService computeCHS: Simah parse/lookup failed: ' . $e->getMessage());
-            $notes[] = 'Error reading SIMAH report: ' . $e->getMessage();
+            Log::warning('RiskService computeCHS: Simah parse/lookup failed: '.$e->getMessage());
+            $notes[] = 'Error reading SIMAH report: '.$e->getMessage();
             $flags[] = 'simah_lookup_error';
         }
 
         // fallback: return default CHS with flags/notes
-        $chs = (float)$this->policy['default_chs'];
+        $chs = (float) $this->policy['default_chs'];
         $notes[] = 'Returning default CHS.';
         $flags[] = 'no_bureau_data';
 
@@ -494,8 +509,8 @@ class RiskService
         // Defaults (CTO-provided) - preserved but overridable from $this->policy / $this->weights
         // -----------------------
         $defaultPolicy = [
-            'bcs_th_low'  => 30000,
-            'bcs_th_mid'  => 80000,
+            'bcs_th_low' => 30000,
+            'bcs_th_mid' => 80000,
             'bcs_th_high' => 150000,
             'default_bcs' => 50,
             'bcs_min_months' => 3, // Min months required
@@ -522,8 +537,8 @@ class RiskService
         $userId = $this->getUserId($entity, $type);
 
         // Lookback and min months
-        $months = (int)($policy['bcs_lookback_months'] ?? 6);
-        $minMonths = max(1, (int)($policy['bcs_min_months'] ?? 3));
+        $months = (int) ($policy['bcs_lookback_months'] ?? 6);
+        $minMonths = max(1, (int) ($policy['bcs_min_months'] ?? 3));
 
         // As-Of date (evaluation reference)
         try {
@@ -555,14 +570,14 @@ class RiskService
             // -----------------------
             // B: If fast path didn't yield a report, do a controlled lookup (limit 5) and pick the first with non-empty data
             // -----------------------
-            if (!$leanReport) {
+            if (! $leanReport) {
                 $recentReports = LeanReport::where('user_id', $userId)
                     ->orderBy('created_at', 'desc')
                     ->limit(5)
                     ->get();
 
                 foreach ($recentReports as $r) {
-                    if (!empty($r->data)) {
+                    if (! empty($r->data)) {
                         $leanReport = $r;
                         break;
                     }
@@ -582,19 +597,19 @@ class RiskService
             // -----------------------
             // C: If we have a leanReport with data, try to compute monthly revenues from it and detect reversals
             // -----------------------
-            if ($leanReport && !empty($leanReport->data)) {
+            if ($leanReport && ! empty($leanReport->data)) {
                 $data = $leanReport->data; // model casts JSON -> array
 
                 $monthlyRevenue = [];
 
                 if (isset($data['report']['banks']) && is_array($data['report']['banks'])) {
                     foreach ($data['report']['banks'] as $bank) {
-                        if (!isset($bank['accounts']) || !is_array($bank['accounts'])) {
+                        if (! isset($bank['accounts']) || ! is_array($bank['accounts'])) {
                             continue;
                         }
                         foreach ($bank['accounts'] as $acctWrapper) {
                             $txns = $acctWrapper['transactions'] ?? [];
-                            if (!is_array($txns)) {
+                            if (! is_array($txns)) {
                                 continue;
                             }
                             foreach ($txns as $txn) {
@@ -616,9 +631,9 @@ class RiskService
                                 // Determine amount numeric
                                 $amount = 0.0;
                                 if (isset($txn['amount']['amount'])) {
-                                    $amount = (float)$txn['amount']['amount'];
+                                    $amount = (float) $txn['amount']['amount'];
                                 } elseif (isset($txn['amount'])) {
-                                    $amount = (float)$txn['amount'];
+                                    $amount = (float) $txn['amount'];
                                 }
                                 $totalAbsAmount += abs($amount);
 
@@ -640,7 +655,7 @@ class RiskService
                                 }
 
                                 // Build monthly revenue buckets only if date present and within lookback window
-                                if ($dt && !$dt->lt($asOf->copy()->subMonths($months)) && !$dt->gt($asOf)) {
+                                if ($dt && ! $dt->lt($asOf->copy()->subMonths($months)) && ! $dt->gt($asOf)) {
                                     $monthKey = $dt->format('Y-m');
 
                                     if ($type === 'merchant') {
@@ -658,7 +673,7 @@ class RiskService
                                 // Reversal detection (transaction_information)
                                 // -----------------------
                                 $info = $txn['transaction_information'] ?? ($txn['transactionDescription'] ?? ($txn['description'] ?? ''));
-                                if (!empty($info) && is_string($info)) {
+                                if (! empty($info) && is_string($info)) {
                                     $upperInfo = strtoupper($info);
                                     foreach ($reversalKeywords as $kw) {
                                         if (strpos($upperInfo, $kw) !== false) {
@@ -688,7 +703,9 @@ class RiskService
 
                 $nonZeroMonths = 0;
                 foreach ($revenues as $r) {
-                    if ($r > 0) $nonZeroMonths++;
+                    if ($r > 0) {
+                        $nonZeroMonths++;
+                    }
                 }
 
                 if ($nonZeroMonths >= $minMonths) {
@@ -696,7 +713,7 @@ class RiskService
                     $avgMonthly = count($revenues) ? (array_sum($revenues) / count($revenues)) : 0.0;
                     $notes[] = "Used LeanReport (id={$leanReport->id}) for turnover calculation; months={$months}, non_zero_months={$nonZeroMonths}";
                 } else {
-                    $notes[] = "LeanReport present (id=" . ($leanReport->id ?? 'n/a') . ") but insufficient months (non_zero_months={$nonZeroMonths}); will fall back to orders";
+                    $notes[] = 'LeanReport present (id='.($leanReport->id ?? 'n/a').") but insufficient months (non_zero_months={$nonZeroMonths}); will fall back to orders";
                     $flags[] = 'insufficient_lean_months';
                     $usedLean = false;
                 }
@@ -705,7 +722,7 @@ class RiskService
             // -----------------------
             // D: If Lean not used, fallback to Order-based calculation
             // -----------------------
-            if (!$usedLean) {
+            if (! $usedLean) {
                 if ($type === 'merchant') {
                     $recentOrders = Order::where('seller_id', $userId)
                         ->where('created_at', '>=', Carbon::now()->subMonths($months))
@@ -714,7 +731,7 @@ class RiskService
                     $monthlyRevenue = [];
                     foreach ($recentOrders as $order) {
                         $month = $order->created_at->format('Y-m');
-                        $monthlyRevenue[$month] = ($monthlyRevenue[$month] ?? 0.0) + (float)($order->grand_total ?? 0.0);
+                        $monthlyRevenue[$month] = ($monthlyRevenue[$month] ?? 0.0) + (float) ($order->grand_total ?? 0.0);
                     }
 
                     $monthsList = [];
@@ -736,7 +753,7 @@ class RiskService
                         $revenueData = Order::getRevenueStreams($months);
                         $revenues = $revenueData['revenue'] ?? [];
                         $avgMonthly = count($revenues) ? (array_sum($revenues) / count($revenues)) : 0.0;
-                        $notes[] = "Used getRevenueStreams() for customer turnover";
+                        $notes[] = 'Used getRevenueStreams() for customer turnover';
                     } else {
                         $recentOrders = Order::where('user_id', $userId)
                             ->where('created_at', '>=', Carbon::now()->subMonths($months))
@@ -744,7 +761,7 @@ class RiskService
                         $monthlyRevenue = [];
                         foreach ($recentOrders as $order) {
                             $month = $order->created_at->format('Y-m');
-                            $monthlyRevenue[$month] = ($monthlyRevenue[$month] ?? 0.0) + (float)($order->grand_total ?? 0.0);
+                            $monthlyRevenue[$month] = ($monthlyRevenue[$month] ?? 0.0) + (float) ($order->grand_total ?? 0.0);
                         }
                         $monthsList = [];
                         for ($i = 0; $i < $months; $i++) {
@@ -767,7 +784,7 @@ class RiskService
             // -----------------------
             $mean = $avgMonthly;
             $variance = 0.0;
-            if (!empty($revenues)) {
+            if (! empty($revenues)) {
                 foreach ($revenues as $v) {
                     $variance += pow(($v - $mean), 2);
                 }
@@ -831,7 +848,7 @@ class RiskService
                     foreach ($bank['accounts'] ?? [] as $acctWrapper) {
                         foreach ($acctWrapper['balances'] ?? [] as $bal) {
                             if (isset($bal['type']) && strtoupper($bal['type']) === 'CLOSING_BOOKED' && isset($bal['amount']['amount'])) {
-                                $val = (float)$bal['amount']['amount'];
+                                $val = (float) $bal['amount']['amount'];
                                 if ($minClosing === null || $val < $minClosing) {
                                     $minClosing = $val;
                                 }
@@ -913,12 +930,12 @@ class RiskService
                 $flags[] = 'no_banking_data';
                 $notes[] = 'Avg monthly turnover computed as 0 — check open-banking integration if you expect data.';
             }
-            if (isset($leanReport) && !$usedLean) {
+            if (isset($leanReport) && ! $usedLean) {
                 $flags[] = 'lean_present_but_not_used';
             }
 
             return [
-                'score' => (float)$bcs,
+                'score' => (float) $bcs,
                 'notes' => implode('; ', $notes),
                 'flags' => array_values(array_unique($flags)),
                 'components' => [
@@ -943,10 +960,11 @@ class RiskService
                 ],
             ];
         } catch (\Throwable $e) {
-            Log::error('RiskService computeBCS error: ' . $e->getMessage());
+            Log::error('RiskService computeBCS error: '.$e->getMessage());
             $flags[] = 'no_banking_data';
+
             return [
-                'score' => (float)($this->policy['default_bcs'] ?? $policy['default_bcs']),
+                'score' => (float) ($this->policy['default_bcs'] ?? $policy['default_bcs']),
                 'notes' => 'Error computing BCS; returning default',
                 'flags' => array_values(array_unique($flags)),
                 'components' => [
@@ -969,16 +987,16 @@ class RiskService
         if (is_string($categoryIds) && $this->looksLikeJsonArray($categoryIds)) {
             $categoryIds = json_decode($categoryIds, true);
         }
-        if (!is_array($categoryIds)) {
+        if (! is_array($categoryIds)) {
             $categoryIds = [$categoryIds];
         }
 
         $categoryIds = array_filter($categoryIds);
 
         $sectorRiskClass = null;
-        if (!empty($categoryIds)) {
+        if (! empty($categoryIds)) {
             $cats = BusinessCategory::whereIn('id', $categoryIds)->pluck('risk')->filter()->toArray();
-            if (!empty($cats)) {
+            if (! empty($cats)) {
                 // choose the highest risk class number (worst)
                 $sectorRiskClass = max($cats);
             }
@@ -1005,7 +1023,7 @@ class RiskService
         if ($user && $user->city_id) {
             $city = City::find($user->city_id);
             if ($city) {
-                $regionRiskClass = (int)($city->risk ?? null);
+                $regionRiskClass = (int) ($city->risk ?? null);
             }
         }
         if ($regionRiskClass === null) {
@@ -1027,7 +1045,7 @@ class RiskService
         $notes[] = "sectorScore={$sectorScore}, regionScore={$regionScore}; weights(sector,region)=({$sectorW},{$regionW})";
 
         return [
-            'score' => (float)$bps,
+            'score' => (float) $bps,
             'notes' => implode('; ', $notes),
             'flags' => [],
             'components' => [
@@ -1127,7 +1145,7 @@ class RiskService
         // fallback if we cannot compute
         if ($utilizationRatio === null) {
             $utilizationRatio = 0.5; // neutral
-            $notes[] = "Utilization not computed from credit limit -> assumed 0.5";
+            $notes[] = 'Utilization not computed from credit limit -> assumed 0.5';
             $flags[] = 'no_credit_limit_info';
         }
 
@@ -1212,14 +1230,14 @@ class RiskService
             $hasAPHistory = SchedulePayment::where('user_id', $userId)->exists() || Order::where('user_id', $userId)->exists();
         }
 
-        if (!$hasAPHistory) {
+        if (! $hasAPHistory) {
             $flags[] = 'no_behavior_history';
             $bes = $this->policy['default_bes'];
             $notes[] = 'No AP history; returning default BES';
         }
 
         return [
-            'score' => (float)$bes,
+            'score' => (float) $bes,
             'notes' => implode('; ', $notes),
             'flags' => $flags,
             'components' => [
@@ -1251,12 +1269,13 @@ class RiskService
         // placeholder: in future consider PEP, sanctions, SAR, etc.
         $caf = $this->policy['default_caf'];
         $notes = 'Compliance module not integrated; using default CAF=1.0';
+
         return [
-            'score' => (float)$caf,
+            'score' => (float) $caf,
             'notes' => $notes,
             'flags' => [],
             'components' => [
-                'caf' => (float)$caf,
+                'caf' => (float) $caf,
             ],
         ];
     }
@@ -1300,8 +1319,8 @@ class RiskService
 
     /**
      * Load weights for a given user_id (the user who sets weights). If not found, use defaults from settings.
-     * @param int|null $weightUserId
-     * @return void
+     *
+     * @param  int|null  $weightUserId
      */
     protected function loadWeights($weightUserId = null): void
     {
@@ -1338,7 +1357,7 @@ class RiskService
         $finalWeights = $defaults;
 
         // Check if we have a specific user with custom weights
-        if (!empty($weightUserId)) {
+        if (! empty($weightUserId)) {
             $rw = RiskWeight::where('user_id', $weightUserId)->first();
             if ($rw) {
                 // Merge user-specific weights with defaults (user values take precedence)
@@ -1365,7 +1384,6 @@ class RiskService
 
     /**
      * Get the current weights source
-     * @return string
      */
     public function getWeightsSource(): string
     {
@@ -1397,6 +1415,7 @@ class RiskService
     protected function looksLikeJsonArray(string $s): bool
     {
         $s = trim($s);
+
         return Str::startsWith($s, '[') && Str::endsWith($s, ']');
     }
 }

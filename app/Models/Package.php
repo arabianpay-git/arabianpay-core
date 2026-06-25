@@ -13,7 +13,9 @@ class Package extends Model
     use LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'package';
 
     protected $fillable = [
@@ -40,19 +42,18 @@ class Package extends Model
             $counter = 1;
 
             while (Package::where('slug', $slug)->where('id', '!=', $package->id)->exists()) {
-                $slug = $baseSlug . '-' . $counter++;
+                $slug = $baseSlug.'-'.$counter++;
             }
 
             $package->slug = $slug;
         });
     }
 
-
     public function getAttribute($key)
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, $this->translatable)) {
+        if (! in_array($key, $this->translatable)) {
             return $value;
         }
 

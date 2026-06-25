@@ -8,7 +8,7 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class ShopSetting extends Model
 {
-    use HasFactory, EncryptsAttributes;
+    use EncryptsAttributes, HasFactory;
 
     protected $fillable = [
         'user_id',
@@ -17,16 +17,16 @@ class ShopSetting extends Model
         'sliders',
         'banner',
         'phone_number',
-        'address'
+        'address',
     ];
 
     protected $encryptableAttributes = [
         'name',
         'phone_number',
-        'address'
+        'address',
     ];
 
     protected $casts = [
-        'sliders' => 'array'
+        'sliders' => 'array',
     ];
 }

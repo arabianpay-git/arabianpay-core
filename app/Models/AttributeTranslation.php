@@ -8,6 +8,7 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 class AttributeTranslation extends Model
 {
     use EncryptsAttributes;
+
     public $timestamps = false;
 
     protected $fillable = [

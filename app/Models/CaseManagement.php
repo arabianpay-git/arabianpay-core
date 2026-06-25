@@ -34,7 +34,6 @@ class CaseManagement extends Model
         'documents' => 'array',
     ];
 
-
     public function user()
     {
         return $this->belongsTo(User::class);

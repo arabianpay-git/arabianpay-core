@@ -42,8 +42,8 @@ return [
     'clickpay' => [
         'profile_id' => env('CLICKPAY_PROFILE_ID'),
         'server_key' => env('CLICKPAY_SERVER_KEY'),
-        'base_url'   => env('CLICKPAY_BASE_URL', 'https://secure.clickpay.com.sa'),
-        'currency'   => env('CLICKPAY_CURRENCY', 'SAR'),
+        'base_url' => env('CLICKPAY_BASE_URL', 'https://secure.clickpay.com.sa'),
+        'currency' => env('CLICKPAY_CURRENCY', 'SAR'),
     ],
     'microsoft' => [
         'client_id' => env('MICROSOFT_CLIENT_ID'),

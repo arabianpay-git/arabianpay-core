@@ -32,7 +32,7 @@ class StorePasskeyAction
         );
 
         // Ensure 'name' is passed — fallback to browser/device info if not
-        if (!isset($additionalProperties['name'])) {
+        if (! isset($additionalProperties['name'])) {
             $userAgent = request()->header('User-Agent', 'Unnamed Device');
             $additionalProperties['name'] = Str::limit($userAgent, 255); // keep within DB limit
         }

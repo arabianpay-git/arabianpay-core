@@ -25,7 +25,7 @@ class NoteController extends Controller
             $currentUser = Auth::user();
             $targetUser = User::find($userId);
 
-            if (!$targetUser) {
+            if (! $targetUser) {
                 // Log invalid user access attempt
                 $this->auditTrailService->log([
                     'event_category' => 'error_events',
@@ -104,7 +104,7 @@ class NoteController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -132,7 +132,7 @@ class NoteController extends Controller
                 $note,
                 "Added note for user: {$targetUser->email}",
                 array_merge($justificationData, [
-                    'note_preview' => substr($note->note, 0, 150) . (strlen($note->note) > 150 ? '...' : ''),
+                    'note_preview' => substr($note->note, 0, 150).(strlen($note->note) > 150 ? '...' : ''),
                     'note_length' => strlen($note->note),
                     'target_user_id' => $targetUser->id,
                     'target_user_email' => $targetUser->email,
@@ -146,7 +146,7 @@ class NoteController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Note added successfully',
-                'note' => $note->load('employee')
+                'note' => $note->load('employee'),
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -166,7 +166,7 @@ class NoteController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong: ' . $e->getMessage()
+                'message' => 'Something went wrong: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -195,7 +195,7 @@ class NoteController extends Controller
 
             return response()->json([
                 'success' => false,
-                'errors' => $validator->errors()
+                'errors' => $validator->errors(),
             ], 422);
         }
 
@@ -224,8 +224,8 @@ class NoteController extends Controller
                 "Updated note for user: {$targetUser->email}",
                 array_merge($justificationData, [
                     'content_changed' => $oldData['note'] !== $note->note,
-                    'old_content_preview' => substr($oldData['note'], 0, 150) . (strlen($oldData['note']) > 150 ? '...' : ''),
-                    'new_content_preview' => substr($note->note, 0, 150) . (strlen($note->note) > 150 ? '...' : ''),
+                    'old_content_preview' => substr($oldData['note'], 0, 150).(strlen($oldData['note']) > 150 ? '...' : ''),
+                    'new_content_preview' => substr($note->note, 0, 150).(strlen($note->note) > 150 ? '...' : ''),
                     'target_user_id' => $targetUser->id,
                     'target_user_email' => $targetUser->email,
                     'updated_by_employee_id' => $currentUser->id,
@@ -238,7 +238,7 @@ class NoteController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Note updated successfully',
-                'note' => $note
+                'note' => $note,
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -258,7 +258,7 @@ class NoteController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong: ' . $e->getMessage()
+                'message' => 'Something went wrong: '.$e->getMessage(),
             ], 500);
         }
     }
@@ -286,7 +286,7 @@ class NoteController extends Controller
                 $note,
                 "Deleted note for user: {$targetUser->email}",
                 array_merge($justificationData, [
-                    'note_content_preview' => substr($noteData['note'], 0, 150) . (strlen($noteData['note']) > 150 ? '...' : ''),
+                    'note_content_preview' => substr($noteData['note'], 0, 150).(strlen($noteData['note']) > 150 ? '...' : ''),
                     'target_user_id' => $targetUser->id,
                     'target_user_email' => $targetUser->email,
                     'original_employee_id' => $noteData['employee_id'],
@@ -302,7 +302,7 @@ class NoteController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Note deleted successfully'
+                'message' => 'Note deleted successfully',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -322,7 +322,7 @@ class NoteController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Something went wrong: ' . $e->getMessage()
+                'message' => 'Something went wrong: '.$e->getMessage(),
             ], 500);
         }
     }

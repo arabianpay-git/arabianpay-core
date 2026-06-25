@@ -8,17 +8,20 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Country extends Model
 {
-    use LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'country';
+
     protected $fillable = [
         'name',
         'code',
     ];
-    protected $encryptableAttributes = ['name'];
 
+    protected $encryptableAttributes = ['name'];
 
     protected array $translatable = ['name'];
 
@@ -41,7 +44,7 @@ class Country extends Model
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, $this->translatable)) {
+        if (! in_array($key, $this->translatable)) {
             return $value;
         }
 

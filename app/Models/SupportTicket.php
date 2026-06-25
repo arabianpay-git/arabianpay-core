@@ -9,10 +9,12 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class SupportTicket extends Model
 {
-    use HasFactory, LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, HasFactory, LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'support_ticket';
 
     protected $fillable = [
@@ -23,7 +25,7 @@ class SupportTicket extends Model
         'details',
         'files',
         'reply',
-        'status'
+        'status',
     ];
 
     protected $encryptableAttributes = [

@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Jobs\GenerateRiskExportJob;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class RiskExportController extends Controller
 {
@@ -33,7 +33,7 @@ class RiskExportController extends Controller
                         ->orWhereHas('customer');
                 });
 
-            if (!empty($filters['search'])) {
+            if (! empty($filters['search'])) {
                 $searchLower = strtolower(trim($filters['search']));
                 $baseQuery->where(function ($query) use ($searchLower) {
                     $query->where('first_name', 'like', "%{$searchLower}%")
@@ -54,7 +54,7 @@ class RiskExportController extends Controller
 
             $total = (int) $baseQuery->count();
         } catch (\Throwable $e) {
-            Log::warning("Failed to compute export total for initial response: " . $e->getMessage());
+            Log::warning('Failed to compute export total for initial response: '.$e->getMessage());
             $total = null;
         }
 
@@ -63,7 +63,7 @@ class RiskExportController extends Controller
             'status' => 'processing',
             'progress' => 0,
             'processed' => 0,
-            'total' => $total
+            'total' => $total,
         ], 3600); // 1 hour
 
         // Dispatch job (make sure queue worker is running)
@@ -78,14 +78,14 @@ class RiskExportController extends Controller
     public function status($id)
     {
         $cacheKey = $this->cacheKey($id);
-        if (!Cache::has($cacheKey)) {
+        if (! Cache::has($cacheKey)) {
             return response()->json(['ready' => false, 'status' => 'not_found', 'progress' => 0, 'processed' => 0, 'total' => null]);
         }
 
         $val = Cache::get($cacheKey);
 
         // If old string-based format remains, handle gracefully
-        if (!is_array($val)) {
+        if (! is_array($val)) {
             if ($val === 'processing') {
                 return response()->json(['ready' => false, 'status' => 'processing', 'progress' => 0, 'processed' => 0, 'total' => null]);
             }
@@ -95,6 +95,7 @@ class RiskExportController extends Controller
             // assume filename string
             $fileName = $val;
             $url = route('risk.export.download', ['id' => $id]);
+
             return response()->json(['ready' => true, 'status' => 'ready', 'progress' => 100, 'processed' => null, 'total' => null, 'url' => $url, 'filename' => $fileName]);
         }
 
@@ -110,7 +111,7 @@ class RiskExportController extends Controller
                 'status' => 'processing',
                 'progress' => $progress,
                 'processed' => $processed,
-                'total' => $total
+                'total' => $total,
             ]);
         }
 
@@ -121,13 +122,14 @@ class RiskExportController extends Controller
                 'progress' => $progress,
                 'processed' => $processed,
                 'total' => $total,
-                'message' => ($val['message'] ?? 'Export failed')
+                'message' => ($val['message'] ?? 'Export failed'),
             ]);
         }
 
         // ready
         $fileName = $val['filename'] ?? null;
         $url = route('risk.export.download', ['id' => $id]);
+
         return response()->json([
             'ready' => true,
             'status' => 'ready',
@@ -135,7 +137,7 @@ class RiskExportController extends Controller
             'processed' => $processed,
             'total' => $total,
             'url' => $url,
-            'filename' => $fileName
+            'filename' => $fileName,
         ]);
     }
 
@@ -147,20 +149,20 @@ class RiskExportController extends Controller
         $cacheKey = $this->cacheKey($id);
         $val = Cache::get($cacheKey);
 
-        if (!$val || (is_array($val) && ($val['status'] ?? '') !== 'ready')) {
+        if (! $val || (is_array($val) && ($val['status'] ?? '') !== 'ready')) {
             abort(404, 'Export not ready');
         }
 
         // If it's stored as array, extract filename; else treat as string
         $fileName = is_array($val) ? ($val['filename'] ?? null) : $val;
 
-        if (!$fileName) {
+        if (! $fileName) {
             abort(404, 'Export file not found');
         }
 
-        $filePath = storage_path('app/exports/' . $fileName);
+        $filePath = storage_path('app/exports/'.$fileName);
 
-        if (!file_exists($filePath)) {
+        if (! file_exists($filePath)) {
             abort(404, 'File not found');
         }
 
@@ -171,6 +173,6 @@ class RiskExportController extends Controller
 
     private function cacheKey(string $id): string
     {
-        return 'risk_export_path_' . $id;
+        return 'risk_export_path_'.$id;
     }
 }

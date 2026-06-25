@@ -11,7 +11,9 @@ class PaymentFailedMail extends Mailable
     use Queueable, SerializesModels;
 
     public $user;
+
     public $schedule;
+
     public $failureReason;
 
     public function __construct($user, $schedule, $failureReason = null)

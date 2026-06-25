@@ -9,11 +9,11 @@ class CrValidation extends Model
 {
     use EncryptsAttributes;
 
-    protected $table = "cr_validations";
+    protected $table = 'cr_validations';
 
     protected $fillable = [
         'cr_data',
-        'email'
+        'email',
     ];
 
     protected $encryptableAttributes = ['email'];

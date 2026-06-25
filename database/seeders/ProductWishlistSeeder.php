@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
+use App\Models\Product;
 use App\Models\ProductWishlist;
 use App\Models\User;
-use App\Models\Product;
+use Illuminate\Database\Seeder;
 
 class ProductWishlistSeeder extends Seeder
 {
@@ -17,8 +17,8 @@ class ProductWishlistSeeder extends Seeder
 
         for ($i = 0; $i < 15; $i++) {
             ProductWishlist::create([
-                'user_id'    => $userIds[$i % $userIds->count()],
-                'seller_id'  => $sellerIds[$i % $sellerIds->count()],
+                'user_id' => $userIds[$i % $userIds->count()],
+                'seller_id' => $sellerIds[$i % $sellerIds->count()],
                 'product_id' => $productIds[$i % $productIds->count()],
             ]);
         }

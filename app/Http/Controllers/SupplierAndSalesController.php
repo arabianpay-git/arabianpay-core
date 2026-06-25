@@ -21,11 +21,11 @@ class SupplierAndSalesController extends Controller
      */
     private function calculateBase(Order $order): float
     {
-        $items    = map_product_details($order->product_details);
+        $items = map_product_details($order->product_details);
         $subTotal = $items->sum('total');
-        $shipping = $order->shipping_cost   ?? 0;
+        $shipping = $order->shipping_cost ?? 0;
         $discount = $order->coupon_discount ?? 0;
-        $tax      = calculate_order_tax($order);
+        $tax = calculate_order_tax($order);
 
         return $subTotal + $tax + $shipping - $discount;
     }
@@ -35,11 +35,11 @@ class SupplierAndSalesController extends Controller
      */
     private function calculateCommission(float $base, $userId): array
     {
-        $commissionPct    = get_seller_commission($userId);
+        $commissionPct = get_seller_commission($userId);
         $commissionAmount = $base * ($commissionPct / 100);
         $commissionTaxPct = get_commission_tax();
         $commissionTaxAmt = $commissionAmount * ($commissionTaxPct / 100);
-        $totalAmount      = $base + $commissionAmount + $commissionTaxAmt;
+        $totalAmount = $base + $commissionAmount + $commissionTaxAmt;
 
         return compact(
             'commissionPct',
@@ -56,30 +56,30 @@ class SupplierAndSalesController extends Controller
 
         $orders->getCollection()->transform(function ($order) {
             // compute item details explicitly
-            $items    = map_product_details($order->product_details);
+            $items = map_product_details($order->product_details);
             $subTotal = $items->sum('total');
-            $shipping = $order->shipping_cost   ?? 0;
+            $shipping = $order->shipping_cost ?? 0;
             $discount = $order->coupon_discount ?? 0;
-            $tax      = calculate_order_tax($order);
+            $tax = calculate_order_tax($order);
 
             // compute base and commission
-            $base       = $this->calculateBase($order);
+            $base = $this->calculateBase($order);
             $commission = $this->calculateCommission($base, $order->seller_id);
 
             // supplier payments so far
-            $supplierDue     = Wallet::where('seller_id', $order->seller_id)
+            $supplierDue = Wallet::where('seller_id', $order->seller_id)
                 ->where('order_id', $order->id)
                 ->where('transaction_type', 'seller_payment')
                 ->sum('balance_after');
             $totalSuplierDue = $base - $supplierDue;
 
             $order->calculated = array_merge([
-                'subTotal'        => $subTotal,
-                'shipping'        => $shipping,
-                'discount'        => $discount,
-                'tax'             => $tax,
-                'base'            => $base,
-                'supplierDue'     => $supplierDue,
+                'subTotal' => $subTotal,
+                'shipping' => $shipping,
+                'discount' => $discount,
+                'tax' => $tax,
+                'base' => $base,
+                'supplierDue' => $supplierDue,
                 'totalSuplierDue' => $totalSuplierDue,
             ], $commission);
 
@@ -100,36 +100,36 @@ class SupplierAndSalesController extends Controller
         $summaryData = [];
 
         foreach ($orders as $sellerId => $sellerOrders) {
-            $user         = optional($sellerOrders->first()->seller);
+            $user = optional($sellerOrders->first()->seller);
             $invoiceCount = $sellerOrders->count();
             $invoiceValue = 0;
-            $taxTotal     = 0;
-            $grandTotal   = 0;
+            $taxTotal = 0;
+            $grandTotal = 0;
 
             foreach ($sellerOrders as $order) {
-                $base       = $this->calculateBase($order);
+                $base = $this->calculateBase($order);
                 $commission = $this->calculateCommission($base, $order->seller_id);
 
                 $invoiceValue += $base;
-                $tax          = calculate_order_tax($order);
-                $taxTotal     += $tax;
-                $grandTotal   += $commission['totalAmount'];
+                $tax = calculate_order_tax($order);
+                $taxTotal += $tax;
+                $grandTotal += $commission['totalAmount'];
             }
 
             $summaryData[] = [
-                'user_id'       => $sellerId,
-                'first_name'    => $user->first_name,
-                'last_name'     => $user->last_name,
+                'user_id' => $sellerId,
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
                 'business_name' => $user->business_name,
                 'invoice_count' => $invoiceCount,
                 'invoice_value' => $invoiceValue,
-                'tax_total'     => $taxTotal,
-                'grand_total'   => $grandTotal,
+                'tax_total' => $taxTotal,
+                'grand_total' => $grandTotal,
             ];
         }
 
-        $page       = request()->get('page', 1);
-        $perPage    = 10;
+        $page = request()->get('page', 1);
+        $perPage = 10;
         $collection = collect($summaryData);
 
         $paginatedSummary = new LengthAwarePaginator(
@@ -151,26 +151,26 @@ class SupplierAndSalesController extends Controller
             ->paginate(10);
 
         $summary = $paginator->getCollection()->map(function (Wallet $wallet) {
-            $order           = $wallet->order;
-            $merchant        = optional($wallet->seller->merchant);
-            $base            = $this->calculateBase($order);
-            $commission      = $this->calculateCommission($base, $order->seller_id);
+            $order = $wallet->order;
+            $merchant = optional($wallet->seller->merchant);
+            $base = $this->calculateBase($order);
+            $commission = $this->calculateCommission($base, $order->seller_id);
 
             return [
-                'seller_name'     => trim($wallet->seller->first_name . ' ' . $wallet->seller->last_name),
+                'seller_name' => trim($wallet->seller->first_name.' '.$wallet->seller->last_name),
                 'seller_business' => $wallet->seller->business_name,
-                'invoice_number'  => strtoupper($order->invoice_number ?? 'N/A'),
-                'payment_date'    => $wallet->updated_at->format(dateFormat()),
+                'invoice_number' => strtoupper($order->invoice_number ?? 'N/A'),
+                'payment_date' => $wallet->updated_at->format(dateFormat()),
                 'payment_invoice' => $base,
-                'tax_number'      => $merchant->vat_register_number ?? 'N/A',
-                'amount_paid'     => $wallet->balance_after,
-                'tax_total'       => calculate_order_tax($order),
-                'total_bills'     => $commission['totalAmount'],
+                'tax_number' => $merchant->vat_register_number ?? 'N/A',
+                'amount_paid' => $wallet->balance_after,
+                'tax_total' => calculate_order_tax($order),
+                'total_bills' => $commission['totalAmount'],
             ];
         });
 
         return view('admin.supplier-and-sales.payment-of-suplier', [
-            'summary'   => $summary,
+            'summary' => $summary,
             'paginator' => $paginator,
         ]);
     }
@@ -195,29 +195,29 @@ class SupplierAndSalesController extends Controller
             });
         }
 
-        $orders    = $ordersQuery->latest()->paginate(10);
-        $grouped   = $orders->getCollection()->groupBy('seller_id');
+        $orders = $ordersQuery->latest()->paginate(10);
+        $grouped = $orders->getCollection()->groupBy('seller_id');
 
         $summary = $grouped->map(function ($sellerOrders, $sellerId) {
-            $firstOrder       = $sellerOrders->first();
-            $merchant         = optional($firstOrder->seller->merchant);
-            $totalPurchases   = $sellerOrders->sum(function ($order) {
+            $firstOrder = $sellerOrders->first();
+            $merchant = optional($firstOrder->seller->merchant);
+            $totalPurchases = $sellerOrders->sum(function ($order) {
                 return $this->calculateBase($order);
             });
-            $totalPayments    = Wallet::where('seller_id', $sellerId)
+            $totalPayments = Wallet::where('seller_id', $sellerId)
                 ->where('transaction_type', 'seller_payment')
                 ->sum('amount');
-            $openingBalance   = Wallet::where('seller_id', $sellerId)
+            $openingBalance = Wallet::where('seller_id', $sellerId)
                 ->where('transaction_type', 'seller_payment')
                 ->sum('balance_after');
 
             return [
-                'seller_name'       => optional($firstOrder->seller)->first_name . ' ' . optional($firstOrder->seller)->last_name,
-                'seller_business'   => optional($firstOrder->seller)->business_name,
-                'tax_number'        => $merchant->vat_register_number ?? 'N/A',
-                'opening_balance'   => $openingBalance,
-                'total_purchases'   => $totalPurchases,
-                'total_payments'    => $totalPayments,
+                'seller_name' => optional($firstOrder->seller)->first_name.' '.optional($firstOrder->seller)->last_name,
+                'seller_business' => optional($firstOrder->seller)->business_name,
+                'tax_number' => $merchant->vat_register_number ?? 'N/A',
+                'opening_balance' => $openingBalance,
+                'total_purchases' => $totalPurchases,
+                'total_payments' => $totalPayments,
                 'remaining_balance' => $totalPurchases - $totalPayments + $openingBalance,
             ];
         })->values();
@@ -226,7 +226,7 @@ class SupplierAndSalesController extends Controller
             ->get()
             ->map(function ($m) {
                 return [
-                    'id'            => $m->id,
+                    'id' => $m->id,
                     'business_name' => optional($m->user)->business_name,
                 ];
             })
@@ -234,23 +234,23 @@ class SupplierAndSalesController extends Controller
             ->values();
 
         return view('admin.supplier-and-sales.detailed-supplier-debt', [
-            'summary'          => $summary,
-            'paginator'        => $orders,
-            'merchants'        => $merchants,
+            'summary' => $summary,
+            'paginator' => $orders,
+            'merchants' => $merchants,
             'selectedMerchant' => $merchantId,
         ]);
     }
 
     public function totalSupplierDebt()
     {
-        $totalPurchases   = Order::where('delivery_status', 'delivered')
+        $totalPurchases = Order::where('delivery_status', 'delivered')
             ->get()
             ->reduce(function ($carry, $order) {
                 return $carry + $this->calculateBase($order);
             }, 0.0);
 
-        $totalPayments    = Wallet::where('transaction_type', 'seller_payment')->sum('amount');
-        $openingBalance   = Wallet::where('transaction_type', 'seller_payment')->sum('balance_after');
+        $totalPayments = Wallet::where('transaction_type', 'seller_payment')->sum('amount');
+        $openingBalance = Wallet::where('transaction_type', 'seller_payment')->sum('balance_after');
         $remainingBalance = $totalPurchases - $totalPayments;
 
         return view('admin.supplier-and-sales.total-supplier-debt', compact(
@@ -271,15 +271,15 @@ class SupplierAndSalesController extends Controller
 
         $transactions->getCollection()->transform(function ($transaction) {
             if ($order = $transaction->order) {
-                $base            = $this->calculateBase($order);
-                $supplierDue     = Wallet::where('seller_id', $order->seller_id)
+                $base = $this->calculateBase($order);
+                $supplierDue = Wallet::where('seller_id', $order->seller_id)
                     ->where('order_id', $order->id)
                     ->where('transaction_type', 'seller_payment')
                     ->sum('balance_after');
 
                 $transaction->calculated = [
-                    'base'            => $base,
-                    'supplierDue'     => $supplierDue,
+                    'base' => $base,
+                    'supplierDue' => $supplierDue,
                     'totalSuplierDue' => $base - $supplierDue,
                 ];
             }
@@ -293,30 +293,30 @@ class SupplierAndSalesController extends Controller
     public function sellerPaymentFromAdmin(Request $request)
     {
         $data = $request->validate([
-            'transaction_id'  => 'required|exists:transactions,id',
-            'seller_id'       => 'required|exists:users,id',
-            'amount'          => 'required|numeric|min:0.01',
+            'transaction_id' => 'required|exists:transactions,id',
+            'seller_id' => 'required|exists:users,id',
+            'amount' => 'required|numeric|min:0.01',
             'transfer_number' => 'required|string|max:255',
-            'payment_date'    => 'required|date',
-            'receipt'         => 'nullable|image|max:2048',
+            'payment_date' => 'required|date',
+            'receipt' => 'nullable|image|max:2048',
         ]);
 
         DB::transaction(function () use ($data) {
             $tx = Transaction::lockForUpdate()->find($data['transaction_id']);
 
             $payment = Payment::create([
-                'user_id'         => $tx->user_id,
-                'seller_id'       => $data['seller_id'],
-                'order_id'        => $tx->order_id,
-                'amount'          => $data['amount'],
+                'user_id' => $tx->user_id,
+                'seller_id' => $data['seller_id'],
+                'order_id' => $tx->order_id,
+                'amount' => $data['amount'],
                 'payment_details' => json_encode([
                     'transfer_number' => $data['transfer_number'],
-                    'payment_date'    => $data['payment_date'],
-                    'receipt_path'    => $data['receipt'],
+                    'payment_date' => $data['payment_date'],
+                    'receipt_path' => $data['receipt'],
                 ]),
-                'invoice_number'  => $tx->order->invoice_number,
-                'txn_code'        => $data['transfer_number'],
-                'payment_status'  => 'paid',
+                'invoice_number' => $tx->order->invoice_number,
+                'txn_code' => $data['transfer_number'],
+                'payment_status' => 'paid',
             ]);
 
             $tx->collected += $data['amount'];
@@ -330,13 +330,13 @@ class SupplierAndSalesController extends Controller
                 ->sum('amount');
 
             Wallet::create([
-                'seller_id'        => $data['seller_id'],
-                'order_id'         => $tx->order_id,
-                'instalment_id'    => $tx->plan_id,
+                'seller_id' => $data['seller_id'],
+                'order_id' => $tx->order_id,
+                'instalment_id' => $tx->plan_id,
                 'transaction_type' => 'seller_payment',
-                'amount'           => $data['amount'],
-                'balance_after'    => $previousBalance + $data['amount'],
-                'status'           => 'active',
+                'amount' => $data['amount'],
+                'balance_after' => $previousBalance + $data['amount'],
+                'status' => 'active',
             ]);
         });
 
@@ -357,7 +357,7 @@ class SupplierAndSalesController extends Controller
                         ->with(['order' => function ($query) {
                             $query->select('id', 'created_at');
                         }]);
-                }
+                },
             ])
             ->paginate(10);
 
@@ -373,9 +373,8 @@ class SupplierAndSalesController extends Controller
             },
             'sellerWallet.order' => function ($query) {
                 $query->select('id', 'seller_id', 'code', 'invoice_number', 'created_at');
-            }
+            },
         ])->where('user_type', 'merchant')->paginate(10);
-
 
         return view('admin.supplier-and-sales.supplier-payout', compact('sellers'));
     }

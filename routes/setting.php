@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Route;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 
 Route::group([
-    'prefix'     => LaravelLocalization::setLocale(),
+    'prefix' => LaravelLocalization::setLocale(),
     'middleware' => ThrottleRequests::class,
 ], function () {
     Route::prefix('admin')
@@ -29,7 +29,6 @@ Route::group([
                 Route::put('/email', 'emailUpdate')->name('email.update');
                 Route::post('email/test', 'emailTest')->name('email.test');
                 Route::post('email/reset', 'emailReset')->name('email.reset');
-
 
                 Route::get('/media', 'media')->name('media');
                 Route::get('/api', 'api')->name('api');
@@ -111,14 +110,15 @@ Route::group([
             });
 
             Route::controller(RiskWeightController::class)->prefix('settings')->group(function () {
-                Route::get('/risk-weight', 'index')->name('settings.risk-weights');
-                Route::post('settings/risk-weights', 'store')->name('settings.risk-weight.store');
+                Route::middleware('permission:risk.config.manage')->group(function () {
+                    Route::get('/risk-weight', 'index')->name('settings.risk-weights');
+                    Route::post('settings/risk-weights', 'store')->name('settings.risk-weight.store');
 
-
-                Route::get('/compliance-rules', 'complianceRules')->name('settings.compliance-rules');
-                Route::get('/fraud-detection', 'fraudDetection')->name('settings.fraud-detection');
-                Route::get('/aml', 'aml')->name('settings.aml');
-                Route::get('/kyc', 'kyc')->name('settings.kyc');
+                    Route::get('/compliance-rules', 'complianceRules')->name('settings.compliance-rules');
+                    Route::get('/fraud-detection', 'fraudDetection')->name('settings.fraud-detection');
+                    Route::get('/aml', 'aml')->name('settings.aml');
+                    Route::get('/kyc', 'kyc')->name('settings.kyc');
+                });
             });
         });
 });

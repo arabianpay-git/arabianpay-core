@@ -29,8 +29,9 @@ dist/
 .DS_Store
 Thumbs.db
 
-# Claude Code scratch / worktrees
+# Claude Code / OpenCode scratch
 /.claude/
+/.opencode/
 
 # Other
 Homestead.json
@@ -40,12 +41,8 @@ yarn-error.log
 auth.json
 
 # -----------------------------
-# Fix for bootstrap tracking
+# Bootstrap cache (Laravel-managed; do not track)
 # -----------------------------
 
-# Ignore everything under bootstrap
 /bootstrap/*
-
-# But allow cache and everything inside it
-!bootstrap/cache/
-!bootstrap/cache/**
+/bootstrap/cache/

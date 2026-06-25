@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Sanad;
 use App\Services\NafithService;
+use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Http\Response;
 
 class SanadController extends Controller
 {
@@ -23,7 +23,7 @@ class SanadController extends Controller
         try {
             $sanad = Sanad::where('order_id', $orderId)->first();
 
-            if (!$sanad) {
+            if (! $sanad) {
                 return response()->json(['success' => false, 'message' => 'Sanad not found for this order.'], 404);
             }
 
@@ -48,6 +48,7 @@ class SanadController extends Controller
             return response()->json(['success' => true, 'data' => $result]);
         } catch (\Exception $e) {
             Log::error('SanadController@detail Exception', ['error' => $e->getMessage(), 'order_id' => $orderId]);
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }
@@ -57,7 +58,7 @@ class SanadController extends Controller
         try {
             $sanad = Sanad::where('order_id', $orderId)->first();
 
-            if (!$sanad) {
+            if (! $sanad) {
                 return response()->json(['success' => false, 'message' => 'Sanad not found for this order.'], 404);
             }
 
@@ -72,10 +73,11 @@ class SanadController extends Controller
 
             // If service returned a Response instance (binary) — return it directly
             if ($result instanceof Response || $result instanceof \Illuminate\Http\Response) {
-                $disposition = 'attachment; filename="sanad-group-' . $groupId . '.pdf"';
+                $disposition = 'attachment; filename="sanad-group-'.$groupId.'.pdf"';
                 if (! $result->headers->has('Content-Disposition')) {
                     $result->headers->set('Content-Disposition', $disposition);
                 }
+
                 return $result;
             }
 
@@ -92,9 +94,10 @@ class SanadController extends Controller
             // otherwise assume it's raw binary body
             return response($result, 200)
                 ->header('Content-Type', 'application/pdf')
-                ->header('Content-Disposition', 'attachment; filename="sanad-group-' . $groupId . '.pdf"');
+                ->header('Content-Disposition', 'attachment; filename="sanad-group-'.$groupId.'.pdf"');
         } catch (\Exception $e) {
             Log::error('SanadController@download Exception', ['error' => $e->getMessage(), 'order_id' => $orderId]);
+
             return response()->json(['success' => false, 'message' => $e->getMessage()], 500);
         }
     }

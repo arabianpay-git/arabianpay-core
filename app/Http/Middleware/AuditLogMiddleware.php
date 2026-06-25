@@ -2,12 +2,12 @@
 
 namespace App\Http\Middleware;
 
+use App\Models\AuditLog;
 use Closure;
 use Illuminate\Http\Request;
-use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
-use App\Models\AuditLog;
+use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\Response;
 
 class AuditLogMiddleware
@@ -27,10 +27,8 @@ class AuditLogMiddleware
         'up',
         'ping',
         'favicon.ico',
-        'assets',
-        'static',
-        'docs',
-        'sanctum',
+        'build/assets',
+        'build/static',
         'api/docs',
         'api/openapi',
         'audit-logs',
@@ -58,7 +56,7 @@ class AuditLogMiddleware
         'date_of_birth',
         'card_number',
         'card_expiry',
-        'cvv'
+        'cvv',
     ];
 
     /**
@@ -66,7 +64,7 @@ class AuditLogMiddleware
      */
     public function handle(Request $request, Closure $next)
     {
-        if (app()->runningInConsole()) {
+        if (app()->runningInConsole() && ! app()->runningUnitTests()) {
             return $next($request);
         }
 
@@ -93,6 +91,11 @@ class AuditLogMiddleware
             $status = $response->getStatusCode();
 
             $severity = $this->determineSeverity($status);
+
+            $samplingRate = (int) config('audit.sampling_rate', 100); // 100 = log all, 10 = log 10%
+            if ($samplingRate < 100 && mt_rand(1, 100) > $samplingRate) {
+                return $response;
+            }
 
             $user = Auth::user();
             $subjectType = $user ? (class_basename(get_class($user))) : 'Guest';
@@ -134,29 +137,30 @@ class AuditLogMiddleware
 
             $failureReason = null;
             if ($status >= 400) {
-                $content = (string) $response->getContent();
-                $failureReason = Str::limit($this->stripBinary($content), 1000);
+                // Do not capture response bodies — they may contain PII, stack traces, or tokens.
+                $failureReason = "HTTP {$status} error (response body omitted for PII safety)";
             }
 
             $properties = [
                 'request_id' => $requestId,
                 'method' => $request->method(),
-                'url' => $request->fullUrl(),
+                'url' => $request->url(),
                 'path' => $request->path(),
                 'endpoint' => $endpoint,
                 'route' => $routeName,
                 'query' => $request->query(),
                 'route_parameters' => $this->maskPii($route ? $route->parameters() : [], false)[1],
+                'query' => $this->maskPii($request->query(), false)[1],
                 'body' => $maskedPayload,
                 'headers' => $safeHeaders,
                 'ip' => $request->ip(),
                 'user_agent' => $request->userAgent(),
             ];
 
-            if (!$idpProvider && isset($properties['body']['idp_provider'])) {
+            if (! $idpProvider && isset($properties['body']['idp_provider'])) {
                 $idpProvider = $properties['body']['idp_provider'];
             }
-            if (!$conditionalAccess && isset($properties['body']['conditional_access_result'])) {
+            if (! $conditionalAccess && isset($properties['body']['conditional_access_result'])) {
                 $conditionalAccess = $properties['body']['conditional_access_result'];
             }
 
@@ -173,7 +177,7 @@ class AuditLogMiddleware
                 'resource' => $routeName ?? $request->path(),
                 'endpoint' => $endpoint,
                 'method' => $request->method(),
-                'status' => (string)$status,
+                'status' => (string) $status,
                 'failure_reason' => $failureReason,
                 'ip_address' => $request->ip(),
                 'device_fingerprint' => $deviceFingerprint,
@@ -188,7 +192,7 @@ class AuditLogMiddleware
 
             AuditLog::create($auditData);
         } catch (\Throwable $e) {
-            Log::warning('AuditLogMiddleware failed to persist audit log: ' . $e->getMessage(), [
+            Log::warning('AuditLogMiddleware failed to persist audit log: '.$e->getMessage(), [
                 'request_id' => $requestId,
                 'path' => $request->path(),
             ]);
@@ -239,6 +243,7 @@ class AuditLogMiddleware
         if ($status >= 300) {
             return 'Warning';
         }
+
         return 'Info';
     }
 
@@ -249,6 +254,7 @@ class AuditLogMiddleware
     {
         try {
             $action = $route->getActionName();
+
             return $action === '__closure' ? 'closure' : $action;
         } catch (\Throwable $e) {
             return 'unknown';
@@ -258,9 +264,7 @@ class AuditLogMiddleware
     /**
      * Mask PII values in array.
      *
-     * @param array $data
-     * @param bool $returnPiisAlso If true returns [$piiFields, $maskedPayload]; if false returns [$unused, $maskedPayload]
-     * @return array
+     * @param  bool  $returnPiisAlso  If true returns [$piiFields, $maskedPayload]; if false returns [$unused, $maskedPayload]
      */
     protected function maskPii(array $data, bool $returnPiisAlso = true): array
     {
@@ -268,19 +272,20 @@ class AuditLogMiddleware
         $piiFound = [];
 
         foreach ($data as $k => $v) {
-            $lower = strtolower((string)$k);
+            $lower = strtolower((string) $k);
             if (is_array($v)) {
                 [$childPii, $childMasked] = $this->maskPii($v, true);
                 if ($childPii) {
                     $piiFound = array_merge($piiFound, $childPii);
                 }
                 $masked[$k] = $childMasked;
+
                 continue;
             }
 
             $isPii = false;
             foreach ($this->piiKeys as $piiKey) {
-                if (Str::contains($lower, strtolower($piiKey))) {
+                if ($lower === strtolower($piiKey)) {
                     $isPii = true;
                     break;
                 }
@@ -288,7 +293,7 @@ class AuditLogMiddleware
 
             if ($isPii) {
                 $piiFound[] = $k;
-                $masked[$k] = $this->maskValue((string)$v);
+                $masked[$k] = $this->maskValue((string) $v);
             } else {
                 if (is_string($v) && Str::length($v) > 2000) {
                     $masked[$k] = Str::limit($v, 2000);
@@ -318,10 +323,11 @@ class AuditLogMiddleware
         }
         $len = mb_strlen($value);
         if ($len <= 4) {
-            return str_repeat('*', max(1, $len - 1)) . mb_substr($value, -1);
+            return str_repeat('*', max(1, $len - 1)).mb_substr($value, -1);
         }
         $visible = 2;
-        return str_repeat('*', $len - $visible) . mb_substr($value, -$visible);
+
+        return str_repeat('*', $len - $visible).mb_substr($value, -$visible);
     }
 
     /**
@@ -330,5 +336,22 @@ class AuditLogMiddleware
     protected function stripBinary(string $s): string
     {
         return preg_replace('/[^\P{C}\n\r\t]+/u', '', $s) ?? $s;
+    }
+
+    /**
+     * Mask PII values embedded in a plain text string (e.g. response body or query string).
+     */
+    protected function maskPiiString(string $text): string
+    {
+        foreach ($this->piiKeys as $piiKey) {
+            // Match JSON/query-style "key":"value" or key=value
+            $text = preg_replace(
+                '/(["\']?'.preg_quote($piiKey, '/').'["\']?\s*[:=]\s*["\'])([^"\']+)(["\'])/i',
+                '$1***$3',
+                $text
+            );
+        }
+
+        return $text;
     }
 }

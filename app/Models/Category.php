@@ -9,7 +9,7 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Category extends Model
 {
-    use LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, LogsModelActions;
 
     protected $fillable = [
         'parent_id',
@@ -36,11 +36,12 @@ class Category extends Model
         'meta_description',
     ];
 
-
     protected $with = ['translations'];
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'category';
 
     protected static function booted()
@@ -52,7 +53,7 @@ class Category extends Model
                 $counter = 1;
 
                 while (Category::where('slug', $slug)->where('id', '!=', $category->id)->exists()) {
-                    $slug = $originalSlug . '-' . $counter++;
+                    $slug = $originalSlug.'-'.$counter++;
                 }
 
                 $category->slug = $slug;
@@ -79,7 +80,7 @@ class Category extends Model
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, $this->translatable)) {
+        if (! in_array($key, $this->translatable)) {
             return $value;
         }
 

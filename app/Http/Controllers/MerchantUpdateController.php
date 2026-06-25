@@ -28,6 +28,7 @@ class MerchantUpdateController extends Controller
         // 💡 Change: Filter the collection as in your original code.
         $filtered = $users->filter(function ($user) use ($query) {
             $q = strtolower($query);
+
             return str_contains(strtolower($user->first_name ?? ''), $q)
                 || str_contains(strtolower($user->last_name ?? ''), $q)
                 || str_contains(strtolower($user->business_name ?? ''), $q)
@@ -78,10 +79,11 @@ class MerchantUpdateController extends Controller
             // This part is the same as the previous response.
             // It gets the current page from the request to send it back.
             $currentPage = (int) $request->input('page', 1);
+
             return response()->json([
                 'success' => true,
                 'message' => 'Merchant updated successfully.',
-                'page' => $currentPage
+                'page' => $currentPage,
             ]);
         }
 

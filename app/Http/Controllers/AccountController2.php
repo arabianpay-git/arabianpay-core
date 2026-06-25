@@ -2,7 +2,23 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{Approval, BusinessCategory, CrValidation, Customer, CustomerCreditLimit, Merchant, NafathVerification, Order, Package, Payment, Product, SchedulePayment, ShopSetting, SupplierBank, SupplierPayout, Transaction, User, Wallet};
+use App\Models\Approval;
+use App\Models\BusinessCategory;
+use App\Models\CrValidation;
+use App\Models\Customer;
+use App\Models\CustomerCreditLimit;
+use App\Models\Merchant;
+use App\Models\NafathVerification;
+use App\Models\Order;
+use App\Models\Package;
+use App\Models\Payment;
+use App\Models\Product;
+use App\Models\SchedulePayment;
+use App\Models\ShopSetting;
+use App\Models\SupplierBank;
+use App\Models\Transaction;
+use App\Models\User;
+use App\Models\Wallet;
 use App\Rules\NoHtml;
 use App\Services\CreditAssessmentService;
 use App\Services\FirebaseService;
@@ -22,9 +38,10 @@ use Spatie\Activitylog\Models\Activity;
 
 class AccountController extends Controller
 {
-    use SmsSender, EmailSender;
+    use EmailSender, SmsSender;
 
     protected $wathqService;
+
     protected $firebase;
 
     public function __construct(WathqService $wathqService, FirebaseService $firebase)
@@ -38,19 +55,19 @@ class AccountController extends Controller
         $total = 0;
 
         foreach ($orders as $order) {
-            $items    = map_product_details($order->product_details);
+            $items = map_product_details($order->product_details);
             $subTotal = $items->sum('total');
             $shipping = $order->shipping_cost ?? 0;
             $discount = $order->coupon_discount ?? 0;
-            $tax      = calculate_order_tax($order);
+            $tax = calculate_order_tax($order);
 
             $base = $subTotal + $tax + $shipping - $discount;
 
-            $commissionPct    = get_system_commission();
+            $commissionPct = get_system_commission();
             $commissionAmount = $base * ($commissionPct / 100);
 
-            $commissionTaxPct  = get_commission_tax();
-            $commissionTaxAmt  = $commissionAmount * ($commissionTaxPct / 100);
+            $commissionTaxPct = get_commission_tax();
+            $commissionTaxAmt = $commissionAmount * ($commissionTaxPct / 100);
 
             $total += $base + $commissionAmount + $commissionTaxAmt;
         }
@@ -63,11 +80,11 @@ class AccountController extends Controller
         $total = 0;
 
         foreach ($orders as $order) {
-            $items    = map_product_details($order->product_details);
+            $items = map_product_details($order->product_details);
             $subTotal = $items->sum('total');
             $shipping = $order->shipping_cost ?? 0;
             $discount = $order->coupon_discount ?? 0;
-            $tax      = calculate_order_tax($order);
+            $tax = calculate_order_tax($order);
 
             $base = $subTotal + $tax + $shipping - $discount;
         }
@@ -85,11 +102,11 @@ class AccountController extends Controller
             'package',
             'user.orders' => function ($q) {
                 $q->where('delivery_status', 'delivered');
-            }
+            },
         ])
             ->select(['id', 'assigned_to', 'user_id', 'package_id', 'cr_number', 'address', 'purchasing_volume', 'status', 'created_at'])
             ->when(
-                !(
+                ! (
                     $user->user_type === 'employee' && $user->is_manager
                 ) && $user->user_type !== 'admin',
                 function ($query) use ($user) {
@@ -111,7 +128,6 @@ class AccountController extends Controller
 
         return view('admin.accounts.customer', compact('customers', 'totalOrderAmount'));
     }
-
 
     public function log($id)
     {
@@ -144,7 +160,7 @@ class AccountController extends Controller
         $customer = Customer::with('user')
             ->where('user_id', $id)
             ->when(
-                !(
+                ! (
                     ($user->user_type === 'employee' && $user->is_manager) || $user->user_type === 'admin'
                 ),
                 function ($query) use ($user) {
@@ -153,13 +169,12 @@ class AccountController extends Controller
             )
             ->first();
 
-        if (!$customer) {
+        if (! $customer) {
             return redirect()->route('customers')->with('error', __('Customer not found or not assigned to you.'));
         }
 
         $data = $creditService->assess($id);
         $riskScore = $riskService->calculateForUser($customer->user);
-
 
         if (empty($customer->cr_data) && $customer->cr_number) {
             $wathqData = $this->wathqService->fetchCrData($customer->cr_number);
@@ -173,7 +188,6 @@ class AccountController extends Controller
         return view('admin.accounts.customer-profile', compact('customer', 'data', 'riskScore'));
     }
 
-
     public function customerFinance($id, CreditAssessmentService $creditService, RiskAnalyticsService $riskService)
     {
         $customer = Customer::with('user', 'package')
@@ -184,16 +198,16 @@ class AccountController extends Controller
 
         $packages = Package::orderBy('name')->get();
 
-        $creditLimitLogs    = CustomerCreditLimit::where('user_id', $id)->paginate(10);
-        $creditLimit        = CustomerCreditLimit::where('user_id', $id)->latest()->first();
-        $totalPaymentDue    = SchedulePayment::where('user_id', $id)
+        $creditLimitLogs = CustomerCreditLimit::where('user_id', $id)->paginate(10);
+        $creditLimit = CustomerCreditLimit::where('user_id', $id)->latest()->first();
+        $totalPaymentDue = SchedulePayment::where('user_id', $id)
             ->whereIn('payment_status', ['due', 'late'])
             ->sum('instalment_amount');
-        $dueCount           = SchedulePayment::where('user_id', $id)->where('payment_status', 'due')->count();
-        $lateCount          = SchedulePayment::where('user_id', $id)->where('payment_status', 'late')->count();
+        $dueCount = SchedulePayment::where('user_id', $id)->where('payment_status', 'due')->count();
+        $lateCount = SchedulePayment::where('user_id', $id)->where('payment_status', 'late')->count();
 
-        $orders             = $customer->user->orders()->where('delivery_status', 'delivered')->get();
-        $totalOrderAmount   = $this->calculateTotalOrderAmount($orders);
+        $orders = $customer->user->orders()->where('delivery_status', 'delivered')->get();
+        $totalOrderAmount = $this->calculateTotalOrderAmount($orders);
 
         return view('admin.accounts.customer-finance', compact(
             'customer',
@@ -262,17 +276,17 @@ class AccountController extends Controller
     public function upgradeLimit(Request $request)
     {
         $data = $request->validate([
-            'credit_limit_id'            => 'required|exists:customer_credit_limits,id',
-            'limit_arabianpay_before'    => 'required|numeric',
-            'limit_arabianpay_after'     => 'required|numeric',
-            'comission'                  => 'nullable|numeric',
+            'credit_limit_id' => 'required|exists:customer_credit_limits,id',
+            'limit_arabianpay_before' => 'required|numeric',
+            'limit_arabianpay_after' => 'required|numeric',
+            'comission' => 'nullable|numeric',
         ]);
 
         CustomerCreditLimit::findOrFail($data['credit_limit_id'])
             ->update([
                 'limit_arabianpay_before' => $data['limit_arabianpay_before'],
-                'limit_arabianpay_after'  => $data['limit_arabianpay_after'],
-                'comission'               => $data['comission'] ?? 0,
+                'limit_arabianpay_after' => $data['limit_arabianpay_after'],
+                'comission' => $data['comission'] ?? 0,
             ]);
 
         return back()->with('success', 'Customer credit limit updated successfully.');
@@ -281,11 +295,11 @@ class AccountController extends Controller
     public function createCreditLimit(Request $request)
     {
         $data = $request->validate([
-            'user_id'                    => 'required|exists:customers,user_id',
-            'package_id'                 => 'nullable|exists:packages,id',
-            'limit_arabianpay_before'    => 'required|numeric',
-            'limit_arabianpay_after'     => 'required|numeric',
-            'comission'                  => 'nullable|numeric',
+            'user_id' => 'required|exists:customers,user_id',
+            'package_id' => 'nullable|exists:packages,id',
+            'limit_arabianpay_before' => 'required|numeric',
+            'limit_arabianpay_after' => 'required|numeric',
+            'comission' => 'nullable|numeric',
         ]);
 
         CustomerCreditLimit::create($data);
@@ -343,7 +357,7 @@ class AccountController extends Controller
                 $customer->user->email,
                 'Account Approved',
                 [
-                    'name' => $customer->user->first_name . " " . $customer->user->last_name,
+                    'name' => $customer->user->first_name.' '.$customer->user->last_name,
                 ]
             );
 
@@ -358,14 +372,14 @@ class AccountController extends Controller
             $firebaseService = app(FirebaseService::class);
 
             $statusMessages = [
-                'approved' => "Congratulations! Your account has been approved.",
-                'pending' => "Your account status is now pending. We will notify you once approved.",
-                'suspended' => "Your account has been suspended. Please contact support for more info.",
-                'blacklisted' => "Your account has been blacklisted. Please contact support."
+                'approved' => 'Congratulations! Your account has been approved.',
+                'pending' => 'Your account status is now pending. We will notify you once approved.',
+                'suspended' => 'Your account has been suspended. Please contact support for more info.',
+                'blacklisted' => 'Your account has been blacklisted. Please contact support.',
             ];
 
-            $notificationTitle = "Account Status Updated";
-            $notificationBody = $statusMessages[$status] ?? "Your account status has been updated.";
+            $notificationTitle = 'Account Status Updated';
+            $notificationBody = $statusMessages[$status] ?? 'Your account status has been updated.';
 
             $firebaseService->sendCustomNotification(
                 $customer->user_id,
@@ -378,7 +392,7 @@ class AccountController extends Controller
                 ]
             );
         } catch (\Throwable $e) {
-            Log::error("Failed to send customer status notification: " . $e->getMessage(), ['customer_id' => $customer->id]);
+            Log::error('Failed to send customer status notification: '.$e->getMessage(), ['customer_id' => $customer->id]);
         }
         // ========================================
 
@@ -426,7 +440,7 @@ class AccountController extends Controller
             'coupon_discount',
             'delivery_status',
             'general_status',
-            'created_at'
+            'created_at',
         ])
             ->where('user_id', $id)
             ->with(['user', 'seller', 'pickupPoint'])
@@ -451,6 +465,7 @@ class AccountController extends Controller
     public function customerCompliance($id)
     {
         $customer = Customer::where('user_id', $id)->with('user')->firstOrFail();
+
         return view('admin.accounts.customer-compliance', compact('customer'));
     }
 
@@ -466,12 +481,12 @@ class AccountController extends Controller
         $merchantsQuery = Merchant::with(['user', 'businessType', 'assigned', 'approval'])
             ->select('id', 'user_id', 'business_type_id', 'cr_number', 'status', 'assigned_to', 'created_at')
             ->when(
-                !($user->user_type === 'employee' && $user->is_manager) && $user->user_type !== 'admin',
-                fn($query) => $query->where('assigned_to', $user->id)
+                ! ($user->user_type === 'employee' && $user->is_manager) && $user->user_type !== 'admin',
+                fn ($query) => $query->where('assigned_to', $user->id)
             )
-            ->when(!$status, fn($q) => $q->where('status', '!=', 'blacklisted'))
-            ->when($status, fn($q) => $q->where('status', $status))
-            ->when($employee, fn($q) => $q->where('assigned_to', $employee))
+            ->when(! $status, fn ($q) => $q->where('status', '!=', 'blacklisted'))
+            ->when($status, fn ($q) => $q->where('status', $status))
+            ->when($employee, fn ($q) => $q->where('assigned_to', $employee))
             ->orderByDesc('id')
             ->orderByRaw('ISNULL(assigned_to) DESC');
 
@@ -501,12 +516,11 @@ class AccountController extends Controller
         return view('admin.accounts.suppliers', ['merchants' => $paginated]);
     }
 
-
     public function updateCommission(Request $request)
     {
         $request->validate([
             'user_id' => 'required|exists:users,id',
-            'commission' => 'required'
+            'commission' => 'required',
         ]);
 
         $approval = Approval::firstOrNew(['user_id' => $request->user_id]);
@@ -515,7 +529,6 @@ class AccountController extends Controller
 
         return response()->json(['success' => true]);
     }
-
 
     /**
      * Private function to filter merchants collection based on search input
@@ -556,6 +569,7 @@ class AccountController extends Controller
             ->with('user', 'businessType')
             ->firstOrFail();
         $supplierShop = ShopSetting::where('user_id', $id)->first();
+
         return view('admin.accounts.supplier-shop', compact('merchant', 'supplierShop'));
     }
 
@@ -601,7 +615,7 @@ class AccountController extends Controller
         $merchant = Merchant::where('user_id', $id)
             ->with('user', 'businessType')
             ->when(
-                !(
+                ! (
                     ($user->user_type === 'employee' && $user->is_manager) || $user->user_type === 'admin'
                 ),
                 function ($query) use ($user) {
@@ -610,7 +624,7 @@ class AccountController extends Controller
             )
             ->first();
 
-        if (!$merchant) {
+        if (! $merchant) {
             return redirect()->route('suppliers')->with('error', __('Supplier not found or not assigned to you.'));
         }
 
@@ -628,8 +642,8 @@ class AccountController extends Controller
 
         $stats = [
             'totalProducts' => Product::where('user_id', $merchant->user_id)->count(),
-            'totalOrders'   => Order::where('seller_id', $merchant->user_id)->count(),
-            'revenue'       => Payment::where('seller_id', $merchant->user_id)->sum('amount'),
+            'totalOrders' => Order::where('seller_id', $merchant->user_id)->count(),
+            'revenue' => Payment::where('seller_id', $merchant->user_id)->sum('amount'),
             'walletBalance' => Wallet::where('seller_id', $merchant->user_id)->sum('balance_after'),
         ];
 
@@ -656,10 +670,10 @@ class AccountController extends Controller
             ->get();
 
         return view('admin.accounts.supplier-profile', array_merge([
-            'merchant'         => $merchant,
+            'merchant' => $merchant,
             'businessCategory' => $businessCategory,
-            'sellerShop'       => $sellerShop,
-            'supplierBanks'    => $supplierBanks,
+            'sellerShop' => $sellerShop,
+            'supplierBanks' => $supplierBanks,
         ], $stats));
     }
 
@@ -682,6 +696,7 @@ class AccountController extends Controller
                 foreach ($items as $item) {
                     $carry += $item['quantity'] ?? 0;
                 }
+
                 return $carry;
             }, 0);
 
@@ -723,7 +738,9 @@ class AccountController extends Controller
 
         foreach ($transactions as $tx) {
             $order = $tx->order;
-            if (! $order) continue;
+            if (! $order) {
+                continue;
+            }
 
             $items = map_product_details($order->product_details);
             $subTotal = $items->sum('total');
@@ -746,7 +763,6 @@ class AccountController extends Controller
         // Commission percentage
         $totalCommissionPercentage = get_seller_commission($merchant->user_id);
         $totalCommission = round(($totalEntitlement * $totalCommissionPercentage) / 100, 2);
-
 
         $stockCount = Product::where('user_id', $merchant->user_id)
             ->sum('current_stock');
@@ -785,6 +801,7 @@ class AccountController extends Controller
         $merchant = Merchant::where('user_id', $id)->with('user')->firstOrFail();
         $contract = Approval::where('user_id', $id)->select('contract', 'contract_end_date', 'created_at')->first();
         $supplierBank = SupplierBank::where('user_id', $id)->select('iban_certificate')->first();
+
         return view('admin.accounts.supplier-compliance', compact('merchant', 'contract', 'supplierBank'));
     }
 
@@ -830,7 +847,7 @@ class AccountController extends Controller
                 $merchant->user->email,
                 'Account Approved',
                 [
-                    'name' => $merchant->user->first_name . " " . $merchant->user->last_name,
+                    'name' => $merchant->user->first_name.' '.$merchant->user->last_name,
                 ]
             );
 
@@ -968,7 +985,7 @@ class AccountController extends Controller
             'coupon_discount',
             'delivery_status',
             'general_status',
-            'created_at'
+            'created_at',
         ])
             ->where('seller_id', $id)
             ->with(['user', 'pickupPoint'])
@@ -988,16 +1005,16 @@ class AccountController extends Controller
             ->paginate(10);
 
         // CHANGED: reuse calculateTotalOrderAmount for each wallet's order
-        $summary = $paginator->getCollection()->map(fn($wallet) => [
-            'seller_name'     => trim($wallet->seller->first_name . ' ' . $wallet->seller->last_name),
+        $summary = $paginator->getCollection()->map(fn ($wallet) => [
+            'seller_name' => trim($wallet->seller->first_name.' '.$wallet->seller->last_name),
             'seller_business' => $wallet->seller->business_name,
-            'invoice_number'  => strtoupper($wallet->order->invoice_number ?? 'N/A'),
-            'payment_date'    => $wallet->updated_at->format(dateFormat()),
+            'invoice_number' => strtoupper($wallet->order->invoice_number ?? 'N/A'),
+            'payment_date' => $wallet->updated_at->format(dateFormat()),
             'payment_invoice' => $this->calculateTotalOrderAmountWithoutTax(collect([$wallet->order])),
-            'tax_number'      => optional($wallet->seller->merchant)->vat_register_number ?? 'N/A',
-            'amount_paid'     => $wallet->balance_after,
-            'tax_total'       => calculate_order_tax($wallet->order),
-            'total_bills'     => $this->calculateTotalOrderAmount(collect([$wallet->order])),
+            'tax_number' => optional($wallet->seller->merchant)->vat_register_number ?? 'N/A',
+            'amount_paid' => $wallet->balance_after,
+            'tax_total' => calculate_order_tax($wallet->order),
+            'total_bills' => $this->calculateTotalOrderAmount(collect([$wallet->order])),
         ]);
 
         return view('admin.accounts.supplier-payments', compact('merchant', 'summary', 'paginator'));
@@ -1012,21 +1029,21 @@ class AccountController extends Controller
         $orders = Order::where('seller_id', $id)->latest()->paginate(10);
 
         $orders->getCollection()->transform(function ($order) {
-            $items         = map_product_details($order->product_details);
-            $subTotal      = $items->sum('total');
-            $shipping      = $order->shipping_cost ?? 0;
-            $discount      = $order->coupon_discount ?? 0;
-            $tax           = calculate_order_tax($order);
+            $items = map_product_details($order->product_details);
+            $subTotal = $items->sum('total');
+            $shipping = $order->shipping_cost ?? 0;
+            $discount = $order->coupon_discount ?? 0;
+            $tax = calculate_order_tax($order);
 
-            $base          = $subTotal + $tax + $shipping - $discount;
+            $base = $subTotal + $tax + $shipping - $discount;
 
-            $commissionPct     = get_system_commission();
-            $commissionAmount  = $base * ($commissionPct / 100);
+            $commissionPct = get_system_commission();
+            $commissionAmount = $base * ($commissionPct / 100);
 
-            $commissionTaxPct  = get_commission_tax();
-            $commissionTaxAmt  = $commissionAmount * ($commissionTaxPct / 100);
+            $commissionTaxPct = get_commission_tax();
+            $commissionTaxAmt = $commissionAmount * ($commissionTaxPct / 100);
 
-            $totalAmount       = $base + $commissionAmount + $commissionTaxAmt;
+            $totalAmount = $base + $commissionAmount + $commissionTaxAmt;
 
             $supplierDue = Wallet::where('seller_id', $order->seller_id)
                 ->where('order_id', $order->id)
@@ -1037,18 +1054,18 @@ class AccountController extends Controller
 
             // Add calculated fields to order
             $order->calculated = [
-                'subTotal'         => $subTotal,
-                'shipping'         => $shipping,
-                'discount'         => $discount,
-                'tax'              => $tax,
-                'base'             => $base,
-                'commissionPct'    => $commissionPct,
+                'subTotal' => $subTotal,
+                'shipping' => $shipping,
+                'discount' => $discount,
+                'tax' => $tax,
+                'base' => $base,
+                'commissionPct' => $commissionPct,
                 'commissionAmount' => $commissionAmount,
                 'commissionTaxPct' => $commissionTaxPct,
                 'commissionTaxAmt' => $commissionTaxAmt,
-                'totalAmount'      => $totalAmount,
-                'supplierDue'      => $supplierDue,
-                'totalSuplierDue'  => $totalSuplierDue,
+                'totalAmount' => $totalAmount,
+                'supplierDue' => $supplierDue,
+                'totalSuplierDue' => $totalSuplierDue,
             ];
 
             return $order;
@@ -1076,11 +1093,11 @@ class AccountController extends Controller
 
         $issueDateStr = Arr::get($governmentData, 'issueDateGregorian');
 
-        $startDate    = $issueDateStr
+        $startDate = $issueDateStr
             ? Carbon::parse($issueDateStr)
             : $customer->created_at;
 
-        $businessAge  = $this->formatBusinessAge($startDate);
+        $businessAge = $this->formatBusinessAge($startDate);
 
         // 4) Placeholder credit score calculation
 
@@ -1099,22 +1116,22 @@ class AccountController extends Controller
         // 6) Score components breakdown (labels => percentages)
         //    TODO: Build this array from your scoring logic
         $scoreComponents = [
-            'POS Revenue'       => $creditScore['creditScore']['monthlyPOSScore'],
-            'Industry Risk'     => $creditScore['creditScore']['industryRiskScore'],
-            'Repayment'         => $creditScore['creditScore']['repaymentScore'],
-            'Business Age'      => $creditScore['creditScore']['businessAgeScore'],
-            'Obligations'       => $creditScore['creditScore']['obligationsScore'],
-            'Liquidity'         => $creditScore['creditScore']['liquidityScore'],
-            'Supplier Ratings'  => $creditScore['creditScore']['supplierScore'],
+            'POS Revenue' => $creditScore['creditScore']['monthlyPOSScore'],
+            'Industry Risk' => $creditScore['creditScore']['industryRiskScore'],
+            'Repayment' => $creditScore['creditScore']['repaymentScore'],
+            'Business Age' => $creditScore['creditScore']['businessAgeScore'],
+            'Obligations' => $creditScore['creditScore']['obligationsScore'],
+            'Liquidity' => $creditScore['creditScore']['liquidityScore'],
+            'Supplier Ratings' => $creditScore['creditScore']['supplierScore'],
         ];
 
         // 7) Payment history timeline (e.g., payments per month)
         //    TODO: Build real data series and categories
-        $monthlyData = Wallet::selectRaw("MONTH(created_at) as month, SUM(amount) as total")
+        $monthlyData = Wallet::selectRaw('MONTH(created_at) as month, SUM(amount) as total')
             ->where('user_id', $customer->user_id)
             ->where('transaction_type', 'user_repayment')
             ->whereYear('created_at', now()->year)
-            ->groupByRaw("MONTH(created_at)")
+            ->groupByRaw('MONTH(created_at)')
             ->pluck('total', 'month');
 
         // Prepare full 12 months even if no data
@@ -1127,9 +1144,8 @@ class AccountController extends Controller
 
         $paymentTimeline = [
             'categories' => $months,
-            'data'       => $data,
+            'data' => $data,
         ];
-
 
         // 8) Flagged risk factors
         //    Each item: ['label' => '', 'value' => '', 'class' => 'text-red-600' etc.]
@@ -1144,29 +1160,29 @@ class AccountController extends Controller
         //    Each item: ['name' => '', 'status' => '', 'badge' => 'badge-success' etc.]
         //    TODO: Fetch real flags from your KYC/SIMAH/CR services
         $statusBadgeMap = [
-            'approved'     => 'badge-success',
-            'pending'      => 'badge-warning',
-            'suspended'    => 'badge-neutral',
-            'blacklisted'  => 'badge-danger',
+            'approved' => 'badge-success',
+            'pending' => 'badge-warning',
+            'suspended' => 'badge-neutral',
+            'blacklisted' => 'badge-danger',
         ];
 
         $crValidation = $governmentData['status']['id'] ?? null;
         $crValidationName = $governmentData['status']['name'] ?? 'Unknown';
         $complianceStatus = [
             [
-                'name'   => 'KYC Verification',
+                'name' => 'KYC Verification',
                 'status' => ucfirst($customer->status),
-                'badge'  => 'badge-sm badge-outline ' . ($statusBadgeMap[$customer->status] ?? 'badge-secondary')
+                'badge' => 'badge-sm badge-outline '.($statusBadgeMap[$customer->status] ?? 'badge-secondary'),
             ],
             [
-                'name'   => 'SIMAH Integration',
+                'name' => 'SIMAH Integration',
                 'status' => 'Pending',
-                'badge'  => 'badge-sm badge-outline badge-warning'
+                'badge' => 'badge-sm badge-outline badge-warning',
             ],
             [
-                'name'   => 'CR Validation',
+                'name' => 'CR Validation',
                 'status' => $crValidationName,
-                'badge'  => 'badge-sm badge-outline ' . ($crValidation ? 'badge-success' : 'badge-danger')
+                'badge' => 'badge-sm badge-outline '.($crValidation ? 'badge-success' : 'badge-danger'),
             ],
         ];
 
@@ -1190,23 +1206,24 @@ class AccountController extends Controller
 
         if ($interval->y > 0) {
             $decimal = round($interval->y + ($interval->m / 12), 1);
-            return $decimal . ' Year';
+
+            return $decimal.' Year';
         }
 
         if ($interval->m > 0) {
-            return $interval->m . ' Month';
+            return $interval->m.' Month';
         }
 
-        return $interval->d . ' Days';
+        return $interval->d.' Days';
     }
 
     private function calculateBase(Order $order): float
     {
-        $items    = map_product_details($order->product_details);
+        $items = map_product_details($order->product_details);
         $subTotal = $items->sum('total');
-        $shipping = $order->shipping_cost   ?? 0;
+        $shipping = $order->shipping_cost ?? 0;
         $discount = $order->coupon_discount ?? 0;
-        $tax      = calculate_order_tax($order);
+        $tax = calculate_order_tax($order);
 
         return $subTotal + $tax + $shipping - $discount;
     }
@@ -1230,7 +1247,7 @@ class AccountController extends Controller
         $businessAge = 0;
         if ($customer) {
             $issueDateStr = Arr::get(is_array($customer->goverment_data) ? $customer->goverment_data : json_decode($customer->goverment_data, true), 'issueDateGregorian');
-            $startDate    = $issueDateStr ? Carbon::parse($issueDateStr) : $customer->created_at;
+            $startDate = $issueDateStr ? Carbon::parse($issueDateStr) : $customer->created_at;
             $interval = $startDate->diffAsCarbonInterval(Carbon::now());
             $businessAge = $interval->y + ($interval->m / 12) + ($interval->d / 365);
         }
@@ -1253,12 +1270,12 @@ class AccountController extends Controller
 
         // 4) Existing Financial Obligations (weight 10%)
         // Placeholder: Assume $existingDebt in local variable, for now set to 0 (no debt)
-        $totalPurchases   = Order::where('user_id', $customer->user_id)->where('delivery_status', 'delivered')
+        $totalPurchases = Order::where('user_id', $customer->user_id)->where('delivery_status', 'delivered')
             ->get()
             ->reduce(function ($carry, $order) {
                 return $carry + $this->calculateBase($order);
             }, 0.0);
-        $totalPayments    = Wallet::where('transaction_type', 'user_repayment')->sum('amount');
+        $totalPayments = Wallet::where('transaction_type', 'user_repayment')->sum('amount');
 
         $existingDebt = $totalPurchases - $totalPayments;
         // Formula: 10 - min(Monthly Revenue / Existing Debt, 10), if debt=0, max score 10
@@ -1278,7 +1295,6 @@ class AccountController extends Controller
         } else {
             $repaymentScore = 5;
         }
-
 
         // 6) Bank Balance & Liquidity Trend (weight 10%)
         // Placeholder: Assume positive trend, flat, or negative

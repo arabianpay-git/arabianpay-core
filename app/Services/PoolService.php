@@ -2,8 +2,8 @@
 
 namespace App\Services;
 
-use App\Models\InvestmentPool;
 use App\Models\Checkout;
+use App\Models\InvestmentPool;
 use Carbon\Carbon;
 
 class PoolService
@@ -15,7 +15,7 @@ class PoolService
     {
         // Check if pool already exists for this month
         $existingPool = InvestmentPool::byMonth($year, $month)->first();
-        
+
         if ($existingPool) {
             return $existingPool;
         }
@@ -34,13 +34,13 @@ class PoolService
 
         // Get or create pool for this month
         $pool = $this->createMonthlyPool($year, $month);
-        
+
         // Assign checkout to pool
         $checkout->update(['pool_id' => $pool->id]);
-        
+
         // Update pool metrics
         $pool->updateMetrics();
-        
+
         return $pool;
     }
 
@@ -118,7 +118,7 @@ class PoolService
         $totalPools = $pools->count();
         $highRiskPools = $pools->where('collection_rate', '<', 80)->count();
         $mediumRiskPools = $pools->where('collection_rate', '>=', 80)
-                                 ->where('collection_rate', '<', 90)->count();
+            ->where('collection_rate', '<', 90)->count();
         $lowRiskPools = $pools->where('collection_rate', '>=', 90)->count();
 
         return [
@@ -129,7 +129,7 @@ class PoolService
                 'high' => $totalPools > 0 ? ($highRiskPools / $totalPools) * 100 : 0,
                 'medium' => $totalPools > 0 ? ($mediumRiskPools / $totalPools) * 100 : 0,
                 'low' => $totalPools > 0 ? ($lowRiskPools / $totalPools) * 100 : 0,
-            ]
+            ],
         ];
     }
 

@@ -79,7 +79,7 @@ class ReportController extends Controller
 
         $placeId = $searchResponse['candidates'][0]['place_id'] ?? null;
 
-        if (!$placeId) {
+        if (! $placeId) {
             return back()->with('error', 'Business not found.');
         }
 
@@ -98,18 +98,11 @@ class ReportController extends Controller
         ]);
     }
 
-
-
-
-
-
-
-
-
     public function portfolioPerformanceReport(Request $request, PortfolioPerformanceService $service)
     {
         $filters = $request->only(['from', 'to', 'merchant_id']);
         $reports = $service->getReport($filters);
+
         return view('admin.reports.portfolio_performance_report', compact('reports'));
     }
 
@@ -125,11 +118,11 @@ class ReportController extends Controller
         ]);
 
         if ($request->filled('from')) {
-            $query->whereHas('user', fn($q) => $q->whereDate('created_at', '>=', $request->from));
+            $query->whereHas('user', fn ($q) => $q->whereDate('created_at', '>=', $request->from));
         }
 
         if ($request->filled('to')) {
-            $query->whereHas('user', fn($q) => $q->whereDate('created_at', '<=', $request->to));
+            $query->whereHas('user', fn ($q) => $q->whereDate('created_at', '<=', $request->to));
         }
 
         if ($request->filled('customer_id')) {
@@ -224,11 +217,11 @@ class ReportController extends Controller
         ]);
 
         if ($request->filled('from')) {
-            $query->whereHas('user', fn($q) => $q->whereDate('created_at', '>=', $request->from));
+            $query->whereHas('user', fn ($q) => $q->whereDate('created_at', '>=', $request->from));
         }
 
         if ($request->filled('to')) {
-            $query->whereHas('user', fn($q) => $q->whereDate('created_at', '<=', $request->to));
+            $query->whereHas('user', fn ($q) => $q->whereDate('created_at', '<=', $request->to));
         }
 
         if ($request->filled('merchant_id')) {
@@ -246,7 +239,7 @@ class ReportController extends Controller
 
             // Calculate total order volume
             $totalOrderAmount = $merchantOrders->sum(function ($order) {
-                if (!$order->product_details) {
+                if (! $order->product_details) {
                     return 0;
                 }
 
@@ -273,15 +266,15 @@ class ReportController extends Controller
                 ? round(($disputeCount / $merchantOrders->count()) * 100, 2)
                 : 0;
 
-            return (object)[
-                'id'                    => $merchant->id,
-                'user'                  => $merchant->user,
-                'order_volume'          => round($totalOrderAmount, 2),
-                'fulfillment_count'     => $fulfilledCount,
+            return (object) [
+                'id' => $merchant->id,
+                'user' => $merchant->user,
+                'order_volume' => round($totalOrderAmount, 2),
+                'fulfillment_count' => $fulfilledCount,
                 'fulfillment_percentage' => $fulfilledPercentage,
-                'total_payouts'         => round($totalPayouts, 2),
-                'dispute_count'         => $disputeCount,
-                'dispute_percentage'    => $disputePercentage,
+                'total_payouts' => round($totalPayouts, 2),
+                'dispute_count' => $disputeCount,
+                'dispute_percentage' => $disputePercentage,
             ];
         });
 
@@ -336,7 +329,6 @@ class ReportController extends Controller
         ]);
     }
 
-
     public function riskExposureAnalysis(Request $request)
     {
         $dateRange = $request->input('date_range', '12M');
@@ -362,25 +354,24 @@ class ReportController extends Controller
         ];
     }
 
-
     public function amlActivityReport(Request $request)
     {
         $allActivities = collect([
-            (object)[
+            (object) [
                 'alert_id' => 'ALERT001',
                 'type' => 'Transaction Monitoring',
                 'screening_status' => 'Flagged',
                 'sar_status' => 'Submitted',
                 'submission_date' => now()->subDays(3)->toDateString(),
             ],
-            (object)[
+            (object) [
                 'alert_id' => 'ALERT002',
                 'type' => 'Customer Screening',
                 'screening_status' => 'Reviewed',
                 'sar_status' => 'Pending',
                 'submission_date' => now()->subDays(10)->toDateString(),
             ],
-            (object)[
+            (object) [
                 'alert_id' => 'ALERT003',
                 'type' => 'Sanctions Check',
                 'screening_status' => 'Cleared',
@@ -388,14 +379,14 @@ class ReportController extends Controller
                 'submission_date' => now()->subDays(15)->toDateString(),
             ],
             // You can add more dummy records here to test pagination
-            (object)[
+            (object) [
                 'alert_id' => 'ALERT004',
                 'type' => 'Transaction Monitoring',
                 'screening_status' => 'Flagged',
                 'sar_status' => 'Pending',
                 'submission_date' => now()->subDays(5)->toDateString(),
             ],
-            (object)[
+            (object) [
                 'alert_id' => 'ALERT005',
                 'type' => 'Customer Screening',
                 'screening_status' => 'Flagged',
@@ -429,21 +420,21 @@ class ReportController extends Controller
     {
         // Create dummy collection data
         $data = collect([
-            (object)[
+            (object) [
                 'collector_id' => 'COLL001',
                 'recovery_rate' => 85.45,
                 'merchant_list' => ['Merchant A', 'Merchant B', 'Merchant C'],
                 'amount_recovered' => 150000.75,
                 'promises_kept' => 12,
             ],
-            (object)[
+            (object) [
                 'collector_id' => 'COLL002',
                 'recovery_rate' => 78.32,
                 'merchant_list' => ['Merchant D', 'Merchant E'],
                 'amount_recovered' => 98000.50,
                 'promises_kept' => 9,
             ],
-            (object)[
+            (object) [
                 'collector_id' => 'COLL003',
                 'recovery_rate' => 92.15,
                 'merchant_list' => ['Merchant F'],
@@ -481,8 +472,8 @@ class ReportController extends Controller
         })->reverse();
 
         $funnelData = $months->map(function ($month) {
-            $start = Carbon::parse($month . '-01')->startOfMonth();
-            $end = Carbon::parse($month . '-01')->endOfMonth();
+            $start = Carbon::parse($month.'-01')->startOfMonth();
+            $end = Carbon::parse($month.'-01')->endOfMonth();
 
             $applications_submitted = Merchant::whereBetween('created_at', [$start, $end])->count();
             $verified = Merchant::whereBetween('created_at', [$start, $end])->whereIn('status', [
@@ -521,7 +512,7 @@ class ReportController extends Controller
         }
 
         return view('admin.reports.onboarding_funnel_report', [
-            'funnelData' => $funnelData->values()->all()  // <<< Make sure it's a plain array here
+            'funnelData' => $funnelData->values()->all(),  // <<< Make sure it's a plain array here
         ]);
     }
 
@@ -577,7 +568,7 @@ class ReportController extends Controller
 
         // Map merchant files
         $merchantFiles = $merchants->map(function ($merchant) {
-            $userName = trim(($merchant->user->first_name ?? '') . ' ' . ($merchant->user->last_name ?? '')) ?: 'Unnamed Merchant';
+            $userName = trim(($merchant->user->first_name ?? '').' '.($merchant->user->last_name ?? '')) ?: 'Unnamed Merchant';
 
             return [
                 'name' => $userName,
@@ -598,7 +589,7 @@ class ReportController extends Controller
 
         // Map customer files
         $customerFiles = $customers->map(function ($customer) {
-            $userName = trim(($customer->user->first_name ?? '') . ' ' . ($customer->user->last_name ?? '')) ?: 'Unnamed Customer';
+            $userName = trim(($customer->user->first_name ?? '').' '.($customer->user->last_name ?? '')) ?: 'Unnamed Customer';
 
             return [
                 'name' => $userName,
@@ -668,6 +659,7 @@ class ReportController extends Controller
             ->appends(['search' => $search, 'order' => $order]);
 
         $departments = Department::select('name', 'id')->get();
+
         return view('admin.reports.system_activity_audit_report', compact('logs', 'departments'));
     }
 
@@ -769,7 +761,7 @@ class ReportController extends Controller
             $dpd = $today->diffInDays($instalment->due_date, false);
 
             if ($dpd > 0) {
-                if (!isset($delinquencyData[$merchantId])) {
+                if (! isset($delinquencyData[$merchantId])) {
                     $delinquencyData[$merchantId] = [
                         'dpd_1_15' => 0,
                         'dpd_16_30' => 0,
@@ -835,11 +827,11 @@ class ReportController extends Controller
                 $productId = $prod['product_id'] ?? null;
                 $quantity = $prod['quantity'] ?? 0;
 
-                if (!$productId) {
+                if (! $productId) {
                     continue;
                 }
 
-                if (!isset($productSales[$productId])) {
+                if (! isset($productSales[$productId])) {
                     $productSales[$productId] = [
                         'sales_volume' => 0,
                         'total_days_to_sell' => 0,
@@ -877,7 +869,9 @@ class ReportController extends Controller
 
             foreach ($products as $prod) {
                 $productId = $prod['product_id'] ?? null;
-                if (!$productId) continue;
+                if (! $productId) {
+                    continue;
+                }
 
                 $returnCounts[$productId] = ($returnCounts[$productId] ?? 0) + 1;
             }
@@ -957,7 +951,7 @@ class ReportController extends Controller
 
             $feedbackScore = $ticket->feedback_score ?? '-';
 
-            return (object)[
+            return (object) [
                 'user_id' => $ticket->user_id,
                 'first_name' => optional($ticket->user)->first_name,
                 'last_name' => optional($ticket->user)->last_name,
@@ -970,7 +964,6 @@ class ReportController extends Controller
                 'status' => $ticket->status,
             ];
         });
-
 
         // For filter dropdowns: users (ticket creators) and merchants (assigned_to)
         $users = User::select('id', 'first_name', 'last_name')->get();
@@ -985,21 +978,21 @@ class ReportController extends Controller
     public function campaignEffectivenessReport()
     {
         $campaigns = collect([
-            (object)[
+            (object) [
                 'campaign_id' => 'CMP-1001',
                 'target_segment' => 'New Merchants',
                 'offers_accepted_percentage' => 65.2,
                 'incremental_orders_percentage' => 20.5,
                 'roi' => 140.8,
             ],
-            (object)[
+            (object) [
                 'campaign_id' => 'CMP-1002',
                 'target_segment' => 'Top Performers',
                 'offers_accepted_percentage' => 82.3,
                 'incremental_orders_percentage' => 34.1,
                 'roi' => 185.4,
             ],
-            (object)[
+            (object) [
                 'campaign_id' => 'CMP-1003',
                 'target_segment' => 'Low Volume Sellers',
                 'offers_accepted_percentage' => 41.6,

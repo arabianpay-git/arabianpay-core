@@ -2,16 +2,18 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\RequestException;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Cache;
-use Illuminate\Http\Client\RequestException;
 
 class SimahService
 {
     protected string $baseUrl;
+
     protected string $username;
+
     protected string $password;
 
     // HTTP timeout in seconds
@@ -19,10 +21,12 @@ class SimahService
 
     // Retry attempts and interval in ms
     protected int $retryAttempts;
+
     protected int $retryInterval;
 
     // Cache key for token
     protected string $cacheKey = 'simah_token';
+
     protected int $cacheTtl; // seconds
 
     public function __construct()
@@ -47,7 +51,7 @@ class SimahService
      */
     protected function authenticate(): string
     {
-        $url = $this->baseUrl . '/api/v1/Identity/login';
+        $url = $this->baseUrl.'/api/v1/Identity/login';
         $start = microtime(true);
 
         $response = Http::timeout($this->timeout)
@@ -57,12 +61,12 @@ class SimahService
                 'password' => $this->password,
             ]);
 
-        Log::info('Simah login request time: ' . round(microtime(true) - $start, 2) . ' seconds');
+        Log::info('Simah login request time: '.round(microtime(true) - $start, 2).' seconds');
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Simah authentication failed', [
                 'status' => $response->status(),
-                'body' => $response->body()
+                'body' => $response->body(),
             ]);
             throw new RequestException($response);
         }
@@ -109,9 +113,9 @@ class SimahService
                 'connect_timeout' => 10, // 10 seconds to connect
             ])
             ->retry($this->retryAttempts, $this->retryInterval)
-            ->post($this->baseUrl . '/api/v1/enquiry/commercial/silver/report', $body);
+            ->post($this->baseUrl.'/api/v1/enquiry/commercial/silver/report', $body);
 
-        Log::info('Simah getSilverReport request time: ' . round(microtime(true) - $start, 2) . ' seconds');
+        Log::info('Simah getSilverReport request time: '.round(microtime(true) - $start, 2).' seconds');
 
         // Retry once if token expired
         if ($response->status() === 401) {
@@ -122,13 +126,13 @@ class SimahService
                     'timeout' => 60,
                     'connect_timeout' => 10,
                 ])
-                ->post($this->baseUrl . '/api/v1/enquiry/commercial/silver/report', $body);
+                ->post($this->baseUrl.'/api/v1/enquiry/commercial/silver/report', $body);
         }
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Simah getSilverReport failed', [
                 'status' => $response->status(),
-                'body' => $response->body()
+                'body' => $response->body(),
             ]);
             throw new RequestException($response);
         }
@@ -219,9 +223,9 @@ class SimahService
                 'connect_timeout' => 10,
             ])
             ->retry($this->retryAttempts, $this->retryInterval)
-            ->post($this->baseUrl . '/api/v2/enquiry/consumer/score', $body);
+            ->post($this->baseUrl.'/api/v2/enquiry/consumer/score', $body);
 
-        Log::info('Simah consumerScore request time: ' . round(microtime(true) - $start, 2) . ' seconds');
+        Log::info('Simah consumerScore request time: '.round(microtime(true) - $start, 2).' seconds');
 
         // Retry once if token expired (401)
         if ($response->status() === 401) {
@@ -237,13 +241,13 @@ class SimahService
                     'timeout' => 60,
                     'connect_timeout' => 10,
                 ])
-                ->post($this->baseUrl . '/api/v2/enquiry/consumer/score', $body);
+                ->post($this->baseUrl.'/api/v2/enquiry/consumer/score', $body);
         }
 
-        if (!$response->successful()) {
+        if (! $response->successful()) {
             Log::error('Simah consumerScore failed', [
                 'status' => $response->status(),
-                'body' => $response->body()
+                'body' => $response->body(),
             ]);
             throw new RequestException($response);
         }

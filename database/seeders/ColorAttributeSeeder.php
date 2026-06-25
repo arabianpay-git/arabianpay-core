@@ -15,8 +15,9 @@ class ColorAttributeSeeder extends Seeder
     {
         $colorAttribute = Attribute::whereEncrypted('name', 'Color')->first();
 
-        if (!$colorAttribute) {
+        if (! $colorAttribute) {
             $this->command->error('Color attribute not found.');
+
             return;
         }
 
@@ -140,6 +141,7 @@ class ColorAttributeSeeder extends Seeder
 
             if ($exists) {
                 $this->command->info("Skipped duplicate color: {$color['value']}");
+
                 continue;
             }
 
@@ -155,7 +157,7 @@ class ColorAttributeSeeder extends Seeder
                 ->whereEncrypted('value', $color['ar'])
                 ->exists();
 
-            if (!$translationExists) {
+            if (! $translationExists) {
                 $attributeValue->translations()->create([
                     'locale' => 'ar',
                     'value' => $color['ar'],

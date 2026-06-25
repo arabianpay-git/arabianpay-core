@@ -2,13 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\UpdateCategoryRequest;
 use App\Models\Category;
 use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
-use Illuminate\Support\Str;
 
 class CategoryController extends Controller
 {
@@ -59,6 +57,7 @@ class CategoryController extends Controller
         // Filter for encrypted fields or any other field
         $categories = $categories->filter(function ($category) use ($query) {
             $q = strtolower($query);
+
             return str_contains(strtolower($category->name), $q)
                 || str_contains(strtolower($category->parent?->name ?? ''), $q);
         });
@@ -105,6 +104,7 @@ class CategoryController extends Controller
         );
 
         $categories = Category::all();
+
         return view('admin.categories.create', compact('categories'));
     }
 
@@ -131,7 +131,7 @@ class CategoryController extends Controller
                 'featured' => $request->boolean('featured'),
                 'meta_title' => $request->meta_title,
                 'meta_description' => $request->meta_description,
-                'unit' => collect($request->unit)->flatMap(fn($item) => explode(',', $item))->map('trim')->filter()->values(),
+                'unit' => collect($request->unit)->flatMap(fn ($item) => explode(',', $item))->map('trim')->filter()->values(),
             ]);
 
             $this->storeOrUpdateTranslation($category, $request);
@@ -170,7 +170,7 @@ class CategoryController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -193,24 +193,12 @@ class CategoryController extends Controller
         ]);
 
         $categories = Category::where('id', '!=', $category->id)->get();
+
         return view('admin.categories.edit', compact('category', 'categories'));
     }
 
-    public function update(Request $request, Category $category)
+    public function update(UpdateCategoryRequest $request, Category $category)
     {
-        $request->validate([
-            'name.en' => [
-                'required',
-                'string',
-                'max:255',
-                Rule::unique('categories', 'name')->ignore($category->id),
-            ],
-            'meta_title.en' => ['nullable', 'string', 'max:255'],
-            'meta_description.en' => ['nullable', 'string', 'max:1000'],
-            'unit' => ['nullable', 'array'],
-            'order_level' => ['required', 'numeric'],
-            'parent_id' => ['nullable', 'exists:categories,id'],
-        ]);
 
         DB::beginTransaction();
 
@@ -228,7 +216,7 @@ class CategoryController extends Controller
                 'featured' => $request->boolean('featured'),
                 'meta_title' => $request->meta_title['en'],
                 'meta_description' => $request->meta_description['en'],
-                'unit' => collect($request->unit)->flatMap(fn($item) => explode(',', $item))->map('trim')->filter()->values(),
+                'unit' => collect($request->unit)->flatMap(fn ($item) => explode(',', $item))->map('trim')->filter()->values(),
             ]);
 
             $this->storeOrUpdateTranslation($category, $request);
@@ -254,13 +242,13 @@ class CategoryController extends Controller
                 $changes[] = "featured status: {$oldStatus} to {$newStatus}";
             }
             if ($oldData['meta_title'] !== $category->meta_title) {
-                $changes[] = "meta title updated";
+                $changes[] = 'meta title updated';
             }
             if ($oldData['meta_description'] !== $category->meta_description) {
-                $changes[] = "meta description updated";
+                $changes[] = 'meta description updated';
             }
 
-            $changeSummary = !empty($changes) ? ' (' . implode(', ', $changes) . ')' : '';
+            $changeSummary = ! empty($changes) ? ' ('.implode(', ', $changes).')' : '';
 
             // Log category update with justification
             $justificationData = $this->auditTrailService->withJustification(
@@ -297,7 +285,7 @@ class CategoryController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -348,7 +336,7 @@ class CategoryController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -375,7 +363,7 @@ class CategoryController extends Controller
 
                 $this->auditTrailService->log([
                     'event_category' => 'localization',
-                    'event_type' => 'category_translation_' . $action,
+                    'event_type' => 'category_translation_'.$action,
                     'entity_type' => 'Category',
                     'entity_id' => $category->id,
                     'action_summary' => "{$action} Arabic translation for category '{$category->name}'",
@@ -423,7 +411,7 @@ class CategoryController extends Controller
     {
         $category = Category::find($id);
 
-        if (!$category) {
+        if (! $category) {
             return response()->json(['units' => []]);
         }
 

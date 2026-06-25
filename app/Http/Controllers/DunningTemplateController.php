@@ -5,8 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\DunningTemplate;
 use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class DunningTemplateController extends Controller
 {
@@ -51,7 +51,7 @@ class DunningTemplateController extends Controller
                     'filters_applied' => $filters,
                     'total_templates' => $items->total(),
                     'current_page' => $items->currentPage(),
-                    'per_page' => $items->perPage()
+                    'per_page' => $items->perPage(),
                 ]
             );
 
@@ -59,7 +59,7 @@ class DunningTemplateController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to load dunning templates list', [
                 'error' => $e->getMessage(),
-                'filters' => $request->all()
+                'filters' => $request->all(),
             ]);
 
             $this->auditTrailService->log([
@@ -69,8 +69,8 @@ class DunningTemplateController extends Controller
                 'action_summary' => 'Failed to load dunning template list',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'filters' => $request->all()
-                ]
+                    'filters' => $request->all(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load templates. Please try again.');
@@ -82,7 +82,7 @@ class DunningTemplateController extends Controller
         try {
             $dunning = DunningTemplate::find($id);
 
-            if (!$dunning) {
+            if (! $dunning) {
                 // Log failed lookup attempt
                 $this->auditTrailService->log([
                     'event_category' => 'data_access',
@@ -92,13 +92,13 @@ class DunningTemplateController extends Controller
                     'action_summary' => 'Attempted to view non-existent dunning template',
                     'properties' => [
                         'requested_id' => $id,
-                        'http_method' => 'GET'
-                    ]
+                        'http_method' => 'GET',
+                    ],
                 ]);
 
                 return response()->json([
                     'success' => false,
-                    'message' => 'Template not found'
+                    'message' => 'Template not found',
                 ], 404);
             }
 
@@ -119,18 +119,18 @@ class DunningTemplateController extends Controller
                     'template_name' => $dunning->name,
                     'dpd_bucket' => $dunning->dpd_bucket,
                     'type' => $dunning->type,
-                    'language' => $dunning->language
-                ]
+                    'language' => $dunning->language,
+                ],
             ], $justificationData));
 
             return response()->json([
                 'success' => true,
-                'data' => $dunning
+                'data' => $dunning,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to retrieve dunning template', [
                 'error' => $e->getMessage(),
-                'template_id' => $id
+                'template_id' => $id,
             ]);
 
             $this->auditTrailService->log([
@@ -141,13 +141,13 @@ class DunningTemplateController extends Controller
                 'action_summary' => 'Failed to retrieve dunning template',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'template_id' => $id
-                ]
+                    'template_id' => $id,
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to retrieve template'
+                'message' => 'Failed to retrieve template',
             ], 500);
         }
     }
@@ -174,12 +174,12 @@ class DunningTemplateController extends Controller
                     'properties' => [
                         'validation_errors' => $validator->errors()->toArray(),
                         'input_data' => $request->except('message'), // Exclude full message from logs
-                        'message_length' => strlen($request->input('message', ''))
-                    ]
+                        'message_length' => strlen($request->input('message', '')),
+                    ],
                 ]);
 
                 return response()->json([
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -194,7 +194,7 @@ class DunningTemplateController extends Controller
 
             $this->auditTrailService->logCreated(
                 $template,
-                'Created new dunning template for ' . $request->dpd_bucket . ' DPD bucket',
+                'Created new dunning template for '.$request->dpd_bucket.' DPD bucket',
                 array_merge([
                     'event_category' => 'crud_operations',
                     'event_type' => 'template_created',
@@ -205,12 +205,12 @@ class DunningTemplateController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $template,
-                'message' => 'Dunning template created successfully'
+                'message' => 'Dunning template created successfully',
             ], 201);
         } catch (\Exception $e) {
             Log::error('Failed to create dunning template', [
                 'error' => $e->getMessage(),
-                'input' => $request->except('message') // Exclude sensitive message content
+                'input' => $request->except('message'), // Exclude sensitive message content
             ]);
 
             $this->auditTrailService->log([
@@ -221,13 +221,13 @@ class DunningTemplateController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'template_name' => $request->input('name'),
-                    'dpd_bucket' => $request->input('dpd_bucket')
-                ]
+                    'dpd_bucket' => $request->input('dpd_bucket'),
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to create template. Please try again.'
+                'message' => 'Failed to create template. Please try again.',
             ], 500);
         }
     }
@@ -241,7 +241,7 @@ class DunningTemplateController extends Controller
             $beforeState = $template->toArray();
 
             $validator = Validator::make($request->all(), [
-                'name' => 'required|string|max:255|unique:dunning_templates,name,' . $id,
+                'name' => 'required|string|max:255|unique:dunning_templates,name,'.$id,
                 'dpd_bucket' => 'required|string|max:20',
                 'type' => 'required|string|max:50',
                 'language' => 'required|string|max:10',
@@ -260,12 +260,12 @@ class DunningTemplateController extends Controller
                     'properties' => [
                         'validation_errors' => $validator->errors()->toArray(),
                         'template_id' => $id,
-                        'current_name' => $template->name
-                    ]
+                        'current_name' => $template->name,
+                    ],
                 ]);
 
                 return response()->json([
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -281,7 +281,7 @@ class DunningTemplateController extends Controller
             $this->auditTrailService->logUpdated(
                 $template,
                 $beforeState,
-                'Updated dunning template: ' . $template->name,
+                'Updated dunning template: '.$template->name,
                 array_merge([
                     'event_category' => 'crud_operations',
                     'event_type' => 'template_updated',
@@ -289,21 +289,21 @@ class DunningTemplateController extends Controller
                     'properties' => [
                         'changed_fields' => $this->getChangedFields($beforeState, $template->toArray()),
                         'old_dpd_bucket' => $beforeState['dpd_bucket'] ?? null,
-                        'new_dpd_bucket' => $template->dpd_bucket
-                    ]
+                        'new_dpd_bucket' => $template->dpd_bucket,
+                    ],
                 ], $justificationData)
             );
 
             return response()->json([
                 'success' => true,
                 'data' => $template,
-                'message' => 'Dunning template updated successfully'
+                'message' => 'Dunning template updated successfully',
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to update dunning template', [
                 'error' => $e->getMessage(),
                 'template_id' => $id,
-                'input' => $request->except('message')
+                'input' => $request->except('message'),
             ]);
 
             $this->auditTrailService->log([
@@ -315,13 +315,13 @@ class DunningTemplateController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'template_id' => $id,
-                    'template_name' => $request->input('name', 'Unknown')
-                ]
+                    'template_name' => $request->input('name', 'Unknown'),
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to update template. Please try again.'
+                'message' => 'Failed to update template. Please try again.',
             ], 500);
         }
     }
@@ -345,7 +345,7 @@ class DunningTemplateController extends Controller
 
             $this->auditTrailService->logDeleted(
                 $template,
-                'Deleted dunning template: ' . $template->name,
+                'Deleted dunning template: '.$template->name,
                 array_merge([
                     'event_category' => 'crud_operations',
                     'event_type' => 'template_deleted',
@@ -354,19 +354,19 @@ class DunningTemplateController extends Controller
                         'template_name' => $beforeState['name'] ?? null,
                         'dpd_bucket' => $beforeState['dpd_bucket'] ?? null,
                         'type' => $beforeState['type'] ?? null,
-                        'language' => $beforeState['language'] ?? null
-                    ]
+                        'language' => $beforeState['language'] ?? null,
+                    ],
                 ], $justificationData)
             );
 
             return response()->json([
                 'success' => true,
-                'message' => 'Dunning template deleted successfully'
+                'message' => 'Dunning template deleted successfully',
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to delete dunning template', [
                 'error' => $e->getMessage(),
-                'template_id' => $id
+                'template_id' => $id,
             ]);
 
             $this->auditTrailService->log([
@@ -377,23 +377,19 @@ class DunningTemplateController extends Controller
                 'action_summary' => 'Failed to delete dunning template',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'template_id' => $id
-                ]
+                    'template_id' => $id,
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to delete template. Please try again.'
+                'message' => 'Failed to delete template. Please try again.',
             ], 500);
         }
     }
 
     /**
      * Helper method to identify changed fields for audit logs
-     *
-     * @param array $beforeState
-     * @param array $afterState
-     * @return array
      */
     private function getChangedFields(array $beforeState, array $afterState): array
     {
@@ -403,17 +399,17 @@ class DunningTemplateController extends Controller
             if (isset($afterState[$key]) && $afterState[$key] != $value) {
                 $changed[$key] = [
                     'old' => $value,
-                    'new' => $afterState[$key]
+                    'new' => $afterState[$key],
                 ];
             }
         }
 
         // Check for new fields that weren't in before state
         foreach ($afterState as $key => $value) {
-            if (!isset($beforeState[$key])) {
+            if (! isset($beforeState[$key])) {
                 $changed[$key] = [
                     'old' => null,
-                    'new' => $value
+                    'new' => $value,
                 ];
             }
         }

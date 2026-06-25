@@ -12,7 +12,9 @@ class Media extends Model
     use LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'media';
 
     protected $fillable = [
@@ -23,7 +25,7 @@ class Media extends Model
         'size',
         'disk',
         'folder',
-        'custom_properties'
+        'custom_properties',
     ];
 
     protected $casts = [

@@ -5,10 +5,8 @@ namespace App\Http\Controllers;
 use App\Models\BusinessType;
 use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
-use Illuminate\Support\Str;
 
 class BusinessTypeController extends Controller
 {
@@ -34,6 +32,7 @@ class BusinessTypeController extends Controller
         );
 
         $businessTypes = BusinessType::with(['businessCategories'])->select('business_types.*')->orderBy('id', 'desc')->paginate(10);
+
         return view('admin.business_types.index', compact('businessTypes'));
     }
 
@@ -103,7 +102,7 @@ class BusinessTypeController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -176,7 +175,7 @@ class BusinessTypeController extends Controller
                 $changes[] = "featured status: {$oldStatus} to {$newStatus}";
             }
 
-            $changeSummary = !empty($changes) ? ' (' . implode(', ', $changes) . ')' : '';
+            $changeSummary = ! empty($changes) ? ' ('.implode(', ', $changes).')' : '';
 
             // Log business type update with justification
             $justificationData = $this->auditTrailService->withJustification(
@@ -213,7 +212,7 @@ class BusinessTypeController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -265,7 +264,7 @@ class BusinessTypeController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -290,7 +289,7 @@ class BusinessTypeController extends Controller
 
                 $this->auditTrailService->log([
                     'event_category' => 'localization',
-                    'event_type' => 'business_type_translation_' . $action,
+                    'event_type' => 'business_type_translation_'.$action,
                     'entity_type' => 'BusinessType',
                     'entity_id' => $businessType->id,
                     'action_summary' => "{$action} Arabic translation for business type '{$businessType->name}'",

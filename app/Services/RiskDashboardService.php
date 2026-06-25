@@ -2,19 +2,21 @@
 
 namespace App\Services;
 
-use App\Models\SchedulePayment;
+use App\Models\BusinessType;
 use App\Models\Merchant;
 use App\Models\Order;
-use App\Models\BusinessType;
+use App\Models\SchedulePayment;
 use App\Models\User;
-use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class RiskDashboardService
 {
     protected $riskAnalyticsService;
+
     protected $userId = null;
+
     protected $userType = null;
 
     // Risk thresholds configuration
@@ -26,7 +28,7 @@ class RiskDashboardService
         'low_capital' => 50000,
         'multiple_activities' => 20,
         'total_credit_limit' => 20000,
-        'charge_off_target' => 2.5
+        'charge_off_target' => 2.5,
     ];
 
     protected $dateRange;
@@ -59,15 +61,15 @@ class RiskDashboardService
             'date_range' => [
                 'current' => [
                     'from' => $this->dateRange['from']->format(dateFormat()),
-                    'to' => $this->dateRange['to']->format(dateFormat())
+                    'to' => $this->dateRange['to']->format(dateFormat()),
                 ],
                 'previous' => [
                     'from' => $this->dateRange['previous_from']->format(dateFormat()),
-                    'to' => $this->dateRange['previous_to']->format(dateFormat())
-                ]
+                    'to' => $this->dateRange['previous_to']->format(dateFormat()),
+                ],
             ],
-            'user_specific' => !is_null($this->userId),
-            'user_type' => $this->userType
+            'user_specific' => ! is_null($this->userId),
+            'user_type' => $this->userType,
         ];
     }
 
@@ -82,31 +84,31 @@ class RiskDashboardService
 
         return [
             'exposure' => [
-                'total' => '<span class="icon-saudi_riyal"></span> ' . number_format($exposure['total'] / 1000000, 2) . 'M',
+                'total' => '<span class="icon-saudi_riyal"></span> '.number_format($exposure['total'] / 1000000, 2).'M',
                 'change' => $this->formatChange($exposure['change']),
                 'trend' => $exposure['change'] > 0 ? 'up' : 'down',
-                'breakdown' => $exposure['breakdown']
+                'breakdown' => $exposure['breakdown'],
             ],
             'utilization' => [
-                'rate' => $utilization['rate'] . '%',
+                'rate' => $utilization['rate'].'%',
                 'change' => $this->formatChange($utilization['change']),
                 'trend' => $utilization['change'] > 0 ? 'up' : 'down',
-                'available' => '<span> ' . number_format($utilization['available'] / 1000000, 2) . 'M',
-                'used' => '<span> ' . number_format($utilization['used'] / 1000000, 2) . 'M'
+                'available' => '<span> '.number_format($utilization['available'] / 1000000, 2).'M',
+                'used' => '<span> '.number_format($utilization['used'] / 1000000, 2).'M',
             ],
             'vintage_curves' => $vintageCurves,
             'dpd_buckets' => $dpdBuckets,
             'npl_ratio' => [
-                'current' => $nplRatio['current'] . '%',
-                'previous' => $nplRatio['previous'] . '%',
+                'current' => $nplRatio['current'].'%',
+                'previous' => $nplRatio['previous'].'%',
                 'change' => $this->formatChange($nplRatio['change']),
-                'trend' => $nplRatio['change'] > 0 ? 'up' : 'down'
+                'trend' => $nplRatio['change'] > 0 ? 'up' : 'down',
             ],
             'cor' => [
-                'current' => $cor['current'] . '%',
-                'target' => $cor['target'] . '%',
-                'status' => $cor['current'] > $cor['target'] ? 'above_target' : 'below_target'
-            ]
+                'current' => $cor['current'].'%',
+                'target' => $cor['target'].'%',
+                'status' => $cor['current'] > $cor['target'] ? 'above_target' : 'below_target',
+            ],
         ];
     }
 
@@ -128,7 +130,7 @@ class RiskDashboardService
             'application_trend' => $applicationTrend,
             'processing_times' => $processingTimes,
             'underwriting_stats' => $underwritingStats,
-            'summary' => $this->getPipelineSummary()
+            'summary' => $this->getPipelineSummary(),
         ];
     }
 
@@ -176,7 +178,7 @@ class RiskDashboardService
             'completed_applications' => $completedApplications,
             'completion_rate' => $totalApplications > 0 ? round(($completedApplications / $totalApplications) * 100) : 0,
             'avg_processing_time' => $this->formatHours($avgProcessingTime ?? 0),
-            'sla_compliance_rate' => $this->calculateOverallSlaCompliance()
+            'sla_compliance_rate' => $this->calculateOverallSlaCompliance(),
         ];
     }
 
@@ -226,17 +228,17 @@ class RiskDashboardService
             'series' => [
                 [
                     'name' => 'Applications',
-                    'data' => $applications
+                    'data' => $applications,
                 ],
                 [
                     'name' => 'Approved',
-                    'data' => $approved
+                    'data' => $approved,
                 ],
                 [
                     'name' => 'Rejected',
-                    'data' => $rejected
-                ]
-            ]
+                    'data' => $rejected,
+                ],
+            ],
         ];
     }
 
@@ -264,7 +266,7 @@ class RiskDashboardService
             'avg_approval' => $this->formatHours($processingData->avg_approval_time ?? 0),
             'avg_rejection' => $this->formatHours($processingData->avg_rejection_time ?? 0),
             'max' => $this->formatHours($processingData->max_processing_time ?? 0),
-            'min' => $this->formatHours($processingData->min_processing_time ?? 0)
+            'min' => $this->formatHours($processingData->min_processing_time ?? 0),
         ];
     }
 
@@ -291,7 +293,7 @@ class RiskDashboardService
             'under_review' => $stats->under_review,
             'contract_sent' => $stats->contract_sent,
             'pending_documents' => $stats->pending_documents,
-            'avg_review_time' => $this->formatHours($stats->avg_review_time ?? 0)
+            'avg_review_time' => $this->formatHours($stats->avg_review_time ?? 0),
         ];
     }
 
@@ -391,7 +393,7 @@ class RiskDashboardService
             'payment_behavior' => $this->getPaymentBehavior(),
             'device_anomalies' => $this->getDeviceAnomalies(),
             'alerts' => $this->getAlertDistribution(),
-            'concentration' => $this->getConcentrationRisks()
+            'concentration' => $this->getConcentrationRisks(),
         ];
     }
 
@@ -408,7 +410,7 @@ class RiskDashboardService
             'pipeline_risk' => $pipelineRisk,
             'ews_risk' => $ewsRisk,
             'overall_risk' => $overallRisk,
-            'risk_level' => $this->getRiskLevel($overallRisk)
+            'risk_level' => $this->getRiskLevel($overallRisk),
         ];
     }
 
@@ -523,7 +525,7 @@ class RiskDashboardService
                     $highestRiskMerchant = [
                         'merchant' => $merchant,
                         'risk_score' => $riskScore['score'],
-                        'factors' => $riskScore['factors']
+                        'factors' => $riskScore['factors'],
                     ];
                     $flags[] = $this->createHighestRiskFlag($highestRiskMerchant);
                 }
@@ -598,8 +600,8 @@ class RiskDashboardService
                 'Personal Loans' => $breakdown['Personal Loans'] ?? 0,
                 'Business Loans' => $breakdown['Business Loans'] ?? 0,
                 'Asset Finance' => 0,
-                'Micro Loans' => 0
-            ])
+                'Micro Loans' => 0,
+            ]),
         ];
     }
 
@@ -633,7 +635,7 @@ class RiskDashboardService
             'rate' => $rate,
             'change' => $change,
             'available' => $totalLimit - $usedAmount,
-            'used' => $usedAmount
+            'used' => $usedAmount,
         ];
     }
 
@@ -669,10 +671,10 @@ class RiskDashboardService
                     round(($dpdData['1-30'] ?? 0) / $total * 100),
                     round(($dpdData['31-60'] ?? 0) / $total * 100),
                     round(($dpdData['61-90'] ?? 0) / $total * 100),
-                    round(($dpdData['90+'] ?? 0) / $total * 100)
+                    round(($dpdData['90+'] ?? 0) / $total * 100),
                 ],
                 'colors' => ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#DC2626'],
-                'counts' => $dpdData
+                'counts' => $dpdData,
             ];
         }
 
@@ -680,7 +682,7 @@ class RiskDashboardService
             'labels' => ['Current', '1-30', '31-60', '61-90', '90+'],
             'data' => [100, 0, 0, 0, 0],
             'colors' => ['#10B981', '#3B82F6', '#F59E0B', '#EF4444', '#DC2626'],
-            'counts' => ['Current' => 0]
+            'counts' => ['Current' => 0],
         ];
     }
 
@@ -729,7 +731,7 @@ class RiskDashboardService
             'previous' => $previousRatio,
             'change' => $change,
             'npl_count' => $nplLoans,
-            'total_count' => $totalLoans
+            'total_count' => $totalLoans,
         ];
     }
 
@@ -757,7 +759,7 @@ class RiskDashboardService
         return [
             'current' => $currentRate,
             'target' => $this->thresholds['charge_off_target'],
-            'charged_off_amount' => $chargedOffAmount
+            'charged_off_amount' => $chargedOffAmount,
         ];
     }
 
@@ -785,7 +787,7 @@ class RiskDashboardService
                 round($data->delinquency_rate * 120, 1), // Projected
                 round($data->delinquency_rate * 150, 1),
                 round($data->delinquency_rate * 180, 1),
-                round($data->delinquency_rate * 200, 1)
+                round($data->delinquency_rate * 200, 1),
             ];
         }
 
@@ -793,13 +795,13 @@ class RiskDashboardService
         foreach ($cohorts as $name => $data) {
             $series[] = [
                 'name' => $name,
-                'data' => $data
+                'data' => $data,
             ];
         }
 
         return [
             'labels' => ['Month 1', 'Month 3', 'Month 6', 'Month 9', 'Month 12'],
-            'series' => $series
+            'series' => $series,
         ];
     }
 
@@ -822,11 +824,12 @@ class RiskDashboardService
         return $query->get()
             ->filter(function ($merchant) use ($today) {
                 $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
-                if (!$crData || !isset($crData['status']['confirmationDate']['gregorian'])) {
+                if (! $crData || ! isset($crData['status']['confirmationDate']['gregorian'])) {
                     return false;
                 }
 
                 $expiryDate = Carbon::parse($crData['status']['confirmationDate']['gregorian']);
+
                 return $expiryDate->diffInDays($today, false) >= -30 && $expiryDate->diffInDays($today, false) < 0;
             });
     }
@@ -846,11 +849,12 @@ class RiskDashboardService
         return $query->get()
             ->filter(function ($merchant) {
                 $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
-                if (!$crData || !isset($crData['capital']['contributionCapital']['cashCapital'])) {
+                if (! $crData || ! isset($crData['capital']['contributionCapital']['cashCapital'])) {
                     return false;
                 }
 
                 $capital = $crData['capital']['contributionCapital']['cashCapital'];
+
                 return $capital < $this->thresholds['low_capital'];
             });
     }
@@ -870,11 +874,12 @@ class RiskDashboardService
         return $query->get()
             ->filter(function ($merchant) {
                 $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
-                if (!$crData || !isset($crData['activities'])) {
+                if (! $crData || ! isset($crData['activities'])) {
                     return false;
                 }
 
                 $activityCount = count($crData['activities']);
+
                 return $activityCount > $this->thresholds['multiple_activities'];
             });
     }
@@ -900,7 +905,7 @@ class RiskDashboardService
         $today = Carbon::today();
 
         $query = SchedulePayment::whereIn('payment_status', ['due', 'late'])
-            ->whereRaw("DATEDIFF(?, due_date) > ?", [$today, $this->thresholds['critical_dpd']])
+            ->whereRaw('DATEDIFF(?, due_date) > ?', [$today, $this->thresholds['critical_dpd']])
             ->with(['user']);
 
         // If user-specific, filter by user_id
@@ -918,11 +923,12 @@ class RiskDashboardService
     {
         $merchantNames = $expiringCRs->take(3)->map(function ($merchant) {
             $name = $merchant->user->business_name ?? $merchant->user->name;
-            return "<a href='" . route('supplierProfile', $merchant->id) . "' class='underline'>" . e($name) . "</a>";
+
+            return "<a href='".route('supplierProfile', $merchant->id)."' class='underline'>".e($name).'</a>';
         })->implode(', ');
 
         $remainingCount = $expiringCRs->count() - 3;
-        $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+        $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
         return [
             'type' => 'critical',
@@ -941,10 +947,10 @@ class RiskDashboardService
                         'name' => $merchant->user->business_name ?? $merchant->user->name,
                         'link' => route('supplierProfile', $merchant->id),
                         'days_until_expiry' => $expiryDate ? abs(Carbon::today()->diffInDays($expiryDate, false)) : 'N/A',
-                        'cr_number' => $crData['crNumber'] ?? 'N/A'
+                        'cr_number' => $crData['crNumber'] ?? 'N/A',
                     ];
-                })->toArray()
-            ]
+                })->toArray(),
+            ],
         ];
     }
 
@@ -952,21 +958,22 @@ class RiskDashboardService
     {
         $merchantNames = $lowCapitalMerchants->take(3)->map(function ($merchant) {
             $name = $merchant->user->business_name ?? $merchant->user->name;
-            return "<a href='" . route('supplierProfile', $merchant->id) . "' class='underline'>" . e($name) . "</a>";
+
+            return "<a href='".route('supplierProfile', $merchant->id)."' class='underline'>".e($name).'</a>';
         })->implode(', ');
 
         $remainingCount = $lowCapitalMerchants->count() - 3;
-        $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+        $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
         return [
             'type' => 'high',
             'title' => "{$lowCapitalMerchants->count()} Low Capital Merchants",
-            'description' => "Merchants with capital below <span>  " . number_format($this->thresholds['low_capital']) . ". High risk of default. Affected: {$merchantNames}{$additionalText}",
+            'description' => 'Merchants with capital below <span>  '.number_format($this->thresholds['low_capital']).". High risk of default. Affected: {$merchantNames}{$additionalText}",
             'time' => 'Recently',
             'icon' => 'ki-filled ki-dollar',
             'additional_info' => [
                 'low_capital_count' => $lowCapitalMerchants->count(),
-                'capital_threshold' => '<span class="icon-saudi_riyal">  ' . number_format($this->thresholds['low_capital']),
+                'capital_threshold' => '<span class="icon-saudi_riyal">  '.number_format($this->thresholds['low_capital']),
                 'top_low_capital_merchants' => $lowCapitalMerchants->map(function ($merchant) {
                     $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
                     $capital = $crData['capital']['contributionCapital']['cashCapital'] ?? 0;
@@ -974,11 +981,11 @@ class RiskDashboardService
                     return [
                         'name' => $merchant->user->business_name ?? $merchant->user->name,
                         'link' => route('supplierProfile', $merchant->id),
-                        'capital' => '<span class="icon-saudi_riyal">  ' . number_format($capital),
-                        'cr_number' => $crData['crNumber'] ?? 'N/A'
+                        'capital' => '<span class="icon-saudi_riyal">  '.number_format($capital),
+                        'cr_number' => $crData['crNumber'] ?? 'N/A',
                     ];
-                })->toArray()
-            ]
+                })->toArray(),
+            ],
         ];
     }
 
@@ -986,21 +993,22 @@ class RiskDashboardService
     {
         $merchantNames = $highActivityMerchants->take(2)->map(function ($merchant) {
             $name = $merchant->user->business_name ?? $merchant->user->name;
-            return "<a href='" . route('supplierProfile', $merchant->id) . "' class='underline'>" . e($name) . "</a>";
+
+            return "<a href='".route('supplierProfile', $merchant->id)."' class='underline'>".e($name).'</a>';
         })->implode(', ');
 
         $remainingCount = $highActivityMerchants->count() - 2;
-        $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+        $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
         return [
             'type' => 'medium',
-            'title' => "Activity Concentration Risk",
+            'title' => 'Activity Concentration Risk',
             'description' => "{$highActivityMerchants->count()} merchants with excessive business activities (>{$this->thresholds['multiple_activities']}). Potential focus risk: {$merchantNames}{$additionalText}",
             'time' => 'Recently',
             'icon' => 'ki-filled ki-category',
             'additional_info' => [
                 'high_activity_count' => $highActivityMerchants->count(),
-                'activity_threshold' => $this->thresholds['multiple_activities'] . ' activities',
+                'activity_threshold' => $this->thresholds['multiple_activities'].' activities',
                 'top_high_activity_merchants' => $highActivityMerchants->map(function ($merchant) {
                     $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
                     $activityCount = $crData ? count($crData['activities']) : 0;
@@ -1009,10 +1017,10 @@ class RiskDashboardService
                         'name' => $merchant->user->business_name ?? $merchant->user->name,
                         'link' => route('supplierProfile', $merchant->id),
                         'activity_count' => $activityCount,
-                        'cr_number' => $crData['crNumber'] ?? 'N/A'
+                        'cr_number' => $crData['crNumber'] ?? 'N/A',
                     ];
-                })->toArray()
-            ]
+                })->toArray(),
+            ],
         ];
     }
 
@@ -1020,30 +1028,31 @@ class RiskDashboardService
     {
         $accountNames = $highExposureAccounts->take(3)->map(function ($account) {
             $name = $account->user->business_name ?? $account->user->name;
-            return "<a href='" . route('customerProfile', $account->user_id) . "' class='underline'>" . e($name) . "</a>";
+
+            return "<a href='".route('customerProfile', $account->user_id)."' class='underline'>".e($name).'</a>';
         })->implode(', ');
 
         $remainingCount = $highExposureAccounts->count() - 3;
-        $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+        $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
         return [
             'type' => 'high',
-            'title' => "High Individual Exposure Accounts",
-            'description' => "{$highExposureAccounts->count()} accounts with exposure > <span>  " . number_format($this->thresholds['large_exposure']) . ". High concentration risk: {$accountNames}{$additionalText}",
+            'title' => 'High Individual Exposure Accounts',
+            'description' => "{$highExposureAccounts->count()} accounts with exposure > <span>  ".number_format($this->thresholds['large_exposure']).". High concentration risk: {$accountNames}{$additionalText}",
             'time' => 'Just now',
             'icon' => 'ki-filled ki-chart-line',
             'additional_info' => [
                 'high_exposure_count' => $highExposureAccounts->count(),
-                'exposure_threshold' => '<span>  ' . number_format($this->thresholds['large_exposure']),
+                'exposure_threshold' => '<span>  '.number_format($this->thresholds['large_exposure']),
                 'top_high_exposure_accounts' => $highExposureAccounts->map(function ($account) {
                     return [
                         'name' => $account->user->business_name ?? $account->user->name,
                         'link' => route('customerProfile', $account->user_id),
-                        'exposure' => '<span>  ' . number_format($account->total_exposure),
-                        'user_type' => $account->user->user_type
+                        'exposure' => '<span>  '.number_format($account->total_exposure),
+                        'user_type' => $account->user->user_type,
                     ];
-                })->toArray()
-            ]
+                })->toArray(),
+            ],
         ];
     }
 
@@ -1051,17 +1060,17 @@ class RiskDashboardService
     {
         return [
             'type' => 'critical',
-            'title' => "NPL Ratio Exceeding Threshold",
+            'title' => 'NPL Ratio Exceeding Threshold',
             'description' => "Current NPL ratio of {$nplRatio['current']}% exceeds target of {$this->thresholds['high_npl']}%. Requires immediate portfolio review.",
             'time' => 'Just now',
             'icon' => 'ki-filled ki-chart-line',
             'additional_info' => [
-                'current_npl' => $nplRatio['current'] . '%',
-                'target_npl' => $this->thresholds['high_npl'] . '%',
-                'variance' => round($nplRatio['current'] - $this->thresholds['high_npl'], 1) . '%',
+                'current_npl' => $nplRatio['current'].'%',
+                'target_npl' => $this->thresholds['high_npl'].'%',
+                'variance' => round($nplRatio['current'] - $this->thresholds['high_npl'], 1).'%',
                 'trend' => $nplRatio['change'] > 0 ? 'Increasing' : 'Decreasing',
-                'change' => $this->formatChange($nplRatio['change'])
-            ]
+                'change' => $this->formatChange($nplRatio['change']),
+            ],
         ];
     }
 
@@ -1069,17 +1078,17 @@ class RiskDashboardService
     {
         return [
             'type' => 'high',
-            'title' => "High Portfolio Utilization",
+            'title' => 'High Portfolio Utilization',
             'description' => "Utilization rate of {$utilization['rate']}% approaching capacity limits. Available: {$utilization['available']}",
             'time' => 'Recently',
             'icon' => 'ki-filled ki-chart-pie-4',
             'additional_info' => [
-                'current_utilization' => $utilization['rate'] . '%',
+                'current_utilization' => $utilization['rate'].'%',
                 'available_capacity' => $utilization['available'],
                 'used_capacity' => $utilization['used'],
                 'trend' => $utilization['change'] > 0 ? 'Increasing' : 'Decreasing',
-                'change' => $this->formatChange($utilization['change'])
-            ]
+                'change' => $this->formatChange($utilization['change']),
+            ],
         ];
     }
 
@@ -1089,11 +1098,12 @@ class RiskDashboardService
         $accountNames = $criticalDPDAccounts->take(3)->map(function ($payments, $userId) {
             $user = $payments->first()->user;
             $name = $user->business_name ?? $user->name;
-            return "<a href='" . route('customerProfile', $userId) . "' class='underline'>" . e($name) . "</a>";
+
+            return "<a href='".route('customerProfile', $userId)."' class='underline'>".e($name).'</a>';
         })->implode(', ');
 
         $remainingCount = $criticalDPDAccounts->count() - 3;
-        $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+        $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
         return [
             'type' => 'critical',
@@ -1103,7 +1113,7 @@ class RiskDashboardService
             'icon' => 'ki-filled ki-information-2',
             'additional_info' => [
                 'affected_accounts_count' => $criticalDPDAccounts->count(),
-                'dpd_threshold' => $this->thresholds['critical_dpd'] . ' days',
+                'dpd_threshold' => $this->thresholds['critical_dpd'].' days',
                 'top_affected_accounts' => $criticalDPDAccounts->map(function ($payments, $userId) use ($today) {
                     $user = $payments->first()->user;
                     $maxDPD = $payments->max(function ($payment) use ($today) {
@@ -1113,11 +1123,11 @@ class RiskDashboardService
                     return [
                         'name' => $user->business_name ?? $user->name,
                         'link' => route('customerProfile', $userId),
-                        'max_dpd' => $maxDPD . ' days',
-                        'total_exposure' => '<span>  ' . number_format($payments->sum('instalment_amount'))
+                        'max_dpd' => $maxDPD.' days',
+                        'total_exposure' => '<span>  '.number_format($payments->sum('instalment_amount')),
                     ];
-                })->toArray()
-            ]
+                })->toArray(),
+            ],
         ];
     }
 
@@ -1134,8 +1144,8 @@ class RiskDashboardService
             'additional_info' => [
                 'monitoring_status' => 'All systems normal',
                 'last_checked' => $today->format('Y-m-d H:i:s'),
-                'active_monitors' => 'CR Expiry, Capital Adequacy, Activity Concentration, Exposure Limits, NPL Ratio, Utilization, DPD'
-            ]
+                'active_monitors' => 'CR Expiry, Capital Adequacy, Activity Concentration, Exposure Limits, NPL Ratio, Utilization, DPD',
+            ],
         ];
     }
 
@@ -1158,10 +1168,11 @@ class RiskDashboardService
         return $query->get()
             ->map(function ($merchant) use ($today) {
                 $riskScore = $this->calculateMerchantRiskScore($merchant, $today);
+
                 return [
                     'merchant' => $merchant,
                     'risk_score' => $riskScore['score'],
-                    'factors' => $riskScore['factors']
+                    'factors' => $riskScore['factors'],
                 ];
             })
             ->sortByDesc('risk_score')
@@ -1210,7 +1221,7 @@ class RiskDashboardService
 
         return [
             'score' => $riskScore,
-            'factors' => $factors
+            'factors' => $factors,
         ];
     }
 
@@ -1244,13 +1255,14 @@ class RiskDashboardService
             'percentage' => $concentrationPercentage,
             'industries' => $industryConcentration->map(function ($count, $typeId) {
                 $type = BusinessType::find($typeId);
+
                 return [
                     'name' => $type->name ?? 'Unknown',
                     'count' => $count,
-                    'risk_level' => $type->risk_level ?? 'medium'
+                    'risk_level' => $type->risk_level ?? 'medium',
                 ];
             })->values()->toArray(),
-            'total_merchants' => $totalMerchants
+            'total_merchants' => $totalMerchants,
         ];
     }
 
@@ -1269,10 +1281,12 @@ class RiskDashboardService
         $geoConcentration = $query->get()
             ->filter(function ($merchant) {
                 $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
+
                 return $crData && isset($crData['headquarterCityName']);
             })
             ->groupBy(function ($merchant) {
                 $crData = $merchant->goverment_data ? json_decode($merchant->goverment_data, true) : null;
+
                 return $crData['headquarterCityName'] ?? 'Unknown';
             })
             ->map(function ($group) {
@@ -1293,10 +1307,10 @@ class RiskDashboardService
                 return [
                     'city' => $city,
                     'count' => $count,
-                    'percentage' => round(($count / $totalMerchants) * 100, 1) . '%'
+                    'percentage' => round(($count / $totalMerchants) * 100, 1).'%',
                 ];
             })->toArray(),
-            'total_merchants' => $totalMerchants
+            'total_merchants' => $totalMerchants,
         ];
     }
 
@@ -1311,19 +1325,19 @@ class RiskDashboardService
         return [
             'type' => 'highest_risk',
             'title' => 'Highest Risk Merchant Identified',
-            'description' => "Merchant <a href='" . route('supplierProfile', $merchant->id) . "' class='underline'>" . e($name) . "</a> has the highest risk score (" . round($highestRiskMerchant['risk_score']) . "/100). Requires immediate review.",
+            'description' => "Merchant <a href='".route('supplierProfile', $merchant->id)."' class='underline'>".e($name).'</a> has the highest risk score ('.round($highestRiskMerchant['risk_score']).'/100). Requires immediate review.',
             'icon' => 'ki-filled ki-shield-cross',
-            'tags' => ['High Risk', 'Priority Review', round($highestRiskMerchant['risk_score']) . '/100'],
+            'tags' => ['High Risk', 'Priority Review', round($highestRiskMerchant['risk_score']).'/100'],
             'additional_info' => [
                 'merchant_name' => $name,
                 'risk_score' => round($highestRiskMerchant['risk_score']),
                 'risk_factors' => $highestRiskMerchant['factors'],
-                'capital_adequacy' => '<span>  ' . number_format($crData['capital']['contributionCapital']['cashCapital'] ?? 0),
+                'capital_adequacy' => '<span>  '.number_format($crData['capital']['contributionCapital']['cashCapital'] ?? 0),
                 'business_activities' => $crData ? count($crData['activities']) : 0,
                 'business_type_risk' => ucwords($merchant->businessType->risk_level ?? 'medium'),
                 'cr_number' => $crData['crNumber'] ?? 'N/A',
-                'cr_expiry' => $crData ? Carbon::parse($crData['status']['confirmationDate']['gregorian'])->format('M d, Y') : 'N/A'
-            ]
+                'cr_expiry' => $crData ? Carbon::parse($crData['status']['confirmationDate']['gregorian'])->format('M d, Y') : 'N/A',
+            ],
         ];
     }
 
@@ -1338,12 +1352,12 @@ class RiskDashboardService
             'title' => 'Industry Concentration Risk',
             'description' => "Top 3 industries represent {$industryConcentration['percentage']}% of portfolio. Industries: {$industryNames}",
             'icon' => 'ki-filled ki-chart-pie-4',
-            'tags' => ['Concentration', 'Diversification', $industryConcentration['percentage'] . '%'],
+            'tags' => ['Concentration', 'Diversification', $industryConcentration['percentage'].'%'],
             'additional_info' => [
                 'total_merchants' => $industryConcentration['total_merchants'],
-                'concentration_percentage' => $industryConcentration['percentage'] . '%',
-                'top_industries' => $industryConcentration['industries']
-            ]
+                'concentration_percentage' => $industryConcentration['percentage'].'%',
+                'top_industries' => $industryConcentration['industries'],
+            ],
         ];
     }
 
@@ -1358,12 +1372,12 @@ class RiskDashboardService
             'title' => 'Geographic Concentration Risk',
             'description' => "Top 3 cities represent {$geoConcentration['percentage']}% of portfolio. Cities: {$cityNames}",
             'icon' => 'ki-filled ki-geolocation',
-            'tags' => ['Geography', 'Concentration', $geoConcentration['percentage'] . '%'],
+            'tags' => ['Geography', 'Concentration', $geoConcentration['percentage'].'%'],
             'additional_info' => [
                 'total_merchants' => $geoConcentration['total_merchants'],
-                'concentration_percentage' => $geoConcentration['percentage'] . '%',
-                'top_cities' => $geoConcentration['cities']
-            ]
+                'concentration_percentage' => $geoConcentration['percentage'].'%',
+                'top_cities' => $geoConcentration['cities'],
+            ],
         ];
     }
 
@@ -1389,43 +1403,43 @@ class RiskDashboardService
             return [
                 'under_review' => [
                     'percentage' => round(($statusCounts['under_review'] ?? 0) / $total * 100),
-                    'count' => $statusCounts['under_review'] ?? 0
+                    'count' => $statusCounts['under_review'] ?? 0,
                 ],
                 'contract_sent' => [
                     'percentage' => round(($statusCounts['contract_sent'] ?? 0) / $total * 100),
-                    'count' => $statusCounts['contract_sent'] ?? 0
+                    'count' => $statusCounts['contract_sent'] ?? 0,
                 ],
                 'active' => [
                     'percentage' => round(($statusCounts['active'] ?? 0) / $total * 100),
-                    'count' => $statusCounts['active'] ?? 0
+                    'count' => $statusCounts['active'] ?? 0,
                 ],
                 'pending' => [
                     'percentage' => round(($statusCounts['pending'] ?? 0) / $total * 100),
-                    'count' => $statusCounts['pending'] ?? 0
+                    'count' => $statusCounts['pending'] ?? 0,
                 ],
                 'approved' => [
                     'percentage' => round(($statusCounts['approved'] ?? 0) / $total * 100),
-                    'count' => $statusCounts['approved'] ?? 0
+                    'count' => $statusCounts['approved'] ?? 0,
                 ],
                 'rejected' => [
                     'percentage' => round(($statusCounts['rejected'] ?? 0) / $total * 100),
-                    'count' => $statusCounts['rejected'] ?? 0
+                    'count' => $statusCounts['rejected'] ?? 0,
                 ],
                 'suspended' => [
                     'percentage' => round(($statusCounts['suspended'] ?? 0) / $total * 100),
-                    'count' => $statusCounts['suspended'] ?? 0
+                    'count' => $statusCounts['suspended'] ?? 0,
                 ],
                 'blacklisted' => [
                     'percentage' => round(($statusCounts['blacklisted'] ?? 0) / $total * 100),
-                    'count' => $statusCounts['blacklisted'] ?? 0
+                    'count' => $statusCounts['blacklisted'] ?? 0,
                 ],
-                'total' => $total
+                'total' => $total,
             ];
         }
 
         $emptyStatus = [
             'percentage' => 0,
-            'count' => 0
+            'count' => 0,
         ];
 
         return array_fill_keys(['under_review', 'contract_sent', 'active', 'pending', 'approved', 'rejected', 'suspended', 'blacklisted'], $emptyStatus) + ['total' => 0];
@@ -1461,21 +1475,21 @@ class RiskDashboardService
                 'current' => $this->formatHours($avgProcessingHours * 0.6),
                 'target' => '6h',
                 'compliance' => $underwritingCompliance,
-                'trend' => $slaTrend['underwriting']
+                'trend' => $slaTrend['underwriting'],
             ],
             'approval' => [
                 'current' => $this->formatHours($avgProcessingHours * 0.3),
                 'target' => '4h',
                 'compliance' => $approvalCompliance,
-                'trend' => $slaTrend['approval']
+                'trend' => $slaTrend['approval'],
             ],
             'disbursement' => [
                 'current' => $this->formatHours($avgProcessingHours * 0.1),
                 'target' => '8h',
                 'compliance' => $disbursementCompliance,
-                'trend' => $slaTrend['disbursement']
+                'trend' => $slaTrend['disbursement'],
             ],
-            'trend_data' => $slaTrend
+            'trend_data' => $slaTrend,
         ];
     }
 
@@ -1504,29 +1518,29 @@ class RiskDashboardService
         return [
             'approved' => [
                 'percentage' => round(($approvalStats->approved / $total) * 100),
-                'count' => $approvalStats->approved
+                'count' => $approvalStats->approved,
             ],
             'declined' => [
                 'percentage' => round(($approvalStats->declined / $total) * 100),
-                'count' => $approvalStats->declined
+                'count' => $approvalStats->declined,
             ],
             'pending' => [
                 'percentage' => round(($approvalStats->pending / $total) * 100),
-                'count' => $approvalStats->pending
+                'count' => $approvalStats->pending,
             ],
             'active' => [
                 'percentage' => round(($approvalStats->active / $total) * 100),
-                'count' => $approvalStats->active
+                'count' => $approvalStats->active,
             ],
             'suspended' => [
                 'percentage' => round(($approvalStats->suspended / $total) * 100),
-                'count' => $approvalStats->suspended
+                'count' => $approvalStats->suspended,
             ],
             'blacklisted' => [
                 'percentage' => round(($approvalStats->blacklisted / $total) * 100),
-                'count' => $approvalStats->blacklisted
+                'count' => $approvalStats->blacklisted,
             ],
-            'total_applications' => $approvalStats->total_applications
+            'total_applications' => $approvalStats->total_applications,
         ];
     }
 
@@ -1593,12 +1607,12 @@ class RiskDashboardService
         $change = round($currentRate - $previousRate, 1);
 
         return [
-            'current' => $currentRate . '%',
+            'current' => $currentRate.'%',
             'change' => $this->formatChange($change),
             'trend' => $change < 0 ? 'down' : 'up',
             'breakdown' => $this->getExceptionBreakdown(),
             'count' => $exceptionApplications,
-            'total_count' => $totalApplications
+            'total_count' => $totalApplications,
         ];
     }
 
@@ -1646,7 +1660,7 @@ class RiskDashboardService
         return [
             'delinquency_trend' => count($delinquencyTrend) > 0 ? $delinquencyTrend : [12, 15, 18, 14, 16, 20, 22],
             'avg_days_late' => round($avgDaysLate, 1),
-            'repeat_late_payers' => $repeatLatePayers
+            'repeat_late_payers' => $repeatLatePayers,
         ];
     }
 
@@ -1664,8 +1678,8 @@ class RiskDashboardService
                 'Device Change' => 25,
                 'Location Mismatch' => 12,
                 'IP Suspicious' => 6,
-                'Other' => 4
-            ]
+                'Other' => 4,
+            ],
         ];
     }
 
@@ -1702,6 +1716,7 @@ class RiskDashboardService
                     ->diffInHours(Carbon::parse($user->latest_order));
 
                 $citiesPerDay = $user->distinct_cities / max(1, $timeSpan / 24);
+
                 return $citiesPerDay > 0.5;
             })
             ->count();
@@ -1731,7 +1746,9 @@ class RiskDashboardService
                 $avg = (float) ($user->avg_order_value ?? 0);
                 $std = (float) ($user->std_order_value ?? 0);
 
-                if ($std === 0) return false; // no variation → no anomaly check
+                if ($std === 0) {
+                    return false;
+                } // no variation → no anomaly check
 
                 $recentOrdersQuery = Order::where('user_id', $user->id)
                     ->where('created_at', '>=', $sevenDaysAgo);
@@ -1741,9 +1758,11 @@ class RiskDashboardService
                 }
 
                 $recentOrders = $recentOrdersQuery->pluck('grand_total')
-                    ->map(fn($v) => (float) $v);
+                    ->map(fn ($v) => (float) $v);
 
-                if ($recentOrders->count() === 0) return false;
+                if ($recentOrders->count() === 0) {
+                    return false;
+                }
 
                 $recentAvg = (float) $recentOrders->avg();
                 $maxRecent = (float) $recentOrders->max();
@@ -1751,9 +1770,15 @@ class RiskDashboardService
                 $threshold = $avg + (2.5 * $std);
 
                 $anomalies = 0;
-                if ($maxRecent > $threshold) $anomalies++;
-                if ($recentAvg > ($avg * 1.5)) $anomalies++;
-                if ($recentOrders->count() > ($user->total_orders / 4)) $anomalies++;
+                if ($maxRecent > $threshold) {
+                    $anomalies++;
+                }
+                if ($recentAvg > ($avg * 1.5)) {
+                    $anomalies++;
+                }
+                if ($recentOrders->count() > ($user->total_orders / 4)) {
+                    $anomalies++;
+                }
 
                 return $anomalies >= 2;
             })
@@ -1873,8 +1898,11 @@ class RiskDashboardService
 
                 // 4. Business Type
                 $businessRisk = strtolower($merchant->businessType->risk_level ?? 'medium');
-                if ($businessRisk === 'very high') $totalScore += 15;
-                elseif ($businessRisk === 'high') $totalScore += 10;
+                if ($businessRisk === 'very high') {
+                    $totalScore += 15;
+                } elseif ($businessRisk === 'high') {
+                    $totalScore += 10;
+                }
 
                 // 5. Order Value Concentration
                 $orderStatsQuery = Order::where('user_id', $merchant->id)
@@ -1903,10 +1931,10 @@ class RiskDashboardService
             ->count();
 
         return [
-            'geo_velocity'       => $geoVelocityAlerts,
+            'geo_velocity' => $geoVelocityAlerts,
             'transaction_pattern' => $transactionPatternAlerts,
-            'behavioral'         => $behavioralAlerts,
-            'high_risk'          => $highRiskAlerts
+            'behavioral' => $behavioralAlerts,
+            'high_risk' => $highRiskAlerts,
         ];
     }
 
@@ -1956,8 +1984,8 @@ class RiskDashboardService
             'merchant_risk' => [
                 'high' => 8,
                 'medium' => 15,
-                'low' => 27
-            ]
+                'low' => 27,
+            ],
         ];
     }
 
@@ -1969,6 +1997,7 @@ class RiskDashboardService
         $utilization = $this->calculateUtilization()['rate'];
 
         $riskScore = min(100, ($nplRatio * 2) + ($utilization * 0.8));
+
         return min(100, max(0, $riskScore));
     }
 
@@ -1983,9 +2012,9 @@ class RiskDashboardService
         $approvedRate = (float) ($approvalRates['approved'] ?? 0);
 
         $riskScore = min(100, $exceptionRate * 1.5 + (100 - $approvedRate));
+
         return min(100, max(0, $riskScore));
     }
-
 
     protected function calculateEwsRisk()
     {
@@ -1993,6 +2022,7 @@ class RiskDashboardService
         $delinquencyTrend = array_sum($paymentBehavior['delinquency_trend']) / count($paymentBehavior['delinquency_trend']);
 
         $riskScore = min(100, $delinquencyTrend * 2 + $paymentBehavior['avg_days_late'] * 5);
+
         return min(100, max(0, $riskScore));
     }
 
@@ -2018,18 +2048,18 @@ class RiskDashboardService
             'from' => $fromDate,
             'to' => $toDate,
             'previous_from' => $fromDate->copy()->subDays($fromDate->diffInDays($toDate)),
-            'previous_to' => $fromDate->copy()->subDay()
+            'previous_to' => $fromDate->copy()->subDay(),
         ];
     }
 
     protected function formatChange($change)
     {
-        return $change > 0 ? '+' . $change . '%' : $change . '%';
+        return $change > 0 ? '+'.$change.'%' : $change.'%';
     }
 
     protected function formatHours($hours)
     {
-        return round($hours, 1) . 'h';
+        return round($hours, 1).'h';
     }
 
     protected function getExceptionBreakdown()
@@ -2088,7 +2118,7 @@ class RiskDashboardService
                 'Suspended Accounts' => round(($suspendedCount / $totalExceptions) * 100),
                 'Blacklisted Accounts' => round(($blacklistedCount / $totalExceptions) * 100),
                 'Payment Delinquency' => round(($delinquentCount / $totalExceptions) * 100),
-                'Document Issues' => round(($documentIssueCount / $totalExceptions) * 100)
+                'Document Issues' => round(($documentIssueCount / $totalExceptions) * 100),
             ];
         }
 
@@ -2096,7 +2126,7 @@ class RiskDashboardService
             'Suspended Accounts' => 0,
             'Blacklisted Accounts' => 0,
             'Payment Delinquency' => 0,
-            'Document Issues' => 0
+            'Document Issues' => 0,
         ];
     }
 
@@ -2171,9 +2201,6 @@ class RiskDashboardService
 
         return $totalProcessed > 0 ? round(($compliantDisbursement / $totalProcessed) * 100) : 100;
     }
-
-
-
 
     // ==================== ALERTS METHODS ====================
     public function getAllAlerts($filters = [])
@@ -2264,7 +2291,7 @@ class RiskDashboardService
             default => 'Information'
         };
     }
-    
+
     // ==================== USER SPECIFIC METHODS ====================
 
     /**
@@ -2287,8 +2314,8 @@ class RiskDashboardService
             'risk_scores' => $this->getRiskScores(),
             'alerts' => $this->buildRiskAlerts(),
             'flags' => $this->buildRiskFlags(),
-            'user_specific' => !is_null($this->userId),
-            'user_type' => $this->userType
+            'user_specific' => ! is_null($this->userId),
+            'user_type' => $this->userType,
         ];
     }
 
@@ -2297,7 +2324,7 @@ class RiskDashboardService
      */
     public function isUserSpecific()
     {
-        return !is_null($this->userId);
+        return ! is_null($this->userId);
     }
 
     /**

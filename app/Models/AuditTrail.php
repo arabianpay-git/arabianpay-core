@@ -35,12 +35,12 @@ class AuditTrail extends Model
     ];
 
     protected $casts = [
-        'timestamp'            => 'datetime',
-        'before_state'         => 'array',
-        'after_state'          => 'array',
-        'properties'           => 'array',
-        'entity_id'            => 'string',
-        'pii_fields_involved'  => 'array',
+        'timestamp' => 'datetime',
+        'before_state' => 'array',
+        'after_state' => 'array',
+        'properties' => 'array',
+        'entity_id' => 'string',
+        'pii_fields_involved' => 'array',
     ];
 
     public function actorUser()
@@ -51,8 +51,6 @@ class AuditTrail extends Model
             'id'          // PK in users
         );
     }
-
-
 
     /**
      * Auto capture request + device context for audit trails created directly via model
@@ -69,7 +67,7 @@ class AuditTrail extends Model
 
             $trail->ip_address ??= $request->ip();
             $trail->device_fingerprint ??= sha1(
-                $request->userAgent() . '|' . $request->ip()
+                $request->userAgent().'|'.$request->ip()
             );
 
             /**
@@ -84,27 +82,27 @@ class AuditTrail extends Model
                 $existingProperties = json_decode($existingProperties, true) ?? [];
             }
 
-            if (!is_array($existingProperties)) {
+            if (! is_array($existingProperties)) {
                 $existingProperties = [];
             }
 
             $trail->properties = array_merge_recursive($existingProperties, [
                 'request' => [
                     'method' => $request->method(),
-                    'url'    => $request->fullUrl(),
-                    'path'   => $request->path(),
-                    'query'  => $request->query(),
+                    'url' => $request->fullUrl(),
+                    'path' => $request->path(),
+                    'query' => $request->query(),
                 ],
                 'device' => [
                     'user_agent' => $request->userAgent(),
-                    'platform'   => php_uname('s'),
-                    'browser'    => $request->header('sec-ch-ua'),
-                    'mobile'     => $request->header('sec-ch-ua-mobile'),
+                    'platform' => php_uname('s'),
+                    'browser' => $request->header('sec-ch-ua'),
+                    'mobile' => $request->header('sec-ch-ua-mobile'),
                 ],
                 'headers' => [
-                    'accept'        => $request->header('accept'),
-                    'content_type'  => $request->header('content-type'),
-                    'language'      => $request->header('accept-language'),
+                    'accept' => $request->header('accept'),
+                    'content_type' => $request->header('content-type'),
+                    'language' => $request->header('accept-language'),
                 ],
             ]);
         });

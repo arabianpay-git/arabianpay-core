@@ -2,31 +2,24 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\AcceptOrderRequest;
+use App\Http\Requests\UpdateOrderStatusRequest;
 use App\Mail\OrderAccepted;
 use App\Mail\OrderStatusUpdated;
 use App\Models\Notification;
 use App\Models\Order;
-use App\Models\Product;
-use App\Models\RefundRequest;
-use App\Models\SchedulePayment;
-use App\Models\ShopSetting;
 use App\Models\OrderActionLog;
-use App\Models\Sanad;
-use App\Services\FirebaseService;
-use App\Services\NafithService;
+use App\Models\Product;
+use App\Models\SchedulePayment;
 use App\Services\AuditTrailService;
+use App\Services\FirebaseService;
 use App\Traits\OtpSenderTrait;
 use App\Traits\SmsTrait;
-use Barryvdh\DomPDF\Facade\Pdf;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
-use Detection\MobileDetect;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Mail;
 
 class OrderController extends Controller
 {
@@ -54,7 +47,7 @@ class OrderController extends Controller
                     'total_orders' => $orders->total(),
                     'current_page' => $orders->currentPage(),
                     'per_page' => $orders->perPage(),
-                    'user_type' => Auth::user()->user_type
+                    'user_type' => Auth::user()->user_type,
                 ]
             );
 
@@ -69,8 +62,8 @@ class OrderController extends Controller
                 'action_summary' => 'Failed to load orders list',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'user_id' => Auth::id()
-                ]
+                    'user_id' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load orders. Please try again.');
@@ -87,12 +80,12 @@ class OrderController extends Controller
             $this->auditTrailService->logViewOperation(
                 'shipping_orders_view',
                 'Order',
-                'Viewed orders by shipping status: ' . $status,
+                'Viewed orders by shipping status: '.$status,
                 [
                     'shipping_status' => $status,
                     'total_orders' => $orders->total(),
                     'current_page' => $orders->currentPage(),
-                    'per_page' => $orders->perPage()
+                    'per_page' => $orders->perPage(),
                 ]
             );
 
@@ -100,7 +93,7 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to load shipping orders', [
                 'error' => $e->getMessage(),
-                'status' => $status
+                'status' => $status,
             ]);
 
             return redirect()->back()->with('error', 'Failed to load shipping orders.');
@@ -136,11 +129,11 @@ class OrderController extends Controller
             $this->auditTrailService->logViewOperation(
                 'status_orders_view',
                 'Order',
-                'Viewed orders with status: ' . $status,
+                'Viewed orders with status: '.$status,
                 [
                     'status' => $status,
                     'total_orders' => $orders->total(),
-                    'current_page' => $orders->currentPage()
+                    'current_page' => $orders->currentPage(),
                 ]
             );
 
@@ -148,7 +141,7 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to load orders by status', [
                 'error' => $e->getMessage(),
-                'status' => $status
+                'status' => $status,
             ]);
 
             return redirect()->back()->with('error', 'Failed to load orders.');
@@ -160,12 +153,17 @@ class OrderController extends Controller
         $user = Auth::user();
 
         $query = Order::with(['user', 'pickupPoint', 'assigned', 'schedulePayments'])
-            ->when($user->user_type !== 'admin', fn($q) => $q->where('assigned_to', $user->id));
+            ->when($user->user_type !== 'admin', fn ($q) => $q->where('assigned_to', $user->id));
 
-        if ($status) $query->where('general_status', $status);
-        if ($shippingStatus) $query->where('delivery_status', $shippingStatus);
+        if ($status) {
+            $query->where('general_status', $status);
+        }
+        if ($shippingStatus) {
+            $query->where('delivery_status', $shippingStatus);
+        }
 
         $query->orderBy('created_at', 'desc');
+
         return $query->orderByRaw('assigned_to IS NULL DESC')->paginate(10);
     }
 
@@ -180,9 +178,9 @@ class OrderController extends Controller
                 'pickupPoint',
                 'assigned',
                 'refund',
-                'transactions'
+                'transactions',
             ])
-                ->when($user->user_type !== 'admin', fn($q) => $q->where('assigned_to', $user->id))
+                ->when($user->user_type !== 'admin', fn ($q) => $q->where('assigned_to', $user->id))
                 ->findOrFail($id);
 
             $productDetails = $this->mapProductDetails($order);
@@ -213,7 +211,7 @@ class OrderController extends Controller
                 'event_type' => 'order_details_view',
                 'entity_type' => 'Order',
                 'entity_id' => $order->id,
-                'action_summary' => 'Viewed detailed information for order #' . $order->id,
+                'action_summary' => 'Viewed detailed information for order #'.$order->id,
                 'properties' => [
                     'order_id' => $order->id,
                     'tracking_number' => $order->tracking,
@@ -222,11 +220,11 @@ class OrderController extends Controller
                     'delivery_status' => $order->delivery_status,
                     'total_amount' => $order->grand_total,
                     'product_count' => $productDetails->count(),
-                    'has_refund_request' => !is_null($refundRequest),
+                    'has_refund_request' => ! is_null($refundRequest),
                     'payment_schedule_count' => $schedulePayments->count(),
                     'viewed_by' => $user->id,
-                    'viewed_by_type' => $user->user_type
-                ]
+                    'viewed_by_type' => $user->user_type,
+                ],
             ], $justificationData));
 
             return view('admin.orders.details', compact(
@@ -243,7 +241,7 @@ class OrderController extends Controller
             Log::error('Failed to load order details', [
                 'error' => $e->getMessage(),
                 'order_id' => $id,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -255,8 +253,8 @@ class OrderController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'requested_order_id' => $id,
-                    'user_id' => Auth::id()
-                ]
+                    'user_id' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load order details. Please try again.');
@@ -283,7 +281,7 @@ class OrderController extends Controller
                 'event_type' => 'invoice_download',
                 'entity_type' => 'Order',
                 'entity_id' => $order->id,
-                'action_summary' => 'Downloaded invoice PDF for order #' . $order->id,
+                'action_summary' => 'Downloaded invoice PDF for order #'.$order->id,
                 'properties' => [
                     'order_id' => $order->id,
                     'invoice_number' => $order->invoice_number,
@@ -291,11 +289,12 @@ class OrderController extends Controller
                     'total_amount' => $order->grand_total,
                     'currency' => 'SAR',
                     'download_timestamp' => now()->toISOString(),
-                    'downloaded_by' => Auth::id()
-                ]
+                    'downloaded_by' => Auth::id(),
+                ],
             ], $justificationData));
 
             $pdf = Pdf::loadView('admin.orders.order_invoice', compact('order', 'store', 'productDetails'));
+
             return $pdf->stream("invoice_{$order->tracking}.pdf");
         } catch (\Exception $e) {
             Log::error("Invoice download error [Order {$orderId}]: {$e->getMessage()}");
@@ -308,8 +307,8 @@ class OrderController extends Controller
                 'action_summary' => 'Failed to download invoice PDF',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'order_id' => $orderId
-                ]
+                    'order_id' => $orderId,
+                ],
             ]);
 
             return back()->withError('Failed to generate invoice. Please try again.');
@@ -336,17 +335,18 @@ class OrderController extends Controller
                 'event_type' => 'shipping_label_download',
                 'entity_type' => 'Order',
                 'entity_id' => $order->id,
-                'action_summary' => 'Downloaded shipping label for order #' . $order->id,
+                'action_summary' => 'Downloaded shipping label for order #'.$order->id,
                 'properties' => [
                     'order_id' => $order->id,
-                    'shipping_address' => substr($order->shipping_address, 0, 100) . '...', // Truncated for privacy
+                    'shipping_address' => substr($order->shipping_address, 0, 100).'...', // Truncated for privacy
                     'delivery_status' => $order->delivery_status,
                     'download_timestamp' => now()->toISOString(),
-                    'downloaded_by' => Auth::id()
-                ]
+                    'downloaded_by' => Auth::id(),
+                ],
             ], $justificationData));
 
             $pdf = Pdf::loadView('admin.orders.shipping_label', compact('order', 'store', 'productDetails'));
+
             return $pdf->stream("shipping-label_{$order->tracking}.pdf");
         } catch (\Exception $e) {
             Log::error("Shipping label error [Order {$orderId}]: {$e->getMessage()}");
@@ -359,8 +359,8 @@ class OrderController extends Controller
                 'action_summary' => 'Failed to generate shipping label',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'order_id' => $orderId
-                ]
+                    'order_id' => $orderId,
+                ],
             ]);
 
             return back()->withError('Failed to generate shipping label. Please try again.');
@@ -368,15 +368,29 @@ class OrderController extends Controller
     }
 
     /** Update order status */
-    public function updateStatus(Request $request, int $id)
+    public function updateStatus(UpdateOrderStatusRequest $request, int $id)
     {
         try {
-            $request->validate([
-                'delivery_status' => 'nullable|in:pending,shipped,delivered,returned',
-                'general_status' => 'nullable|in:accepted,processing,cancelled,failed',
-            ]);
 
             $order = Order::findOrFail($id);
+            $user = Auth::user();
+
+            if ($user->user_type !== 'admin' && $order->assigned_to !== $user->id) {
+                $this->auditTrailService->log([
+                    'event_category' => 'security_events',
+                    'event_type' => 'unauthorized_order_status_update',
+                    'entity_type' => 'Order',
+                    'entity_id' => $order->id,
+                    'action_summary' => 'Unauthorized attempt to update order status',
+                    'properties' => [
+                        'order_id' => $order->id,
+                        'attempted_by' => $user->id,
+                        'assigned_to' => $order->assigned_to,
+                    ],
+                ]);
+
+                return back()->with('error', __('You are not authorized to update this order.'));
+            }
 
             // Capture before state for audit
             $beforeState = $order->toArray();
@@ -401,8 +415,8 @@ class OrderController extends Controller
                         'old_delivery_status' => $oldDeliveryStatus,
                         'new_delivery_status' => $newDeliveryStatus,
                         'order_id' => $order->id,
-                        'customer_id' => $order->user_id
-                    ]
+                        'customer_id' => $order->user_id,
+                    ],
                 ]);
 
                 return back()->with('error', 'Invalid delivery status flow.');
@@ -419,8 +433,8 @@ class OrderController extends Controller
                         'order_id' => $order->id,
                         'customer_id' => $order->user_id,
                         'current_status' => 'delivered',
-                        'attempted_status' => 'returned'
-                    ]
+                        'attempted_status' => 'returned',
+                    ],
                 ]);
 
                 return back()->with('error', 'Delivered order cannot be returned.');
@@ -436,8 +450,8 @@ class OrderController extends Controller
                     'properties' => [
                         'old_general_status' => $oldGeneralStatus,
                         'new_general_status' => $newGeneralStatus,
-                        'order_id' => $order->id
-                    ]
+                        'order_id' => $order->id,
+                    ],
                 ]);
 
                 return back()->with('error', 'Invalid general status flow.');
@@ -453,8 +467,8 @@ class OrderController extends Controller
                     'properties' => [
                         'order_id' => $order->id,
                         'current_status' => 'accepted',
-                        'attempted_status' => $newGeneralStatus
-                    ]
+                        'attempted_status' => $newGeneralStatus,
+                    ],
                 ]);
 
                 return back()->with('error', 'Accepted order cannot be cancelled or failed.');
@@ -466,10 +480,9 @@ class OrderController extends Controller
                 $this->handleDeliveredStatus($order);
             }
 
-            $order->update([
-                'delivery_status' => $newDeliveryStatus,
-                'general_status' => $newGeneralStatus,
-            ]);
+            $order->delivery_status = $newDeliveryStatus;
+            $order->general_status = $newGeneralStatus;
+            $order->save();
 
             // Log the status update with justification
             $justificationData = $this->auditTrailService->withJustification(
@@ -481,7 +494,7 @@ class OrderController extends Controller
             $this->auditTrailService->logUpdated(
                 $order,
                 $beforeState,
-                'Updated order #' . $order->id . ' status',
+                'Updated order #'.$order->id.' status',
                 array_merge([
                     'event_category' => 'order_operations',
                     'event_type' => 'status_update',
@@ -495,8 +508,8 @@ class OrderController extends Controller
                         'customer_id' => $order->user_id,
                         'updated_by' => Auth::id(),
                         'updated_by_type' => Auth::user()->user_type,
-                        'changes_made' => $this->getOrderChangedFields($beforeState, $order->toArray())
-                    ]
+                        'changes_made' => $this->getOrderChangedFields($beforeState, $order->toArray()),
+                    ],
                 ], $justificationData)
             );
 
@@ -520,7 +533,7 @@ class OrderController extends Controller
             //   Notification Payload
             // =========================
             $title = "Order #{$order->id} Status Updated";
-            $description = "Your order status has been updated.";
+            $description = 'Your order status has been updated.';
 
             if ($oldDeliveryStatus !== $newDeliveryStatus) {
                 $description .= " Delivery: {$newDeliveryStatus}.";
@@ -587,16 +600,16 @@ class OrderController extends Controller
 
                 $statusUpdateText = '';
                 if ($oldDeliveryStatus !== $newDeliveryStatus) {
-                    $statusUpdateText .= "Delivery Status: " . ucfirst($newDeliveryStatus) . ". ";
+                    $statusUpdateText .= 'Delivery Status: '.ucfirst($newDeliveryStatus).'. ';
                 }
                 if ($oldGeneralStatus !== $newGeneralStatus) {
-                    $statusUpdateText .= "Order Status: " . ucfirst($newGeneralStatus) . ". ";
+                    $statusUpdateText .= 'Order Status: '.ucfirst($newGeneralStatus).'. ';
                 }
 
                 // SMS Notification
-                if (!empty($user->phone_number)) {
+                if (! empty($user->phone_number)) {
                     try {
-                        $smsMessage = "Order #{$order->id}: " . trim($statusUpdateText) . " Track at: " . url('/orders/track/' . $order->id);
+                        $smsMessage = "Order #{$order->id}: ".trim($statusUpdateText).' Track at: '.url('/orders/track/'.$order->id);
                         $smsSent = $this->sendOrderSms($user->phone_number, $smsMessage);
 
                         // Log SMS sending in audit trail
@@ -612,12 +625,12 @@ class OrderController extends Controller
                                     'customer_id' => $order->user_id,
                                     'phone_number' => $user->phone_number,
                                     'message' => $smsMessage,
-                                    'sms_status' => 'sent'
-                                ]
+                                    'sms_status' => 'sent',
+                                ],
                             ]);
                         }
                     } catch (\Throwable $e) {
-                        Log::error("SMS send failed for order {$order->id}: " . $e->getMessage());
+                        Log::error("SMS send failed for order {$order->id}: ".$e->getMessage());
                         $this->auditTrailService->log([
                             'event_category' => 'error_events',
                             'event_type' => 'sms_notification_failed',
@@ -628,14 +641,14 @@ class OrderController extends Controller
                                 'order_id' => $order->id,
                                 'customer_id' => $order->user_id,
                                 'phone_number' => $user->phone_number,
-                                'error' => $e->getMessage()
-                            ]
+                                'error' => $e->getMessage(),
+                            ],
                         ]);
                     }
                 }
 
                 // Email Notification
-                if (!empty($user->email)) {
+                if (! empty($user->email)) {
                     try {
                         $emailData = [
                             'subject' => $title,
@@ -643,7 +656,7 @@ class OrderController extends Controller
                             'delivery_status' => ucfirst($newDeliveryStatus),
                             'general_status' => ucfirst($newGeneralStatus),
                             'status_message' => trim($statusUpdateText),
-                            'tracking_url' => url('/orders/track/' . $order->id),
+                            'tracking_url' => url('/orders/track/'.$order->id),
                             'customer_name' => $user->name ?? 'Customer',
                         ];
 
@@ -661,11 +674,11 @@ class OrderController extends Controller
                                 'customer_id' => $order->user_id,
                                 'email' => $user->email,
                                 'subject' => $title,
-                                'email_status' => 'sent'
-                            ]
+                                'email_status' => 'sent',
+                            ],
                         ]);
                     } catch (\Throwable $e) {
-                        Log::error("Email send failed for order {$order->id}: " . $e->getMessage());
+                        Log::error("Email send failed for order {$order->id}: ".$e->getMessage());
                         $this->auditTrailService->log([
                             'event_category' => 'error_events',
                             'event_type' => 'email_notification_failed',
@@ -676,8 +689,8 @@ class OrderController extends Controller
                                 'order_id' => $order->id,
                                 'customer_id' => $order->user_id,
                                 'email' => $user->email,
-                                'error' => $e->getMessage()
-                            ]
+                                'error' => $e->getMessage(),
+                            ],
                         ]);
                     }
                 }
@@ -698,8 +711,8 @@ class OrderController extends Controller
                     'notification_type' => 'order_status',
                     'delivery_status' => $newDeliveryStatus,
                     'general_status' => $newGeneralStatus,
-                    'channels' => ['firebase', 'database', 'sms', 'email']
-                ]
+                    'channels' => ['firebase', 'database', 'sms', 'email'],
+                ],
             ]);
 
             return back()->with('success', 'Order status updated successfully.');
@@ -718,8 +731,8 @@ class OrderController extends Controller
                     'order_id' => $id,
                     'attempted_by' => Auth::id(),
                     'delivery_status' => $request->delivery_status ?? 'not_provided',
-                    'general_status' => $request->general_status ?? 'not_provided'
-                ]
+                    'general_status' => $request->general_status ?? 'not_provided',
+                ],
             ]);
 
             return back()->with('error', 'Failed to update order status.');
@@ -727,34 +740,8 @@ class OrderController extends Controller
     }
 
     /** Accept order */
-    public function acceptOrder(Request $request)
+    public function acceptOrder(AcceptOrderRequest $request)
     {
-        $this->authorizeUser();
-
-        $validator = Validator::make($request->all(), [
-            'order_id' => 'required|exists:orders,id',
-            'invoice_number' => 'required|string|max:255',
-            'estimated_delivery_date' => 'required|date',
-            'invoice_file' => 'required|file|mimes:pdf|max:2048',
-        ]);
-
-        if ($validator->fails()) {
-            // Log validation failure
-            $this->auditTrailService->log([
-                'event_category' => 'validation_errors',
-                'event_type' => 'order_accept_validation_failed',
-                'entity_type' => 'Order',
-                'entity_id' => $request->order_id,
-                'action_summary' => 'Order acceptance failed validation',
-                'properties' => [
-                    'validation_errors' => $validator->errors()->toArray(),
-                    'order_id' => $request->order_id,
-                    'attempted_by' => Auth::id()
-                ]
-            ]);
-
-            return response()->json(['status' => 'error', 'errors' => $validator->errors()], 422);
-        }
 
         $order = Order::findOrFail($request->order_id);
         $oldGeneralStatus = $order->general_status;
@@ -771,12 +758,12 @@ class OrderController extends Controller
                 $file = $request->file('invoice_file');
 
                 $extension = strtolower($file->getClientOriginalExtension());
-                $filename = Str::random(40) . '.' . $extension;
+                $filename = Str::random(40).'.'.$extension;
                 $fullPath = "{$folder}/{$filename}";
 
                 $file->storeAs($folder, $filename, $disk);
                 $order->invoice_file = $fullPath;
-                $invoicePath = storage_path('app/public/' . $fullPath);
+                $invoicePath = storage_path('app/public/'.$fullPath);
             }
 
             $order->invoice_number = $request->invoice_number;
@@ -794,7 +781,7 @@ class OrderController extends Controller
             $this->auditTrailService->logUpdated(
                 $order,
                 $beforeState,
-                'Accepted order #' . $order->id . ' with invoice #' . $order->invoice_number,
+                'Accepted order #'.$order->id.' with invoice #'.$order->invoice_number,
                 array_merge([
                     'event_category' => 'order_operations',
                     'event_type' => 'order_accepted',
@@ -806,8 +793,8 @@ class OrderController extends Controller
                         'estimated_delivery_date' => $order->estimated_delivery_date,
                         'invoice_file_path' => $order->invoice_file,
                         'accepted_by' => Auth::id(),
-                        'changes_made' => $this->getOrderChangedFields($beforeState, $order->toArray())
-                    ]
+                        'changes_made' => $this->getOrderChangedFields($beforeState, $order->toArray()),
+                    ],
                 ], $justificationData)
             );
 
@@ -887,9 +874,9 @@ class OrderController extends Controller
 
             if ($user) {
                 // SMS Notification
-                if (!empty($user->phone_number)) {
+                if (! empty($user->phone_number)) {
                     try {
-                        $smsMessage = "Great news! Order #{$order->id} has been accepted. Invoice #{$order->invoice_number}. Estimated delivery: {$order->estimated_delivery_date}. View details: " . url('/orders/' . $order->id);
+                        $smsMessage = "Great news! Order #{$order->id} has been accepted. Invoice #{$order->invoice_number}. Estimated delivery: {$order->estimated_delivery_date}. View details: ".url('/orders/'.$order->id);
                         $smsSent = $this->sendOrderSms($user->phone_number, $smsMessage);
 
                         if ($smsSent) {
@@ -904,12 +891,12 @@ class OrderController extends Controller
                                     'customer_id' => $order->user_id,
                                     'phone_number' => $user->phone_number,
                                     'message' => $smsMessage,
-                                    'sms_status' => 'sent'
-                                ]
+                                    'sms_status' => 'sent',
+                                ],
                             ]);
                         }
                     } catch (\Throwable $e) {
-                        Log::error("SMS send failed for accepted order {$order->id}: " . $e->getMessage());
+                        Log::error("SMS send failed for accepted order {$order->id}: ".$e->getMessage());
                         $this->auditTrailService->log([
                             'event_category' => 'error_events',
                             'event_type' => 'sms_notification_failed',
@@ -920,14 +907,14 @@ class OrderController extends Controller
                                 'order_id' => $order->id,
                                 'customer_id' => $order->user_id,
                                 'phone_number' => $user->phone_number,
-                                'error' => $e->getMessage()
-                            ]
+                                'error' => $e->getMessage(),
+                            ],
                         ]);
                     }
                 }
 
                 // Email Notification with Invoice Attachment
-                if (!empty($user->email)) {
+                if (! empty($user->email)) {
                     try {
                         $emailData = [
                             'subject' => "Order #{$order->id} Accepted - Invoice Attached",
@@ -956,11 +943,11 @@ class OrderController extends Controller
                                 'subject' => $emailData['subject'],
                                 'invoice_number' => $order->invoice_number,
                                 'attachment_sent' => $invoicePath !== null,
-                                'email_status' => 'sent'
-                            ]
+                                'email_status' => 'sent',
+                            ],
                         ]);
                     } catch (\Throwable $e) {
-                        Log::error("Email send failed for accepted order {$order->id}: " . $e->getMessage());
+                        Log::error("Email send failed for accepted order {$order->id}: ".$e->getMessage());
                         $this->auditTrailService->log([
                             'event_category' => 'error_events',
                             'event_type' => 'email_notification_failed',
@@ -971,8 +958,8 @@ class OrderController extends Controller
                                 'order_id' => $order->id,
                                 'customer_id' => $order->user_id,
                                 'email' => $user->email,
-                                'error' => $e->getMessage()
-                            ]
+                                'error' => $e->getMessage(),
+                            ],
                         ]);
                     }
                 }
@@ -993,19 +980,19 @@ class OrderController extends Controller
                     'invoice_number' => $order->invoice_number,
                     'schedule_payments_created' => true,
                     'notification_channels' => ['firebase', 'database', 'sms', 'email'],
-                    'email_with_invoice' => $invoicePath !== null
-                ]
+                    'email_with_invoice' => $invoicePath !== null,
+                ],
             ]);
 
             return response()->json([
                 'status' => 'success',
-                'message' => translate('Order accepted successfully!')
+                'message' => translate('Order accepted successfully!'),
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Failed to accept order', [
                 'order_id' => $order->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             $this->auditTrailService->log([
@@ -1018,13 +1005,13 @@ class OrderController extends Controller
                     'error' => $e->getMessage(),
                     'order_id' => $order->id,
                     'attempted_by' => Auth::id(),
-                    'invoice_number' => $request->invoice_number
-                ]
+                    'invoice_number' => $request->invoice_number,
+                ],
             ]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => translate('Failed to accept order. Please try again.')
+                'message' => translate('Failed to accept order. Please try again.'),
             ], 500);
         }
     }
@@ -1061,7 +1048,7 @@ class OrderController extends Controller
             $this->auditTrailService->logUpdated(
                 $order,
                 $beforeState,
-                'Rejected order #' . $order->id,
+                'Rejected order #'.$order->id,
                 array_merge([
                     'event_category' => 'order_operations',
                     'event_type' => 'order_rejected',
@@ -1072,8 +1059,8 @@ class OrderController extends Controller
                         'rejection_reason' => $order->rejection_reason,
                         'rejected_by' => Auth::id(),
                         'rejected_by_type' => Auth::user()->user_type,
-                        'changes_made' => $this->getOrderChangedFields($beforeState, $order->toArray())
-                    ]
+                        'changes_made' => $this->getOrderChangedFields($beforeState, $order->toArray()),
+                    ],
                 ], $justificationData)
             );
 
@@ -1138,9 +1125,9 @@ class OrderController extends Controller
 
             if ($user) {
                 // SMS Notification
-                if (!empty($user->phone_number)) {
+                if (! empty($user->phone_number)) {
                     try {
-                        $smsMessage = "Update: Order #{$order->id} has been rejected. Reason: {$order->rejection_reason}. Contact support: " . (config('app.support_phone') ?? config('app.support_email'));
+                        $smsMessage = "Update: Order #{$order->id} has been rejected. Reason: {$order->rejection_reason}. Contact support: ".(config('app.support_phone') ?? config('app.support_email'));
                         $smsSent = $this->sendOrderSms($user->phone_number, $smsMessage);
 
                         if ($smsSent) {
@@ -1155,12 +1142,12 @@ class OrderController extends Controller
                                     'customer_id' => $order->user_id,
                                     'phone_number' => $user->phone_number,
                                     'message' => $smsMessage,
-                                    'sms_status' => 'sent'
-                                ]
+                                    'sms_status' => 'sent',
+                                ],
                             ]);
                         }
                     } catch (\Throwable $e) {
-                        Log::error("SMS send failed for rejected order {$order->id}: " . $e->getMessage());
+                        Log::error("SMS send failed for rejected order {$order->id}: ".$e->getMessage());
                         $this->auditTrailService->log([
                             'event_category' => 'error_events',
                             'event_type' => 'sms_notification_failed',
@@ -1171,14 +1158,14 @@ class OrderController extends Controller
                                 'order_id' => $order->id,
                                 'customer_id' => $order->user_id,
                                 'phone_number' => $user->phone_number,
-                                'error' => $e->getMessage()
-                            ]
+                                'error' => $e->getMessage(),
+                            ],
                         ]);
                     }
                 }
 
                 // Email Notification
-                if (!empty($user->email)) {
+                if (! empty($user->email)) {
                     try {
                         $emailData = [
                             'subject' => $title,
@@ -1203,11 +1190,11 @@ class OrderController extends Controller
                                 'email' => $user->email,
                                 'subject' => $title,
                                 'rejection_reason' => $order->rejection_reason,
-                                'email_status' => 'sent'
-                            ]
+                                'email_status' => 'sent',
+                            ],
                         ]);
                     } catch (\Throwable $e) {
-                        Log::error("Email send failed for rejected order {$order->id}: " . $e->getMessage());
+                        Log::error("Email send failed for rejected order {$order->id}: ".$e->getMessage());
                         $this->auditTrailService->log([
                             'event_category' => 'error_events',
                             'event_type' => 'email_notification_failed',
@@ -1218,8 +1205,8 @@ class OrderController extends Controller
                                 'order_id' => $order->id,
                                 'customer_id' => $order->user_id,
                                 'email' => $user->email,
-                                'error' => $e->getMessage()
-                            ]
+                                'error' => $e->getMessage(),
+                            ],
                         ]);
                     }
                 }
@@ -1238,19 +1225,19 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'customer_id' => $order->user_id,
                     'rejection_reason' => $order->rejection_reason,
-                    'notification_channels' => ['firebase', 'database', 'sms', 'email']
-                ]
+                    'notification_channels' => ['firebase', 'database', 'sms', 'email'],
+                ],
             ]);
 
             return response()->json([
                 'status' => 'success',
-                'message' => translate('Order has been rejected successfully.')
+                'message' => translate('Order has been rejected successfully.'),
             ]);
         } catch (\Throwable $e) {
             DB::rollBack();
             Log::error('Failed to reject order', [
                 'order_id' => $order->id,
-                'error' => $e->getMessage()
+                'error' => $e->getMessage(),
             ]);
 
             $this->auditTrailService->log([
@@ -1262,13 +1249,13 @@ class OrderController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'order_id' => $order->id,
-                    'rejection_reason' => $request->rejection_reason
-                ]
+                    'rejection_reason' => $request->rejection_reason,
+                ],
             ]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => translate('Failed to reject order. Please try again.')
+                'message' => translate('Failed to reject order. Please try again.'),
             ], 500);
         }
     }
@@ -1293,8 +1280,6 @@ class OrderController extends Controller
 
     /**
      * Create 3 installment payments for the accepted order.
-     * @param Order $order
-     * @return void
      */
     private function createSchedulePayments(Order $order): void
     {
@@ -1343,7 +1328,7 @@ class OrderController extends Controller
                 'event_category' => 'payment_operations',
                 'event_type' => 'schedule_payments_created',
                 'entity_type' => 'SchedulePayment',
-                'action_summary' => 'Created 3 installment payments for order #' . $order->id,
+                'action_summary' => 'Created 3 installment payments for order #'.$order->id,
                 'properties' => [
                     'order_id' => $order->id,
                     'customer_id' => $userId,
@@ -1355,8 +1340,8 @@ class OrderController extends Controller
                     'second_due_date' => now()->addDays(60)->format('Y-m-d'),
                     'third_due_date' => now()->addDays(90)->format('Y-m-d'),
                     'created_by' => Auth::id(),
-                    'payment_ids' => array_map(fn($sp) => $sp->id, $schedulePayments)
-                ]
+                    'payment_ids' => array_map(fn ($sp) => $sp->id, $schedulePayments),
+                ],
             ], $justificationData));
 
             $this->logOrderAction(
@@ -1368,7 +1353,7 @@ class OrderController extends Controller
         } catch (\Exception $e) {
             Log::error('Failed to create schedule payments', [
                 'error' => $e->getMessage(),
-                'order_id' => $order->id
+                'order_id' => $order->id,
             ]);
 
             $this->auditTrailService->log([
@@ -1380,15 +1365,15 @@ class OrderController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'order_id' => $order->id,
-                    'grand_total' => $order->grand_total
-                ]
+                    'grand_total' => $order->grand_total,
+                ],
             ]);
         }
     }
 
     /**
      * Create Nafith SANAD if order meets criteria.
-     * @param Order $order
+     *
      * @return string|null Error message string, or null on success.
      */
     private function createNafithSanad(Order $order): ?string
@@ -1408,9 +1393,10 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'order_amount' => $order->grand_total,
                     'nafith_threshold' => $nafithMaxAmount,
-                    'customer_id' => $user->id
-                ]
+                    'customer_id' => $user->id,
+                ],
             ]);
+
             return null;
         }
 
@@ -1423,9 +1409,10 @@ class OrderController extends Controller
                 'action_summary' => 'Nafith SANAD creation skipped - SANAD already exists',
                 'properties' => [
                     'order_id' => $order->id,
-                    'customer_id' => $user->id
-                ]
+                    'customer_id' => $user->id,
+                ],
             ]);
+
             return null;
         }
 
@@ -1440,11 +1427,12 @@ class OrderController extends Controller
                 'properties' => [
                     'order_id' => $order->id,
                     'customer_id' => $user->id,
-                    'has_iqama' => !empty($user->iqama),
-                    'has_phone' => !empty($user->phone_number),
-                    'missing_fields' => empty($user->iqama) ? 'iqama' : (empty($user->phone_number) ? 'phone' : 'none')
-                ]
+                    'has_iqama' => ! empty($user->iqama),
+                    'has_phone' => ! empty($user->phone_number),
+                    'missing_fields' => empty($user->iqama) ? 'iqama' : (empty($user->phone_number) ? 'phone' : 'none'),
+                ],
             ]);
+
             return 'Missing Iqama or Phone number for the customer.';
         }
 
@@ -1452,20 +1440,20 @@ class OrderController extends Controller
         $nafithService = app(NafithService::class);
 
         $debtorData = [
-            'national_id'  => (string) $user->iqama,
+            'national_id' => (string) $user->iqama,
             'phone_number' => (string) $user->phone_number,
         ];
 
         $sanadItems = [
             [
-                'due_type'     => 'date',
-                'due_date'     => now()->addDays(90)->format(dateFormat()),
-                'total_value'  => $order->grand_total,
-                'reference_id' => 'sanad_' . $order->id,
-            ]
+                'due_type' => 'date',
+                'due_date' => now()->addDays(90)->format(dateFormat()),
+                'total_value' => $order->grand_total,
+                'reference_id' => 'sanad_'.$order->id,
+            ],
         ];
 
-        $referenceId = 'order_' . $order->id . '_' . time();
+        $referenceId = 'order_'.$order->id.'_'.time();
 
         try {
             $response = $nafithService->createSingleSanad(
@@ -1477,15 +1465,15 @@ class OrderController extends Controller
 
             // Assuming Sanad model exists and response structure is correct
             $sanad = Sanad::create([
-                'id'           => $response['id'],
-                'order_id'     => $order->id,
-                'user_id'      => $user->id,
+                'id' => $response['id'],
+                'order_id' => $order->id,
+                'user_id' => $user->id,
                 'reference_id' => $response['reference_id'] ?? null,
-                'status'       => $response['status'] ?? null,
-                'total_value'  => $response['total_value'] ?? null,
-                'currency'     => $response['currency'] ?? 'SAR',
-                'issued_at'    => $response['issued_at'] ?? null,
-                'approved_at'  => $response['approved_at'] ?? null,
+                'status' => $response['status'] ?? null,
+                'total_value' => $response['total_value'] ?? null,
+                'currency' => $response['currency'] ?? 'SAR',
+                'issued_at' => $response['issued_at'] ?? null,
+                'approved_at' => $response['approved_at'] ?? null,
                 'raw_response' => $response,
             ]);
 
@@ -1498,7 +1486,7 @@ class OrderController extends Controller
 
             $this->auditTrailService->logCreated(
                 $sanad,
-                'Created Nafith SANAD for order #' . $order->id,
+                'Created Nafith SANAD for order #'.$order->id,
                 array_merge([
                     'event_category' => 'financial_operations',
                     'event_type' => 'nafith_sanad_created',
@@ -1509,15 +1497,15 @@ class OrderController extends Controller
             $this->logOrderAction(
                 $order,
                 'nafith_sanad_created',
-                "Nafith SANAD successfully created for {$order->grand_total} SAR, due " . $sanadItems[0]['due_date'],
+                "Nafith SANAD successfully created for {$order->grand_total} SAR, due ".$sanadItems[0]['due_date'],
                 ['sanad_id' => $response['id'], 'nafith_response' => $response]
             );
 
             return null; // Success
         } catch (\Throwable $e) {
             Log::error("Nafith SANAD creation failed for order {$order->id}: {$e->getMessage()}", [
-                'order_id'   => $order->id,
-                'user_id'    => $user->id,
+                'order_id' => $order->id,
+                'user_id' => $user->id,
                 'debtorData' => $debtorData,
                 'sanadItems' => $sanadItems,
             ]);
@@ -1533,8 +1521,8 @@ class OrderController extends Controller
                     'order_id' => $order->id,
                     'customer_id' => $user->id,
                     'order_amount' => $order->grand_total,
-                    'reference_id' => $referenceId
-                ]
+                    'reference_id' => $referenceId,
+                ],
             ]);
 
             $this->logOrderAction(
@@ -1567,8 +1555,8 @@ class OrderController extends Controller
                     'customer_id' => $order->user_id,
                     'otp' => '******', // Masked for security
                     'otp_last_4' => substr($otp, -4), // Last 4 digits for reference
-                    'generated_by' => Auth::id()
-                ]
+                    'generated_by' => Auth::id(),
+                ],
             ]);
 
             $message = "Please submit this OTP on the ArabianPay mobile app to confirm your order delivery: {$otp}";
@@ -1577,7 +1565,7 @@ class OrderController extends Controller
             $sentSms = false;
             $sentEmail = false;
 
-            if (!empty($order->user->phone_number)) {
+            if (! empty($order->user->phone_number)) {
                 $this->sendSmsOtp($order->user->phone_number, $otp, $message);
                 $sentSms = true;
 
@@ -1593,12 +1581,12 @@ class OrderController extends Controller
                         'customer_id' => $order->user_id,
                         'phone_number' => substr($order->user->phone_number, -4), // Last 4 digits only
                         'sms_provider' => 'default',
-                        'timestamp' => now()->toISOString()
-                    ]
+                        'timestamp' => now()->toISOString(),
+                    ],
                 ]);
             }
 
-            if (!empty($order->user->email)) {
+            if (! empty($order->user->email)) {
                 $this->sendEmailOtp($order->user->email, $otp, 'Order Delivery OTP', $message);
                 $sentEmail = true;
 
@@ -1612,13 +1600,13 @@ class OrderController extends Controller
                     'properties' => [
                         'order_id' => $order->id,
                         'customer_id' => $order->user_id,
-                        'email_domain' => substr(strrchr($order->user->email, "@"), 1), // Domain only
-                        'timestamp' => now()->toISOString()
-                    ]
+                        'email_domain' => substr(strrchr($order->user->email, '@'), 1), // Domain only
+                        'timestamp' => now()->toISOString(),
+                    ],
                 ]);
             }
 
-            $description .= " SMS sent: " . ($sentSms ? 'Yes' : 'No') . ", Email sent: " . ($sentEmail ? 'Yes' : 'No') . ".";
+            $description .= ' SMS sent: '.($sentSms ? 'Yes' : 'No').', Email sent: '.($sentEmail ? 'Yes' : 'No').'.';
 
             $this->logOrderAction(
                 $order,
@@ -1626,14 +1614,14 @@ class OrderController extends Controller
                 $description,
                 [
                     'otp' => $otp,
-                    'sms_attempt' => !empty($order->user->phone_number),
-                    'email_attempt' => !empty($order->user->email),
+                    'sms_attempt' => ! empty($order->user->phone_number),
+                    'email_attempt' => ! empty($order->user->email),
                     'sms_success' => $sentSms,
                     'email_success' => $sentEmail,
                 ]
             );
         } catch (\Throwable $e) {
-            $description .= " Failed to send OTP.";
+            $description .= ' Failed to send OTP.';
             Log::error('Failed to send delivery OTP', ['order_id' => $order->id, 'error' => $e->getMessage()]);
 
             $this->auditTrailService->log([
@@ -1645,8 +1633,8 @@ class OrderController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'order_id' => $order->id,
-                    'customer_id' => $order->user_id
-                ]
+                    'customer_id' => $order->user_id,
+                ],
             ]);
 
             $this->logOrderAction(
@@ -1665,15 +1653,18 @@ class OrderController extends Controller
     private function mapProductDetails(Order $order)
     {
         return collect(json_decode($order->product_details, true))
-            ->map(fn($item) => $this->mapSingleProduct($item))
+            ->map(fn ($item) => $this->mapSingleProduct($item))
             ->filter();
     }
 
     private function mapSingleProduct(array $item)
     {
         $product = Product::find($item['product_id']);
-        if (!$product) return null;
+        if (! $product) {
+            return null;
+        }
         $price = data_get($item, 'attributes.0.price', $product->unit_price);
+
         return [
             'product' => $product,
             'quantity' => $item['quantity'],
@@ -1687,7 +1678,7 @@ class OrderController extends Controller
     private function authorizeUser(): void
     {
         $user = Auth::user();
-        if (!($user->user_type === 'admin' || ($user->user_type === 'employee' && $user->is_manager))) {
+        if (! ($user->user_type === 'admin' || ($user->user_type === 'employee' && $user->is_manager))) {
             // Log unauthorized access attempt
             $this->auditTrailService->log([
                 'event_category' => 'access_control',
@@ -1699,13 +1690,13 @@ class OrderController extends Controller
                     'user_type' => $user->user_type,
                     'is_manager' => $user->is_manager,
                     'ip_address' => request()->ip(),
-                    'timestamp' => now()->toISOString()
-                ]
+                    'timestamp' => now()->toISOString(),
+                ],
             ]);
 
             response()->json([
                 'status' => 'error',
-                'message' => translate('You do not have permission to perform this action.')
+                'message' => translate('You do not have permission to perform this action.'),
             ], 403)->send();
             exit;
         }
@@ -1713,19 +1704,22 @@ class OrderController extends Controller
 
     /**
      * Log an action related to the order.
-     * @param Order $order The order model instance.
-     * @param string $actionType The type of action (e.g., 'update_status', 'accept_order').
-     * @param string|null $description A human-readable description of the action.
-     * @param array $properties Additional structured data to store.
-     * @return void
+     *
+     * @param  Order  $order  The order model instance.
+     * @param  string  $actionType  The type of action (e.g., 'update_status', 'accept_order').
+     * @param  string|null  $description  A human-readable description of the action.
+     * @param  array  $properties  Additional structured data to store.
      */
-    private function logOrderAction(Order $order, string $actionType, string $description = null, array $properties = []): void
+    private function logOrderAction(Order $order, string $actionType, ?string $description = null, array $properties = []): void
     {
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
 
         // Device detection
-        $detect = new MobileDetect();
-        $device = $detect->isMobile() ? ($detect->isTablet() ? 'Tablet' : 'Mobile') : 'Desktop';
+        $device = 'Unknown';
+        if (class_exists(\Detection\MobileDetect::class)) {
+            $detect = new \Detection\MobileDetect;
+            $device = $detect->isMobile() ? ($detect->isTablet() ? 'Tablet' : 'Mobile') : 'Desktop';
+        }
 
         // Simple platform/OS detection
         $platform = 'Unknown';
@@ -1747,9 +1741,9 @@ class OrderController extends Controller
             $browser = 'Internet Explorer';
         } elseif (preg_match('/Firefox/i', $userAgent)) {
             $browser = 'Firefox';
-        } elseif (preg_match('/Chrome/i', $userAgent) && !preg_match('/Edge/i', $userAgent)) {
+        } elseif (preg_match('/Chrome/i', $userAgent) && ! preg_match('/Edge/i', $userAgent)) {
             $browser = 'Chrome';
-        } elseif (preg_match('/Safari/i', $userAgent) && !preg_match('/Chrome/i', $userAgent)) {
+        } elseif (preg_match('/Safari/i', $userAgent) && ! preg_match('/Chrome/i', $userAgent)) {
             $browser = 'Safari';
         } elseif (preg_match('/Opera|OPR/i', $userAgent)) {
             $browser = 'Opera';
@@ -1764,7 +1758,7 @@ class OrderController extends Controller
             'platform_os' => $platform,
             'browser_name' => $browser,
             'actor_user_id' => Auth::id(),
-            'actor_user_type' => Auth::user()->user_type ?? 'Guest',
+            'actor_user_type' => Auth::user()?->user_type ?? 'Guest',
         ]);
 
         OrderActionLog::create([
@@ -1779,10 +1773,6 @@ class OrderController extends Controller
 
     /**
      * Helper method to identify changed fields in order updates
-     *
-     * @param array $beforeState
-     * @param array $afterState
-     * @return array
      */
     private function getOrderChangedFields(array $beforeState, array $afterState): array
     {
@@ -1795,12 +1785,12 @@ class OrderController extends Controller
                     $changed[$key] = [
                         'old' => '***MASKED***',
                         'new' => '***MASKED***',
-                        'changed' => true
+                        'changed' => true,
                     ];
                 } else {
                     $changed[$key] = [
                         'old' => $value,
-                        'new' => $afterState[$key]
+                        'new' => $afterState[$key],
                     ];
                 }
             }
@@ -1808,16 +1798,16 @@ class OrderController extends Controller
 
         // Check for new fields that weren't in before state
         foreach ($afterState as $key => $value) {
-            if (!isset($beforeState[$key])) {
+            if (! isset($beforeState[$key])) {
                 if (in_array($key, $sensitiveFields)) {
                     $changed[$key] = [
                         'old' => null,
-                        'new' => '***MASKED***'
+                        'new' => '***MASKED***',
                     ];
                 } else {
                     $changed[$key] = [
                         'old' => null,
-                        'new' => $value
+                        'new' => $value,
                     ];
                 }
             }

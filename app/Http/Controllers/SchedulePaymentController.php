@@ -6,11 +6,11 @@ use App\Models\PartialPayment;
 use App\Models\SchedulePayment;
 use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Auth;
 
 class SchedulePaymentController extends Controller
 {
@@ -27,7 +27,7 @@ class SchedulePaymentController extends Controller
             $user = currentUser();
             $validStatuses = ['pending', 'paid', 'overdue', 'cancelled', 'failed'];
 
-            if (!in_array($status, $validStatuses)) {
+            if (! in_array($status, $validStatuses)) {
                 $this->auditTrailService->log([
                     'event_category' => 'validation_errors',
                     'event_type' => 'invalid_payment_status_filter',
@@ -37,8 +37,8 @@ class SchedulePaymentController extends Controller
                         'requested_status' => $status,
                         'valid_statuses' => $validStatuses,
                         'user_id' => $user->id,
-                        'user_type' => $user->user_type
-                    ]
+                        'user_type' => $user->user_type,
+                    ],
                 ]);
 
                 return redirect()->route('schedule-payments.index')
@@ -65,7 +65,7 @@ class SchedulePaymentController extends Controller
                 'event_category' => 'data_access',
                 'event_type' => 'schedule_payments_filtered_view',
                 'entity_type' => 'SchedulePayment',
-                'action_summary' => 'Viewed schedule payments filtered by status: ' . $status,
+                'action_summary' => 'Viewed schedule payments filtered by status: '.$status,
                 'properties' => [
                     'filter_status' => $status,
                     'total_results' => $schedulePayments->total(),
@@ -73,8 +73,8 @@ class SchedulePaymentController extends Controller
                     'per_page' => $schedulePayments->perPage(),
                     'user_id' => $user->id,
                     'user_type' => $user->user_type,
-                    'assigned_only' => $user->user_type !== 'admin'
-                ]
+                    'assigned_only' => $user->user_type !== 'admin',
+                ],
             ], $justificationData));
 
             return view('admin.schedule-payment.index', compact('schedulePayments', 'type'));
@@ -82,7 +82,7 @@ class SchedulePaymentController extends Controller
             Log::error('Failed to filter schedule payments by status', [
                 'error' => $e->getMessage(),
                 'status' => $status,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -93,8 +93,8 @@ class SchedulePaymentController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'requested_status' => $status,
-                    'user_id' => Auth::id()
-                ]
+                    'user_id' => Auth::id(),
+                ],
             ]);
 
             return redirect()->route('schedule-payments.index')
@@ -114,7 +114,7 @@ class SchedulePaymentController extends Controller
                 ->select('uuid', 'instalment_number', 'due_date', 'instalment_amount', 'payment_status')
                 ->paginate(10);
 
-            $type = "All";
+            $type = 'All';
 
             // Log schedule payments list view with justification
             $justificationData = $this->auditTrailService->withJustification(
@@ -135,15 +135,15 @@ class SchedulePaymentController extends Controller
                     'user_id' => $user->id,
                     'user_type' => $user->user_type,
                     'view_type' => $user->user_type === 'admin' ? 'admin_view' : 'assigned_view',
-                    'assigned_only' => $user->user_type !== 'admin'
-                ]
+                    'assigned_only' => $user->user_type !== 'admin',
+                ],
             ], $justificationData));
 
             return view('admin.schedule-payment.index', compact('schedulePayments', 'type'));
         } catch (\Exception $e) {
             Log::error('Failed to load schedule payments list', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -153,8 +153,8 @@ class SchedulePaymentController extends Controller
                 'action_summary' => 'Failed to load schedule payments list',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'user_id' => Auth::id()
-                ]
+                    'user_id' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load schedule payments. Please try again.');
@@ -179,8 +179,8 @@ class SchedulePaymentController extends Controller
                         'assigned_to' => $schedulePayment->assigned_to,
                         'user_id' => $user->id,
                         'user_type' => $user->user_type,
-                        'unauthorized_access' => true
-                    ]
+                        'unauthorized_access' => true,
+                    ],
                 ]);
 
                 return redirect()->route('schedule-payments.index')
@@ -219,11 +219,11 @@ class SchedulePaymentController extends Controller
                     'deducted_amount' => $schedulePayment->deducted_amount,
                     'customer_id' => $schedulePayment->user_id,
                     'assigned_to' => $schedulePayment->assigned_to,
-                    'has_payment_record' => !is_null($schedulePayment->payment),
+                    'has_payment_record' => ! is_null($schedulePayment->payment),
                     'claims_count' => $schedulePayment->claims->count(),
                     'viewed_by' => $user->id,
-                    'viewed_by_type' => $user->user_type
-                ]
+                    'viewed_by_type' => $user->user_type,
+                ],
             ], $justificationData));
 
             return view('admin.schedule-payment.show', compact('schedulePayment'));
@@ -231,7 +231,7 @@ class SchedulePaymentController extends Controller
             Log::error('Failed to load schedule payment details', [
                 'error' => $e->getMessage(),
                 'schedule_payment_id' => $schedulePayment->id ?? 'unknown',
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -243,8 +243,8 @@ class SchedulePaymentController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'schedule_payment_id' => $schedulePayment->id ?? 'unknown',
-                    'user_id' => Auth::id()
-                ]
+                    'user_id' => Auth::id(),
+                ],
             ]);
 
             return redirect()->route('schedule-payments.index')
@@ -270,13 +270,13 @@ class SchedulePaymentController extends Controller
                         'assigned_to' => $schedulePayment->assigned_to,
                         'user_id' => $user->id,
                         'api_endpoint' => 'paymentJson',
-                        'unauthorized_access' => true
-                    ]
+                        'unauthorized_access' => true,
+                    ],
                 ]);
 
                 return response()->json([
                     'success' => false,
-                    'error' => 'Unauthorized access'
+                    'error' => 'Unauthorized access',
                 ], 403);
             }
 
@@ -293,7 +293,7 @@ class SchedulePaymentController extends Controller
                     'instalment_amount' => $schedulePayment->instalment_amount,
                     'late_fee' => $schedulePayment->late_fee,
                     'status' => $schedulePayment->payment_status,
-                    'is_late' => (bool)$schedulePayment->is_late,
+                    'is_late' => (bool) $schedulePayment->is_late,
                     'late_days' => $schedulePayment->late_days,
                 ],
                 'checkout' => $schedulePayment->checkout ? [
@@ -345,12 +345,12 @@ class SchedulePaymentController extends Controller
                     'api_endpoint' => 'paymentJson',
                     'http_method' => 'GET',
                     'payment_status' => $schedulePayment->payment_status,
-                    'has_payment_data' => !is_null($payment),
+                    'has_payment_data' => ! is_null($payment),
                     'claims_count' => count($data['claims']),
                     'requested_by' => $user->id,
                     'request_ip' => request()->ip(),
-                    'user_agent' => request()->userAgent()
-                ]
+                    'user_agent' => request()->userAgent(),
+                ],
             ], $justificationData));
 
             return response()->json(['success' => true, 'data' => $data]);
@@ -358,7 +358,7 @@ class SchedulePaymentController extends Controller
             Log::error('Failed to fetch schedule payment JSON data', [
                 'error' => $e->getMessage(),
                 'schedule_payment_id' => $schedulePayment->id ?? 'unknown',
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -372,13 +372,13 @@ class SchedulePaymentController extends Controller
                     'schedule_payment_id' => $schedulePayment->id ?? 'unknown',
                     'api_endpoint' => 'paymentJson',
                     'request_ip' => request()->ip(),
-                    'user_id' => Auth::id()
-                ]
+                    'user_id' => Auth::id(),
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to fetch schedule payment data'
+                'error' => 'Failed to fetch schedule payment data',
             ], 500);
         }
     }
@@ -402,13 +402,13 @@ class SchedulePaymentController extends Controller
                         'assigned_to' => $payment->assigned_to,
                         'user_id' => $user->id,
                         'user_type' => $user->user_type,
-                        'unauthorized_update' => true
-                    ]
+                        'unauthorized_update' => true,
+                    ],
                 ]);
 
                 return response()->json([
                     'success' => false,
-                    'error' => 'You are not authorized to update this schedule payment.'
+                    'error' => 'You are not authorized to update this schedule payment.',
                 ], 403);
             }
 
@@ -428,8 +428,8 @@ class SchedulePaymentController extends Controller
                         'validation_errors' => $validator->errors()->toArray(),
                         'schedule_payment_id' => $payment->id,
                         'customer_id' => $payment->user_id,
-                        'attempted_by' => $user->id
-                    ]
+                        'attempted_by' => $user->id,
+                    ],
                 ]);
 
                 return response()->json(['success' => false, 'error' => $validator->errors()->first()]);
@@ -457,7 +457,7 @@ class SchedulePaymentController extends Controller
             $this->auditTrailService->logUpdated(
                 $payment,
                 $beforeState,
-                'Updated schedule payment #' . $payment->id . ' due date',
+                'Updated schedule payment #'.$payment->id.' due date',
                 array_merge([
                     'event_category' => 'payment_operations',
                     'event_type' => 'schedule_payment_updated',
@@ -473,8 +473,8 @@ class SchedulePaymentController extends Controller
                         'new_payment_status' => 'pending',
                         'updated_by' => $user->id,
                         'updated_by_type' => $user->user_type,
-                        'changes_made' => $this->getSchedulePaymentChangedFields($beforeState, $payment->toArray())
-                    ]
+                        'changes_made' => $this->getSchedulePaymentChangedFields($beforeState, $payment->toArray()),
+                    ],
                 ], $justificationData)
             );
 
@@ -486,8 +486,8 @@ class SchedulePaymentController extends Controller
                 'data' => [
                     'id' => $payment->id,
                     'new_due_date' => $payment->due_date,
-                    'payment_status' => $payment->payment_status
-                ]
+                    'payment_status' => $payment->payment_status,
+                ],
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -495,7 +495,7 @@ class SchedulePaymentController extends Controller
                 'error' => $e->getMessage(),
                 'schedule_payment_id' => $id,
                 'request_data' => $request->all(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -508,13 +508,13 @@ class SchedulePaymentController extends Controller
                     'error' => $e->getMessage(),
                     'schedule_payment_id' => $id,
                     'requested_due_date' => $request->due_date,
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to update schedule payment. Please try again.'
+                'error' => 'Failed to update schedule payment. Please try again.',
             ], 500);
         }
     }
@@ -525,9 +525,9 @@ class SchedulePaymentController extends Controller
             $user = currentUser();
 
             $validator = Validator::make($request->all(), [
-                'schedule_id'    => 'required|exists:schedule_payments,id',
+                'schedule_id' => 'required|exists:schedule_payments,id',
                 'payment_method' => 'required',
-                'receipt'        => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
+                'receipt' => 'required|file|mimes:jpg,jpeg,png,pdf|max:10240',
             ]);
 
             if ($validator->fails()) {
@@ -542,13 +542,13 @@ class SchedulePaymentController extends Controller
                         'validation_errors' => $validator->errors()->toArray(),
                         'schedule_payment_id' => $request->schedule_id,
                         'payment_method' => $request->payment_method,
-                        'attempted_by' => $user->id
-                    ]
+                        'attempted_by' => $user->id,
+                    ],
                 ]);
 
                 return response()->json([
                     'success' => false,
-                    'errors' => $validator->errors()
+                    'errors' => $validator->errors(),
                 ], 422);
             }
 
@@ -572,8 +572,8 @@ class SchedulePaymentController extends Controller
                         'user_id' => $user->id,
                         'user_type' => $user->user_type,
                         'unauthorized_payment' => true,
-                        'payment_method' => $request->payment_method
-                    ]
+                        'payment_method' => $request->payment_method,
+                    ],
                 ]);
 
                 return response()->json([
@@ -601,8 +601,8 @@ class SchedulePaymentController extends Controller
                         'instalment_amount' => $payment->instalment_amount,
                         'deducted_amount' => $deductedAmount,
                         'payment_status' => $payment->payment_status,
-                        'attempted_by' => $user->id
-                    ]
+                        'attempted_by' => $user->id,
+                    ],
                 ]);
 
                 return response()->json([
@@ -631,7 +631,7 @@ class SchedulePaymentController extends Controller
                     $file = $request->file('receipt');
 
                     $extension = strtolower($file->getClientOriginalExtension());
-                    $filename = Str::random(40) . '.' . $extension;
+                    $filename = Str::random(40).'.'.$extension;
                     $receiptPath = "$folder/$filename";
 
                     $file->storeAs($folder, $filename, $disk);
@@ -649,8 +649,8 @@ class SchedulePaymentController extends Controller
                             'receipt_filename' => $filename,
                             'file_extension' => $extension,
                             'file_size_kb' => round($file->getSize() / 1024, 2),
-                            'uploaded_by' => $user->id
-                        ]
+                            'uploaded_by' => $user->id,
+                        ],
                     ]);
                 }
 
@@ -674,7 +674,7 @@ class SchedulePaymentController extends Controller
                 $this->auditTrailService->logUpdated(
                     $payment,
                     $beforeState,
-                    'Processed payment for schedule payment #' . $payment->id,
+                    'Processed payment for schedule payment #'.$payment->id,
                     array_merge([
                         'event_category' => 'payment_operations',
                         'event_type' => 'schedule_payment_processed',
@@ -692,13 +692,13 @@ class SchedulePaymentController extends Controller
                             'old_payment_status' => $beforeState['payment_status'] ?? 'unknown',
                             'new_payment_status' => 'paid',
                             'paid_at' => $payment->paid_at,
-                            'has_receipt' => !is_null($receiptPath),
+                            'has_receipt' => ! is_null($receiptPath),
                             'receipt_path' => $receiptPath,
                             'updated_partial_payments_count' => $updatedPartialCount,
                             'processed_by' => $user->id,
                             'processed_by_type' => $user->user_type,
-                            'changes_made' => $this->getSchedulePaymentChangedFields($beforeState, $payment->toArray())
-                        ]
+                            'changes_made' => $this->getSchedulePaymentChangedFields($beforeState, $payment->toArray()),
+                        ],
                     ], $justificationData)
                 );
 
@@ -706,15 +706,15 @@ class SchedulePaymentController extends Controller
 
                 return response()->json([
                     'success' => true,
-                    'message' => 'Payment submitted successfully. Amount: SAR ' . number_format($remainingAmount, 2),
+                    'message' => 'Payment submitted successfully. Amount: SAR '.number_format($remainingAmount, 2),
                     'data' => [
                         'payment_id' => $payment->id,
                         'amount_paid' => $remainingAmount,
                         'total_deducted' => $payment->deducted_amount,
                         'payment_status' => $payment->payment_status,
                         'paid_at' => $payment->paid_at,
-                        'receipt_uploaded' => !is_null($receiptPath)
-                    ]
+                        'receipt_uploaded' => ! is_null($receiptPath),
+                    ],
                 ]);
             } catch (\Throwable $e) {
                 DB::rollBack();
@@ -726,7 +726,7 @@ class SchedulePaymentController extends Controller
                 'error' => $e->getMessage(),
                 'schedule_id' => $request->schedule_id ?? 'unknown',
                 'payment_method' => $request->payment_method ?? 'unknown',
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -740,8 +740,8 @@ class SchedulePaymentController extends Controller
                     'schedule_payment_id' => $request->schedule_id ?? 'unknown',
                     'payment_method' => $request->payment_method ?? 'unknown',
                     'has_receipt_file' => $request->hasFile('receipt'),
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return response()->json([
@@ -754,7 +754,7 @@ class SchedulePaymentController extends Controller
     /**
      * Private helper to mark all partial payments of a schedule as paid
      */
-    private function markPartialPaymentsAsPaid(int $scheduleId, string $paymentMethod, ?string $receiptPath = null, int $processedBy): int
+    private function markPartialPaymentsAsPaid(int $scheduleId, string $paymentMethod, ?string $receiptPath, int $processedBy): int
     {
         try {
             $partialPayments = PartialPayment::where('schedule_payment_id', $scheduleId)
@@ -787,10 +787,10 @@ class SchedulePaymentController extends Controller
                         'schedule_payment_id' => $scheduleId,
                         'partial_payments_updated' => $updatedCount,
                         'payment_method' => $paymentMethod,
-                        'has_receipt' => !is_null($receiptPath),
+                        'has_receipt' => ! is_null($receiptPath),
                         'processed_by' => $processedBy,
-                        'processed_at' => now()->toISOString()
-                    ]
+                        'processed_at' => now()->toISOString(),
+                    ],
                 ]);
             }
 
@@ -799,7 +799,7 @@ class SchedulePaymentController extends Controller
             Log::error('Failed to mark partial payments as paid', [
                 'error' => $e->getMessage(),
                 'schedule_payment_id' => $scheduleId,
-                'processed_by' => $processedBy
+                'processed_by' => $processedBy,
             ]);
 
             $this->auditTrailService->log([
@@ -810,8 +810,8 @@ class SchedulePaymentController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'schedule_payment_id' => $scheduleId,
-                    'attempted_by' => $processedBy
-                ]
+                    'attempted_by' => $processedBy,
+                ],
             ]);
 
             return 0;
@@ -820,10 +820,6 @@ class SchedulePaymentController extends Controller
 
     /**
      * Helper method to identify changed fields in schedule payment updates
-     *
-     * @param array $beforeState
-     * @param array $afterState
-     * @return array
      */
     private function getSchedulePaymentChangedFields(array $beforeState, array $afterState): array
     {
@@ -836,12 +832,12 @@ class SchedulePaymentController extends Controller
                     $changed[$key] = [
                         'old' => '***MASKED***',
                         'new' => '***MASKED***',
-                        'changed' => true
+                        'changed' => true,
                     ];
                 } else {
                     $changed[$key] = [
                         'old' => $value,
-                        'new' => $afterState[$key]
+                        'new' => $afterState[$key],
                     ];
                 }
             }
@@ -849,16 +845,16 @@ class SchedulePaymentController extends Controller
 
         // Check for new fields that weren't in before state
         foreach ($afterState as $key => $value) {
-            if (!isset($beforeState[$key])) {
+            if (! isset($beforeState[$key])) {
                 if (in_array($key, $sensitiveFields)) {
                     $changed[$key] = [
                         'old' => null,
-                        'new' => '***MASKED***'
+                        'new' => '***MASKED***',
                     ];
                 } else {
                     $changed[$key] = [
                         'old' => null,
-                        'new' => $value
+                        'new' => $value,
                     ];
                 }
             }

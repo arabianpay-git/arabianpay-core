@@ -8,14 +8,18 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Attribute extends Model
 {
-    use LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, LogsModelActions;
 
     protected $fillable = ['name'];
+
     protected $encryptableAttributes = ['name'];
+
     protected array $translatable = ['name'];
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'attribute';
 
     public function translations()
@@ -27,7 +31,7 @@ class Attribute extends Model
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, $this->translatable)) {
+        if (! in_array($key, $this->translatable)) {
             return $value;
         }
 

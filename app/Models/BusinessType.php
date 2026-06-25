@@ -10,7 +10,7 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class BusinessType extends Model
 {
-    use HasFactory, LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, HasFactory, LogsModelActions;
 
     protected $fillable = [
         'name',
@@ -19,14 +19,17 @@ class BusinessType extends Model
         'order_level',
         'banner',
         'icon',
-        'featured'
+        'featured',
     ];
 
     protected $encryptableAttributes = ['name'];
+
     protected array $translatable = ['name'];
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'business_type';
 
     protected static function booted()
@@ -38,7 +41,7 @@ class BusinessType extends Model
                 $counter = 1;
 
                 while (self::where('slug', $slug)->where('id', '!=', $businessType->id)->exists()) {
-                    $slug = $originalSlug . '-' . $counter++;
+                    $slug = $originalSlug.'-'.$counter++;
                 }
 
                 $businessType->slug = $slug;
@@ -50,7 +53,7 @@ class BusinessType extends Model
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, $this->translatable)) {
+        if (! in_array($key, $this->translatable)) {
             return $value;
         }
 
@@ -64,7 +67,6 @@ class BusinessType extends Model
 
         return $translation?->$key ?? $value;
     }
-
 
     public function translations()
     {

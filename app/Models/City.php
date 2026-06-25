@@ -8,20 +8,24 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class City extends Model
 {
-    use LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, LogsModelActions;
 
     protected $fillable = [
         'name',
         'risk',
         'state_id',
     ];
+
     protected $encryptableAttributes = ['name'];
 
     protected array $translatable = ['name'];
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'city';
+
     public function state()
     {
         return $this->belongsTo(State::class);
@@ -41,7 +45,7 @@ class City extends Model
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, $this->translatable)) {
+        if (! in_array($key, $this->translatable)) {
             return $value;
         }
 

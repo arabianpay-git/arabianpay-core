@@ -4,7 +4,6 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\DB;
 
 class CustomerCreditLimit extends Model
 {
@@ -38,7 +37,6 @@ class CustomerCreditLimit extends Model
         return $this->belongsTo(Package::class);
     }
 
-
     /**
      * Total vs used ArabianPay credit utilization.
      * (float) get_setting('credit_limit', 0)
@@ -58,15 +56,15 @@ class CustomerCreditLimit extends Model
             $orders = $customer->user->orders ?? [];
 
             foreach ($orders as $order) {
-                $items    = map_product_details($order->product_details);
+                $items = map_product_details($order->product_details);
                 $subTotal = (float) $items->sum('total');          // cast to float
                 $shipping = (float) ($order->shipping_cost ?? 0);  // cast to float
                 $discount = (float) ($order->coupon_discount ?? 0); // cast to float
-                $tax      = (float) calculate_order_tax($order);   // cast to float
+                $tax = (float) calculate_order_tax($order);   // cast to float
 
                 $base = $subTotal + $tax + $shipping - $discount;
 
-                $commissionPct    = (float) get_system_commission();
+                $commissionPct = (float) get_system_commission();
                 $commissionAmount = $base * ($commissionPct / 100);
 
                 $commissionTaxPct = (float) get_commission_tax();
@@ -79,8 +77,8 @@ class CustomerCreditLimit extends Model
         }
 
         return [
-            'limit'               => $totalLimit,
-            'used'                => $used,
+            'limit' => $totalLimit,
+            'used' => $used,
             'utilization_percent' => $totalLimit ? round(($used / $totalLimit) * 100, 1) : 0,
         ];
     }

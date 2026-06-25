@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Exports\SuppliersExport;
+use App\Http\Requests\ApproveSupplierStatusRequest;
+use App\Http\Requests\StoreShopSettingsRequest;
+use App\Http\Requests\UpdateSupplierStatusRequest;
 use App\Models\Approval;
 use App\Models\BusinessCategory;
 use App\Models\CustomerCreditLimit;
@@ -15,7 +18,6 @@ use App\Models\SupplierPayout;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
-use App\Rules\NoHtml;
 use App\Services\AuditTrailService;
 use App\Services\FirebaseService;
 use App\Services\WathqService;
@@ -264,17 +266,9 @@ class SupplierController extends Controller
         return view('admin.accounts.supplier-shop', compact('merchant', 'supplierShop'));
     }
 
-    public function supplierShopSubmit(Request $request)
+    public function supplierShopSubmit(StoreShopSettingsRequest $request)
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255', new NoHtml],
-            'logo' => 'nullable|string',
-            'sliders' => 'nullable|array',
-            'sliders.*' => 'nullable|string',
-            'banner' => 'nullable|string',
-            'phone_number' => ['required', 'regex:/^(?:\+9665\d{8}|05\d{8})$/', 'string'],
-            'address' => ['required', 'string', 'max:255', new NoHtml],
-        ]);
+        $validated = $request->validated();
 
         DB::beginTransaction();
 
@@ -726,17 +720,9 @@ class SupplierController extends Controller
         return view('admin.accounts.supplier-compliance', compact('merchant', 'contract', 'supplierBank'));
     }
 
-    public function updateSupplierStatusApprove(Request $request, $id)
+    public function updateSupplierStatusApprove(ApproveSupplierStatusRequest $request, $id)
     {
         $merchant = Merchant::where('user_id', $id)->firstOrFail();
-
-        $request->validate([
-            'commission' => 'required|numeric|min:0|max:100',
-            'reason' => 'nullable|string|max:1000',
-            'contract' => 'required|file|mimes:pdf,jpg,jpeg,png',
-            'payment_schedule' => 'required|integer|min:0|max:100',
-            'contract_end_date' => 'required|date',
-        ]);
 
         DB::beginTransaction();
 
@@ -843,11 +829,9 @@ class SupplierController extends Controller
         }
     }
 
-    public function updateSupplierStatus(Request $request, $id)
+    public function updateSupplierStatus(UpdateSupplierStatusRequest $request, $id)
     {
-        $status = $request->validate([
-            'status' => 'required|in:under_review,active,contract_sent,approved,suspended,pending,blacklisted',
-        ])['status'];
+        $status = $request->validated()['status'];
 
         $merchant = Merchant::where('user_id', $id)->firstOrFail();
         $oldStatus = $merchant->status;

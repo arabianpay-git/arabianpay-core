@@ -2,11 +2,11 @@
 
 namespace App\Services;
 
-use App\Models\User;
 use App\Models\RiskScore;
 use App\Models\RiskWeight;
-use Illuminate\Support\Facades\Cache;
+use App\Models\User;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -18,17 +18,26 @@ class RiskAnalyticsService
 
     // ---- Main default weights (visible defaults at top) ----
     private const DEFAULT_WEIGHT_CR_ID = 25.0;
+
     private const DEFAULT_WEIGHT_POS = 25.0;
+
     private const DEFAULT_WEIGHT_REPAYMENT = 20.0;
+
     private const DEFAULT_WEIGHT_INDUSTRY = 15.0;
+
     private const DEFAULT_WEIGHT_LOCATION = 10.0;
 
     // ---- CR / ID sub-weights (raw points) ----
     private const DEFAULT_CR_ID_SUB_ID_MATCH = 30;
+
     private const DEFAULT_CR_ID_SUB_ID_EXPIRY = 20;
+
     private const DEFAULT_CR_ID_SUB_CR_EXPIRY = 20;
+
     private const DEFAULT_CR_ID_SUB_INDUSTRY = 15;
+
     private const DEFAULT_CR_ID_SUB_ACTIVITY = 15;
+
     private const DEFAULT_CR_ID_SUB_TOTAL = 100;
 
     // ---- POS thresholds ----
@@ -36,8 +45,11 @@ class RiskAnalyticsService
 
     // ---- Repayment sub-scores / thresholds ----
     private const DEFAULT_REPAYMENT_FEW_THRESHOLD = 2;
+
     private const DEFAULT_REPAYMENT_SCORE_NO_DELAYS = 20.0;
+
     private const DEFAULT_REPAYMENT_SCORE_FEW_DELAYS = 15.0;
+
     private const DEFAULT_REPAYMENT_SCORE_MANY_DELAYS = 5.0;
 
     // ---- Industry risk map ----
@@ -58,19 +70,27 @@ class RiskAnalyticsService
         'madinah' => 4,
         'khobar' => 4,
     ];
+
     private const DEFAULT_LOCATION_ACTIVITY_MAX = 4.5;
+
     private const DEFAULT_LOCATION_DEFAULT_RATE_MAX = 4.5;
+
     private const DEFAULT_LOCATION_SUB_TOTAL_MAX = 15.0;
 
     // Google API settings
     private const GOOGLE_CACHE_DURATION = 604800;
+
     private const GOOGLE_CACHE_FAILURE_DURATION = 86400;
+
     private const GOOGLE_REQUEST_TIMEOUT = 8;
+
     private const GOOGLE_RETRY_ATTEMPTS = 2;
+
     private const GOOGLE_RETRY_SLEEP_MS = 150;
 
     // Cache settings for risk weights
     private const RISK_WEIGHTS_CACHE_DURATION = 3600; // 1 hour
+
     private const RISK_WEIGHTS_CACHE_KEY = 'risk_weights_cache';
 
     // Weight properties (will be set per user)
@@ -87,11 +107,12 @@ class RiskAnalyticsService
     private function loadUserWeights(int $userId): void
     {
         // Use cached weights if available
-        $cacheKey = self::RISK_WEIGHTS_CACHE_KEY . '_' . $userId;
+        $cacheKey = self::RISK_WEIGHTS_CACHE_KEY.'_'.$userId;
         $cachedWeights = Cache::get($cacheKey);
 
         if ($cachedWeights) {
             $this->userWeights = $cachedWeights;
+
             return;
         }
 
@@ -100,7 +121,7 @@ class RiskAnalyticsService
             ->latest()
             ->first();
 
-        if (!$userWeights) {
+        if (! $userWeights) {
             // Fall back to global weights (user_id is null)
             $userWeights = RiskWeight::whereNull('user_id')
                 ->latest()
@@ -158,8 +179,8 @@ class RiskAnalyticsService
 
         // Check cache for each user
         foreach ($userIds as $userId) {
-            $cacheKey = self::RISK_WEIGHTS_CACHE_KEY . '_' . $userId;
-            if (!Cache::has($cacheKey)) {
+            $cacheKey = self::RISK_WEIGHTS_CACHE_KEY.'_'.$userId;
+            if (! Cache::has($cacheKey)) {
                 $uncachedUserIds[] = $userId;
             }
         }
@@ -193,7 +214,7 @@ class RiskAnalyticsService
             $this->initializeWeightsForCaching($userWeight, $tempWeights);
 
             Cache::put(
-                self::RISK_WEIGHTS_CACHE_KEY . '_' . $userId,
+                self::RISK_WEIGHTS_CACHE_KEY.'_'.$userId,
                 $tempWeights,
                 self::RISK_WEIGHTS_CACHE_DURATION
             );
@@ -268,7 +289,7 @@ class RiskAnalyticsService
         $this->loadUserWeights($user->id);
 
         // Apply any weight overrides for this calculation
-        if (!empty($weightOverrides)) {
+        if (! empty($weightOverrides)) {
             $this->applyWeightOverrides($weightOverrides);
         }
 
@@ -282,9 +303,9 @@ class RiskAnalyticsService
         // Choose business name for display and for Google lookup
         $businessNameForGoogle = $decodedCrData['name'] ?? $userData['businessName'];
 
-        return (object)[
+        return (object) [
             'id' => $user->id,
-            'name' => trim($user->first_name . ' ' . $user->last_name),
+            'name' => trim($user->first_name.' '.$user->last_name),
             'business_name' => $userData['businessName'],
             'business_name_for_google' => $businessNameForGoogle,
             'cr_number' => $userData['crNumber'],
@@ -327,22 +348,23 @@ class RiskAnalyticsService
         $businessNames = $userCollection->map(function ($user) {
             $userData = $this->getUserData($user);
             $decodedCrData = $this->parseCrData($userData['crData']);
+
             return $decodedCrData['name'] ?? $userData['businessName'];
         })->filter()->unique()->values()->all();
 
         // Prefetch Google ratings
-        if (!empty($businessNames)) {
+        if (! empty($businessNames)) {
             $this->prefetchGoogleRatings($businessNames);
         }
 
         // Calculate for each user (will use cached weights)
         $mapped = $userCollection->map(function ($user) use ($weightOverrides) {
             // Load the pre-cached weights for this user
-            $cacheKey = self::RISK_WEIGHTS_CACHE_KEY . '_' . $user->id;
+            $cacheKey = self::RISK_WEIGHTS_CACHE_KEY.'_'.$user->id;
             $this->userWeights = Cache::get($cacheKey);
 
             // Apply any weight overrides for this calculation
-            if (!empty($weightOverrides)) {
+            if (! empty($weightOverrides)) {
                 $this->applyWeightOverrides($weightOverrides);
             }
 
@@ -367,9 +389,9 @@ class RiskAnalyticsService
         // Choose business name for display and for Google lookup
         $businessNameForGoogle = $decodedCrData['name'] ?? $userData['businessName'];
 
-        return (object)[
+        return (object) [
             'id' => $user->id,
-            'name' => trim($user->first_name . ' ' . $user->last_name),
+            'name' => trim($user->first_name.' '.$user->last_name),
             'business_name' => $userData['businessName'],
             'business_name_for_google' => $businessNameForGoogle,
             'cr_number' => $userData['crNumber'],
@@ -405,6 +427,7 @@ class RiskAnalyticsService
         return collect($users)->map(function ($user) {
             $userData = $this->getUserData($user);
             $decodedCrData = $this->parseCrData($userData['crData']);
+
             return $decodedCrData['name'] ?? $userData['businessName'];
         })->filter()->unique()->values()->all();
     }
@@ -419,7 +442,7 @@ class RiskAnalyticsService
 
         foreach ($uniqueNames as $name) {
             $cacheKey = $this->getGoogleCacheKey($name);
-            if (!Cache::has($cacheKey)) {
+            if (! Cache::has($cacheKey)) {
                 $toFetch[] = $name;
             }
         }
@@ -433,7 +456,7 @@ class RiskAnalyticsService
                 try {
                     $this->fetchAndCacheGoogleRating($name);
                 } catch (\Throwable $e) {
-                    Log::warning("Prefetch failed for '{$name}': " . $e->getMessage());
+                    Log::warning("Prefetch failed for '{$name}': ".$e->getMessage());
                 }
             }
             // yield / gentle pause between chunks
@@ -452,13 +475,15 @@ class RiskAnalyticsService
         // double-check cache
         if (Cache::has($cacheKey)) {
             $val = Cache::get($cacheKey);
-            return $val === 'false' ? null : (float)$val;
+
+            return $val === 'false' ? null : (float) $val;
         }
 
         $apiKey = env('GOOGLE_PLACE_API_KEY');
-        if (!$apiKey) {
+        if (! $apiKey) {
             Log::warning("Google API key not configured; skipping rating fetch for: {$businessName}");
             Cache::put($cacheKey, 'false', self::GOOGLE_CACHE_FAILURE_DURATION);
+
             return null;
         }
 
@@ -470,12 +495,13 @@ class RiskAnalyticsService
                     'key' => $apiKey,
                 ]);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::warning("Google TextSearch API failed for: {$businessName}", [
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
                 Cache::put($cacheKey, 'false', self::GOOGLE_CACHE_FAILURE_DURATION);
+
                 return null;
             }
 
@@ -483,18 +509,21 @@ class RiskAnalyticsService
             $rating = $data['results'][0]['rating'] ?? null;
 
             if ($rating !== null) {
-                $ratingValue = (float)$rating;
+                $ratingValue = (float) $rating;
                 Cache::put($cacheKey, $ratingValue, self::GOOGLE_CACHE_DURATION);
                 Log::info("Cached Google rating for {$businessName}: {$ratingValue}");
+
                 return $ratingValue;
             }
 
             Log::info("No rating found for business: {$businessName}");
             Cache::put($cacheKey, 'false', self::GOOGLE_CACHE_FAILURE_DURATION);
+
             return null;
         } catch (\Throwable $e) {
-            Log::error("Google API exception for business: {$businessName} - " . $e->getMessage());
+            Log::error("Google API exception for business: {$businessName} - ".$e->getMessage());
             Cache::put($cacheKey, 'false', self::GOOGLE_CACHE_FAILURE_DURATION);
+
             return null;
         }
     }
@@ -505,6 +534,7 @@ class RiskAnalyticsService
     public function clearCachedGoogleRating(string $businessName): bool
     {
         $cacheKey = $this->getGoogleCacheKey($businessName);
+
         return Cache::forget($cacheKey);
     }
 
@@ -513,7 +543,7 @@ class RiskAnalyticsService
      */
     public function clearCachedWeights(int $userId): bool
     {
-        return Cache::forget(self::RISK_WEIGHTS_CACHE_KEY . '_' . $userId);
+        return Cache::forget(self::RISK_WEIGHTS_CACHE_KEY.'_'.$userId);
     }
 
     // --------------------------------------------------------------------------------
@@ -527,6 +557,7 @@ class RiskAnalyticsService
     {
         if ($user->user_type === 'merchant') {
             $govData = $user->merchant;
+
             return [
                 'crData' => $govData->goverment_data ?? null,
                 'crNumber' => $govData->cr_number ?? null,
@@ -537,6 +568,7 @@ class RiskAnalyticsService
         }
 
         $govData = $user->customer;
+
         return [
             'crData' => $govData->cr_data ?? null,
             'crNumber' => $govData->cr_number ?? null,
@@ -554,12 +586,13 @@ class RiskAnalyticsService
         if (is_string($crData)) {
             return json_decode($crData, true) ?: [];
         }
+
         return is_array($crData) ? $crData : [];
     }
 
     private function getGoogleCacheKey(string $businessName): string
     {
-        return 'google_rating_' . md5(strtolower(trim($businessName)));
+        return 'google_rating_'.md5(strtolower(trim($businessName)));
     }
 
     private function getManualRisk(int $userId): array
@@ -569,7 +602,7 @@ class RiskAnalyticsService
             return [
                 'score' => $riskScore->risk_score,
                 'flagged' => true,
-                'reason' => $riskScore->reason
+                'reason' => $riskScore->reason,
             ];
         }
 
@@ -638,16 +671,26 @@ class RiskAnalyticsService
     {
         $ownerId = $crData['parties'][0]['identity']['id'] ?? null;
 
-        if (!$idNumber || !$ownerId) return 0;
-        if ($idNumber === $ownerId) return $this->userWeights['crIdSubIdMatch'];
-        if (str_contains($ownerId, $idNumber) || str_contains($idNumber, $ownerId)) return (int) ($this->userWeights['crIdSubIdMatch'] / 2);
+        if (! $idNumber || ! $ownerId) {
+            return 0;
+        }
+        if ($idNumber === $ownerId) {
+            return $this->userWeights['crIdSubIdMatch'];
+        }
+        if (str_contains($ownerId, $idNumber) || str_contains($idNumber, $ownerId)) {
+            return (int) ($this->userWeights['crIdSubIdMatch'] / 2);
+        }
+
         return 0;
     }
 
     private function calculateIdExpiryScore(User $user): int
     {
-        if (!$user->iqama_expiry) return 0;
+        if (! $user->iqama_expiry) {
+            return 0;
+        }
         $diff = now()->diffInMonths($user->iqama_expiry, false);
+
         return match (true) {
             $diff >= 0 => $this->userWeights['crIdSubIdExpiry'],
             $diff >= -3 => (int) ($this->userWeights['crIdSubIdExpiry'] / 2),
@@ -658,11 +701,14 @@ class RiskAnalyticsService
     private function calculateCrExpiryScore(array $crData): int
     {
         $expiryDate = $crData['status']['confirmationDate']['gregorian'] ?? null;
-        if (!$expiryDate) return 0;
+        if (! $expiryDate) {
+            return 0;
+        }
 
         try {
             $expiry = \Carbon\Carbon::parse($expiryDate);
             $diff = now()->diffInMonths($expiry, false);
+
             return match (true) {
                 $diff >= 0 => $this->userWeights['crIdSubCrExpiry'],
                 $diff >= -3 => (int) ($this->userWeights['crIdSubCrExpiry'] / 2),
@@ -670,6 +716,7 @@ class RiskAnalyticsService
             };
         } catch (\Exception $e) {
             Log::warning("Failed to parse CR expiry date: {$expiryDate}");
+
             return 0;
         }
     }
@@ -677,6 +724,7 @@ class RiskAnalyticsService
     private function calculateActivityScore(array $crData): int
     {
         $crActivities = collect($crData['activities'] ?? [])->pluck('name')->toArray();
+
         return count($crActivities) > 0 ? $this->userWeights['crIdSubActivity'] : 0;
     }
 
@@ -743,7 +791,7 @@ class RiskAnalyticsService
                 'tier_score' => $tierScore,
                 'activity_score' => $activityScore,
                 'default_rate_score' => $defaultScore,
-            ]
+            ],
         ];
     }
 
@@ -753,17 +801,18 @@ class RiskAnalyticsService
      */
     private function calculateGoogleScore($businessName = null): ?float
     {
-        if (!$businessName) {
+        if (! $businessName) {
             return null;
         }
 
         $cacheKey = $this->getGoogleCacheKey($businessName);
 
-        if (!Cache::has($cacheKey)) {
+        if (! Cache::has($cacheKey)) {
             return null; // do not fetch here to keep page fast
         }
 
         $val = Cache::get($cacheKey);
-        return $val === 'false' ? null : (float)$val;
+
+        return $val === 'false' ? null : (float) $val;
     }
 }

@@ -16,7 +16,9 @@ class GenerateRiskExportJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     public string $exportId;
+
     public array $filters;
+
     public int $tries = 3;
 
     protected RiskAnalyticsService $riskAnalyticsService;
@@ -37,15 +39,15 @@ class GenerateRiskExportJob implements ShouldQueue
     {
         // ensure exports directory exists
         $exportDir = storage_path('app/exports');
-        if (!is_dir($exportDir)) {
+        if (! is_dir($exportDir)) {
             mkdir($exportDir, 0755, true);
         }
 
         $filename = "risk_scores_{$this->exportId}.csv";
-        $filePath = $exportDir . DIRECTORY_SEPARATOR . $filename;
+        $filePath = $exportDir.DIRECTORY_SEPARATOR.$filename;
 
         // cache key used by controller/status
-        $cacheKey = 'risk_export_path_' . $this->exportId;
+        $cacheKey = 'risk_export_path_'.$this->exportId;
 
         try {
             // Build base query (same filters as before)
@@ -60,7 +62,7 @@ class GenerateRiskExportJob implements ShouldQueue
                         ->orWhereHas('customer');
                 });
 
-            if (!empty($this->filters['search'])) {
+            if (! empty($this->filters['search'])) {
                 $searchLower = strtolower(trim($this->filters['search']));
                 $baseQuery->where(function ($query) use ($searchLower) {
                     $query->where('first_name', 'like', "%{$searchLower}%")
@@ -87,7 +89,7 @@ class GenerateRiskExportJob implements ShouldQueue
                 'status' => 'processing',
                 'progress' => 0,
                 'processed' => 0,
-                'total' => $total
+                'total' => $total,
             ], 3600);
 
             if ($total === 0) {
@@ -98,8 +100,9 @@ class GenerateRiskExportJob implements ShouldQueue
                     'progress' => 100,
                     'processed' => 0,
                     'total' => 0,
-                    'filename' => $filename
+                    'filename' => $filename,
                 ], 3600);
+
                 return;
             }
 
@@ -136,7 +139,7 @@ class GenerateRiskExportJob implements ShouldQueue
                 'Google Rating',
                 'Manual Risk Score',
                 'Manual Risk Reason',
-                'Total Score'
+                'Total Score',
             ]);
 
             $processed = 0;
@@ -144,9 +147,9 @@ class GenerateRiskExportJob implements ShouldQueue
 
             // debug: log total found
             Log::info("[RiskExport][{$this->exportId}] total users to export: {$total}");
-            Cache::put($cacheKey . '_debug', [
+            Cache::put($cacheKey.'_debug', [
                 'started_at' => now()->toDateTimeString(),
-                'total' => $total
+                'total' => $total,
             ], 3600);
 
             // Prepare a query clone for chunking. Use chunkById for safety.
@@ -160,14 +163,16 @@ class GenerateRiskExportJob implements ShouldQueue
 
                 // collect a few ids for debugging
                 foreach ($users as $u) {
-                    if (count($sampleIds) < 10) $sampleIds[] = $u->id;
+                    if (count($sampleIds) < 10) {
+                        $sampleIds[] = $u->id;
+                    }
                 }
 
                 $usersCollection = collect($users);
 
                 // prefetch google ratings for this chunk
                 $businessNames = $this->riskAnalyticsService->extractBusinessNamesFromUsers($usersCollection);
-                if (!empty($businessNames)) {
+                if (! empty($businessNames)) {
                     $this->riskAnalyticsService->prefetchGoogleRatings($businessNames, 10, 200000);
                 }
 
@@ -223,14 +228,14 @@ class GenerateRiskExportJob implements ShouldQueue
                     'status' => 'processing',
                     'progress' => $percent,
                     'processed' => $processed,
-                    'total' => $total
+                    'total' => $total,
                 ], 3600);
 
-                Cache::put($cacheKey . '_debug_chunk', [
+                Cache::put($cacheKey.'_debug_chunk', [
                     'last_chunk_count' => $chunkCount,
                     'processed_so_far' => $processed,
                     'sample_ids' => $sampleIds,
-                    'updated_at' => now()->toDateTimeString()
+                    'updated_at' => now()->toDateTimeString(),
                 ], 3600);
 
                 Log::info("[RiskExport][{$this->exportId}] chunk processed: {$chunkCount}, processed so far: {$processed}");
@@ -241,10 +246,10 @@ class GenerateRiskExportJob implements ShouldQueue
             // final verify: if processed differs from total, log a warning and store debug info
             if ($processed !== $total) {
                 Log::warning("[RiskExport][{$this->exportId}] processed ({$processed}) != total ({$total}). Check query/filter differences.");
-                Cache::put($cacheKey . '_debug_final', [
+                Cache::put($cacheKey.'_debug_final', [
                     'processed' => $processed,
                     'total' => $total,
-                    'note' => 'processed != total - possible query mismatch or relationship filtering'
+                    'note' => 'processed != total - possible query mismatch or relationship filtering',
                 ], 3600);
             }
 
@@ -254,16 +259,16 @@ class GenerateRiskExportJob implements ShouldQueue
                 'progress' => 100,
                 'processed' => $processed,
                 'total' => $total,
-                'filename' => $filename
+                'filename' => $filename,
             ], 3600);
         } catch (\Throwable $e) {
-            Log::error("Risk export job failed ({$this->exportId}): " . $e->getMessage());
+            Log::error("Risk export job failed ({$this->exportId}): ".$e->getMessage());
             Cache::put($cacheKey, [
                 'status' => 'error',
                 'progress' => 0,
                 'processed' => $processed ?? 0,
                 'total' => $total ?? null,
-                'message' => $e->getMessage()
+                'message' => $e->getMessage(),
             ], 3600);
             throw $e;
         }

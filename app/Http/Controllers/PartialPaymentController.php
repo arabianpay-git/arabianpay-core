@@ -6,11 +6,10 @@ use App\Models\PartialPayment;
 use App\Models\SchedulePayment;
 use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Validator;
 
 class PartialPaymentController extends Controller
 {
@@ -46,13 +45,13 @@ class PartialPaymentController extends Controller
                         'user_id' => $request->user_id,
                         'partial_amount' => $request->partial_amount,
                         'attempted_by' => Auth::id(),
-                        'ip_address' => $request->ip()
-                    ]
+                        'ip_address' => $request->ip(),
+                    ],
                 ]);
 
                 return response()->json([
                     'success' => false,
-                    'error' => $validator->errors()->first()
+                    'error' => $validator->errors()->first(),
                 ]);
             }
 
@@ -84,13 +83,13 @@ class PartialPaymentController extends Controller
                         'instalment_amount' => $schedule->instalment_amount,
                         'deducted_amount' => $schedule->deducted_amount,
                         'total_partial_paid' => $totalPartialPaid,
-                        'attempted_by' => Auth::id()
-                    ]
+                        'attempted_by' => Auth::id(),
+                    ],
                 ]);
 
                 return response()->json([
                     'success' => false,
-                    'error' => "Partial amount cannot exceed remaining amount. Remaining limit: SAR " . number_format($remaining, 2)
+                    'error' => 'Partial amount cannot exceed remaining amount. Remaining limit: SAR '.number_format($remaining, 2),
                 ]);
             }
 
@@ -127,7 +126,7 @@ class PartialPaymentController extends Controller
 
             $this->auditTrailService->logCreated(
                 $partial,
-                'Created partial payment for schedule payment #' . $schedule->id,
+                'Created partial payment for schedule payment #'.$schedule->id,
                 array_merge([
                     'event_category' => 'payment_operations',
                     'event_type' => 'partial_payment_created',
@@ -147,8 +146,8 @@ class PartialPaymentController extends Controller
                         'payment_status_updated' => $schedule->payment_status,
                         'created_by' => Auth::id(),
                         'employee_id' => $request->employee_id,
-                        'details' => $request->details ? substr($request->details, 0, 200) : null
-                    ]
+                        'details' => $request->details ? substr($request->details, 0, 200) : null,
+                    ],
                 ], $justificationData)
             );
 
@@ -169,8 +168,8 @@ class PartialPaymentController extends Controller
                         'partial_amount' => $request->partial_amount,
                         'old_payment_status' => $scheduleBeforeState['payment_status'] ?? 'pending',
                         'new_payment_status' => $schedule->payment_status,
-                        'updated_by' => Auth::id()
-                    ]
+                        'updated_by' => Auth::id(),
+                    ],
                 ]
             );
 
@@ -178,20 +177,20 @@ class PartialPaymentController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Partial payment created successfully. Remaining limit now: SAR ' . number_format($remaining - $request->partial_amount, 2),
+                'message' => 'Partial payment created successfully. Remaining limit now: SAR '.number_format($remaining - $request->partial_amount, 2),
                 'data' => [
                     'partial_payment_id' => $partial->id,
                     'new_deducted_amount' => $newDeductedAmount,
                     'remaining_amount' => $remaining - $request->partial_amount,
-                    'payment_status' => $schedule->payment_status
-                ]
+                    'payment_status' => $schedule->payment_status,
+                ],
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to create partial payment', [
                 'error' => $e->getMessage(),
                 'request_data' => $request->except(['details']), // Exclude long text from logs
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -205,13 +204,13 @@ class PartialPaymentController extends Controller
                     'user_id' => $request->user_id ?? 'unknown',
                     'partial_amount' => $request->partial_amount ?? 0,
                     'attempted_by' => Auth::id(),
-                    'ip_address' => $request->ip()
-                ]
+                    'ip_address' => $request->ip(),
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to create partial payment. Please try again.'
+                'error' => 'Failed to create partial payment. Please try again.',
             ]);
         }
     }
@@ -242,8 +241,8 @@ class PartialPaymentController extends Controller
                     'partial_amount' => $partial->partial_amount,
                     'partial_due_date' => $partial->partial_due_date,
                     'viewed_by' => Auth::id(),
-                    'viewed_by_type' => Auth::user()->user_type
-                ]
+                    'viewed_by_type' => Auth::user()->user_type,
+                ],
             ], $justificationData));
 
             return response()->json(['success' => true, 'data' => $partial]);
@@ -251,7 +250,7 @@ class PartialPaymentController extends Controller
             Log::error('Failed to retrieve partial payment for editing', [
                 'error' => $e->getMessage(),
                 'partial_payment_id' => $id,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -263,13 +262,13 @@ class PartialPaymentController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'partial_payment_id' => $id,
-                    'requested_by' => Auth::id()
-                ]
+                    'requested_by' => Auth::id(),
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to retrieve partial payment details.'
+                'error' => 'Failed to retrieve partial payment details.',
             ]);
         }
     }
@@ -300,8 +299,8 @@ class PartialPaymentController extends Controller
                         'partial_payment_id' => $partial->id,
                         'schedule_payment_id' => $partial->schedule_payment_id,
                         'customer_id' => $partial->user_id,
-                        'attempted_by' => Auth::id()
-                    ]
+                        'attempted_by' => Auth::id(),
+                    ],
                 ]);
 
                 return response()->json(['success' => false, 'error' => $validator->errors()->first()]);
@@ -325,7 +324,7 @@ class PartialPaymentController extends Controller
             $this->auditTrailService->logUpdated(
                 $partial,
                 $beforeState,
-                'Updated partial payment #' . $partial->id,
+                'Updated partial payment #'.$partial->id,
                 array_merge([
                     'event_category' => 'payment_operations',
                     'event_type' => 'partial_payment_updated',
@@ -340,8 +339,8 @@ class PartialPaymentController extends Controller
                         'new_details' => $request->details ? substr($request->details, 0, 200) : null,
                         'partial_amount' => $partial->partial_amount,
                         'updated_by' => Auth::id(),
-                        'changes_made' => $this->getPartialPaymentChangedFields($beforeState, $partial->toArray())
-                    ]
+                        'changes_made' => $this->getPartialPaymentChangedFields($beforeState, $partial->toArray()),
+                    ],
                 ], $justificationData)
             );
 
@@ -353,8 +352,8 @@ class PartialPaymentController extends Controller
                 'data' => [
                     'partial_payment_id' => $partial->id,
                     'new_due_date' => $partial->partial_due_date,
-                    'updated_at' => $partial->updated_at
-                ]
+                    'updated_at' => $partial->updated_at,
+                ],
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -362,7 +361,7 @@ class PartialPaymentController extends Controller
                 'error' => $e->getMessage(),
                 'partial_payment_id' => $id,
                 'request_data' => $request->all(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -375,13 +374,13 @@ class PartialPaymentController extends Controller
                     'error' => $e->getMessage(),
                     'partial_payment_id' => $id,
                     'requested_due_date' => $request->partial_due_date ?? 'not_provided',
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to update partial payment. Please try again.'
+                'error' => 'Failed to update partial payment. Please try again.',
             ]);
         }
     }
@@ -427,7 +426,7 @@ class PartialPaymentController extends Controller
 
             $this->auditTrailService->logDeleted(
                 $partial,
-                'Deleted partial payment #' . $partial->id,
+                'Deleted partial payment #'.$partial->id,
                 array_merge([
                     'event_category' => 'payment_operations',
                     'event_type' => 'partial_payment_deleted',
@@ -443,8 +442,8 @@ class PartialPaymentController extends Controller
                         'deleted_at' => now()->toISOString(),
                         'schedule_payment_updated' => isset($schedule),
                         'new_deducted_amount' => $schedule->deducted_amount ?? null,
-                        'new_payment_status' => $schedule->payment_status ?? null
-                    ]
+                        'new_payment_status' => $schedule->payment_status ?? null,
+                    ],
                 ], $justificationData)
             );
 
@@ -467,8 +466,8 @@ class PartialPaymentController extends Controller
                             'old_payment_status' => $scheduleBeforeState['payment_status'] ?? 'pending',
                             'new_payment_status' => $schedule->payment_status,
                             'updated_by' => Auth::id(),
-                            'reason' => 'Partial payment deletion'
-                        ]
+                            'reason' => 'Partial payment deletion',
+                        ],
                     ]
                 );
             }
@@ -482,15 +481,15 @@ class PartialPaymentController extends Controller
                     'deleted_id' => $id,
                     'deleted_amount' => $partialAmount,
                     'schedule_payment_updated' => isset($schedule),
-                    'new_deducted_amount' => $schedule->deducted_amount ?? null
-                ]
+                    'new_deducted_amount' => $schedule->deducted_amount ?? null,
+                ],
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to delete partial payment', [
                 'error' => $e->getMessage(),
                 'partial_payment_id' => $id,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -502,23 +501,19 @@ class PartialPaymentController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'partial_payment_id' => $id,
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return response()->json([
                 'success' => false,
-                'error' => 'Failed to delete partial payment. Please try again.'
+                'error' => 'Failed to delete partial payment. Please try again.',
             ]);
         }
     }
 
     /**
      * Helper method to identify changed fields in partial payment updates
-     *
-     * @param array $beforeState
-     * @param array $afterState
-     * @return array
      */
     private function getPartialPaymentChangedFields(array $beforeState, array $afterState): array
     {
@@ -531,18 +526,18 @@ class PartialPaymentController extends Controller
                 if ($field === 'details') {
                     $changed[$field] = [
                         'old' => $beforeState[$field] ? '***EXISTS***' : null,
-                        'new' => $afterState[$field] ? '***EXISTS***' : null
+                        'new' => $afterState[$field] ? '***EXISTS***' : null,
                     ];
                 } else {
                     $changed[$field] = [
                         'old' => $beforeState[$field],
-                        'new' => $afterState[$field]
+                        'new' => $afterState[$field],
                     ];
                 }
-            } elseif (!isset($beforeState[$field]) && isset($afterState[$field])) {
+            } elseif (! isset($beforeState[$field]) && isset($afterState[$field])) {
                 $changed[$field] = [
                     'old' => null,
-                    'new' => $afterState[$field]
+                    'new' => $afterState[$field],
                 ];
             }
         }

@@ -18,7 +18,7 @@ class CspNonceTest extends TestCase
     {
         $nonce = new CspNonce;
 
-        $first  = $nonce->value();
+        $first = $nonce->value();
         $second = $nonce->value();
 
         $this->assertSame($first, $second, 'Nonce must be stable within a single request scope.');
@@ -49,7 +49,7 @@ class CspNonceTest extends TestCase
     {
         // In real requests the app container is fresh per request.
         // Within a single test invocation the singleton must be stable.
-        $first  = app(CspNonce::class)->value();
+        $first = app(CspNonce::class)->value();
         $second = app(CspNonce::class)->value();
 
         $this->assertSame($first, $second, 'app(CspNonce::class) must resolve the same instance within one request.');
@@ -57,7 +57,7 @@ class CspNonceTest extends TestCase
 
     public function test_csp_nonce_helper_returns_same_value_as_class(): void
     {
-        $fromClass  = app(CspNonce::class)->value();
+        $fromClass = app(CspNonce::class)->value();
         $fromHelper = csp_nonce();
 
         $this->assertSame($fromClass, $fromHelper, 'csp_nonce() helper must mirror app(CspNonce::class)->value().');

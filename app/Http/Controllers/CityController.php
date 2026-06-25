@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\City;
 use App\Models\Country;
 use App\Models\State;
-use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class CityController extends Controller
 {
@@ -23,6 +23,7 @@ class CityController extends Controller
     {
         $countries = Country::all();
         $states = State::all();
+
         return view('admin.locations.cities.create', compact('countries', 'states'));
     }
 
@@ -51,7 +52,7 @@ class CityController extends Controller
         // log the creation of the city
         $city->logModelAction(
             event: 'create',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " created a new city: {$city->name} in state ID {$city->state_id}",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." created a new city: {$city->name} in state ID {$city->state_id}",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),
@@ -66,6 +67,7 @@ class CityController extends Controller
     public function edit(City $city)
     {
         $states = State::all();
+
         return view('admin.locations.cities.edit', compact('city', 'states'));
     }
 
@@ -92,7 +94,7 @@ class CityController extends Controller
         // log the update of the city
         $city->logModelAction(
             event: 'update',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " updated city: {$city->name} [{$city->id}]",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." updated city: {$city->name} [{$city->id}]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),
@@ -109,7 +111,7 @@ class CityController extends Controller
         // log the deletion of the city
         $city->logModelAction(
             event: 'delete',
-            description: Auth::user()->first_name . " " . Auth::user()->last_name . " deleted city: {$city->name} [{$city->id}]",
+            description: Auth::user()->first_name.' '.Auth::user()->last_name." deleted city: {$city->name} [{$city->id}]",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => (string) Str::uuid(),

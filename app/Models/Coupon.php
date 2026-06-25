@@ -10,10 +10,12 @@ use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Coupon extends Model
 {
-    use HasFactory, LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, HasFactory, LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'coupon';
 
     protected $fillable = [
@@ -47,7 +49,7 @@ class Coupon extends Model
                 $counter = 1;
 
                 while (self::where('slug', $slug)->where('id', '!=', $coupon->id)->exists()) {
-                    $slug = $originalSlug . '-' . $counter++;
+                    $slug = $originalSlug.'-'.$counter++;
                 }
 
                 $coupon->slug = $slug;

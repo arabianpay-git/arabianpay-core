@@ -2,10 +2,10 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
-use App\Models\UserSearch;
 use App\Models\User;
+use App\Models\UserSearch;
 use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
 
 class UserSearchSeeder extends Seeder
 {

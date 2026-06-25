@@ -11,6 +11,7 @@ use Illuminate\Support\Str;
 class AuditTrailService
 {
     protected $request;
+
     protected $user;
 
     public function __construct(Request $request)
@@ -21,9 +22,6 @@ class AuditTrailService
 
     /**
      * Log an audit trail event
-     *
-     * @param array $data
-     * @return AuditTrail
      */
     public function log(array $data): AuditTrail
     {
@@ -33,6 +31,7 @@ class AuditTrailService
             'environment' => config('app.env'),
             'request_id' => $this->request->header('X-Request-ID') ?? (string) Str::uuid(),
             'correlation_id' => $this->request->header('X-Correlation-ID') ?? (string) Str::uuid(),
+            'ip_address' => $this->request->ip() ?? '127.0.0.1',
         ];
 
         // Set actor information if user is authenticated
@@ -64,14 +63,9 @@ class AuditTrailService
     /**
      * Log a CRUD operation
      *
-     * @param string $eventType
-     * @param string $entityType
-     * @param mixed $entityId
-     * @param string $actionSummary
-     * @param mixed $beforeState
-     * @param mixed $afterState
-     * @param array $additionalData
-     * @return AuditTrail
+     * @param  mixed  $entityId
+     * @param  mixed  $beforeState
+     * @param  mixed  $afterState
      */
     public function logCrudOperation(
         string $eventType,
@@ -97,12 +91,6 @@ class AuditTrailService
 
     /**
      * Log a view operation (no entity ID needed)
-     *
-     * @param string $eventType
-     * @param string $entityType
-     * @param string $actionSummary
-     * @param array $properties
-     * @return AuditTrail
      */
     public function logViewOperation(
         string $eventType,
@@ -121,11 +109,6 @@ class AuditTrailService
 
     /**
      * Log a model creation event
-     *
-     * @param Model $model
-     * @param string $actionSummary
-     * @param array $additionalData
-     * @return AuditTrail
      */
     public function logCreated(Model $model, string $actionSummary = '', array $additionalData = []): AuditTrail
     {
@@ -145,12 +128,6 @@ class AuditTrailService
 
     /**
      * Log a model update event
-     *
-     * @param Model $model
-     * @param array $oldData
-     * @param string $actionSummary
-     * @param array $additionalData
-     * @return AuditTrail
      */
     public function logUpdated(Model $model, array $oldData, string $actionSummary = '', array $additionalData = []): AuditTrail
     {
@@ -170,11 +147,6 @@ class AuditTrailService
 
     /**
      * Log a model deletion event
-     *
-     * @param Model $model
-     * @param string $actionSummary
-     * @param array $additionalData
-     * @return AuditTrail
      */
     public function logDeleted(Model $model, string $actionSummary = '', array $additionalData = []): AuditTrail
     {
@@ -194,12 +166,6 @@ class AuditTrailService
 
     /**
      * Log a search event
-     *
-     * @param string $entityType
-     * @param string $searchQuery
-     * @param int $resultsCount
-     * @param array $additionalData
-     * @return AuditTrail
      */
     public function logSearch(string $entityType, string $searchQuery, int $resultsCount, array $additionalData = []): AuditTrail
     {
@@ -217,11 +183,6 @@ class AuditTrailService
 
     /**
      * Set justification for an action (GDPR requirement)
-     *
-     * @param string $justification
-     * @param string $pdplCategory
-     * @param array $piiFields
-     * @return array
      */
     public function withJustification(string $justification, string $pdplCategory = 'legitimate_interest', array $piiFields = []): array
     {

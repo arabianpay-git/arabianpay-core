@@ -3,12 +3,37 @@
 namespace App\Models;
 
 use App\Services\CreditAssessmentService;
-use App\Services\RiskAnalyticsService;
+use App\Traits\WithApprovalContext;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class RiskManagement extends Model
 {
+    use EncryptsAttributes, WithApprovalContext;
+
+    protected $fillable = [
+        'user_id',
+        'creditor_id',
+        'name',
+        'registration_date',
+        'contact_email',
+        'contact_phone',
+        'business_type',
+        'default_count',
+        'outstanding_debt',
+        'payment_history',
+        'previous_enquiries',
+        'credit_instruments',
+        'total_transactions',
+        'avg_transaction_value',
+        'last_transaction_date',
+        'dispute_rate',
+        'last_risk_assessment',
+    ];
+
+    protected $encryptableAttributes = ['contact_email', 'contact_phone'];
 
     /**
      * Risk score bands distribution.
@@ -31,7 +56,7 @@ class RiskManagement extends Model
             ->get()
             ->groupBy('line');
 
-        return $data->map(fn($items, $line) => [
+        return $data->map(fn ($items, $line) => [
             'name' => $line,
             'data' => $items->pluck('default_count')->toArray(),
         ])->values()->toArray();
@@ -43,7 +68,7 @@ class RiskManagement extends Model
     public static function getAverageCreditScores()
     {
         return cache()->remember('average_credit_score', now()->addHours(1), function () {
-            $creditService = new CreditAssessmentService();
+            $creditService = new CreditAssessmentService;
             $users = User::has('customer')->get();
 
             $totalScores = [];
@@ -53,6 +78,8 @@ class RiskManagement extends Model
                     $creditScore = $creditService->assess($user->id);
                     $totalScores[] = $creditScore['creditScore']['compositeScore'];
                 } catch (\Exception $e) {
+                    Log::error($e->getMessage(), ['user_id' => $user->id]);
+
                     continue;
                 }
             }
@@ -62,7 +89,6 @@ class RiskManagement extends Model
             return round($averageScore, 2);
         });
     }
-
 
     public function merchant()
     {

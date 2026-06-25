@@ -2,16 +2,15 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\User;
-use App\Models\ChatMessage;
 use App\Events\MessageSent;
-use App\Events\TypingEvent;
 use App\Events\MessagesRead;
+use App\Events\TypingEvent;
+use App\Models\ChatMessage;
+use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Storage;
-use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
 
 class ChatController extends Controller
 {
@@ -50,7 +49,7 @@ class ChatController extends Controller
 
             return [
                 'id' => $user->id,
-                'name' => $user->first_name . ' ' . $user->last_name,
+                'name' => $user->first_name.' '.$user->last_name,
                 'avatar' => $user->avatar ?? "https://ui-avatars.com/api/?name={$user->first_name}+{$user->last_name}&color=7F9CF5&background=EBF4FF",
                 'last_message' => $last ? Str::limit($last->message ?? '', 60) : '',
                 'last_time' => $last ? $last->created_at->diffForHumans() : '',

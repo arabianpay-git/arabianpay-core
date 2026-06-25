@@ -2,8 +2,19 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\{CrValidation, Customer, CustomerCreditLimit, NafathVerification, Order, Package, Product, SchedulePayment, Transaction, User, Wallet};
-use App\Rules\NoHtml;
+use App\Http\Requests\UpdateCustomerStatusRequest;
+use App\Http\Requests\UpgradeCustomerPackageRequest;
+use App\Models\CrValidation;
+use App\Models\Customer;
+use App\Models\CustomerCreditLimit;
+use App\Models\NafathVerification;
+use App\Models\Order;
+use App\Models\Package;
+use App\Models\Product;
+use App\Models\SchedulePayment;
+use App\Models\Transaction;
+use App\Models\User;
+use App\Models\Wallet;
 use App\Services\AuditTrailService;
 use App\Services\CreditAssessmentService;
 use App\Services\FirebaseService;
@@ -20,10 +31,12 @@ use Spatie\Activitylog\Models\Activity;
 
 class AccountController extends Controller
 {
-    use SmsSender, EmailSender;
+    use EmailSender, SmsSender;
 
     protected $wathqService;
+
     protected $firebase;
+
     protected $auditTrailService;
 
     public function __construct(WathqService $wathqService, FirebaseService $firebase, AuditTrailService $auditTrailService)
@@ -32,7 +45,6 @@ class AccountController extends Controller
         $this->firebase = $firebase;
         $this->auditTrailService = $auditTrailService;
     }
-
 
     public function customers(Request $request)
     {
@@ -57,11 +69,11 @@ class AccountController extends Controller
             'package',
             'user.orders' => function ($q) {
                 $q->where('delivery_status', 'delivered');
-            }
+            },
         ])
             ->select(['id', 'assigned_to', 'user_id', 'package_id', 'cr_number', 'address', 'purchasing_volume', 'status', 'created_at'])
             ->when(
-                !(
+                ! (
                     $user->user_type === 'employee' && $user->is_manager
                 ) && $user->user_type !== 'admin',
                 function ($query) use ($user) {
@@ -125,7 +137,7 @@ class AccountController extends Controller
     {
         $customer = Customer::with('user')->where('user_id', $id)->firstOrFail();
 
-        if (!hasSensitivePermission('credit_data_simah_bureau')) {
+        if (! hasSensitivePermission('credit_data_simah_bureau')) {
             // Log unauthorized access attempt
             $this->auditTrailService->log([
                 'event_category' => 'security_events',
@@ -167,7 +179,7 @@ class AccountController extends Controller
         $customer = Customer::with('user')
             ->where('user_id', $id)
             ->when(
-                !(
+                ! (
                     ($user->user_type === 'employee' && $user->is_manager) || $user->user_type === 'admin'
                 ),
                 function ($query) use ($user) {
@@ -176,13 +188,13 @@ class AccountController extends Controller
             )
             ->first();
 
-        if (!$customer) {
+        if (! $customer) {
             // Log failed access attempt
             $this->auditTrailService->log([
                 'event_category' => 'access_control',
                 'event_type' => 'customer_access_denied',
                 'entity_type' => 'Customer',
-                'action_summary' => "Attempted to access customer profile without proper assignment or permissions",
+                'action_summary' => 'Attempted to access customer profile without proper assignment or permissions',
                 'properties' => [
                     'attempted_user_id' => $id,
                     'current_user_id' => $user->id,
@@ -239,14 +251,14 @@ class AccountController extends Controller
 
     public function customerFinance($id, CreditAssessmentService $creditService, RiskAnalyticsService $riskService)
     {
-        if (!hasSensitivePermission('transaction_references')) {
+        if (! hasSensitivePermission('transaction_references')) {
             // Log unauthorized access attempt
             $this->auditTrailService->log([
                 'event_category' => 'security_events',
                 'event_type' => 'unauthorized_finance_access',
                 'entity_type' => 'Customer',
                 'entity_id' => $id,
-                'action_summary' => "Attempted to access customer finance data without permission",
+                'action_summary' => 'Attempted to access customer finance data without permission',
                 'properties' => [
                     'permission_required' => 'transaction_references',
                     'customer_id' => $id,
@@ -281,16 +293,16 @@ class AccountController extends Controller
 
         $packages = Package::orderBy('name')->get();
 
-        $creditLimitLogs    = CustomerCreditLimit::where('user_id', $id)->paginate(10);
-        $creditLimit        = CustomerCreditLimit::where('user_id', $id)->latest()->first();
-        $totalPaymentDue    = SchedulePayment::where('user_id', $id)
+        $creditLimitLogs = CustomerCreditLimit::where('user_id', $id)->paginate(10);
+        $creditLimit = CustomerCreditLimit::where('user_id', $id)->latest()->first();
+        $totalPaymentDue = SchedulePayment::where('user_id', $id)
             ->whereIn('payment_status', ['due', 'late'])
             ->sum('instalment_amount');
-        $dueCount           = SchedulePayment::where('user_id', $id)->where('payment_status', 'due')->count();
-        $lateCount          = SchedulePayment::where('user_id', $id)->where('payment_status', 'late')->count();
+        $dueCount = SchedulePayment::where('user_id', $id)->where('payment_status', 'due')->count();
+        $lateCount = SchedulePayment::where('user_id', $id)->where('payment_status', 'late')->count();
 
-        $orders             = $customer->user->orders()->where('delivery_status', 'delivered')->get();
-        $totalOrderAmount   = $this->calculateTotalOrderAmount($orders);
+        $orders = $customer->user->orders()->where('delivery_status', 'delivered')->get();
+        $totalOrderAmount = $this->calculateTotalOrderAmount($orders);
 
         return view('admin.accounts.customer-finance', compact(
             'customer',
@@ -306,9 +318,8 @@ class AccountController extends Controller
         ));
     }
 
-    public function upgradePackage(Request $request, $user)
+    public function upgradePackage(UpgradeCustomerPackageRequest $request, $user)
     {
-        $request->validate(['package_id' => 'required|exists:packages,id']);
         $customer = Customer::where('user_id', $user)->firstOrFail();
 
         $oldPackage = $customer->package->name;
@@ -354,17 +365,17 @@ class AccountController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Failed to upgrade package: ' . $e->getMessage());
+            return back()->with('error', 'Failed to upgrade package: '.$e->getMessage());
         }
     }
 
     public function upgradeLimit(Request $request)
     {
         $data = $request->validate([
-            'credit_limit_id'            => 'required|exists:customer_credit_limits,id',
-            'limit_arabianpay_before'    => 'required|numeric',
-            'limit_arabianpay_after'     => 'required|numeric',
-            'comission'                  => 'nullable|numeric',
+            'credit_limit_id' => 'required|exists:customer_credit_limits,id',
+            'limit_arabianpay_before' => 'required|numeric',
+            'limit_arabianpay_after' => 'required|numeric',
+            'comission' => 'nullable|numeric',
         ]);
 
         DB::beginTransaction();
@@ -375,8 +386,8 @@ class AccountController extends Controller
 
             $creditLimit->update([
                 'limit_arabianpay_before' => $data['limit_arabianpay_before'],
-                'limit_arabianpay_after'  => $data['limit_arabianpay_after'],
-                'comission'               => $data['comission'] ?? 0,
+                'limit_arabianpay_after' => $data['limit_arabianpay_after'],
+                'comission' => $data['comission'] ?? 0,
             ]);
 
             // Log credit limit update with justification
@@ -405,25 +416,25 @@ class AccountController extends Controller
                 'event_type' => 'credit_limit_update_failed',
                 'entity_type' => 'CustomerCreditLimit',
                 'entity_id' => $data['credit_limit_id'] ?? null,
-                'action_summary' => "Failed to update credit limit",
+                'action_summary' => 'Failed to update credit limit',
                 'properties' => [
                     'error_message' => $e->getMessage(),
                     'input_data' => $data,
                 ],
             ]);
 
-            return back()->with('error', 'Failed to update credit limit: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update credit limit: '.$e->getMessage());
         }
     }
 
     public function createCreditLimit(Request $request)
     {
         $data = $request->validate([
-            'user_id'                    => 'required|exists:customers,user_id',
-            'package_id'                 => 'nullable|exists:packages,id',
-            'limit_arabianpay_before'    => 'required|numeric',
-            'limit_arabianpay_after'     => 'required|numeric',
-            'comission'                  => 'nullable|numeric',
+            'user_id' => 'required|exists:customers,user_id',
+            'package_id' => 'nullable|exists:packages,id',
+            'limit_arabianpay_before' => 'required|numeric',
+            'limit_arabianpay_after' => 'required|numeric',
+            'comission' => 'nullable|numeric',
         ]);
 
         DB::beginTransaction();
@@ -455,22 +466,20 @@ class AccountController extends Controller
                 'event_category' => 'error_events',
                 'event_type' => 'credit_limit_creation_failed',
                 'entity_type' => 'CustomerCreditLimit',
-                'action_summary' => "Failed to create credit limit",
+                'action_summary' => 'Failed to create credit limit',
                 'properties' => [
                     'error_message' => $e->getMessage(),
                     'input_data' => $data,
                 ],
             ]);
 
-            return back()->with('error', 'Failed to create credit limit: ' . $e->getMessage());
+            return back()->with('error', 'Failed to create credit limit: '.$e->getMessage());
         }
     }
 
-    public function updateCustomerStatus(Request $request, $id)
+    public function updateCustomerStatus(UpdateCustomerStatusRequest $request, $id)
     {
-        $status = $request->validate([
-            'status' => 'required|in:approved,suspended,pending,blacklisted',
-        ])['status'];
+        $status = $request->validated()['status'];
 
         $customer = Customer::findOrFail($id);
         $oldStatus = $customer->status;
@@ -483,7 +492,7 @@ class AccountController extends Controller
 
             // Log status update with justification
             $justificationData = $this->auditTrailService->withJustification(
-                "Customer status updated based on compliance review",
+                'Customer status updated based on compliance review',
                 'compliance_obligation',
                 []
             );
@@ -502,7 +511,7 @@ class AccountController extends Controller
                     $customer->user->email,
                     'Account Approved',
                     [
-                        'name' => $customer->user->first_name . " " . $customer->user->last_name,
+                        'name' => $customer->user->first_name.' '.$customer->user->last_name,
                     ]
                 );
 
@@ -517,7 +526,7 @@ class AccountController extends Controller
                     'event_type' => 'account_approved_notification',
                     'entity_type' => 'Customer',
                     'entity_id' => $customer->id,
-                    'action_summary' => "Sent approval notifications to customer",
+                    'action_summary' => 'Sent approval notifications to customer',
                     'properties' => [
                         'email_sent' => true,
                         'sms_sent' => true,
@@ -530,14 +539,14 @@ class AccountController extends Controller
             // Send Firebase Notification
             try {
                 $statusMessages = [
-                    'approved' => "Congratulations! Your account has been approved.",
-                    'pending' => "Your account status is now pending. We will notify you once approved.",
-                    'suspended' => "Your account has been suspended. Please contact support for more info.",
-                    'blacklisted' => "Your account has been blacklisted. Please contact support."
+                    'approved' => 'Congratulations! Your account has been approved.',
+                    'pending' => 'Your account status is now pending. We will notify you once approved.',
+                    'suspended' => 'Your account has been suspended. Please contact support for more info.',
+                    'blacklisted' => 'Your account has been blacklisted. Please contact support.',
                 ];
 
-                $notificationTitle = "Account Status Updated";
-                $notificationBody = $statusMessages[$status] ?? "Your account status has been updated.";
+                $notificationTitle = 'Account Status Updated';
+                $notificationBody = $statusMessages[$status] ?? 'Your account status has been updated.';
 
                 $this->firebase->sendCustomNotification(
                     $customer->user_id,
@@ -556,7 +565,7 @@ class AccountController extends Controller
                     'event_type' => 'firebase_notification_sent',
                     'entity_type' => 'Customer',
                     'entity_id' => $customer->id,
-                    'action_summary' => "Sent Firebase notification for status update",
+                    'action_summary' => 'Sent Firebase notification for status update',
                     'properties' => [
                         'notification_title' => $notificationTitle,
                         'notification_body' => $notificationBody,
@@ -564,7 +573,7 @@ class AccountController extends Controller
                     ],
                 ]);
             } catch (\Throwable $e) {
-                Log::error("Failed to send customer status notification: " . $e->getMessage(), ['customer_id' => $customer->id]);
+                Log::error('Failed to send customer status notification: '.$e->getMessage(), ['customer_id' => $customer->id]);
 
                 // Log Firebase failure
                 $this->auditTrailService->log([
@@ -572,7 +581,7 @@ class AccountController extends Controller
                     'event_type' => 'firebase_notification_failed',
                     'entity_type' => 'Customer',
                     'entity_id' => $customer->id,
-                    'action_summary' => "Failed to send Firebase notification for status update",
+                    'action_summary' => 'Failed to send Firebase notification for status update',
                     'properties' => [
                         'error_message' => $e->getMessage(),
                         'status_change' => $status,
@@ -592,7 +601,7 @@ class AccountController extends Controller
                 'event_type' => 'customer_status_update_failed',
                 'entity_type' => 'Customer',
                 'entity_id' => $customer->id,
-                'action_summary' => "Failed to update customer status",
+                'action_summary' => 'Failed to update customer status',
                 'properties' => [
                     'error_message' => $e->getMessage(),
                     'old_status' => $oldStatus,
@@ -600,20 +609,20 @@ class AccountController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Failed to update status: ' . $e->getMessage());
+            return back()->with('error', 'Failed to update status: '.$e->getMessage());
         }
     }
 
     public function transactions($id)
     {
-        if (!hasSensitivePermission('transaction_references')) {
+        if (! hasSensitivePermission('transaction_references')) {
             // Log unauthorized access attempt
             $this->auditTrailService->log([
                 'event_category' => 'security_events',
                 'event_type' => 'unauthorized_transaction_access',
                 'entity_type' => 'Customer',
                 'entity_id' => $id,
-                'action_summary' => "Attempted to access customer transactions without permission",
+                'action_summary' => 'Attempted to access customer transactions without permission',
                 'properties' => [
                     'permission_required' => 'transaction_references',
                     'customer_id' => $id,
@@ -674,7 +683,7 @@ class AccountController extends Controller
             'coupon_discount',
             'delivery_status',
             'general_status',
-            'created_at'
+            'created_at',
         ])
             ->where('user_id', $id)
             ->with(['user', 'seller', 'pickupPoint'])
@@ -685,14 +694,14 @@ class AccountController extends Controller
 
     public function payments($id)
     {
-        if (!hasSensitivePermission('transaction_references')) {
+        if (! hasSensitivePermission('transaction_references')) {
             // Log unauthorized access attempt
             $this->auditTrailService->log([
                 'event_category' => 'security_events',
                 'event_type' => 'unauthorized_payment_access',
                 'entity_type' => 'Customer',
                 'entity_id' => $id,
-                'action_summary' => "Attempted to access customer payments without permission",
+                'action_summary' => 'Attempted to access customer payments without permission',
                 'properties' => [
                     'permission_required' => 'transaction_references',
                     'customer_id' => $id,
@@ -749,17 +758,16 @@ class AccountController extends Controller
         return view('admin.accounts.customer-compliance', compact('customer'));
     }
 
-
     public function customerCreditAssessment($id, CreditAssessmentService $service)
     {
-        if (!hasSensitivePermission('credit_decision_output')) {
+        if (! hasSensitivePermission('credit_decision_output')) {
             // Log unauthorized access attempt
             $this->auditTrailService->log([
                 'event_category' => 'security_events',
                 'event_type' => 'unauthorized_credit_assessment_access',
                 'entity_type' => 'Customer',
                 'entity_id' => $id,
-                'action_summary' => "Attempted to access credit assessment without permission",
+                'action_summary' => 'Attempted to access credit assessment without permission',
                 'properties' => [
                     'permission_required' => 'credit_decision_output',
                     'customer_id' => $id,
@@ -802,11 +810,11 @@ class AccountController extends Controller
 
         $issueDateStr = Arr::get($governmentData, 'issueDateGregorian');
 
-        $startDate    = $issueDateStr
+        $startDate = $issueDateStr
             ? Carbon::parse($issueDateStr)
             : $customer->created_at;
 
-        $businessAge  = $this->formatBusinessAge($startDate);
+        $businessAge = $this->formatBusinessAge($startDate);
 
         // 4) Placeholder credit score calculation
 
@@ -823,21 +831,21 @@ class AccountController extends Controller
 
         // 6) Score components breakdown
         $scoreComponents = [
-            'POS Revenue'       => $creditScore['creditScore']['monthlyPOSScore'],
-            'Industry Risk'     => $creditScore['creditScore']['industryRiskScore'],
-            'Repayment'         => $creditScore['creditScore']['repaymentScore'],
-            'Business Age'      => $creditScore['creditScore']['businessAgeScore'],
-            'Obligations'       => $creditScore['creditScore']['obligationsScore'],
-            'Liquidity'         => $creditScore['creditScore']['liquidityScore'],
-            'Supplier Ratings'  => $creditScore['creditScore']['supplierScore'],
+            'POS Revenue' => $creditScore['creditScore']['monthlyPOSScore'],
+            'Industry Risk' => $creditScore['creditScore']['industryRiskScore'],
+            'Repayment' => $creditScore['creditScore']['repaymentScore'],
+            'Business Age' => $creditScore['creditScore']['businessAgeScore'],
+            'Obligations' => $creditScore['creditScore']['obligationsScore'],
+            'Liquidity' => $creditScore['creditScore']['liquidityScore'],
+            'Supplier Ratings' => $creditScore['creditScore']['supplierScore'],
         ];
 
         // 7) Payment history timeline
-        $monthlyData = Wallet::selectRaw("MONTH(created_at) as month, SUM(amount) as total")
+        $monthlyData = Wallet::selectRaw('MONTH(created_at) as month, SUM(amount) as total')
             ->where('user_id', $customer->user_id)
             ->where('transaction_type', 'user_repayment')
             ->whereYear('created_at', now()->year)
-            ->groupByRaw("MONTH(created_at)")
+            ->groupByRaw('MONTH(created_at)')
             ->pluck('total', 'month');
 
         // Prepare full 12 months even if no data
@@ -850,7 +858,7 @@ class AccountController extends Controller
 
         $paymentTimeline = [
             'categories' => $months,
-            'data'       => $data,
+            'data' => $data,
         ];
 
         // 8) Flagged risk factors
@@ -862,29 +870,29 @@ class AccountController extends Controller
 
         // 9) Compliance statuses
         $statusBadgeMap = [
-            'approved'     => 'badge-success',
-            'pending'      => 'badge-warning',
-            'suspended'    => 'badge-neutral',
-            'blacklisted'  => 'badge-danger',
+            'approved' => 'badge-success',
+            'pending' => 'badge-warning',
+            'suspended' => 'badge-neutral',
+            'blacklisted' => 'badge-danger',
         ];
 
         $crValidation = $governmentData['status']['id'] ?? null;
         $crValidationName = $governmentData['status']['name'] ?? 'Unknown';
         $complianceStatus = [
             [
-                'name'   => 'KYC Verification',
+                'name' => 'KYC Verification',
                 'status' => ucfirst($customer->status),
-                'badge'  => 'badge-sm badge-outline ' . ($statusBadgeMap[$customer->status] ?? 'badge-secondary')
+                'badge' => 'badge-sm badge-outline '.($statusBadgeMap[$customer->status] ?? 'badge-secondary'),
             ],
             [
-                'name'   => 'SIMAH Integration',
+                'name' => 'SIMAH Integration',
                 'status' => 'Pending',
-                'badge'  => 'badge-sm badge-outline badge-warning'
+                'badge' => 'badge-sm badge-outline badge-warning',
             ],
             [
-                'name'   => 'CR Validation',
+                'name' => 'CR Validation',
                 'status' => $crValidationName,
-                'badge'  => 'badge-sm badge-outline ' . ($crValidation ? 'badge-success' : 'badge-danger')
+                'badge' => 'badge-sm badge-outline '.($crValidation ? 'badge-success' : 'badge-danger'),
             ],
         ];
 
@@ -908,23 +916,24 @@ class AccountController extends Controller
 
         if ($interval->y > 0) {
             $decimal = round($interval->y + ($interval->m / 12), 1);
-            return $decimal . ' Year';
+
+            return $decimal.' Year';
         }
 
         if ($interval->m > 0) {
-            return $interval->m . ' Month';
+            return $interval->m.' Month';
         }
 
-        return $interval->d . ' Days';
+        return $interval->d.' Days';
     }
 
     private function calculateBase(Order $order): float
     {
-        $items    = map_product_details($order->product_details);
+        $items = map_product_details($order->product_details);
         $subTotal = $items->sum('total');
-        $shipping = $order->shipping_cost   ?? 0;
+        $shipping = $order->shipping_cost ?? 0;
         $discount = $order->coupon_discount ?? 0;
-        $tax      = calculate_order_tax($order);
+        $tax = calculate_order_tax($order);
 
         return $subTotal + $tax + $shipping - $discount;
     }
@@ -943,7 +952,7 @@ class AccountController extends Controller
         $businessAge = 0;
         if ($customer) {
             $issueDateStr = Arr::get(is_array($customer->goverment_data) ? $customer->goverment_data : json_decode($customer->goverment_data, true), 'issueDateGregorian');
-            $startDate    = $issueDateStr ? Carbon::parse($issueDateStr) : $customer->created_at;
+            $startDate = $issueDateStr ? Carbon::parse($issueDateStr) : $customer->created_at;
             $interval = $startDate->diffAsCarbonInterval(Carbon::now());
             $businessAge = $interval->y + ($interval->m / 12) + ($interval->d / 365);
         }
@@ -961,12 +970,12 @@ class AccountController extends Controller
         $industryRiskScores = ['low' => 15, 'medium' => 10, 'high' => 5];
         $industryRiskScore = $industryRiskScores[$industryRisk] ?? 10;
 
-        $totalPurchases   = Order::where('user_id', $customer->user_id)->where('delivery_status', 'delivered')
+        $totalPurchases = Order::where('user_id', $customer->user_id)->where('delivery_status', 'delivered')
             ->get()
             ->reduce(function ($carry, $order) {
                 return $carry + $this->calculateBase($order);
             }, 0.0);
-        $totalPayments    = Wallet::where('transaction_type', 'user_repayment')->sum('amount');
+        $totalPayments = Wallet::where('transaction_type', 'user_repayment')->sum('amount');
 
         $existingDebt = $totalPurchases - $totalPayments;
         if ($existingDebt > 0) {
@@ -1074,17 +1083,16 @@ class AccountController extends Controller
         return view('admin.accounts.nafath', ['nafath' => $nafathRecords]);
     }
 
-
     private function calculateTotalOrderAmountWithoutTax($orders): float
     {
         $total = 0;
 
         foreach ($orders as $order) {
-            $items    = map_product_details($order->product_details);
+            $items = map_product_details($order->product_details);
             $subTotal = $items->sum('total');
             $shipping = $order->shipping_cost ?? 0;
             $discount = $order->coupon_discount ?? 0;
-            $tax      = calculate_order_tax($order);
+            $tax = calculate_order_tax($order);
 
             $base = $subTotal + $tax + $shipping - $discount;
         }
@@ -1097,19 +1105,19 @@ class AccountController extends Controller
         $total = 0;
 
         foreach ($orders as $order) {
-            $items    = map_product_details($order->product_details);
+            $items = map_product_details($order->product_details);
             $subTotal = $items->sum('total');
             $shipping = $order->shipping_cost ?? 0;
             $discount = $order->coupon_discount ?? 0;
-            $tax      = calculate_order_tax($order);
+            $tax = calculate_order_tax($order);
 
             $base = $subTotal + $tax + $shipping - $discount;
 
-            $commissionPct    = get_system_commission();
+            $commissionPct = get_system_commission();
             $commissionAmount = $base * ($commissionPct / 100);
 
-            $commissionTaxPct  = get_commission_tax();
-            $commissionTaxAmt  = $commissionAmount * ($commissionTaxPct / 100);
+            $commissionTaxPct = get_commission_tax();
+            $commissionTaxAmt = $commissionAmount * ($commissionTaxPct / 100);
 
             $total += $base + $commissionAmount + $commissionTaxAmt;
         }

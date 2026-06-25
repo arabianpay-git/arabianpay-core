@@ -5,13 +5,16 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Claim;
 use App\Models\SchedulePayment;
-use Illuminate\Http\Request;
-use Illuminate\Http\JsonResponse;
-use Illuminate\Support\Facades\Auth;
+use App\Services\AuditTrailService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 
 class ClaimsController extends Controller
 {
+    public function __construct(private AuditTrailService $auditTrail) {}
+
     /**
      * Display a listing of the claims.
      */
@@ -82,18 +85,18 @@ class ClaimsController extends Controller
             'user_id' => $schedulePayment->user_id,
             'assigned_to' => Auth::id(),
             'claim_type' => $request->claim_type,
-            'priority' => $request->priority,
-            'claim_status' => 'pending',
             'notes' => $request->notes,
             'next_follow_up' => $request->next_follow_up ? Carbon::parse($request->next_follow_up) : now()->addHours(2),
         ]);
 
-        
+        $claim->priority = $request->priority;
+        $claim->claim_status = 'pending';
+        $claim->save();
 
         return response()->json([
             'success' => true,
             'message' => 'Claim created successfully',
-            'claim' => $claim->load(['schedulePayment', 'user', 'assignedTo'])
+            'claim' => $claim->load(['schedulePayment', 'user', 'assignedTo']),
         ]);
     }
 
@@ -103,6 +106,7 @@ class ClaimsController extends Controller
     public function show(Claim $claim)
     {
         $claim->load(['schedulePayment.checkout.user', 'assignedTo']);
+
         return view('admin.claims.show', compact('claim'));
     }
 
@@ -129,9 +133,6 @@ class ClaimsController extends Controller
         // If customer was reached
         if (in_array($request->customer_response, ['answered', 'promised', 'disputed'])) {
             $updateData['contacted_at'] = now();
-            $updateData['claim_status'] = $request->customer_response === 'promised' ? 'promised' : 'contacted';
-        } else {
-            $updateData['claim_status'] = 'attempted';
         }
 
         // Handle promises
@@ -145,14 +146,24 @@ class ClaimsController extends Controller
             $updateData['next_follow_up'] = Carbon::parse($request->next_follow_up);
         }
 
+        $before = $claim->toArray();
+
         $claim->update($updateData);
 
-     
+        // Update status separately as it is no longer mass-assignable
+        if (in_array($request->customer_response, ['answered', 'promised', 'disputed'])) {
+            $claim->claim_status = $request->customer_response === 'promised' ? 'promised' : 'contacted';
+        } else {
+            $claim->claim_status = 'attempted';
+        }
+        $claim->save();
+
+        $this->auditTrail->logUpdated($claim->fresh(), $before, 'Claim attempt updated');
 
         return response()->json([
             'success' => true,
             'message' => 'Claim updated successfully',
-            'claim' => $claim->fresh()
+            'claim' => $claim->fresh(),
         ]);
     }
 
@@ -161,10 +172,13 @@ class ClaimsController extends Controller
      */
     public function resolve(Claim $claim): JsonResponse
     {
-        $claim->update([
-            'claim_status' => 'resolved',
-            'next_follow_up' => null,
-        ]);
+        $before = $claim->toArray();
+
+        $claim->claim_status = 'resolved';
+        $claim->next_follow_up = null;
+        $claim->save();
+
+        $this->auditTrail->logUpdated($claim->fresh(), $before, 'Claim resolved');
 
         $claim->addCommunicationLog('resolved', [
             'action' => 'Claim resolved',
@@ -173,7 +187,7 @@ class ClaimsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Claim marked as resolved'
+            'message' => 'Claim marked as resolved',
         ]);
     }
 
@@ -186,7 +200,11 @@ class ClaimsController extends Controller
             'escalation_reason' => 'required|string',
         ]);
 
+        $before = $claim->toArray();
+
         $claim->escalate($request->escalation_reason);
+
+        $this->auditTrail->logUpdated($claim->fresh(), $before, 'Claim escalated');
 
         $claim->addCommunicationLog('escalated', [
             'reason' => $request->escalation_reason,
@@ -195,7 +213,7 @@ class ClaimsController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Claim escalated successfully'
+            'message' => 'Claim escalated successfully',
         ]);
     }
 
@@ -211,7 +229,7 @@ class ClaimsController extends Controller
 
         return response()->json([
             'success' => true,
-            'claims' => $claims
+            'claims' => $claims,
         ]);
     }
 
@@ -224,7 +242,7 @@ class ClaimsController extends Controller
             'checkout.user',
             'checkout.investmentPool',
             'payment',
-            'claims.assignedTo'
+            'claims.assignedTo',
         ]);
 
         return view('admin.schedule-payment.show', compact('schedulePayment'));

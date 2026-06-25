@@ -2,15 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\EncryptsAttributes;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Order extends Model
 {
-    use HasFactory, EncryptsAttributes;
+    use EncryptsAttributes, HasFactory;
 
     protected $fillable = [
         'assigned_to',
@@ -32,7 +32,6 @@ class Order extends Model
         'order_from',
         'payment_type',
         'shipping_cost',
-        'payment_status',
         'payment_details',
         'grand_total',
         'commission_amount',
@@ -40,8 +39,6 @@ class Order extends Model
         'coupon_discount',
         'code',
         'tracking',
-        'delivery_status',
-        'general_status',
         'invoice_number',
         'invoice_file',
         'estimated_delivery_date',
@@ -63,8 +60,6 @@ class Order extends Model
         'shipping_type',
         'order_from',
         'payment_type',
-        'shipping_cost',
-        'grand_total',
         'coupon_discount',
         'code',
     ];
@@ -72,7 +67,6 @@ class Order extends Model
     protected $casts = [
         'payment_details' => 'array',
     ];
-
 
     public function assigned()
     {
@@ -83,6 +77,7 @@ class Order extends Model
     {
         return $this->belongsTo(User::class);
     }
+
     public function customer()
     {
         return $this->belongsTo(User::class, 'user_id');
@@ -102,6 +97,7 @@ class Order extends Model
     {
         return $this->belongsTo(Checkout::class, 'checkout_id');
     }
+
     public function pickupPoint()
     {
         return $this->belongsTo(PickupPoint::class);
@@ -117,6 +113,7 @@ class Order extends Model
         return $this->hasMany(SupplierPayout::class, 'order_id');
         // return $this->hasMany(Payment::class, 'order_id');
     }
+
     public function payments()
     {
         return $this->hasMany(Payment::class, 'order_id');
@@ -142,9 +139,9 @@ class Order extends Model
      */
     public static function getRevenueStreams($range)
     {
-        $months = (int)$range;
-        $end    = Carbon::now();
-        $start  = $end->copy()->subMonths($months - 1)->startOfMonth();
+        $months = (int) $range;
+        $end = Carbon::now();
+        $start = $end->copy()->subMonths($months - 1)->startOfMonth();
 
         // build month labels
         $labels = [];
@@ -166,25 +163,24 @@ class Order extends Model
             ->keyBy('month');  // now $raw['Apr 2025']->revenue, etc.
 
         // build series arrays
-        $revenueSeries   = [];
-        $shippingSeries  = [];
-        $discountSeries  = [];
+        $revenueSeries = [];
+        $shippingSeries = [];
+        $discountSeries = [];
 
         foreach ($labels as $m) {
             $row = $raw->get($m);
-            $revenueSeries[]  = $row->revenue  ?? 0;
+            $revenueSeries[] = $row->revenue ?? 0;
             $shippingSeries[] = $row->shipping ?? 0;
             $discountSeries[] = $row->discounts ?? 0;
         }
 
         return [
-            'months'   => $labels,
-            'revenue'  => $revenueSeries,
+            'months' => $labels,
+            'revenue' => $revenueSeries,
             'shipping' => $shippingSeries,
             'discounts' => $discountSeries,
         ];
     }
-
 
     /**
      * Distribution of order delivery_status.
@@ -193,7 +189,7 @@ class Order extends Model
     {
         return DB::table('orders')
             ->select('delivery_status as status', DB::raw('COUNT(*) as count'))
-            ->where('created_at', '>=', Carbon::now()->subMonths((int)$range))
+            ->where('created_at', '>=', Carbon::now()->subMonths((int) $range))
             ->groupBy('delivery_status')
             ->get();
     }
@@ -204,9 +200,9 @@ class Order extends Model
      */
     public static function getFulfillmentTimes($range)
     {
-        $months = (int)$range;
-        $end    = Carbon::now();
-        $start  = $end->copy()->subMonths($months - 1)->startOfMonth();
+        $months = (int) $range;
+        $end = Carbon::now();
+        $start = $end->copy()->subMonths($months - 1)->startOfMonth();
 
         // build month labels
         $labels = [];
@@ -240,7 +236,6 @@ class Order extends Model
         ];
     }
 
-
     /**
      * Payment type distribution.
      */
@@ -248,7 +243,7 @@ class Order extends Model
     {
         return DB::table('orders')
             ->select('payment_type as method', DB::raw('COUNT(*) as count'))
-            ->where('created_at', '>=', Carbon::now()->subMonths((int)$range))
+            ->where('created_at', '>=', Carbon::now()->subMonths((int) $range))
             ->groupBy('payment_type')
             ->get();
     }

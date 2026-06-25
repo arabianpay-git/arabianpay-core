@@ -2,12 +2,12 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\Order;
-use App\Models\User;
 use App\Models\PickupPoint;
 use App\Models\Product;
+use App\Models\User;
 use Faker\Factory as Faker;
+use Illuminate\Database\Seeder;
 
 class OrderSeeder extends Seeder
 {
@@ -43,7 +43,7 @@ class OrderSeeder extends Seeder
                     $randomVariant = collect($variants)->random();
                     $selectedVariantAttributes = $randomVariant['attributes'] ?? null;
 
-                    if (!empty($randomVariant['price'])) {
+                    if (! empty($randomVariant['price'])) {
                         $attributePrice = (float) $randomVariant['price'];
                     }
                 }
@@ -58,7 +58,7 @@ class OrderSeeder extends Seeder
                 ];
             }
 
-            $order = new Order();
+            $order = new Order;
             $order->user()->associate($user);
             $order->seller()->associate($seller);
             $order->pickupPoint()->associate($pickupPoint);
@@ -86,7 +86,7 @@ class OrderSeeder extends Seeder
 
             $order->coupon_discount = 10.00;
             $order->grand_total = $calculatedTotal + $order->shipping_cost - $order->coupon_discount;
-            $order->code = 'ORDER-' . strtoupper($faker->unique()->bothify('??###'));
+            $order->code = 'ORDER-'.strtoupper($faker->unique()->bothify('??###'));
             $order->tracking = strtoupper($faker->unique()->bothify('TRACK###??'));
 
             $order->delivery_status = 'shipped';

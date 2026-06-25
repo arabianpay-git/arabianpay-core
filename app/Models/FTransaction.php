@@ -2,12 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\WithApprovalContext;
 use Illuminate\Database\Eloquent\Model;
+
 // Financial Transaction
 class FTransaction extends Model
 {
+    use WithApprovalContext;
+
     protected $table = 'f_transactions';
-    
+
     protected $fillable = [
         'uuid',
         'checkout_id', // links to the checkouts table
@@ -23,34 +27,43 @@ class FTransaction extends Model
         'notes',
     ];
 
+    protected $casts = [
+        'amount' => 'decimal:2',
+        'transaction_date' => 'datetime',
+    ];
+
     public function user()
     {
         return $this->belongsTo(User::class, 'user_id');
     }
+
     public function checkout()
     {
         return $this->belongsTo(Checkout::class, 'checkout_id');
     }
+
     public function order()
     {
         return $this->belongsTo(Order::class, 'order_id');
     }
+
     public function payment()
     {
         return $this->belongsTo(Payment::class, 'payment_id');
     }
+
     public function customer()
     {
         return $this->belongsTo(Customer::class, 'customer_id');
     }
+
     public function supplier()
     {
         return $this->belongsTo(Merchant::class, 'supplier_id');
     }
-    
+
     public function entries()
     {
         return $this->hasMany(FEntry::class, 'transaction_id');
     }
-    
 }

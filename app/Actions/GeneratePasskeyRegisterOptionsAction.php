@@ -2,6 +2,7 @@
 
 namespace App\Actions;
 
+use Illuminate\Support\Str;
 use Spatie\LaravelPasskeys\Actions\GeneratePasskeyRegisterOptionsAction as SpatieGeneratePasskeyRegisterOptionsAction;
 use Spatie\LaravelPasskeys\Models\Concerns\HasPasskeys;
 use Spatie\LaravelPasskeys\Support\Config;
@@ -9,19 +10,16 @@ use Spatie\LaravelPasskeys\Support\Serializer;
 use Webauthn\PublicKeyCredentialCreationOptions;
 use Webauthn\PublicKeyCredentialParameters;
 use Webauthn\PublicKeyCredentialRpEntity;
-use Webauthn\PublicKeyCredentialUserEntity;
-use Illuminate\Support\Str; // Required for Str::random() if you revert challenge to string
+use Webauthn\PublicKeyCredentialUserEntity; // Required for Str::random() if you revert challenge to string
 
 class GeneratePasskeyRegisterOptionsAction extends SpatieGeneratePasskeyRegisterOptionsAction
 {
-
     /**
      * Executes the action to generate passkey registration options.
      * Overrides Spatie's action to include specific pubKeyCredParams and a binary challenge.
      *
-     * @param HasPasskeys $authenticatable The user model.
-     * @param bool $asJson Whether to return the options as a JSON string.
-     * @return string|PublicKeyCredentialCreationOptions
+     * @param  HasPasskeys  $authenticatable  The user model.
+     * @param  bool  $asJson  Whether to return the options as a JSON string.
      */
     public function execute(
         HasPasskeys $authenticatable,

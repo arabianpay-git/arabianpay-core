@@ -5,16 +5,17 @@ namespace App\Models;
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
-use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 use Joelwmale\LaravelEncryption\Services\EncryptService;
+use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Product extends Model
 {
-    use LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'product';
 
     protected $fillable = [
@@ -86,14 +87,13 @@ class Product extends Model
         'tags',
         'unit',
         'meta_title',
-        'meta_description'
+        'meta_description',
     ];
 
     public function getTranslatableFields(): array
     {
         return $this->translatable ?? [];
     }
-
 
     public function getRawValue(string $key): mixed
     {
@@ -150,7 +150,6 @@ class Product extends Model
         return $this->hasMany(ProductWishlist::class);
     }
 
-
     public function getAttributeCombinationsAttribute()
     {
         $combinations = [];
@@ -172,12 +171,11 @@ class Product extends Model
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, $this->translatable)) {
+        if (! in_array($key, $this->translatable)) {
             return $value;
         }
 
         $locale = app()->getLocale();
-
 
         if ($locale === 'en') {
             return $value;
@@ -187,7 +185,6 @@ class Product extends Model
 
         return $translation?->$key ?? $value;
     }
-
 
     public function encryptAttributes()
     {
@@ -250,7 +247,7 @@ class Product extends Model
     {
         static::saving(function ($product) {
             if (empty($product->slug) || $product->isDirty('name.en')) {
-                $product->slug = Str::slug($product->name) . '-' . uniqid();
+                $product->slug = Str::slug($product->name).'-'.uniqid();
             }
         });
     }

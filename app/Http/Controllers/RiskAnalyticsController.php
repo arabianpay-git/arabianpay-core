@@ -5,22 +5,24 @@ namespace App\Http\Controllers;
 use App\Models\Customer;
 use App\Models\Merchant;
 use App\Models\RiskScore;
-use App\Models\RiskWeight;
 use App\Models\User;
+use App\Services\AuditTrailService;
 use App\Services\RiskAnalyticsService;
 use App\Services\RiskDashboardService;
 use App\Services\RiskService;
-use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 
 class RiskAnalyticsController extends Controller
 {
     protected $riskDashboardService;
+
     protected $riskAnalyticsService;
+
     protected $riskService;
+
     protected $auditTrailService;
 
     public function __construct(
@@ -40,7 +42,7 @@ class RiskAnalyticsController extends Controller
         try {
             $filters = [
                 'date_from' => $request->get('date_from'),
-                'date_to' => $request->get('date_to')
+                'date_to' => $request->get('date_to'),
             ];
 
             $dashboardData = $this->riskDashboardService->getDashboardData($filters);
@@ -59,14 +61,14 @@ class RiskAnalyticsController extends Controller
                 'action_summary' => 'Viewed risk management dashboard',
                 'properties' => [
                     'filters_applied' => $filters,
-                    'portfolio_data_available' => !empty($dashboardData['portfolio']),
-                    'pipeline_data_available' => !empty($dashboardData['pipeline']),
-                    'ews_data_available' => !empty($dashboardData['ews']),
+                    'portfolio_data_available' => ! empty($dashboardData['portfolio']),
+                    'pipeline_data_available' => ! empty($dashboardData['pipeline']),
+                    'ews_data_available' => ! empty($dashboardData['ews']),
                     'risk_scores_count' => count($dashboardData['risk_scores'] ?? []),
                     'active_alerts_count' => count($dashboardData['alerts'] ?? []),
                     'viewed_by' => Auth::id(),
-                    'viewed_by_type' => Auth::user()->user_type
-                ]
+                    'viewed_by_type' => Auth::user()->user_type,
+                ],
             ], $justificationData));
 
             return view('admin.risk-management.dashboard', [
@@ -75,13 +77,13 @@ class RiskAnalyticsController extends Controller
                 'ewsData' => $dashboardData['ews'],
                 'riskScores' => $dashboardData['risk_scores'],
                 'activeAlerts' => $dashboardData['alerts'],
-                'filters' => $filters
+                'filters' => $filters,
             ]);
         } catch (\Exception $e) {
             Log::error('Failed to load risk dashboard', [
                 'error' => $e->getMessage(),
                 'filters' => $request->all(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -92,8 +94,8 @@ class RiskAnalyticsController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'filters' => $request->all(),
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load risk dashboard. Please try again.');
@@ -105,7 +107,7 @@ class RiskAnalyticsController extends Controller
         try {
             $filters = [
                 'date_from' => $request->get('date_from'),
-                'date_to' => $request->get('date_to')
+                'date_to' => $request->get('date_to'),
             ];
 
             $allAlerts = $this->riskDashboardService->getAllAlerts($filters);
@@ -135,10 +137,10 @@ class RiskAnalyticsController extends Controller
                     'medium_alerts' => $mediumCount,
                     'information_alerts' => $informationCount,
                     'date_range' => $filters['date_from'] && $filters['date_to']
-                        ? $filters['date_from'] . ' to ' . $filters['date_to']
+                        ? $filters['date_from'].' to '.$filters['date_to']
                         : 'All time',
-                    'viewed_by' => Auth::id()
-                ]
+                    'viewed_by' => Auth::id(),
+                ],
             ], $justificationData));
 
             return view('admin.risk-management.alerts-index', [
@@ -154,7 +156,7 @@ class RiskAnalyticsController extends Controller
             Log::error('Failed to load risk alerts', [
                 'error' => $e->getMessage(),
                 'filters' => $request->all(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -165,8 +167,8 @@ class RiskAnalyticsController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'filters' => $request->all(),
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load risk alerts. Please try again.');
@@ -205,8 +207,8 @@ class RiskAnalyticsController extends Controller
             );
 
             $actionSummary = $beforeState
-                ? 'Updated risk score for user #' . $user->id
-                : 'Created risk score for user #' . $user->id;
+                ? 'Updated risk score for user #'.$user->id
+                : 'Created risk score for user #'.$user->id;
 
             $properties = [
                 'user_id' => $user->id,
@@ -216,7 +218,7 @@ class RiskAnalyticsController extends Controller
                 'new_risk_score' => $request->risk_score,
                 'adjustment_reason' => $request->reason,
                 'adjusted_by' => Auth::id(),
-                'adjusted_by_type' => Auth::user()->user_type
+                'adjusted_by_type' => Auth::user()->user_type,
             ];
 
             if ($beforeState) {
@@ -229,7 +231,7 @@ class RiskAnalyticsController extends Controller
                         'event_type' => 'risk_score_updated',
                         'entity_type' => 'RiskScore',
                     ], $justificationData, [
-                        'properties' => $properties
+                        'properties' => $properties,
                     ])
                 );
             } else {
@@ -241,7 +243,7 @@ class RiskAnalyticsController extends Controller
                         'event_type' => 'risk_score_created',
                         'entity_type' => 'RiskScore',
                     ], $justificationData, [
-                        'properties' => $properties
+                        'properties' => $properties,
                     ])
                 );
             }
@@ -254,7 +256,7 @@ class RiskAnalyticsController extends Controller
                 'error' => $e->getMessage(),
                 'user_id' => $request->user_id ?? 'unknown',
                 'risk_score' => $request->risk_score ?? 'unknown',
-                'updated_by' => Auth::id()
+                'updated_by' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -268,8 +270,8 @@ class RiskAnalyticsController extends Controller
                     'user_id' => $request->user_id ?? 'unknown',
                     'requested_score' => $request->risk_score ?? 'unknown',
                     'reason' => substr($request->reason ?? '', 0, 200),
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to update risk score. Please try again.');
@@ -353,7 +355,7 @@ class RiskAnalyticsController extends Controller
                         'user_types' => $userTypes,
                         'order' => $order,
                         'per_page' => $perPage,
-                        'results_count' => 0
+                        'results_count' => 0,
                     ]
                 );
 
@@ -366,7 +368,7 @@ class RiskAnalyticsController extends Controller
                     $entity = $user->merchant;
                     $entityType = 'merchant';
 
-                    if (!$entity) {
+                    if (! $entity) {
                         return [
                             'user' => $user,
                             'risk' => [
@@ -384,7 +386,7 @@ class RiskAnalyticsController extends Controller
                     $entity = $user->customer;
                     $entityType = 'customer';
 
-                    if (!$entity) {
+                    if (! $entity) {
                         return [
                             'user' => $user,
                             'risk' => [
@@ -421,7 +423,7 @@ class RiskAnalyticsController extends Controller
 
             // Filter out skipped users
             $processedRisksCollection = $risksCollection->filter(function ($item) {
-                return !isset($item['skipped']) || $item['skipped'] === false;
+                return ! isset($item['skipped']) || $item['skipped'] === false;
             });
 
             // Create paginated result
@@ -454,8 +456,8 @@ class RiskAnalyticsController extends Controller
                     'current_page' => $usersPaginator->currentPage(),
                     'filtered_count' => $processedRisksCollection->count(),
                     'skipped_count' => $risksCollection->count() - $processedRisksCollection->count(),
-                    'viewed_by' => Auth::id()
-                ]
+                    'viewed_by' => Auth::id(),
+                ],
             ], $justificationData));
 
             return view('admin.risk-management.merchant-score', ['risks' => $paginatedRisks]);
@@ -464,7 +466,7 @@ class RiskAnalyticsController extends Controller
                 'error' => $e->getMessage(),
                 'search' => $request->input('search'),
                 'type' => $request->input('type'),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -477,8 +479,8 @@ class RiskAnalyticsController extends Controller
                     'search_query' => $request->input('search'),
                     'type_filter' => $request->input('type'),
                     'per_page' => $request->input('per_page', 10),
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load risk scores. Please try again.');
@@ -492,7 +494,7 @@ class RiskAnalyticsController extends Controller
     {
         try {
             // Check sensitive permissions first
-            if (!hasSensitivePermission('risk_drivers_aggregated')) {
+            if (! hasSensitivePermission('risk_drivers_aggregated')) {
                 // Log unauthorized access attempt
                 $this->auditTrailService->log([
                     'event_category' => 'access_control',
@@ -506,8 +508,8 @@ class RiskAnalyticsController extends Controller
                         'required_permission' => 'risk_drivers_aggregated',
                         'user_has_permission' => false,
                         'attempted_by' => Auth::id(),
-                        'attempted_by_type' => Auth::user()->user_type
-                    ]
+                        'attempted_by_type' => Auth::user()->user_type,
+                    ],
                 ]);
 
                 return back()->with('error', translate('Access Restricted'));
@@ -518,14 +520,14 @@ class RiskAnalyticsController extends Controller
             // Get the entity based on type
             if ($type === 'merchant') {
                 $entity = Merchant::where('user_id', $userId)->first();
-                if (!$entity) {
+                if (! $entity) {
                     $entity = Merchant::where('user_id', $userId)->first();
                 }
             } else {
                 $entity = Customer::where('user_id', $userId)->first();
             }
 
-            if (!$entity) {
+            if (! $entity) {
                 $this->auditTrailService->log([
                     'event_category' => 'error_events',
                     'event_type' => 'risk_analysis_entity_not_found',
@@ -536,11 +538,11 @@ class RiskAnalyticsController extends Controller
                         'user_id' => $userId,
                         'entity_type' => $type,
                         'searched_in' => $type === 'merchant' ? 'Merchant table' : 'Customer table',
-                        'attempted_by' => Auth::id()
-                    ]
+                        'attempted_by' => Auth::id(),
+                    ],
                 ]);
 
-                return back()->with('error', ucfirst($type) . ' record not found');
+                return back()->with('error', ucfirst($type).' record not found');
             }
 
             // Get complete risk analysis
@@ -548,7 +550,7 @@ class RiskAnalyticsController extends Controller
 
             $riskData = $this->riskDashboardService->getUserDashboardData($userId, [
                 'date_from' => '2024-01-01',
-                'date_to' => '2024-01-31'
+                'date_to' => '2024-01-31',
             ]);
 
             // Log risk details view with justification
@@ -563,7 +565,7 @@ class RiskAnalyticsController extends Controller
                 'event_type' => 'risk_details_view',
                 'entity_type' => ucfirst($type),
                 'entity_id' => $userId,
-                'action_summary' => 'Viewed detailed risk analysis for ' . $type . ' #' . $userId,
+                'action_summary' => 'Viewed detailed risk analysis for '.$type.' #'.$userId,
                 'properties' => [
                     'user_id' => $userId,
                     'user_email' => $user->email,
@@ -571,12 +573,12 @@ class RiskAnalyticsController extends Controller
                     'entity_id' => $entity->id,
                     'risk_score' => $riskAnalysis['final_score'] ?? 'Not calculated',
                     'risk_category' => $riskAnalysis['category'] ?? 'Unknown',
-                    'has_comprehensive_analysis' => !empty($riskAnalysis['components']),
+                    'has_comprehensive_analysis' => ! empty($riskAnalysis['components']),
                     'analysis_components_count' => count($riskAnalysis['components'] ?? []),
                     'viewed_by' => Auth::id(),
                     'viewed_by_type' => Auth::user()->user_type,
-                    'has_permission' => true
-                ]
+                    'has_permission' => true,
+                ],
             ], $justificationData));
 
             return view('admin.risk-management.details', compact('user', 'riskAnalysis', 'type', 'riskData'));
@@ -585,7 +587,7 @@ class RiskAnalyticsController extends Controller
                 'error' => $e->getMessage(),
                 'user_id' => $userId,
                 'type' => $type,
-                'attempted_by' => Auth::id()
+                'attempted_by' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -598,11 +600,11 @@ class RiskAnalyticsController extends Controller
                     'error' => $e->getMessage(),
                     'user_id' => $userId,
                     'entity_type' => $type,
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
-            return back()->with('error', 'Error loading risk analysis: ' . $e->getMessage());
+            return back()->with('error', 'Error loading risk analysis: '.$e->getMessage());
         }
     }
 
@@ -616,14 +618,14 @@ class RiskAnalyticsController extends Controller
 
             if ($type === 'merchant') {
                 $entity = Merchant::where('seller_id', $userId)->first();
-                if (!$entity) {
+                if (! $entity) {
                     $entity = Merchant::where('user_id', $userId)->first();
                 }
             } else {
                 $entity = Customer::where('user_id', $userId)->first();
             }
 
-            if (!$entity) {
+            if (! $entity) {
                 $this->auditTrailService->log([
                     'event_category' => 'error_events',
                     'event_type' => 'risk_components_entity_not_found',
@@ -634,8 +636,8 @@ class RiskAnalyticsController extends Controller
                         'user_id' => $userId,
                         'entity_type' => $type,
                         'search_criteria' => $type === 'merchant' ? 'seller_id/user_id' : 'user_id',
-                        'api_request' => true
-                    ]
+                        'api_request' => true,
+                    ],
                 ]);
 
                 return response()->json(['error' => 'Entity not found'], 404);
@@ -655,7 +657,7 @@ class RiskAnalyticsController extends Controller
                 'event_type' => 'risk_components_api_call',
                 'entity_type' => ucfirst($type),
                 'entity_id' => $userId,
-                'action_summary' => 'Fetched risk components via API for ' . $type . ' #' . $userId,
+                'action_summary' => 'Fetched risk components via API for '.$type.' #'.$userId,
                 'properties' => [
                     'user_id' => $userId,
                     'entity_type' => $type,
@@ -666,8 +668,8 @@ class RiskAnalyticsController extends Controller
                     'final_score' => $riskAnalysis['final_score'] ?? 'Not calculated',
                     'requested_by' => Auth::id(),
                     'user_agent' => request()->userAgent(),
-                    'ip_address' => request()->ip()
-                ]
+                    'ip_address' => request()->ip(),
+                ],
             ], $justificationData));
 
             return response()->json($riskAnalysis);
@@ -676,7 +678,7 @@ class RiskAnalyticsController extends Controller
                 'error' => $e->getMessage(),
                 'user_id' => $userId,
                 'type' => $type,
-                'request_ip' => request()->ip()
+                'request_ip' => request()->ip(),
             ]);
 
             $this->auditTrailService->log([
@@ -692,8 +694,8 @@ class RiskAnalyticsController extends Controller
                     'api_endpoint' => 'components',
                     'http_method' => 'GET',
                     'request_ip' => request()->ip(),
-                    'user_agent' => request()->userAgent()
-                ]
+                    'user_agent' => request()->userAgent(),
+                ],
             ]);
 
             return response()->json(['error' => $e->getMessage()], 500);

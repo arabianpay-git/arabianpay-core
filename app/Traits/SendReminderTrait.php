@@ -17,9 +17,9 @@ trait SendReminderTrait
         }
 
         $postData = [
-            "src"   => "Arabianpay",
-            "dests" => $phones,
-            "body"  => $message,
+            'src' => 'Arabianpay',
+            'dests' => $phones,
+            'body' => $message,
         ];
 
         $response = Http::withToken('EGE4CF3dD_Q6yXGnnMRJ')

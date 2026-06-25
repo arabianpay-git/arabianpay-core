@@ -15,6 +15,7 @@ use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class CollectionController extends Controller
 {
@@ -48,11 +49,11 @@ class CollectionController extends Controller
 
         // Read optional date filters (these are global date filters from header)
         $startDate = $request->query('date_from') ? Carbon::parse($request->query('date_from'))->startOfDay() : null;
-        $endDate   = $request->query('date_to')   ? Carbon::parse($request->query('date_to'))->endOfDay()   : null;
+        $endDate = $request->query('date_to') ? Carbon::parse($request->query('date_to'))->endOfDay() : null;
 
         // Chart-specific params
         $collectionRange = $request->query('collection_range'); // expected '7','30','90'
-        $dpdPeriod       = $request->query('dpd_period'); // expected 'current','previous','quarter'
+        $dpdPeriod = $request->query('dpd_period'); // expected 'current','previous','quarter'
 
         // Prepare start/end for collection performance:
         // Priority: if global date filter provided, use it; otherwise, if collection_range provided, derive last X days.
@@ -72,21 +73,21 @@ class CollectionController extends Controller
         $dpdStart = $dpdEnd = null;
         if ($startDate && $endDate) {
             $dpdStart = $startDate;
-            $dpdEnd   = $endDate;
+            $dpdEnd = $endDate;
         } else {
             switch ($dpdPeriod) {
                 case 'previous':
                     $dpdStart = Carbon::now()->subMonth()->startOfMonth();
-                    $dpdEnd   = Carbon::now()->subMonth()->endOfMonth();
+                    $dpdEnd = Carbon::now()->subMonth()->endOfMonth();
                     break;
                 case 'quarter':
                     $dpdStart = Carbon::now()->subMonths(3)->startOfDay();
-                    $dpdEnd   = Carbon::now()->endOfDay();
+                    $dpdEnd = Carbon::now()->endOfDay();
                     break;
                 case 'current':
                 default:
                     $dpdStart = Carbon::now()->startOfMonth();
-                    $dpdEnd   = Carbon::now()->endOfDay();
+                    $dpdEnd = Carbon::now()->endOfDay();
                     break;
             }
         }
@@ -155,7 +156,7 @@ class CollectionController extends Controller
         }
 
         $totalInstalmentAmount = $collectionQuery->sum('instalment_amount');
-        $totalDeductedAmount   = $collectionQuery->sum('deducted_amount');
+        $totalDeductedAmount = $collectionQuery->sum('deducted_amount');
         $collectionRate = $totalInstalmentAmount > 0
             ? round(($totalDeductedAmount / $totalInstalmentAmount) * 100, 1)
             : 0.0;
@@ -177,35 +178,34 @@ class CollectionController extends Controller
                 'change' => $this->pctChangePlaceholder(),
                 'trend' => $totalOutstanding > 0 ? 'up' : 'down',
                 'icon' => 'icon-saudi_riyal',
-                'color' => 'primary'
+                'color' => 'primary',
             ],
             'overdue_amount' => [
                 'value' => number_format($overdueAmount ?? 0, 2),
                 'change' => $this->pctChangePlaceholder(),
                 'trend' => $overdueAmount > 0 ? 'up' : 'down',
                 'icon' => 'ki-filled ki-watch',
-                'color' => 'danger'
+                'color' => 'danger',
             ],
             'collection_rate' => [
-                'value' => $collectionRate . '%',
+                'value' => $collectionRate.'%',
                 'change' => $this->pctChangePlaceholder(),
                 'trend' => $collectionRate >= 50 ? 'up' : 'down',
                 'icon' => 'ki-filled ki-chart-line',
-                'color' => 'success'
+                'color' => 'success',
             ],
             'active_promises' => [
                 'value' => (string) $activePromises,
                 'change' => $this->pctChangePlaceholder(),
                 'trend' => $activePromises > 0 ? 'down' : 'up',
                 'icon' => 'ki-filled ki-calendar-8',
-                'color' => 'warning'
+                'color' => 'warning',
             ],
         ];
     }
 
     /**
      * Collection performance (SchedulePayment based)
-     *
      */
     private function buildCollectionPerformance($months = 6, ?Carbon $start = null, ?Carbon $end = null)
     {
@@ -221,6 +221,7 @@ class CollectionController extends Controller
                 $labels[] = $cursor->format('M Y');
                 $cursor->addMonth();
             }
+
             return $labels;
         };
 
@@ -273,9 +274,9 @@ class CollectionController extends Controller
 
             foreach ($labels as $m) {
                 $collected[] = (float) ($mainRaw->get($m) ?? 0);
-                $target[] = isset($targetRaw[$m]) ? (float)$targetRaw[$m] : 0;
-                $remaining[] = isset($remainingRaw[$m]) ? (float)$remainingRaw[$m] : 0;
-                $overdueSeries[] = isset($overdueRaw[$m]) ? (float)$overdueRaw[$m] : 0;
+                $target[] = isset($targetRaw[$m]) ? (float) $targetRaw[$m] : 0;
+                $remaining[] = isset($remainingRaw[$m]) ? (float) $remainingRaw[$m] : 0;
+                $overdueSeries[] = isset($overdueRaw[$m]) ? (float) $overdueRaw[$m] : 0;
             }
 
             return [
@@ -325,10 +326,10 @@ class CollectionController extends Controller
 
         foreach ($labels as $m) {
             $row = $mainRaw->get($m);
-            $collected[] = $row ? (float)$row->collected : 0;
-            $target[] = $row ? (float)$row->target : 0;
-            $remaining[] = $row ? (float)$row->remaining : 0;
-            $overdueSeries[] = isset($overdueRaw[$m]) ? (float)$overdueRaw[$m] : 0;
+            $collected[] = $row ? (float) $row->collected : 0;
+            $target[] = $row ? (float) $row->target : 0;
+            $remaining[] = $row ? (float) $row->remaining : 0;
+            $overdueSeries[] = isset($overdueRaw[$m]) ? (float) $overdueRaw[$m] : 0;
         }
 
         return [
@@ -354,15 +355,15 @@ class CollectionController extends Controller
             $baseQuery->whereBetween('due_date', [$start, $end]);
         }
 
-        $bucket1 = (clone $baseQuery)->whereRaw("DATEDIFF(?, due_date) BETWEEN 0 AND 30", [$today])->count();
-        $bucket2 = (clone $baseQuery)->whereRaw("DATEDIFF(?, due_date) BETWEEN 31 AND 60", [$today])->count();
-        $bucket3 = (clone $baseQuery)->whereRaw("DATEDIFF(?, due_date) BETWEEN 61 AND 90", [$today])->count();
-        $bucket4 = (clone $baseQuery)->whereRaw("DATEDIFF(?, due_date) > 90", [$today])->count();
+        $bucket1 = (clone $baseQuery)->whereRaw('DATEDIFF(?, due_date) BETWEEN 0 AND 30', [$today])->count();
+        $bucket2 = (clone $baseQuery)->whereRaw('DATEDIFF(?, due_date) BETWEEN 31 AND 60', [$today])->count();
+        $bucket3 = (clone $baseQuery)->whereRaw('DATEDIFF(?, due_date) BETWEEN 61 AND 90', [$today])->count();
+        $bucket4 = (clone $baseQuery)->whereRaw('DATEDIFF(?, due_date) > 90', [$today])->count();
 
         return [
             'labels' => ['0-30 DPD', '31-60 DPD', '61-90 DPD', '90+ DPD'],
-            'data' => [(int)$bucket1, (int)$bucket2, (int)$bucket3, (int)$bucket4],
-            'colors' => ['#50CD89', '#FFC700', '#F1416C', '#7239EA']
+            'data' => [(int) $bucket1, (int) $bucket2, (int) $bucket3, (int) $bucket4],
+            'colors' => ['#50CD89', '#FFC700', '#F1416C', '#7239EA'],
         ];
     }
 
@@ -383,7 +384,7 @@ class CollectionController extends Controller
         );
 
         $start = $request->query('date_from') ? Carbon::parse($request->query('date_from'))->startOfDay() : null;
-        $end   = $request->query('date_to')   ? Carbon::parse($request->query('date_to'))->endOfDay()   : null;
+        $end = $request->query('date_to') ? Carbon::parse($request->query('date_to'))->endOfDay() : null;
 
         // Reuse your helper which returns an array of alerts
         $alerts = $this->buildAlerts($start, $end);
@@ -413,7 +414,7 @@ class CollectionController extends Controller
         );
 
         $start = $request->query('date_from') ? Carbon::parse($request->query('date_from'))->startOfDay() : null;
-        $end   = $request->query('date_to')   ? Carbon::parse($request->query('date_to'))->endOfDay()   : null;
+        $end = $request->query('date_to') ? Carbon::parse($request->query('date_to'))->endOfDay() : null;
 
         // Reuse your helper which returns an array of flags
         $flags = $this->buildFlags($start, $end);
@@ -441,7 +442,7 @@ class CollectionController extends Controller
 
         // --- 1) Critical: accounts exceeded X DPD (only 'due'|'late' considered overdue)
         $critQuery = SchedulePayment::whereIn('payment_status', ['due', 'late'])
-            ->whereRaw("DATEDIFF(?, due_date) > ?", [$today, $THRESHOLD_CRITICAL_DPD])
+            ->whereRaw('DATEDIFF(?, due_date) > ?', [$today, $THRESHOLD_CRITICAL_DPD])
             ->with(['order.customer', 'order.seller']);
 
         if ($start && $end) {
@@ -454,12 +455,13 @@ class CollectionController extends Controller
         if ($critCount > 0) {
             $userNames = $criticalAccounts->take(3)->map(function ($account) {
                 $user = $account->order->user ?? $account->order->merchant;
-                $name = $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User';
-                return "<a href='" . route('customerProfile', ['id' => $user->id]) . "' class='underline'>" . e(trim($name)) . "</a>";
+                $name = $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User';
+
+                return "<a href='".route('customerProfile', ['id' => $user->id])."' class='underline'>".e(trim($name)).'</a>';
             })->implode(', ');
 
             $remainingCount = $critCount - 3;
-            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
             $alerts[] = [
                 'type' => 'critical',
@@ -472,14 +474,15 @@ class CollectionController extends Controller
                     'dpd_threshold' => $THRESHOLD_CRITICAL_DPD,
                     'top_affected_users' => $criticalAccounts->take(3)->map(function ($account) use ($today) {
                         $user = $account->order->user ?? $account->order->merchant;
+
                         return [
-                            'name' => $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User',
+                            'name' => $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User',
                             'link' => $user ? route('customerProfile', ['id' => $user->id]) : '#',
                             'dpd' => abs($today->diffInDays($account->due_date, false)),
                             'amount' => $account->instalment_amount,
                         ];
-                    })->toArray()
-                ]
+                    })->toArray(),
+                ],
             ];
         }
 
@@ -500,12 +503,13 @@ class CollectionController extends Controller
         if ($brokenPromisesCount > 0) {
             $userNames = $brokenPromisesList->take(3)->map(function ($promise) {
                 $user = $promise->schedulePayment->order->user ?? $promise->schedulePayment->order->merchant;
-                $name = $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User';
-                return "<a href='" . route('customerProfile', ['id' => $user->id]) . "' class='underline'>" . e(trim($name)) . "</a>";
+                $name = $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User';
+
+                return "<a href='".route('customerProfile', ['id' => $user->id])."' class='underline'>".e(trim($name)).'</a>';
             })->implode(', ');
 
             $remainingCount = $brokenPromisesCount - 3;
-            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
             $alerts[] = [
                 'type' => 'high',
@@ -515,17 +519,18 @@ class CollectionController extends Controller
                 'icon' => 'ki-filled ki-cross-circle',
                 'additional_info' => [
                     'broken_promises_count' => $brokenPromisesCount,
-                    'promise_date_range' => $start && $end ? $start->format('M d') . ' - ' . $end->format('M d') : 'Recent',
+                    'promise_date_range' => $start && $end ? $start->format('M d').' - '.$end->format('M d') : 'Recent',
                     'affected_users' => $brokenPromisesList->take(3)->map(function ($promise) use ($today) {
                         $user = $promise->schedulePayment->order->user ?? $promise->schedulePayment->order->merchant;
+
                         return [
-                            'name' => $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User',
+                            'name' => $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User',
                             'link' => $user ? route('customerProfile', ['id' => $user->id]) : '#',
                             'promise_date' => Carbon::parse($promise->promise_date)->format('M d, Y'),
-                            'days_overdue' => abs($today->diffInDays($promise->promise_date, false))
+                            'days_overdue' => abs($today->diffInDays($promise->promise_date, false)),
                         ];
-                    })->toArray()
-                ]
+                    })->toArray(),
+                ],
             ];
         }
 
@@ -545,18 +550,18 @@ class CollectionController extends Controller
         $alerts[] = [
             'type' => 'info',
             'title' => 'Dunning run summary',
-            'description' => "{$dunningSentCount} accounts evaluated for reminders. " .
-                "Status breakdown: " .
+            'description' => "{$dunningSentCount} accounts evaluated for reminders. ".
+                'Status breakdown: '.
                 $dunningAccounts->groupBy('payment_status')->map(function ($group, $status) {
-                    return ucfirst($status) . " (" . $group->count() . ")";
+                    return ucfirst($status).' ('.$group->count().')';
                 })->implode(', '),
             'time' => $today->format('M d, Y H:i'),
             'icon' => 'ki-filled ki-check-circle',
             'additional_info' => [
                 'total_evaluated' => $dunningSentCount,
                 'status_breakdown' => $dunningAccounts->groupBy('payment_status')->map->count()->toArray(),
-                'date_range' => $start && $end ? $start->format('M d, Y') . ' to ' . $end->format('M d, Y') : 'All time'
-            ]
+                'date_range' => $start && $end ? $start->format('M d, Y').' to '.$end->format('M d, Y') : 'All time',
+            ],
         ];
 
         // --- 4) Large overdue amount: sum of remaining unpaid portions for overdue rows (due|late & due_date < today)
@@ -580,18 +585,19 @@ class CollectionController extends Controller
 
             $userList = $topOverdueUsers->map(function ($payment) {
                 $user = $payment->order->user ?? $payment->order->merchant;
-                $name = $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User';
+                $name = $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User';
                 $amount = $payment->instalment_amount - ($payment->deducted_amount ?? 0);
-                return "<a href='" . route('customerProfile', ['id' => $user->id]) . "' class='underline'>" . e(trim($name)) . "</a> (SAR " . number_format($amount, 2) . ")";
+
+                return "<a href='".route('customerProfile', ['id' => $user->id])."' class='underline'>".e(trim($name)).'</a> (SAR '.number_format($amount, 2).')';
             })->implode(', ');
 
             $remainingCount = $overdueAccounts->count() - 3;
-            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more accounts" : "";
+            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more accounts" : '';
 
             $alerts[] = [
                 'type' => 'high',
                 'title' => 'Large overdue balance',
-                'description' => "Total overdue amount is SAR " . number_format($overdueAmount, 2) . ". Top overdue accounts: {$userList}{$additionalText}",
+                'description' => 'Total overdue amount is SAR '.number_format($overdueAmount, 2).". Top overdue accounts: {$userList}{$additionalText}",
                 'time' => 'Just now',
                 'icon' => 'ki-filled ki-exclamation',
                 'additional_info' => [
@@ -599,14 +605,15 @@ class CollectionController extends Controller
                     'affected_accounts_count' => $overdueAccounts->count(),
                     'top_overdue_accounts' => $topOverdueUsers->map(function ($payment) {
                         $user = $payment->order->user ?? $payment->order->merchant;
+
                         return [
-                            'name' => $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User',
+                            'name' => $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User',
                             'overdue_amount' => $payment->instalment_amount - ($payment->deducted_amount ?? 0),
                             'due_date' => $payment->due_date->format('M d, Y'),
-                            'days_overdue' => Carbon::today()->diffInDays($payment->due_date)
+                            'days_overdue' => Carbon::today()->diffInDays($payment->due_date),
                         ];
-                    })->toArray()
-                ]
+                    })->toArray(),
+                ],
             ];
         }
 
@@ -626,12 +633,13 @@ class CollectionController extends Controller
 
             $userList = $recentFailedUsers->map(function ($payment) {
                 $user = $payment->order->user ?? $payment->order->merchant;
-                $name = $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User';
-                return "<a href='" . route('customerProfile', ['id' => $user->id]) . "' class='underline'>" . e(trim($name)) . "</a>";
+                $name = $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User';
+
+                return "<a href='".route('customerProfile', ['id' => $user->id])."' class='underline'>".e(trim($name)).'</a>';
             })->implode(', ');
 
             $remainingCount = $failedPaymentsCount - 3;
-            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
             $alerts[] = [
                 'type' => 'warning',
@@ -643,14 +651,15 @@ class CollectionController extends Controller
                     'failed_payments_count' => $failedPaymentsCount,
                     'recent_failed_users' => $recentFailedUsers->map(function ($payment) {
                         $user = $payment->order->user ?? $payment->order->merchant;
+
                         return [
-                            'name' => $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User',
+                            'name' => $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User',
                             'amount' => $payment->instalment_amount,
-                            'failed_date' => $payment->due_date->format('M d, Y')
+                            'failed_date' => $payment->due_date->format('M d, Y'),
                         ];
                     })->toArray(),
-                    'total_failed_amount' => $failedPayments->sum('instalment_amount')
-                ]
+                    'total_failed_amount' => $failedPayments->sum('instalment_amount'),
+                ],
             ];
         }
 
@@ -670,12 +679,13 @@ class CollectionController extends Controller
 
             $userList = $pendingUsers->map(function ($payment) {
                 $user = $payment->order->user ?? $payment->order->merchant;
-                $name = $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User';
-                return "<a href='" . route('customerProfile', ['id' => $user->id]) . "' class='nderline'>" . e(trim($name)) . "</a>";
+                $name = $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User';
+
+                return "<a href='".route('customerProfile', ['id' => $user->id])."' class='nderline'>".e(trim($name)).'</a>';
             })->implode(', ');
 
             $remainingCount = $pendingAllocCount - 3;
-            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
             $alerts[] = [
                 'type' => 'warning',
@@ -688,13 +698,14 @@ class CollectionController extends Controller
                     'total_pending_amount' => $pendingAllocations->sum('instalment_amount'),
                     'users_awaiting_allocation' => $pendingUsers->map(function ($payment) {
                         $user = $payment->order->user ?? $payment->order->merchant;
+
                         return [
-                            'name' => $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User',
+                            'name' => $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User',
                             'amount' => $payment->instalment_amount,
-                            'due_date' => $payment->due_date->format('M d, Y')
+                            'due_date' => $payment->due_date->format('M d, Y'),
                         ];
-                    })->toArray()
-                ]
+                    })->toArray(),
+                ],
             ];
         }
 
@@ -713,8 +724,9 @@ class CollectionController extends Controller
         if ($topBreakers->isNotEmpty()) {
             $items = $topBreakers->map(function ($b) {
                 $user = $b->user;
-                $name = $user ? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) : 'User #' . $b->user_id;
-                return "<a href='" . route('customerProfile', ['id' => $user->id]) . "' class='underline'>" . e($name) . "</a> ({$b->cnt} broken promises)";
+                $name = $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? '')) : 'User #'.$b->user_id;
+
+                return "<a href='".route('customerProfile', ['id' => $user->id])."' class='underline'>".e($name)."</a> ({$b->cnt} broken promises)";
             })->implode(', ');
 
             $alerts[] = [
@@ -726,13 +738,14 @@ class CollectionController extends Controller
                 'additional_info' => [
                     'top_breakers' => $topBreakers->map(function ($breaker) {
                         $user = $breaker->user;
+
                         return [
-                            'name' => $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'User #' . $breaker->user_id,
+                            'name' => $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'User #'.$breaker->user_id,
                             'broken_promises_count' => $breaker->cnt,
-                            'user_id' => $breaker->user_id
+                            'user_id' => $breaker->user_id,
                         ];
-                    })->toArray()
-                ]
+                    })->toArray(),
+                ],
             ];
         }
 
@@ -746,8 +759,8 @@ class CollectionController extends Controller
                 'icon' => 'ki-filled ki-check-circle',
                 'additional_info' => [
                     'monitoring_status' => 'All systems normal',
-                    'last_checked' => $today->format('Y-m-d H:i:s')
-                ]
+                    'last_checked' => $today->format('Y-m-d H:i:s'),
+                ],
             ];
         }
 
@@ -782,31 +795,31 @@ class CollectionController extends Controller
             $dpd = $highValue->due_date ? abs($today->diffInDays($highValue->due_date, false)) : 0;
 
             $user = $highValue->order->user ?? $highValue->order->merchant;
-            $merchantName = $user ? trim(($user->first_name ?? '') . ' ' . ($user->last_name ?? '')) : ('User #' . ($highValue->user_id ?? 'N/A'));
+            $merchantName = $user ? trim(($user->first_name ?? '').' '.($user->last_name ?? '')) : ('User #'.($highValue->user_id ?? 'N/A'));
             $userEmail = $user->email ?? 'N/A';
             $userPhone = $user->phone ?? 'N/A';
 
             $flags[] = [
                 'type' => 'high_risk',
                 'title' => 'High-value account at risk',
-                'description' => "Account <a href='" . route('customerProfile', ['id' => $user->id]) . "' class='underline'>" . e($merchantName) . "</a> - SAR " . number_format($remaining, 2) . " overdue ({$dpd} DPD)",
+                'description' => "Account <a href='".route('customerProfile', ['id' => $user->id])."' class='underline'>".e($merchantName).'</a> - SAR '.number_format($remaining, 2)." overdue ({$dpd} DPD)",
                 'icon' => 'ki-filled ki-security-user',
-                'tags' => ['Overdue', 'VIP', $dpd . ' DPD'],
+                'tags' => ['Overdue', 'VIP', $dpd.' DPD'],
                 'additional_info' => [
                     'user_name' => $merchantName,
                     'user_email' => $userEmail,
                     'user_phone' => $userPhone,
                     'overdue_amount' => $remaining,
-                    'days_past_due' => $dpd . ' ' . ($dpd === 1 ? 'Day' : 'Days'),
+                    'days_past_due' => $dpd.' '.($dpd === 1 ? 'Day' : 'Days'),
                     'due_date' => $highValue->due_date->format('M d, Y'),
                     'order_id' => isset($highValue->order->id)
-                        ? "<a href='" . route('orders.details', ['id' => $highValue->order->id]) . "' class='underline'>"
-                        . e($highValue->order->tracking) .
-                        "</a>"
+                        ? "<a href='".route('orders.details', ['id' => $highValue->order->id])."' class='underline'>"
+                        .e($highValue->order->tracking).
+                        '</a>'
                         : 'N/A',
                     'instalment_amount' => $highValue->instalment_amount,
-                    'deducted_amount' => $highValue->deducted_amount ?? 0
-                ]
+                    'deducted_amount' => $highValue->deducted_amount ?? 0,
+                ],
             ];
         }
 
@@ -825,33 +838,35 @@ class CollectionController extends Controller
         if ($promisesDueToday) {
             $userNames = $promisesDueList->take(3)->map(function ($promise) {
                 $user = $promise->user;
-                $name = $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User';
-                return "<a href='" . route('customerProfile', ['id' => $user->id]) . "' class='underline'>" . e(trim($name)) . "</a>";
+                $name = $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User';
+
+                return "<a href='".route('customerProfile', ['id' => $user->id])."' class='underline'>".e(trim($name)).'</a>';
             })->implode(', ');
 
             $remainingCount = $promisesDueToday - 3;
-            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
             $flags[] = [
                 'type' => 'promise_due',
                 'title' => 'Promise-to-pay due',
                 'description' => "{$promisesDueToday} accounts with promises due. Including: {$userNames}{$additionalText}",
                 'icon' => 'ki-filled ki-calendar-8',
-                'tags' => ['Today', 'Promise', $promisesDueToday . ' Accounts'],
+                'tags' => ['Today', 'Promise', $promisesDueToday.' Accounts'],
                 'additional_info' => [
                     'total_promises_due' => $promisesDueToday,
                     'promise_date' => $today->format('M d, Y'),
                     'users_with_promises' => $promisesDueList->take(5)->map(function ($promise) {
                         $user = $promise->user;
                         $schedule = $promise->schedulePayment;
+
                         return [
-                            'name' => $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User',
+                            'name' => $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User',
                             'user_id' => $user->id ?? null,
                             'promise_amount' => $promise->amount ?? ($schedule->instalment_amount ?? 0),
-                            'promise_date' => Carbon::parse($promise->promise_date)->format('M d, Y')
+                            'promise_date' => Carbon::parse($promise->promise_date)->format('M d, Y'),
                         ];
-                    })->toArray()
-                ]
+                    })->toArray(),
+                ],
             ];
         }
 
@@ -870,19 +885,20 @@ class CollectionController extends Controller
         if ($allocationPendingCount > 0) {
             $pendingUsers = $pendingAllocations->take(2)->map(function ($payment) {
                 $user = $payment->order->user ?? $payment->order->merchant;
-                $name = $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User';
-                return "<a href='" . route('customerProfile', ['id' => $user->id]) . "' class='underline'>" . e(trim($name)) . "</a>";
+                $name = $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User';
+
+                return "<a href='".route('customerProfile', ['id' => $user->id])."' class='underline'>".e(trim($name)).'</a>';
             })->implode(', ');
 
             $remainingCount = $allocationPendingCount - 2;
-            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : "";
+            $additionalText = $remainingCount > 0 ? " and {$remainingCount} more" : '';
 
             $flags[] = [
                 'type' => 'allocation_pending',
                 'title' => 'Allocation pending approval',
-                'description' => "{$allocationPendingCount} payments (SAR " . number_format($totalPendingAmount, 2) . ") require allocation approval. Including users: {$pendingUsers}{$additionalText}",
+                'description' => "{$allocationPendingCount} payments (SAR ".number_format($totalPendingAmount, 2).") require allocation approval. Including users: {$pendingUsers}{$additionalText}",
                 'icon' => 'ki-filled ki-dollar',
-                'tags' => ['Pending', $allocationPendingCount . ' Items', 'SAR ' . number_format($totalPendingAmount, 0)],
+                'tags' => ['Pending', $allocationPendingCount.' Items', 'SAR '.number_format($totalPendingAmount, 0)],
                 'additional_info' => [
                     'pending_count' => $allocationPendingCount,
                     'total_amount' => $totalPendingAmount,
@@ -890,18 +906,19 @@ class CollectionController extends Controller
                     'users_affected' => $pendingAllocations->groupBy('user_id')->count(),
                     'top_pending_items' => $pendingAllocations->take(3)->map(function ($payment) {
                         $user = $payment->order->user ?? $payment->order->merchant;
+
                         return [
-                            'user_name' => $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User',
+                            'user_name' => $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User',
                             'amount' => $payment->instalment_amount,
                             'due_date' => $payment->due_date->format('M d, Y'),
                             'order_id' => isset($payment->order->id)
-                                ? "<a href='" . route('orders.details', ['id' => $payment->order->id]) . "' class='underline'>"
-                                . e($payment->order->tracking) .
-                                "</a>"
+                                ? "<a href='".route('orders.details', ['id' => $payment->order->id])."' class='underline'>"
+                                .e($payment->order->tracking).
+                                '</a>'
                                 : 'N/A',
                         ];
-                    })->toArray()
-                ]
+                    })->toArray(),
+                ],
             ];
         }
 
@@ -918,7 +935,7 @@ class CollectionController extends Controller
 
         if ($recentFailedTop) {
             $user = $recentFailedTop->order->user ?? $recentFailedTop->order->merchant;
-            $userName = $user ? ($user->first_name . ' ' . ($user->last_name ?? '')) : 'Unknown User';
+            $userName = $user ? ($user->first_name.' '.($user->last_name ?? '')) : 'Unknown User';
             $userEmail = $user->email ?? 'N/A';
 
             $failedCount = $recentFailedList->count();
@@ -927,23 +944,23 @@ class CollectionController extends Controller
             $flags[] = [
                 'type' => 'failed_payment',
                 'title' => 'Large failed payment',
-                'description' => "Order #" . optional($recentFailedTop->order)->id . " for <a href='" . route('customerProfile', ['id' => $user->id]) . "' class='underline'>" . e($userName) . "</a> — SAR " . number_format($recentFailedTop->instalment_amount, 2),
+                'description' => 'Order #'.optional($recentFailedTop->order)->id." for <a href='".route('customerProfile', ['id' => $user->id])."' class='underline'>".e($userName).'</a> — SAR '.number_format($recentFailedTop->instalment_amount, 2),
                 'icon' => 'ki-filled ki-information-3',
-                'tags' => ['Failed', 'Large Amount', $failedCount . ' Total'],
+                'tags' => ['Failed', 'Large Amount', $failedCount.' Total'],
                 'additional_info' => [
                     'user_name' => $userName,
                     'user_email' => $userEmail,
                     'order_id' => isset($recentFailedTop->order->id)
-                        ? "<a href='" . route('orders.details', ['id' => $recentFailedTop->order->id]) . "' class='underline'>"
-                        . e($recentFailedTop->order->tracking) .
-                        "</a>"
+                        ? "<a href='".route('orders.details', ['id' => $recentFailedTop->order->id])."' class='underline'>"
+                        .e($recentFailedTop->order->tracking).
+                        '</a>'
                         : 'N/A',
                     'failed_amount' => $recentFailedTop->instalment_amount,
                     'failed_date' => $recentFailedTop->due_date->format('M d, Y'),
                     'total_failed_count' => $failedCount,
                     'total_failed_amount' => $totalFailedAmount,
-                    'failure_reason' => $recentFailedTop->failure_reason ?? 'Unknown'
-                ]
+                    'failure_reason' => $recentFailedTop->failure_reason ?? 'Unknown',
+                ],
             ];
         }
 
@@ -966,29 +983,29 @@ class CollectionController extends Controller
                 'description' => 'Create payment promises',
                 'icon' => 'ki-filled ki-calendar-8',
                 'route' => route('collections.promisetopay'),
-                'count' => $promiseCount
+                'count' => $promiseCount,
             ],
             [
                 'title' => 'Dunning',
                 'description' => 'Send reminders',
                 'icon' => 'ki-filled ki-sms',
                 'route' => route('dunning.index'),
-                'count' => $dunningCount
+                'count' => $dunningCount,
             ],
             [
                 'title' => 'Allocations',
                 'description' => 'Process payments',
                 'icon' => 'ki-filled ki-badge',
                 'route' => route('collections.allocations'),
-                'count' => $allocationsCount
+                'count' => $allocationsCount,
             ],
             [
                 'title' => 'Penalties & Fees',
                 'description' => 'Manage charges',
                 'icon' => 'ki-filled ki-calculator',
                 'route' => route('collections.penalties'),
-                'count' => $penaltiesCount
-            ]
+                'count' => $penaltiesCount,
+            ],
         ];
     }
 
@@ -998,13 +1015,8 @@ class CollectionController extends Controller
     /**
      * Recent installments (optionally filter by due_date range + status/dpd/channel/search)
      *
-     * @param int $limit
-     * @param Carbon|null $start
-     * @param Carbon|null $end
-     * @param string|null $status
-     * @param string|null $dpd
-     * @param string|null $channel
-     * @param string|null $q
+     * @param  int  $limit
+     * @param  string|null  $q
      * @return array
      */
     private function getRecentInstallments($limit = 10, ?Carbon $start = null, ?Carbon $end = null, ?string $status = null, ?string $dpd = null, ?string $channel = null)
@@ -1031,13 +1043,13 @@ class CollectionController extends Controller
         if ($dpd) {
             $today = Carbon::today();
             if ($dpd === '0-30') {
-                $qbuilder->whereRaw("DATEDIFF(?, due_date) BETWEEN 0 AND 30", [$today]);
+                $qbuilder->whereRaw('DATEDIFF(?, due_date) BETWEEN 0 AND 30', [$today]);
             } elseif ($dpd === '31-60') {
-                $qbuilder->whereRaw("DATEDIFF(?, due_date) BETWEEN 31 AND 60", [$today]);
+                $qbuilder->whereRaw('DATEDIFF(?, due_date) BETWEEN 31 AND 60', [$today]);
             } elseif ($dpd === '61-90') {
-                $qbuilder->whereRaw("DATEDIFF(?, due_date) BETWEEN 61 AND 90", [$today]);
+                $qbuilder->whereRaw('DATEDIFF(?, due_date) BETWEEN 61 AND 90', [$today]);
             } elseif ($dpd === '90+') {
-                $qbuilder->whereRaw("DATEDIFF(?, due_date) > 90", [$today]);
+                $qbuilder->whereRaw('DATEDIFF(?, due_date) > 90', [$today]);
             }
         }
 
@@ -1047,20 +1059,20 @@ class CollectionController extends Controller
         return $rows->map(function ($r) use ($today) {
             // merchant = order.user first + last (safe)
             $merchantFirst = optional($r->order->user)->first_name ?? '';
-            $merchantLast  = optional($r->order->user)->last_name ?? '';
-            $merchantName  = trim($merchantFirst . ' ' . $merchantLast);
+            $merchantLast = optional($r->order->user)->last_name ?? '';
+            $merchantName = trim($merchantFirst.' '.$merchantLast);
             $merchant = $merchantName ?: 'N/A';
 
             $merchantBusiness = optional($r->order->user)->business_name ?? 'N/A';
 
             $orderCode = optional($r->order)->tracking ?? optional($r->order)->invoice_number
-                ?? ('ORD-' . ($r->order_id ?? 'N/A'));
+                ?? ('ORD-'.($r->order_id ?? 'N/A'));
 
             // order_id should be the actual order->id (per your request)
             $orderId = optional($r->order)->id ?? 'N/A';
 
             $dueDate = $r->due_date ? Carbon::parse($r->due_date)->format(dateFormat()) : 'N/A';
-            $amount = '<span class="icon-saudi_riyal"></span>' . number_format($r->instalment_amount, 2);
+            $amount = '<span class="icon-saudi_riyal"></span>'.number_format($r->instalment_amount, 2);
             $status = $r->payment_status ?? 'unknown';
             $dpd = ($r->due_date && $r->due_date->lessThan($today)) ? $today->diffInDays($r->due_date) : 0;
             $channel = optional($r->order)->payment_type ?? 'N/A';
@@ -1074,7 +1086,7 @@ class CollectionController extends Controller
                 'amount' => $amount,
                 'status' => $status,
                 'dpd' => $dpd,
-                'channel' => $channel
+                'channel' => $channel,
             ];
         })->toArray();
     }
@@ -1104,22 +1116,26 @@ class CollectionController extends Controller
 
         $status = $request->query('status');
         $search = $request->query('search');
-        $from   = $request->query('from');
-        $to     = $request->query('to');
+        $from = $request->query('from');
+        $to = $request->query('to');
 
         $ordersQuery = Order::with(['schedulePayments', 'user'])
             ->whereHas('schedulePayments');
 
         // Status filter
         if ($status) {
-            $ordersQuery->whereHas('schedulePayments', fn($q) => $q->where('payment_status', $status));
+            $ordersQuery->whereHas('schedulePayments', fn ($q) => $q->where('payment_status', $status));
         }
 
         // Date filter for schedule payments
         if ($from || $to) {
             $ordersQuery->whereHas('schedulePayments', function ($q) use ($from, $to) {
-                if ($from) $q->whereDate('due_date', '>=', $from);
-                if ($to)   $q->whereDate('due_date', '<=', $to);
+                if ($from) {
+                    $q->whereDate('due_date', '>=', $from);
+                }
+                if ($to) {
+                    $q->whereDate('due_date', '<=', $to);
+                }
             });
         }
 
@@ -1143,7 +1159,7 @@ class CollectionController extends Controller
     private function applySearch($query, $search)
     {
         $search = trim($search);
-        $terms  = explode(' ', strtolower($search));
+        $terms = explode(' ', strtolower($search));
 
         return $query->where(function ($q) use ($terms, $search) {
             // Search by decrypted tracking (if possible)
@@ -1192,7 +1208,7 @@ class CollectionController extends Controller
 
         // Status filter
         if ($status && $status !== 'all') {
-            $ordersQuery->whereHas('schedulePayments', fn($q) => $q->where('payment_status', $status));
+            $ordersQuery->whereHas('schedulePayments', fn ($q) => $q->where('payment_status', $status));
         }
 
         // Search filter
@@ -1207,10 +1223,10 @@ class CollectionController extends Controller
 
         // Date filters
         if ($from) {
-            $ordersQuery->whereHas('schedulePayments', fn($q) => $q->whereDate('due_date', '>=', $from));
+            $ordersQuery->whereHas('schedulePayments', fn ($q) => $q->whereDate('due_date', '>=', $from));
         }
         if ($to) {
-            $ordersQuery->whereHas('schedulePayments', fn($q) => $q->whereDate('due_date', '<=', $to));
+            $ordersQuery->whereHas('schedulePayments', fn ($q) => $q->whereDate('due_date', '<=', $to));
         }
 
         $orders = $ordersQuery->orderBy('created_at', 'desc')->get();
@@ -1225,14 +1241,14 @@ class CollectionController extends Controller
                     'overdue' => 'event-overdue',
                     'paid' => 'event-paid',
                     'failed' => 'event-failed',
-                    'promise' => 'event-promise'
+                    'promise' => 'event-promise',
                 ][$p->payment_status] ?? 'event-default';
 
                 // DPD: Days Past Due
                 $dpd = max(now()->diffInDays($p->due_date, false), 0);
 
                 return [
-                    'title' => 'SAR ' . number_format($p->instalment_amount, 2) . ' - ' . ($order->user->business_name ?? $order->user->first_name),
+                    'title' => 'SAR '.number_format($p->instalment_amount, 2).' - '.($order->user->business_name ?? $order->user->first_name),
                     'start' => $p->due_date->format(dateFormat()),
                     'className' => $statusClass,
                     'extendedProps' => [
@@ -1241,8 +1257,8 @@ class CollectionController extends Controller
                         'merchant' => $order->user->business_name ?? $order->user->first_name,
                         'orderId' => $order->id,
                         'amount' => $p->instalment_amount,
-                        'channel' => $order->payment_type ?? 'N/A'
-                    ]
+                        'channel' => $order->payment_type ?? 'N/A',
+                    ],
                 ];
             });
         })->flatten(1)->values();
@@ -1264,9 +1280,9 @@ class CollectionController extends Controller
             'pickupPoint',
             'assigned',
             'refund',
-            'transactions'
+            'transactions',
         ])
-            ->when($user->user_type !== 'admin', fn($q) => $q->where('assigned_to', $user->id))
+            ->when($user->user_type !== 'admin', fn ($q) => $q->where('assigned_to', $user->id))
             ->findOrFail($id);
 
         // Log view installment details
@@ -1354,7 +1370,7 @@ class CollectionController extends Controller
 
         // Search by user name
         if ($search = request('search')) {
-            $query->whereHas('user', fn($q) => $q->where('name', 'like', "%$search%"));
+            $query->whereHas('user', fn ($q) => $q->where('name', 'like', "%$search%"));
         }
 
         $items = $query->latest()->paginate(10);
@@ -1386,19 +1402,19 @@ class CollectionController extends Controller
         if ($unpaidPayments->isEmpty()) {
             return response()->json([
                 'success' => false,
-                'message' => 'No unpaid installments found for this client.'
+                'message' => 'No unpaid installments found for this client.',
             ]);
         }
 
-        $formatted = $unpaidPayments->map(fn($p) => [
+        $formatted = $unpaidPayments->map(fn ($p) => [
             'id' => $p->id,
             'instalment_amount' => $p->instalment_amount,
-            'due_date' => $p->due_date->format(dateFormat())
+            'due_date' => $p->due_date->format(dateFormat()),
         ]);
 
         return response()->json([
             'success' => true,
-            'data' => $formatted
+            'data' => $formatted,
         ]);
     }
 
@@ -1433,6 +1449,7 @@ class CollectionController extends Controller
 
         if ($request->ajax()) {
             $html = view('admin.collections.partials.allocations_table', compact('groupedPayments'))->render();
+
             return response()->json(['html' => $html]);
         }
 
@@ -1472,15 +1489,18 @@ class CollectionController extends Controller
     private function mapProductDetails(Order $order)
     {
         return collect(json_decode($order->product_details, true))
-            ->map(fn($item) => $this->mapSingleProduct($item))
+            ->map(fn ($item) => $this->mapSingleProduct($item))
             ->filter();
     }
 
     private function mapSingleProduct(array $item)
     {
         $product = Product::find($item['product_id']);
-        if (!$product) return null;
+        if (! $product) {
+            return null;
+        }
         $price = data_get($item, 'attributes.0.price', $product->unit_price);
+
         return [
             'product' => $product,
             'quantity' => $item['quantity'],
@@ -1520,7 +1540,7 @@ class CollectionController extends Controller
         $paymentsCollection = $query->get();
 
         // If search provided, filter using the custom function
-        if (!empty($search)) {
+        if (! empty($search)) {
             $paymentsCollection = $this->filterPartialPaymentMerchants($paymentsCollection, $search);
         }
 
@@ -1594,7 +1614,30 @@ class CollectionController extends Controller
         DB::beginTransaction();
 
         try {
-            $payment = PartialPayment::findOrFail($request->id);
+            $payment = PartialPayment::with('schedulePayment.order')->findOrFail($request->id);
+
+            $user = Auth::user();
+            $order = $payment->schedulePayment?->order;
+
+            if ($user->user_type !== 'admin' && $order && $order->assigned_to !== $user->id) {
+                $this->auditTrailService->log([
+                    'event_category' => 'security_events',
+                    'event_type' => 'unauthorized_partial_payment_update',
+                    'entity_type' => 'PartialPayment',
+                    'entity_id' => $payment->id,
+                    'action_summary' => 'Unauthorized attempt to update partial payment status',
+                    'properties' => [
+                        'payment_id' => $payment->id,
+                        'order_id' => $order?->id,
+                        'attempted_by' => $user->id,
+                        'assigned_to' => $order?->assigned_to,
+                    ],
+                ]);
+
+                DB::rollBack();
+
+                return response()->json(['status' => 'error', 'message' => __('You are not authorized to update this partial payment.')], 403);
+            }
 
             if ($payment->approval_status !== 'pending') {
                 // Log attempt to process already processed payment
@@ -1603,7 +1646,7 @@ class CollectionController extends Controller
                     'event_type' => 'partial_payment_already_processed',
                     'entity_type' => 'PartialPayment',
                     'entity_id' => $payment->id,
-                    'action_summary' => "Attempted to process already processed partial payment",
+                    'action_summary' => 'Attempted to process already processed partial payment',
                     'properties' => [
                         'payment_id' => $payment->id,
                         'current_status' => $payment->approval_status,
@@ -1640,7 +1683,7 @@ class CollectionController extends Controller
 
             return response()->json([
                 'status' => 'success',
-                'message' => 'Partial payment ' . $payment->approval_status . ' successfully.',
+                'message' => 'Partial payment '.$payment->approval_status.' successfully.',
             ]);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -1651,7 +1694,7 @@ class CollectionController extends Controller
                 'event_type' => 'partial_payment_update_failed',
                 'entity_type' => 'PartialPayment',
                 'entity_id' => $request->id ?? null,
-                'action_summary' => "Failed to update partial payment status",
+                'action_summary' => 'Failed to update partial payment status',
                 'properties' => [
                     'error_message' => $e->getMessage(),
                     'payment_id' => $request->id,
@@ -1659,10 +1702,16 @@ class CollectionController extends Controller
                 ],
             ]);
 
+            Log::error('Partial payment status update failed', [
+                'error' => $e->getMessage(),
+                'payment_id' => $request->id,
+                'user_id' => Auth::id(),
+            ]);
+
             return response()->json([
                 'status' => 'error',
-                'message' => 'Error: ' . $e->getMessage(),
-            ]);
+                'message' => __('Failed to update partial payment. Please try again or contact support.'),
+            ], 500);
         }
     }
 }

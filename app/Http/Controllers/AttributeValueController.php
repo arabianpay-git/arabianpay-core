@@ -5,9 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\AttributeValue;
 use App\Rules\NoHtml;
 use App\Services\AuditTrailService;
-use Illuminate\Validation\Rule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 
 class AttributeValueController extends Controller
 {
@@ -66,7 +66,7 @@ class AttributeValueController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -104,7 +104,7 @@ class AttributeValueController extends Controller
             'value.ar' => [
                 'nullable',
                 new NoHtml,
-            ]
+            ],
         ]);
 
         DB::beginTransaction();
@@ -154,7 +154,7 @@ class AttributeValueController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 
@@ -202,7 +202,7 @@ class AttributeValueController extends Controller
                 ],
             ]);
 
-            return back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            return back()->with('error', 'Something went wrong: '.$e->getMessage());
         }
     }
 

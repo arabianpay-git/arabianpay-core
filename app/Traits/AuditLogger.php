@@ -5,7 +5,6 @@ namespace App\Traits;
 use App\Models\AuditLog;
 use App\Models\AuditTrail;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Request;
 
 trait AuditLogger
 {
@@ -34,12 +33,12 @@ trait AuditLogger
             'status' => $data['status'] ?? null,
             'failure_reason' => $data['failure_reason'] ?? null,
             'ip_address' => $this->maskIp(request()->ip()),
-            'device_fingerprint' => $data['device_fingerprint'] ?? sha1(request()->userAgent() . '|' . request()->ip()),
+            'device_fingerprint' => $data['device_fingerprint'] ?? sha1(request()->userAgent().'|'.request()->ip()),
             'request_id' => $data['request_id'] ?? request()->header('X-Request-Id') ?? (string) now()->timestamp,
             'idp_provider' => $data['idp_provider'] ?? null,
             'conditional_access_result' => $data['conditional_access_result'] ?? null,
             'pdpl_category' => $data['pdpl_category'] ?? null,
-            'pii_fields_involved' => isset($data['pii_fields_involved']) ? implode(', ', (array)$data['pii_fields_involved']) : null,
+            'pii_fields_involved' => isset($data['pii_fields_involved']) ? implode(', ', (array) $data['pii_fields_involved']) : null,
             'masking_state' => $data['masking_state'] ?? 'Partial',
             'properties' => $data['properties'] ?? $this->buildRequestProperties(),
         ], $data);
@@ -66,7 +65,7 @@ trait AuditLogger
             'actor_email' => $this->maskValue($data['actor_email'] ?? optional(Auth::user())->email),
             'actor_role' => $data['actor_role'] ?? null,
             'ip_address' => $this->maskIp(request()->ip()),
-            'device_fingerprint' => $data['device_fingerprint'] ?? sha1(request()->userAgent() . '|' . request()->ip()),
+            'device_fingerprint' => $data['device_fingerprint'] ?? sha1(request()->userAgent().'|'.request()->ip()),
             'event_category' => $data['event_category'] ?? ($data['category'] ?? 'business'),
             'event_type' => $data['event_type'] ?? ($data['action'] ?? 'unknown'),
             'entity_type' => $data['entity_type'] ?? null,
@@ -76,7 +75,7 @@ trait AuditLogger
             'after_state' => isset($data['after_state']) ? $this->maskState($data['after_state'], $data['pii_fields_involved'] ?? null) : null,
             'justification' => $data['justification'] ?? null,
             'pdpl_category' => $data['pdpl_category'] ?? null,
-            'pii_fields_involved' => isset($data['pii_fields_involved']) ? implode(', ', (array)$data['pii_fields_involved']) : null,
+            'pii_fields_involved' => isset($data['pii_fields_involved']) ? implode(', ', (array) $data['pii_fields_involved']) : null,
             'masking_state' => $data['masking_state'] ?? 'Full',
             'properties' => $data['properties'] ?? $this->buildRequestProperties(),
         ], $data);
@@ -120,12 +119,14 @@ trait AuditLogger
         // mask simple emails and long strings
         if (strpos($val, '@') !== false) {
             [$local, $domain] = explode('@', $val, 2);
-            $localMasked = strlen($local) > 1 ? substr($local, 0, 1) . str_repeat('*', max(1, strlen($local) - 1)) : '*';
-            return $localMasked . '@' . $domain;
+            $localMasked = strlen($local) > 1 ? substr($local, 0, 1).str_repeat('*', max(1, strlen($local) - 1)) : '*';
+
+            return $localMasked.'@'.$domain;
         }
         if (strlen($val) > 8) {
-            return substr($val, 0, 3) . str_repeat('*', strlen($val) - 6) . substr($val, -3);
+            return substr($val, 0, 3).str_repeat('*', strlen($val) - 6).substr($val, -3);
         }
+
         return $val;
     }
 
@@ -136,9 +137,10 @@ trait AuditLogger
         }
         $parts = explode('.', $ip);
         if (count($parts) === 4) {
-            return $parts[0] . '.***.***.' . $parts[3];
+            return $parts[0].'.***.***.'.$parts[3];
         }
-        return substr($ip, 0, 6) . '***';
+
+        return substr($ip, 0, 6).'***';
     }
 
     protected function maskState(array $state, $piiFields = null): array
@@ -156,11 +158,12 @@ trait AuditLogger
                 $shouldMask = in_array($lk, $defaultPii, true);
             }
             if ($shouldMask && is_string($v)) {
-                $masked[$k] = $this->maskValue((string)$v);
+                $masked[$k] = $this->maskValue((string) $v);
             } else {
                 $masked[$k] = $v;
             }
         }
+
         return $masked;
     }
 }

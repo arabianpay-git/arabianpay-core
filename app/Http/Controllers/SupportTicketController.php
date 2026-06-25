@@ -6,9 +6,9 @@ use App\Models\SupportTicket;
 use App\Services\AuditTrailService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 
 class SupportTicketController extends Controller
 {
@@ -48,15 +48,15 @@ class SupportTicketController extends Controller
                     'viewed_by' => $user->id,
                     'viewed_by_type' => $user->user_type,
                     'is_admin_view' => true,
-                    'status_distribution' => $tickets->groupBy('status')->map->count()
-                ]
+                    'status_distribution' => $tickets->groupBy('status')->map->count(),
+                ],
             ], $justificationData));
 
             return view('admin.support-ticket.index', compact('tickets'));
         } catch (\Exception $e) {
             Log::error('Failed to load support tickets list', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -66,8 +66,8 @@ class SupportTicketController extends Controller
                 'action_summary' => 'Failed to load support tickets list',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'user_id' => Auth::id()
-                ]
+                    'user_id' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load support tickets. Please try again.');
@@ -95,8 +95,8 @@ class SupportTicketController extends Controller
                         'ticket_assigned_to' => $ticket->assigned_to,
                         'user_id' => $user->id,
                         'user_type' => $user->user_type,
-                        'unauthorized_access' => true
-                    ]
+                        'unauthorized_access' => true,
+                    ],
                 ]);
 
                 return redirect()->route('tickets')
@@ -112,9 +112,9 @@ class SupportTicketController extends Controller
             foreach ($activities as $activity) {
                 $activityUser = $activity->user;
                 $activityData->push([
-                    'id'    => $activity->id,
+                    'id' => $activity->id,
                     'type' => $activity->user_id == Auth::id(),
-                    'user_name' => $activityUser ? ($activityUser->first_name . ' ' . $activityUser->last_name) : 'N/A',
+                    'user_name' => $activityUser ? ($activityUser->first_name.' '.$activityUser->last_name) : 'N/A',
                     'user_business' => $activityUser ? ($activityUser->business_name) : 'N/A',
                     'message' => $activity->details,
                     'subject' => $activity->subject,
@@ -145,13 +145,13 @@ class SupportTicketController extends Controller
                     'ticket_owner_id' => $ticket->user_id,
                     'ticket_assigned_to' => $ticket->assigned_to,
                     'activities_count' => $activities->count(),
-                    'has_files' => !empty($ticket->files),
+                    'has_files' => ! empty($ticket->files),
                     'files_count' => count($ticket->files ?? []),
                     'viewed_by' => $user->id,
                     'viewed_by_type' => $user->user_type,
                     'is_ticket_owner' => $ticket->user_id == $user->id,
-                    'is_assigned_to' => $ticket->assigned_to == $user->id
-                ]
+                    'is_assigned_to' => $ticket->assigned_to == $user->id,
+                ],
             ], $justificationData));
 
             return view('admin.support-ticket.show', compact('ticket', 'activityData'));
@@ -159,7 +159,7 @@ class SupportTicketController extends Controller
             Log::error('Failed to load support ticket details', [
                 'error' => $e->getMessage(),
                 'ticket_id' => $id,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -171,8 +171,8 @@ class SupportTicketController extends Controller
                 'properties' => [
                     'error' => $e->getMessage(),
                     'ticket_id' => $id,
-                    'user_id' => Auth::id()
-                ]
+                    'user_id' => Auth::id(),
+                ],
             ]);
 
             return redirect()->route('tickets')
@@ -194,15 +194,15 @@ class SupportTicketController extends Controller
                 'properties' => [
                     'viewed_by' => $user->id,
                     'viewed_by_type' => $user->user_type,
-                    'timestamp' => now()->toISOString()
-                ]
+                    'timestamp' => now()->toISOString(),
+                ],
             ]);
 
             return view('admin.support-ticket.create');
         } catch (\Exception $e) {
             Log::error('Failed to load ticket creation form', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             return redirect()->route('tickets')
@@ -224,14 +224,14 @@ class SupportTicketController extends Controller
 
             DB::beginTransaction();
 
-            $ticketNumber = 'TKT-' . now()->format('Ymd') . '-' . rand(1000, 9999);
+            $ticketNumber = 'TKT-'.now()->format('Ymd').'-'.rand(1000, 9999);
             $filesData = [];
 
             // Handle file uploads if present
             if ($request->hasFile('files')) {
                 foreach ($request->file('files') as $file) {
                     $extension = strtolower($file->getClientOriginalExtension());
-                    $filename = Str::random(40) . '.' . $extension;
+                    $filename = Str::random(40).'.'.$extension;
                     $folder = 'support_tickets';
                     $filePath = "{$folder}/{$filename}";
 
@@ -242,7 +242,7 @@ class SupportTicketController extends Controller
                         'path' => $filePath,
                         'size' => $file->getSize(),
                         'mime_type' => $file->getMimeType(),
-                        'uploaded_at' => now()->toISOString()
+                        'uploaded_at' => now()->toISOString(),
                     ];
                 }
             }
@@ -266,7 +266,7 @@ class SupportTicketController extends Controller
 
             $this->auditTrailService->logCreated(
                 $ticket,
-                'Created new support ticket: ' . $ticket->subject,
+                'Created new support ticket: '.$ticket->subject,
                 array_merge([
                     'event_category' => 'support_operations',
                     'event_type' => 'support_ticket_created',
@@ -281,23 +281,23 @@ class SupportTicketController extends Controller
                         'created_by_email' => $user->email,
                         'assigned_to' => $ticket->assigned_to,
                         'files_count' => count($filesData),
-                        'file_names' => array_map(fn($f) => $f['original_name'], $filesData),
+                        'file_names' => array_map(fn ($f) => $f['original_name'], $filesData),
                         'ip_address' => $request->ip(),
-                        'user_agent' => $request->userAgent()
-                    ]
+                        'user_agent' => $request->userAgent(),
+                    ],
                 ], $justificationData)
             );
 
             DB::commit();
 
             return redirect()->route('tickets')
-                ->with('success', 'Ticket created successfully! Ticket Number: ' . $ticketNumber);
+                ->with('success', 'Ticket created successfully! Ticket Number: '.$ticketNumber);
         } catch (\Exception $e) {
             DB::rollBack();
             Log::error('Failed to create support ticket', [
                 'error' => $e->getMessage(),
                 'subject' => $request->subject ?? 'unknown',
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -311,8 +311,8 @@ class SupportTicketController extends Controller
                     'details_length' => strlen($request->details ?? ''),
                     'has_files' => $request->hasFile('files'),
                     'files_count' => $request->hasFile('files') ? count($request->file('files')) : 0,
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()
@@ -339,7 +339,7 @@ class SupportTicketController extends Controller
                 $user->id === $ticket->assigned_to ||
                 $user->id === $ticket->user_id;
 
-            if (!$canReply) {
+            if (! $canReply) {
                 $this->auditTrailService->log([
                     'event_category' => 'access_control',
                     'event_type' => 'unauthorized_ticket_reply',
@@ -353,8 +353,8 @@ class SupportTicketController extends Controller
                         'ticket_assigned_to' => $ticket->assigned_to,
                         'user_id' => $user->id,
                         'user_type' => $user->user_type,
-                        'unauthorized_reply' => true
-                    ]
+                        'unauthorized_reply' => true,
+                    ],
                 ]);
 
                 return redirect()->back()
@@ -369,7 +369,7 @@ class SupportTicketController extends Controller
             if ($request->hasFile('files')) {
                 foreach ($request->file('files') as $file) {
                     $extension = strtolower($file->getClientOriginalExtension());
-                    $filename = Str::random(40) . '.' . $extension;
+                    $filename = Str::random(40).'.'.$extension;
                     $folder = 'support_tickets';
                     $filePath = "{$folder}/{$filename}";
 
@@ -382,7 +382,7 @@ class SupportTicketController extends Controller
                         'mime_type' => $file->getMimeType(),
                         'uploaded_at' => now()->toISOString(),
                         'uploaded_by' => $user->id,
-                        'is_reply_attachment' => true
+                        'is_reply_attachment' => true,
                     ];
                 }
             }
@@ -419,7 +419,7 @@ class SupportTicketController extends Controller
             $this->auditTrailService->logUpdated(
                 $ticket,
                 $beforeState,
-                'Replied to support ticket: ' . $ticket->ticket_number,
+                'Replied to support ticket: '.$ticket->ticket_number,
                 array_merge([
                     'event_category' => 'support_operations',
                     'event_type' => 'support_ticket_replied',
@@ -439,8 +439,8 @@ class SupportTicketController extends Controller
                         'reply_activity_id' => $replyActivity->id,
                         'ip_address' => $request->ip(),
                         'user_agent' => $request->userAgent(),
-                        'changes_made' => $this->getTicketChangedFields($beforeState, $ticket->toArray())
-                    ]
+                        'changes_made' => $this->getTicketChangedFields($beforeState, $ticket->toArray()),
+                    ],
                 ], $justificationData)
             );
 
@@ -453,7 +453,7 @@ class SupportTicketController extends Controller
             Log::error('Failed to reply to support ticket', [
                 'error' => $e->getMessage(),
                 'ticket_id' => $ticket_id,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -467,8 +467,8 @@ class SupportTicketController extends Controller
                     'ticket_id' => $ticket_id,
                     'reply_length' => strlen($request->reply ?? ''),
                     'has_files' => $request->hasFile('files'),
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()
@@ -487,7 +487,7 @@ class SupportTicketController extends Controller
             $user = Auth::user();
             $ticket = SupportTicket::whereEncrypted('ticket_number', $ticket_number)->first();
 
-            if (!$ticket) {
+            if (! $ticket) {
                 $this->auditTrailService->log([
                     'event_category' => 'error_events',
                     'event_type' => 'ticket_status_update_not_found',
@@ -496,8 +496,8 @@ class SupportTicketController extends Controller
                     'properties' => [
                         'ticket_number' => $ticket_number,
                         'requested_status' => $request->status,
-                        'attempted_by' => $user->id
-                    ]
+                        'attempted_by' => $user->id,
+                    ],
                 ]);
 
                 return redirect()->back()->with('error', 'Ticket not found.');
@@ -508,7 +508,7 @@ class SupportTicketController extends Controller
                 $user->user_type === 'admin' ||
                 ($user->user_type === 'employee' && $user->is_manager);
 
-            if (!$isAuthorized) {
+            if (! $isAuthorized) {
                 $this->auditTrailService->log([
                     'event_category' => 'access_control',
                     'event_type' => 'unauthorized_ticket_status_update',
@@ -523,8 +523,8 @@ class SupportTicketController extends Controller
                         'user_id' => $user->id,
                         'user_type' => $user->user_type,
                         'is_manager' => $user->is_manager,
-                        'unauthorized_update' => true
-                    ]
+                        'unauthorized_update' => true,
+                    ],
                 ]);
 
                 return redirect()->back()->with('error', 'You are not authorized to update this ticket status.');
@@ -552,7 +552,7 @@ class SupportTicketController extends Controller
                 $this->auditTrailService->logUpdated(
                     $t,
                     $beforeState,
-                    'Updated ticket status to ' . $request->status,
+                    'Updated ticket status to '.$request->status,
                     array_merge([
                         'event_category' => 'support_operations',
                         'event_type' => 'support_ticket_status_updated',
@@ -569,8 +569,8 @@ class SupportTicketController extends Controller
                             'is_ticket_owner' => $t->user_id === $user->id,
                             'ip_address' => $request->ip(),
                             'user_agent' => $request->userAgent(),
-                            'changes_made' => $this->getTicketChangedFields($beforeState, $t->toArray())
-                        ]
+                            'changes_made' => $this->getTicketChangedFields($beforeState, $t->toArray()),
+                        ],
                     ], $justificationData)
                 );
 
@@ -592,8 +592,8 @@ class SupportTicketController extends Controller
                     'tickets_updated' => $updatedCount,
                     'batch_uuid' => $batchUuid,
                     'updated_by' => $user->id,
-                    'timestamp' => now()->toISOString()
-                ]
+                    'timestamp' => now()->toISOString(),
+                ],
             ]);
 
             return redirect()->back()->with('success', 'Ticket status updated successfully.');
@@ -603,7 +603,7 @@ class SupportTicketController extends Controller
                 'error' => $e->getMessage(),
                 'ticket_number' => $ticket_number,
                 'requested_status' => $request->status,
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -615,8 +615,8 @@ class SupportTicketController extends Controller
                     'error' => $e->getMessage(),
                     'ticket_number' => $ticket_number,
                     'requested_status' => $request->status,
-                    'attempted_by' => Auth::id()
-                ]
+                    'attempted_by' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to update ticket status. Please try again.');
@@ -670,15 +670,15 @@ class SupportTicketController extends Controller
                     'ticket_criteria' => 'assigned_to OR created_by',
                     'assigned_tickets' => $tickets->where('assigned_to', $user->id)->count(),
                     'owned_tickets' => $tickets->where('user_id', $user->id)->count(),
-                    'status_distribution' => $tickets->groupBy('status')->map->count()
-                ]
+                    'status_distribution' => $tickets->groupBy('status')->map->count(),
+                ],
             ], $justificationData));
 
             return view('admin.support-ticket.index', compact('tickets'));
         } catch (\Exception $e) {
             Log::error('Failed to load internal tickets', [
                 'error' => $e->getMessage(),
-                'user_id' => Auth::id()
+                'user_id' => Auth::id(),
             ]);
 
             $this->auditTrailService->log([
@@ -688,8 +688,8 @@ class SupportTicketController extends Controller
                 'action_summary' => 'Failed to load internal support tickets',
                 'properties' => [
                     'error' => $e->getMessage(),
-                    'user_id' => Auth::id()
-                ]
+                    'user_id' => Auth::id(),
+                ],
             ]);
 
             return redirect()->back()->with('error', 'Failed to load internal tickets. Please try again.');
@@ -698,10 +698,6 @@ class SupportTicketController extends Controller
 
     /**
      * Helper method to identify changed fields in ticket updates
-     *
-     * @param array $beforeState
-     * @param array $afterState
-     * @return array
      */
     private function getTicketChangedFields(array $beforeState, array $afterState): array
     {
@@ -715,19 +711,19 @@ class SupportTicketController extends Controller
                         $changed[$key] = [
                             'old_length' => strlen($value ?? ''),
                             'new_length' => strlen($afterState[$key] ?? ''),
-                            'changed' => true
+                            'changed' => true,
                         ];
                     } else {
                         $changed[$key] = [
                             'old' => '***MASKED***',
                             'new' => '***MASKED***',
-                            'changed' => true
+                            'changed' => true,
                         ];
                     }
                 } else {
                     $changed[$key] = [
                         'old' => $value,
-                        'new' => $afterState[$key]
+                        'new' => $afterState[$key],
                     ];
                 }
             }
@@ -735,23 +731,23 @@ class SupportTicketController extends Controller
 
         // Check for new fields that weren't in before state
         foreach ($afterState as $key => $value) {
-            if (!isset($beforeState[$key])) {
+            if (! isset($beforeState[$key])) {
                 if (in_array($key, $sensitiveFields)) {
                     if ($key === 'details' || $key === 'reply') {
                         $changed[$key] = [
                             'old' => null,
-                            'new_length' => strlen($value ?? '')
+                            'new_length' => strlen($value ?? ''),
                         ];
                     } else {
                         $changed[$key] = [
                             'old' => null,
-                            'new' => '***MASKED***'
+                            'new' => '***MASKED***',
                         ];
                     }
                 } else {
                     $changed[$key] = [
                         'old' => null,
-                        'new' => $value
+                        'new' => $value,
                     ];
                 }
             }

@@ -2,18 +2,22 @@
 
 namespace App\Models;
 
+use App\Traits\EncryptsAttributes;
 use App\Traits\LogsModelActions;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class InstalmentPlan extends Model
 {
-    use LogsModelActions, EncryptsAttributes;
+    use EncryptsAttributes, HasFactory, LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
+
     protected static $logOnlyDirty = true;
+
     protected static $logName = 'instalment_plan';
+
     protected $fillable = [
         'uuid',
         'name',
@@ -25,7 +29,7 @@ class InstalmentPlan extends Model
         'late_fee',
         'transaction_fee',
         'installments',
-        'status'
+        'status',
     ];
 
     protected $encryptableAttributes = [
@@ -53,7 +57,7 @@ class InstalmentPlan extends Model
                 $counter = 1;
 
                 while (self::where('slug', $slug)->where('id', '!=', $instalmentPlan->id)->exists()) {
-                    $slug = $originalSlug . '-' . $counter++;
+                    $slug = $originalSlug.'-'.$counter++;
                 }
 
                 $instalmentPlan->slug = $slug;
@@ -72,14 +76,14 @@ class InstalmentPlan extends Model
     /**
      * Get the translated attribute.
      *
-     * @param string $key
+     * @param  string  $key
      * @return mixed
      */
     public function getAttribute($key)
     {
         $value = parent::getAttribute($key);
 
-        if (!in_array($key, ['name', 'description'])) {
+        if (! in_array($key, ['name', 'description'])) {
             return $value;
         }
 

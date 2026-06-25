@@ -2,17 +2,20 @@
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\StoreTransferRequest;
 use App\Models\TransferRequest;
+use App\Services\AuditTrailService;
 use App\Services\FirebaseService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
-use App\Services\AuditTrailService;
 
 class TransferRequestController extends Controller
 {
     protected $firebase;
+
     protected $auditTrailService;
 
     public function __construct(FirebaseService $firebase, AuditTrailService $auditTrailService)
@@ -25,7 +28,7 @@ class TransferRequestController extends Controller
     {
         $user = currentUser();
         $transferRequests = TransferRequest::with(['fromUser', 'toUser', 'model'])
-            ->when($user->user_type !== 'admin', fn($query) => $query->where('to_user_id', $user->id))
+            ->when($user->user_type !== 'admin', fn ($query) => $query->where('to_user_id', $user->id))
             ->latest()
             ->paginate(10);
 
@@ -34,7 +37,7 @@ class TransferRequestController extends Controller
             'event_category' => 'transfer_requests',
             'event_type' => 'view_list',
             'entity_type' => 'TransferRequest',
-            'action_summary' => "Viewed transfer requests list",
+            'action_summary' => 'Viewed transfer requests list',
             'properties' => [
                 'user_type' => $user->user_type,
                 'viewed_by' => Auth::id(),
@@ -44,25 +47,20 @@ class TransferRequestController extends Controller
         return view('admin.transfer_requests.index', compact('transferRequests'));
     }
 
-    public function store(Request $request)
+    public function store(StoreTransferRequest $request)
     {
-        $data = $request->validate([
-            'to_user_id'  => 'required|exists:users,id',
-            'model_type'  => 'required|string',
-            'model_id'    => 'required|integer',
-            'description' => 'nullable|string',
-        ]);
+        $data = $request->validated();
 
         DB::beginTransaction();
 
         try {
             $transferRequest = TransferRequest::create([
                 'from_user_id' => Auth::id(),
-                'to_user_id'   => $data['to_user_id'],
-                'model_type'   => $data['model_type'],
-                'model_id'     => $data['model_id'],
-                'description'  => $data['description'],
-                'status'       => 'pending',
+                'to_user_id' => $data['to_user_id'],
+                'model_type' => $data['model_type'],
+                'model_id' => $data['model_id'],
+                'description' => $data['description'],
+                'status' => 'pending',
             ]);
 
             $this->updateModelAssignedTo($data['model_type'], $data['model_id'], $data['to_user_id']);
@@ -90,7 +88,7 @@ class TransferRequestController extends Controller
                 'event_type' => 'single_transfer_created',
                 'entity_type' => 'TransferRequest',
                 'entity_id' => $transferRequest->id,
-                'action_summary' => "Created single transfer request",
+                'action_summary' => 'Created single transfer request',
                 'properties' => [
                     'from_user_id' => Auth::id(),
                     'to_user_id' => $data['to_user_id'],
@@ -111,7 +109,7 @@ class TransferRequestController extends Controller
                 'event_category' => 'error_events',
                 'event_type' => 'single_transfer_failed',
                 'entity_type' => 'TransferRequest',
-                'action_summary' => "Failed to create single transfer request",
+                'action_summary' => 'Failed to create single transfer request',
                 'properties' => [
                     'error_message' => $e->getMessage(),
                     'model_type' => $data['model_type'] ?? null,
@@ -120,18 +118,20 @@ class TransferRequestController extends Controller
                 ],
             ]);
 
-            return redirect()->back()->with('error', 'Something went wrong: ' . $e->getMessage());
+            Log::error('Transfer request creation failed', ['error' => $e->getMessage(), 'user_id' => Auth::id()]);
+
+            return redirect()->back()->with('error', __('Transfer failed. Please try again or contact support.'));
         }
     }
 
     public function bulkStore(Request $request)
     {
         $data = $request->validate([
-            'to_user_id'  => 'required|exists:users,id',
-            'model_ids'   => 'required|array|min:1',
+            'to_user_id' => 'required|exists:users,id',
+            'model_ids' => 'required|array|min:1',
             'model_ids.*' => 'integer',
             'description' => 'nullable|string',
-            'model_type'  => 'required|string',
+            'model_type' => 'required|in:App\Models\Order,App\Models\Merchant,App\Models\SupportTicket,App\Models\SchedulePayment,App\Models\RefundRequest,App\Models\Transaction,App\Models\Customer',
         ]);
 
         DB::beginTransaction();
@@ -161,11 +161,11 @@ class TransferRequestController extends Controller
                 try {
                     $transferRequest = TransferRequest::create([
                         'from_user_id' => Auth::id(),
-                        'to_user_id'   => $data['to_user_id'],
-                        'model_type'   => $data['model_type'],
-                        'model_id'     => $modelId,
-                        'description'  => $data['description'],
-                        'status'       => 'pending',
+                        'to_user_id' => $data['to_user_id'],
+                        'model_type' => $data['model_type'],
+                        'model_id' => $modelId,
+                        'description' => $data['description'],
+                        'status' => 'pending',
                     ]);
 
                     $this->updateModelAssignedTo($data['model_type'], $modelId, $data['to_user_id']);
@@ -194,7 +194,7 @@ class TransferRequestController extends Controller
                         'event_type' => 'bulk_item_transferred',
                         'entity_type' => 'TransferRequest',
                         'entity_id' => $transferRequest->id,
-                        'action_summary' => "Transferred item in bulk operation",
+                        'action_summary' => 'Transferred item in bulk operation',
                         'properties' => [
                             'from_user_id' => Auth::id(),
                             'to_user_id' => $data['to_user_id'],
@@ -217,7 +217,7 @@ class TransferRequestController extends Controller
                         'event_category' => 'error_events',
                         'event_type' => 'bulk_item_failed',
                         'entity_type' => 'TransferRequest',
-                        'action_summary' => "Failed to transfer item in bulk operation",
+                        'action_summary' => 'Failed to transfer item in bulk operation',
                         'properties' => [
                             'model_type' => $data['model_type'],
                             'model_id' => $modelId,
@@ -234,7 +234,7 @@ class TransferRequestController extends Controller
                 'event_category' => 'transfer_requests',
                 'event_type' => 'bulk_transfer_completed',
                 'entity_type' => 'TransferRequest',
-                'action_summary' => "Completed bulk transfer operation",
+                'action_summary' => 'Completed bulk transfer operation',
                 'properties' => [
                     'from_user_id' => Auth::id(),
                     'to_user_id' => $data['to_user_id'],
@@ -249,7 +249,7 @@ class TransferRequestController extends Controller
             DB::commit();
 
             if (count($failedRequests) > 0) {
-                return back()->with('warning', __('Bulk transfer completed with some failures. Successful: ') . count($createdRequests) . ', Failed: ' . count($failedRequests));
+                return back()->with('warning', __('Bulk transfer completed with some failures. Successful: ').count($createdRequests).', Failed: '.count($failedRequests));
             }
 
             return back()->with('success', __('Bulk transfer successful.'));
@@ -261,7 +261,7 @@ class TransferRequestController extends Controller
                 'event_category' => 'error_events',
                 'event_type' => 'bulk_transfer_failed',
                 'entity_type' => 'TransferRequest',
-                'action_summary' => "Bulk transfer failed",
+                'action_summary' => 'Bulk transfer failed',
                 'properties' => [
                     'model_type' => $data['model_type'] ?? null,
                     'to_user_id' => $data['to_user_id'] ?? null,
@@ -270,14 +270,16 @@ class TransferRequestController extends Controller
                 ],
             ]);
 
-            return back()->with('error', __('Bulk transfer failed: ') . $e->getMessage());
+            Log::error('Bulk transfer failed', ['error' => $e->getMessage(), 'user_id' => Auth::id()]);
+
+            return back()->with('error', __('Bulk transfer failed. Please try again or contact support.'));
         }
     }
 
     public function fetch(Request $request)
     {
         $data = $request->validate([
-            'model_id'   => 'required|integer',
+            'model_id' => 'required|integer',
             'model_type' => 'required|string',
         ]);
 
@@ -292,7 +294,7 @@ class TransferRequestController extends Controller
             'event_category' => 'transfer_requests',
             'event_type' => 'fetch_transfers',
             'entity_type' => 'TransferRequest',
-            'action_summary' => "Fetched transfer requests for model",
+            'action_summary' => 'Fetched transfer requests for model',
             'properties' => [
                 'model_type' => $data['model_type'],
                 'model_id' => $data['model_id'],
@@ -320,7 +322,7 @@ class TransferRequestController extends Controller
                     'event_type' => 'assigned_to_updated',
                     'entity_type' => $modelType,
                     'entity_id' => $modelId,
-                    'action_summary' => "Updated assigned_to field for model",
+                    'action_summary' => 'Updated assigned_to field for model',
                     'properties' => [
                         'model_type' => $modelType,
                         'model_id' => $modelId,
@@ -345,7 +347,7 @@ class TransferRequestController extends Controller
 
         if ($modelType === \App\Models\Merchant::class) {
             $title = 'New Supplier Assigned';
-            $desc = "A new supplier has been assigned to you. Please review their profile.";
+            $desc = 'A new supplier has been assigned to you. Please review their profile.';
             $clickAction = route('supplierProfile', ['id' => $modelId]);
         }
 
@@ -378,7 +380,7 @@ class TransferRequestController extends Controller
             'event_type' => 'transfer_notification_sent',
             'entity_type' => 'TransferRequest',
             'entity_id' => $transferRequestId,
-            'action_summary' => "Sent notification for transfer request",
+            'action_summary' => 'Sent notification for transfer request',
             'properties' => [
                 'transfer_request_id' => $transferRequestId,
                 'to_user_id' => $toUserId,
@@ -401,7 +403,7 @@ class TransferRequestController extends Controller
         // Original logging method (keep as is)
         $user->logModelAction(
             event: 'create_transfer_request',
-            description: $user->first_name . " " . $user->last_name . " created a transfer request for model: {$modelType} with ID: {$modelId}",
+            description: $user->first_name.' '.$user->last_name." created a transfer request for model: {$modelType} with ID: {$modelId}",
             properties: [
                 'ip' => request()->ip(),
                 'batch_uuid' => $batchUuid ?? (string) Str::uuid(),

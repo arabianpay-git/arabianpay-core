@@ -4,29 +4,28 @@ namespace App\Http\Controllers;
 
 use App\Models\Category;
 use App\Models\City;
+use App\Models\CustomerCreditLimit;
 use App\Models\Order;
-use App\Models\Transaction;
+use App\Models\Product;
+use App\Models\RefundRequest;
 use App\Models\RiskManagement;
 use App\Models\SchedulePayment;
-use App\Models\RefundRequest;
-use App\Models\CustomerCreditLimit;
-use App\Models\Product;
 use App\Models\SensitiveDataApproval;
 use App\Models\State;
+use App\Models\Transaction;
 use App\Models\User;
 use App\Models\Wallet;
-use App\Services\RiskAnalyticsService;
 use App\Services\AuditTrailService;
-use Carbon\Carbon;
+use App\Services\RiskAnalyticsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Crypt;
-use Illuminate\Support\Facades\URL;
 use Illuminate\Support\Facades\Log;
 
 class DashboardController extends Controller
 {
     protected $riskService;
+
     protected $auditTrailService;
 
     public function __construct(RiskAnalyticsService $riskService, AuditTrailService $auditTrailService)
@@ -48,12 +47,12 @@ class DashboardController extends Controller
             'properties' => [
                 'user_type' => $user->user_type,
                 'is_manager' => $user->is_manager,
-                'date_range' => $request->input('date_range', '12M')
-            ]
+                'date_range' => $request->input('date_range', '12M'),
+            ],
         ]);
 
         // Restrict employees who are not managers
-        if ($user->user_type === 'employee' && !$user->is_manager) {
+        if ($user->user_type === 'employee' && ! $user->is_manager) {
             // Log restricted access attempt
             $this->auditTrailService->log([
                 'event_category' => 'access_control',
@@ -64,7 +63,7 @@ class DashboardController extends Controller
                     'user_id' => $user->id,
                     'user_type' => $user->user_type,
                     // 'permissions' => $user->getAllPermissions()->pluck('name')->toArray()
-                ]
+                ],
             ]);
 
             return view('admin.dashboard.employee');
@@ -98,13 +97,13 @@ class DashboardController extends Controller
             'action_summary' => 'Dashboard data loaded successfully',
             'properties' => [
                 'date_range' => $dateRange,
-                'loan_data_available' => !empty($loanData),
-                'financial_data_available' => !empty($financialData),
-                'risk_data_available' => !empty($riskData),
-                'operational_data_available' => !empty($operationalData),
+                'loan_data_available' => ! empty($loanData),
+                'financial_data_available' => ! empty($financialData),
+                'risk_data_available' => ! empty($riskData),
+                'operational_data_available' => ! empty($operationalData),
                 'categories_count' => $categorySales->count(),
-                'stock_categories_count' => $categoryStock->count()
-            ]
+                'stock_categories_count' => $categoryStock->count(),
+            ],
         ]);
 
         return view('admin.dashboard.index', compact(
@@ -126,7 +125,7 @@ class DashboardController extends Controller
                 'payment_status' => SchedulePayment::getPaymentStatusDistribution(),
                 'overdue_instalments' => SchedulePayment::getOverdueTrend($range),
                 'loan_portfolio' => Transaction::getRiskExposureData(),
-                'active_loans' => Transaction::where('general_status', 'active')->count()
+                'active_loans' => Transaction::where('general_status', 'active')->count(),
             ];
 
             // Log loan data retrieval (once, not per query)
@@ -137,13 +136,14 @@ class DashboardController extends Controller
                 [
                     'date_range' => $range,
                     'data_points_count' => count($data),
-                    'active_loans_count' => $data['active_loans']
+                    'active_loans_count' => $data['active_loans'],
                 ]
             );
 
             return $data;
         } catch (\Exception $e) {
             Log::error('Failed to get loan performance data', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -155,7 +155,7 @@ class DashboardController extends Controller
                 'revenue_breakdown' => Order::getRevenueStreams($range),
                 'wallet_balances' => Wallet::getBalanceTrends($range),
                 'refund_analysis' => RefundRequest::getRefundAnalysis(),
-                'cash_flow' => Transaction::getCashFlowData($range)
+                'cash_flow' => Transaction::getCashFlowData($range),
             ];
 
             // Log financial data retrieval
@@ -165,13 +165,14 @@ class DashboardController extends Controller
                 'Retrieved financial health dashboard data',
                 [
                     'date_range' => $range,
-                    'data_points_count' => count($data)
+                    'data_points_count' => count($data),
                 ]
             );
 
             return $data;
         } catch (\Exception $e) {
             Log::error('Failed to get financial health data', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -183,7 +184,7 @@ class DashboardController extends Controller
                 'risk_distribution' => RiskManagement::getRiskScoreDistribution(),
                 'default_rates' => RiskManagement::getDefaultRatesByBusiness(),
                 'credit_scores' => RiskManagement::getAverageCreditScores(),
-                'credit_utilization' => CustomerCreditLimit::getCreditUtilization()
+                'credit_utilization' => CustomerCreditLimit::getCreditUtilization(),
             ];
 
             // Log risk data retrieval
@@ -192,13 +193,14 @@ class DashboardController extends Controller
                 'RiskManagement',
                 'Retrieved risk management dashboard data',
                 [
-                    'data_points_count' => count($data)
+                    'data_points_count' => count($data),
                 ]
             );
 
             return $data;
         } catch (\Exception $e) {
             Log::error('Failed to get risk management data', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -210,7 +212,7 @@ class DashboardController extends Controller
                 'order_statuses' => Order::getStatusDistribution($range),
                 'fulfillment_times' => Order::getFulfillmentTimes($range),
                 'payment_methods' => Order::getPaymentMethodDistribution($range),
-                'settlement_status' => Transaction::getSettlementStatus()
+                'settlement_status' => Transaction::getSettlementStatus(),
             ];
 
             // Log operational data retrieval
@@ -220,13 +222,14 @@ class DashboardController extends Controller
                 'Retrieved operational metrics dashboard data',
                 [
                     'date_range' => $range,
-                    'data_points_count' => count($data)
+                    'data_points_count' => count($data),
                 ]
             );
 
             return $data;
         } catch (\Exception $e) {
             Log::error('Failed to get operational metrics', ['error' => $e->getMessage()]);
+
             return [];
         }
     }
@@ -245,7 +248,7 @@ class DashboardController extends Controller
                         $categoryName = $product->category->name;
                         $quantity = $item['quantity'] ?? 0;
 
-                        if (!isset($categorySales[$categoryName])) {
+                        if (! isset($categorySales[$categoryName])) {
                             $categorySales[$categoryName] = 0;
                         }
 
@@ -265,13 +268,14 @@ class DashboardController extends Controller
                 'Retrieved category-wise sales data',
                 [
                     'categories_count' => $formattedData->count(),
-                    'total_sales' => array_sum($categorySales)
+                    'total_sales' => array_sum($categorySales),
                 ]
             );
 
             return $formattedData;
         } catch (\Exception $e) {
             Log::error('Failed to get category sales data', ['error' => $e->getMessage()]);
+
             return collect([]);
         }
     }
@@ -282,6 +286,7 @@ class DashboardController extends Controller
             $categoryStock = Category::with('products')->get()
                 ->map(function ($category) {
                     $stock = $category->products->sum('current_stock');
+
                     return [
                         'name' => $category->name,
                         'stock' => $stock,
@@ -298,13 +303,14 @@ class DashboardController extends Controller
                 'Retrieved category-wise stock data',
                 [
                     'categories_count' => $categoryStock->count(),
-                    'total_stock' => $categoryStock->sum('stock')
+                    'total_stock' => $categoryStock->sum('stock'),
                 ]
             );
 
             return $categoryStock;
         } catch (\Exception $e) {
             Log::error('Failed to get category stock data', ['error' => $e->getMessage()]);
+
             return collect([]);
         }
     }
@@ -329,13 +335,14 @@ class DashboardController extends Controller
                 'properties' => [
                     'country_id' => $country_id,
                     'states_count' => $states->count(),
-                    'request_source' => $request->fullUrl()
-                ]
+                    'request_source' => $request->fullUrl(),
+                ],
             ], $justificationData));
 
             return response()->json($states);
         } catch (\Exception $e) {
             Log::error('Failed to get states', ['error' => $e->getMessage(), 'country_id' => $country_id]);
+
             return response()->json([], 500);
         }
     }
@@ -360,13 +367,14 @@ class DashboardController extends Controller
                 'properties' => [
                     'state_id' => $state_id,
                     'cities_count' => $cities->count(),
-                    'request_source' => $request->fullUrl()
-                ]
+                    'request_source' => $request->fullUrl(),
+                ],
             ], $justificationData));
 
             return response()->json($cities);
         } catch (\Exception $e) {
             Log::error('Failed to get cities', ['error' => $e->getMessage(), 'state_id' => $state_id]);
+
             return response()->json([], 500);
         }
     }
@@ -385,8 +393,8 @@ class DashboardController extends Controller
                 'properties' => [
                     'cities_count' => $cities->count(),
                     'is_authenticated' => Auth::check(),
-                    'user_type' => Auth::check() ? Auth::user()->user_type : 'guest'
-                ]
+                    'user_type' => Auth::check() ? Auth::user()->user_type : 'guest',
+                ],
             ]);
 
             return view('welcome', compact('cities'));
@@ -412,8 +420,8 @@ class DashboardController extends Controller
                     'attempted_by' => $user->id,
                     'attempted_by_email' => $user->email,
                     'target_user_id' => $id,
-                    'user_type' => $user->user_type
-                ]
+                    'user_type' => $user->user_type,
+                ],
             ]);
 
             abort(403, 'Unauthorized action.');
@@ -437,13 +445,13 @@ class DashboardController extends Controller
 
             $signature = hash_hmac(
                 'sha256',
-                '/impersonate-login?token=' . urlencode($params['token']) . '&expires=' . $params['expires'],
+                '/impersonate-login?token='.urlencode($params['token']).'&expires='.$params['expires'],
                 config('app.key')
             );
 
             $params['signature'] = $signature;
 
-            $finalUrl = $baseUrl . '?' . http_build_query($params);
+            $finalUrl = $baseUrl.'?'.http_build_query($params);
 
             // Log successful impersonation with security justification
             $justificationData = $this->auditTrailService->withJustification(
@@ -463,7 +471,7 @@ class DashboardController extends Controller
                     'impersonated_by' => $user->id,
                     'impersonated_at' => now()->toISOString(),
                     'target_user_id' => $targetUser->id,
-                    'target_user_email' => $targetUser->email
+                    'target_user_email' => $targetUser->email,
                 ],
                 'properties' => [
                     'impersonator_id' => $user->id,
@@ -471,8 +479,8 @@ class DashboardController extends Controller
                     'target_user_id' => $targetUser->id,
                     'target_user_email' => $targetUser->email,
                     'expiry_time' => now()->addMinutes(2)->toISOString(),
-                    'redirect_url' => $baseUrl
-                ]
+                    'redirect_url' => $baseUrl,
+                ],
             ], $justificationData));
 
             return redirect()->away($finalUrl);
@@ -488,14 +496,14 @@ class DashboardController extends Controller
                     'error' => $e->getMessage(),
                     'attempted_by' => $user->id,
                     'attempted_by_email' => $user->email,
-                    'target_user_id' => $id
-                ]
+                    'target_user_id' => $id,
+                ],
             ]);
 
             Log::error('Failed to redirect to partner', [
                 'error' => $e->getMessage(),
                 'admin_id' => $user->id,
-                'target_user_id' => $id
+                'target_user_id' => $id,
             ]);
 
             abort(404, 'User not found or operation failed.');
@@ -532,7 +540,7 @@ class DashboardController extends Controller
             // Find intersection with current request
             $conflictingPermissions = array_intersect($requestedPermissions, $alreadyRequested);
 
-            if (!empty($conflictingPermissions)) {
+            if (! empty($conflictingPermissions)) {
                 $permissionList = implode(', ', $conflictingPermissions);
 
                 // Log conflicting permission request attempt
@@ -545,8 +553,8 @@ class DashboardController extends Controller
                         'user_id' => $userId,
                         'conflicting_permissions' => $conflictingPermissions,
                         'request_reason' => $validated['request_reason'],
-                        'pending_approvals_count' => $pendingApprovals->count()
-                    ]
+                        'pending_approvals_count' => $pendingApprovals->count(),
+                    ],
                 ]);
 
                 return response()->json([
@@ -572,7 +580,7 @@ class DashboardController extends Controller
 
             $this->auditTrailService->logCreated(
                 $approval,
-                "User requested sensitive permissions: " . implode(', ', $requestedPermissions),
+                'User requested sensitive permissions: '.implode(', ', $requestedPermissions),
                 array_merge([
                     'event_category' => 'approval_operations',
                     'event_type' => 'sensitive_permission_request',
@@ -596,13 +604,13 @@ class DashboardController extends Controller
                 'properties' => [
                     'user_id' => $userId,
                     'error' => $e->getMessage(),
-                    'requested_permissions' => $requestedPermissions
-                ]
+                    'requested_permissions' => $requestedPermissions,
+                ],
             ]);
 
             Log::error('Failed to store approval request', [
                 'error' => $e->getMessage(),
-                'user_id' => $userId
+                'user_id' => $userId,
             ]);
 
             return response()->json([

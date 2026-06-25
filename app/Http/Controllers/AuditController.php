@@ -7,11 +7,12 @@ use App\Exports\AuditTrailsExport;
 use App\Models\AuditLog;
 use App\Models\AuditTrail;
 use App\Models\User;
-use Illuminate\Http\Request;
-use Illuminate\Support\Str;
-use Illuminate\Support\Facades\Cache;
 use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
 use Maatwebsite\Excel\Facades\Excel;
 
 class AuditController extends Controller
@@ -50,7 +51,7 @@ class AuditController extends Controller
         }
 
         if ($filters['actor_email']) {
-            $query->where('actor_email', 'like', '%' . $filters['actor_email'] . '%');
+            $query->where('actor_email', 'like', '%'.$filters['actor_email'].'%');
         }
 
         if ($filters['date_from']) {
@@ -63,10 +64,10 @@ class AuditController extends Controller
 
         if ($filters['search']) {
             $query->where(function ($q) use ($filters) {
-                $q->where('action_summary', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('event_type', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('entity_type', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('justification', 'like', '%' . $filters['search'] . '%');
+                $q->where('action_summary', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('event_type', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('entity_type', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('justification', 'like', '%'.$filters['search'].'%');
             });
         }
 
@@ -81,8 +82,9 @@ class AuditController extends Controller
         });
 
         // Get statistics
-        $stats = Cache::remember('audit_stats_' . md5(serialize($filters)), 300, function () use ($query) {
+        $stats = Cache::remember('audit_stats_'.md5(serialize($filters)), 300, function () use ($query) {
             $baseQuery = clone $query;
+
             return [
                 'total_records' => $baseQuery->count(),
                 'unique_users' => $baseQuery->distinct('actor_email')->count('actor_email'),
@@ -95,7 +97,7 @@ class AuditController extends Controller
         $auditTrails = $query->paginate(20)
             ->through(function (AuditTrail $trail) {
                 $actorName = $trail->actorUser
-                    ? $trail->actorUser->first_name . ' ' . $trail->actorUser->last_name
+                    ? $trail->actorUser->first_name.' '.$trail->actorUser->last_name
                     : 'System';
 
                 return [
@@ -130,7 +132,7 @@ class AuditController extends Controller
 
                     'before_state' => $trail->before_state,
                     'after_state' => $trail->after_state,
-                    'has_changes' => !empty($trail->before_state) || !empty($trail->after_state),
+                    'has_changes' => ! empty($trail->before_state) || ! empty($trail->after_state),
 
                     'justification' => $trail->justification,
                     'pdpl_category' => $trail->pdpl_category,
@@ -173,7 +175,7 @@ class AuditController extends Controller
                 'actor' => [
                     'type' => $audit->actor_type,
                     'id' => $audit->actor_id,
-                    'name' => $audit->actorUser ? $audit->actorUser->first_name . ' ' . $audit->actorUser->last_name : 'System',
+                    'name' => $audit->actorUser ? $audit->actorUser->first_name.' '.$audit->actorUser->last_name : 'System',
                     'email' => $this->maskEmail($audit->actor_email),
                     'full_email' => $audit->actor_email,
                     'role' => $audit->actor_role,
@@ -204,7 +206,7 @@ class AuditController extends Controller
                 'data_changes' => [
                     'before_state' => $audit->before_state,
                     'after_state' => $audit->after_state,
-                    'has_changes' => !empty($audit->before_state) || !empty($audit->after_state),
+                    'has_changes' => ! empty($audit->before_state) || ! empty($audit->after_state),
                 ],
 
                 'compliance' => [
@@ -286,10 +288,10 @@ class AuditController extends Controller
 
         if ($filters['search']) {
             $query->where(function ($q) use ($filters) {
-                $q->where('subject_identifier', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('endpoint', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('failure_reason', 'like', '%' . $filters['search'] . '%')
-                    ->orWhere('request_id', 'like', '%' . $filters['search'] . '%');
+                $q->where('subject_identifier', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('endpoint', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('failure_reason', 'like', '%'.$filters['search'].'%')
+                    ->orWhere('request_id', 'like', '%'.$filters['search'].'%');
             });
         }
 
@@ -308,8 +310,9 @@ class AuditController extends Controller
         });
 
         // Get statistics
-        $stats = Cache::remember('audit_log_stats_' . md5(serialize($filters)), 300, function () use ($query) {
+        $stats = Cache::remember('audit_log_stats_'.md5(serialize($filters)), 300, function () use ($query) {
             $baseQuery = clone $query;
+
             return [
                 'total_records' => $baseQuery->count(),
                 'critical_events' => $baseQuery->where('severity', 'Critical')->count(),
@@ -466,31 +469,33 @@ class AuditController extends Controller
 
     private function maskEmail(?string $email): ?string
     {
-        if (!$email || !str_contains($email, '@')) {
+        if (! $email || ! str_contains($email, '@')) {
             return $email;
         }
 
         [$name, $domain] = explode('@', $email);
-        return Str::substr($name, 0, 1) . '***@' . $domain;
+
+        return Str::substr($name, 0, 1).'***@'.$domain;
     }
 
     private function maskIp(?string $ip): ?string
     {
-        if (!$ip || !str_contains($ip, '.')) {
+        if (! $ip || ! str_contains($ip, '.')) {
             return $ip;
         }
 
         $parts = explode('.', $ip);
-        return $parts[0] . '.***.***.' . end($parts);
+
+        return $parts[0].'.***.***.'.end($parts);
     }
 
     private function maskFingerprint(?string $fp): ?string
     {
-        if (!$fp) {
+        if (! $fp) {
             return null;
         }
 
-        return 'fp-****' . Str::substr($fp, -3);
+        return 'fp-****'.Str::substr($fp, -3);
     }
 
     private function getLogCategoryIcon(string $category): string
@@ -759,21 +764,21 @@ class AuditController extends Controller
                     'request_data' => $log->request_data,
                     'response_data' => $log->response_data,
                     'metadata' => $log->metadata ? json_decode($log->metadata, true) : [],
-                ]
+                ],
             ];
 
             return response()->json($formattedLog);
         } catch (\Illuminate\Database\Eloquent\ModelNotFoundException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Log entry not found'
+                'message' => 'Log entry not found',
             ], 404);
         } catch (\Exception $e) {
-            Log::error('Failed to fetch log details: ' . $e->getMessage());
+            Log::error('Failed to fetch log details: '.$e->getMessage());
 
             return response()->json([
                 'success' => false,
-                'message' => 'Failed to load log details'
+                'message' => 'Failed to load log details',
             ], 500);
         }
     }
@@ -784,6 +789,7 @@ class AuditController extends Controller
         if ($user) {
             return $user;
         }
+
         return 'Unknown';
     }
 
@@ -820,20 +826,6 @@ class AuditController extends Controller
         // For now, return empty. You can implement geoIP lookup here
         return null;
     }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     /**
      * Export audit logs to Excel
@@ -906,11 +898,11 @@ class AuditController extends Controller
 
             if ($filters['search']) {
                 $query->where(function ($q) use ($filters) {
-                    $q->where('subject_identifier', 'like', '%' . $filters['search'] . '%')
-                        ->orWhere('endpoint', 'like', '%' . $filters['search'] . '%')
-                        ->orWhere('failure_reason', 'like', '%' . $filters['search'] . '%')
-                        ->orWhere('request_id', 'like', '%' . $filters['search'] . '%')
-                        ->orWhere('description', 'like', '%' . $filters['search'] . '%');
+                    $q->where('subject_identifier', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('endpoint', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('failure_reason', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('request_id', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('description', 'like', '%'.$filters['search'].'%');
                 });
             }
 
@@ -921,7 +913,7 @@ class AuditController extends Controller
                 if ($request->ajax()) {
                     return response()->json([
                         'success' => false,
-                        'message' => 'No logs found to export with the current filters.'
+                        'message' => 'No logs found to export with the current filters.',
                     ], 404);
                 }
 
@@ -935,18 +927,19 @@ class AuditController extends Controller
             // Export using Laravel Excel
             return Excel::download(new AuditLogsExport($query), $filename);
         } catch (\Exception $e) {
-            Log::error('Audit logs export failed: ' . $e->getMessage());
+            Log::error('Audit logs export failed', ['error' => $e->getMessage(), 'user_id' => Auth::id()]);
 
             if ($request->ajax()) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Export failed: ' . $e->getMessage()
+                    'message' => __('Export failed. Please try again or contact support.'),
                 ], 500);
             }
 
-            return back()->with('error', 'Export failed: ' . $e->getMessage());
+            return back()->with('error', __('Export failed. Please try again or contact support.'));
         }
     }
+
     public function exportTrails(Request $request)
     {
         try {
@@ -982,7 +975,7 @@ class AuditController extends Controller
             }
 
             if ($filters['actor_email']) {
-                $query->where('actor_email', 'like', '%' . $filters['actor_email'] . '%');
+                $query->where('actor_email', 'like', '%'.$filters['actor_email'].'%');
             }
 
             if ($filters['date_from']) {
@@ -995,10 +988,10 @@ class AuditController extends Controller
 
             if ($filters['search']) {
                 $query->where(function ($q) use ($filters) {
-                    $q->where('action_summary', 'like', '%' . $filters['search'] . '%')
-                        ->orWhere('event_type', 'like', '%' . $filters['search'] . '%')
-                        ->orWhere('entity_type', 'like', '%' . $filters['search'] . '%')
-                        ->orWhere('justification', 'like', '%' . $filters['search'] . '%');
+                    $q->where('action_summary', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('event_type', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('entity_type', 'like', '%'.$filters['search'].'%')
+                        ->orWhere('justification', 'like', '%'.$filters['search'].'%');
                 });
             }
 
@@ -1015,12 +1008,12 @@ class AuditController extends Controller
 
             return Excel::download(new AuditTrailsExport($query), $filename);
         } catch (\Exception $e) {
-            Log::error('Audit trails export failed: ' . $e->getMessage(), [
-                'exception' => $e,
-                'trace' => $e->getTraceAsString()
+            Log::error('Audit trails export failed', [
+                'error' => $e->getMessage(),
+                'user_id' => Auth::id(),
             ]);
 
-            return back()->with('error', 'Export failed: ' . $e->getMessage());
+            return back()->with('error', __('Export failed. Please try again or contact support.'));
         }
     }
 }
