@@ -113,12 +113,12 @@ Route::group([
                 Route::middleware('permission:risk.config.manage')->group(function () {
                     Route::get('/risk-weight', 'index')->name('settings.risk-weights');
                     Route::post('settings/risk-weights', 'store')->name('settings.risk-weight.store');
-                });
 
-                Route::get('/compliance-rules', 'complianceRules')->name('settings.compliance-rules');
-                Route::get('/fraud-detection', 'fraudDetection')->name('settings.fraud-detection');
-                Route::get('/aml', 'aml')->name('settings.aml');
-                Route::get('/kyc', 'kyc')->name('settings.kyc');
+                    Route::get('/compliance-rules', 'complianceRules')->name('settings.compliance-rules');
+                    Route::get('/fraud-detection', 'fraudDetection')->name('settings.fraud-detection');
+                    Route::get('/aml', 'aml')->name('settings.aml');
+                    Route::get('/kyc', 'kyc')->name('settings.kyc');
+                });
             });
         });
 });

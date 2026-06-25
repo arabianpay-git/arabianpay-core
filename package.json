@@ -17,6 +17,7 @@
         "axios": "^1.8.2",
         "browserslist": "^4.26.3",
         "concurrently": "^9.0.1",
+        "ecc-universal": "^2.0.0",
         "laravel-echo": "^2.2.6",
         "laravel-vite-plugin": "^1.2.0",
         "postcss": "^8.4.32",
