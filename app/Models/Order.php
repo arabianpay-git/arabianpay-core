@@ -2,11 +2,11 @@
 
 namespace App\Models;
 
+use App\Traits\EncryptsAttributes;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Order extends Model
 {

@@ -31,6 +31,7 @@ class AuditTrailService
             'environment' => config('app.env'),
             'request_id' => $this->request->header('X-Request-ID') ?? (string) Str::uuid(),
             'correlation_id' => $this->request->header('X-Correlation-ID') ?? (string) Str::uuid(),
+            'ip_address' => $this->request->ip() ?? '127.0.0.1',
         ];
 
         // Set actor information if user is authenticated

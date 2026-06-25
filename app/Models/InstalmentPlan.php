@@ -2,14 +2,15 @@
 
 namespace App\Models;
 
+use App\Traits\EncryptsAttributes;
 use App\Traits\LogsModelActions;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
-use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class InstalmentPlan extends Model
 {
-    use EncryptsAttributes, LogsModelActions;
+    use EncryptsAttributes, HasFactory, LogsModelActions;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
 

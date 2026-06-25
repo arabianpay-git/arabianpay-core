@@ -8,7 +8,9 @@ use App\Mail\OrderAccepted;
 use App\Mail\OrderStatusUpdated;
 use App\Models\Notification;
 use App\Models\Order;
+use App\Models\OrderActionLog;
 use App\Models\Product;
+use App\Models\SchedulePayment;
 use App\Services\AuditTrailService;
 use App\Services\FirebaseService;
 use App\Traits\OtpSenderTrait;
@@ -1713,8 +1715,11 @@ class OrderController extends Controller
         $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? 'Unknown';
 
         // Device detection
-        $detect = new MobileDetect;
-        $device = $detect->isMobile() ? ($detect->isTablet() ? 'Tablet' : 'Mobile') : 'Desktop';
+        $device = 'Unknown';
+        if (class_exists(\Detection\MobileDetect::class)) {
+            $detect = new \Detection\MobileDetect;
+            $device = $detect->isMobile() ? ($detect->isTablet() ? 'Tablet' : 'Mobile') : 'Desktop';
+        }
 
         // Simple platform/OS detection
         $platform = 'Unknown';
@@ -1753,7 +1758,7 @@ class OrderController extends Controller
             'platform_os' => $platform,
             'browser_name' => $browser,
             'actor_user_id' => Auth::id(),
-            'actor_user_type' => Auth::user()->user_type ?? 'Guest',
+            'actor_user_type' => Auth::user()?->user_type ?? 'Guest',
         ]);
 
         OrderActionLog::create([

@@ -2,10 +2,10 @@
 
 namespace App\Models;
 
+use App\Traits\EncryptsAttributes;
 use App\Traits\LogsModelActions;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Customer extends Model
 {

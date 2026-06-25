@@ -2,15 +2,16 @@
 
 namespace App\Models;
 
+use App\Traits\EncryptsAttributes;
 use App\Traits\LogsModelActions;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
-use Joelwmale\LaravelEncryption\Traits\EncryptsAttributes;
 
 class Merchant extends Model
 {
-    use EncryptsAttributes, LogsModelActions, SoftDeletes;
+    use EncryptsAttributes, HasFactory, LogsModelActions, SoftDeletes;
 
     protected static $logAttributes = ['status', 'amount', 'due_date'];
 

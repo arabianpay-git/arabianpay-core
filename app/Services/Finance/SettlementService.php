@@ -118,18 +118,20 @@ class SettlementService
      */
     public function calculateSettlementAmount($orders)
     {
-        $totalAmount = 0;
-        $commissionAmount = 0;
+        $totalAmount = '0.00';
+        $commissionAmount = '0.00';
 
         foreach ($orders as $order) {
             $totalAmount = bcadd((string) $totalAmount, (string) $order->grand_total, 2);
             $commissionAmount = bcadd((string) $commissionAmount, (string) ($order->commission_amount ?? 0), 2);
         }
 
+        $payable = bcsub((string) $totalAmount, (string) $commissionAmount, 2);
+
         return [
             'total_amount' => $totalAmount,
             'commission_amount' => $commissionAmount,
-            'payable_amount' => max(0, bcsub((string) $totalAmount, (string) $commissionAmount, 2)),
+            'payable_amount' => bccomp($payable, '0', 2) >= 0 ? $payable : '0.00',
         ];
     }
 

@@ -19,11 +19,15 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function ($middleware) {
         $middleware->append(SecureHeaders::class);
         $middleware->append(AuditLogMiddleware::class);
+
+        $middleware->alias([
+            'permission' => PermissionMiddleware::class,
+            'role' => RoleMiddleware::class,
+        ]);
+
         return [
             LocaleSessionRedirect::class,
             ThrottleRequests::class,
-            RoleMiddleware::class,
-            PermissionMiddleware::class,
         ];
     })
     ->withExceptions(function (Exceptions $exceptions) {

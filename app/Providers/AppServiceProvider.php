@@ -15,8 +15,10 @@ use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\Facades\Config;
 use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\ServiceProvider;
 use Mcamara\LaravelLocalization\Facades\LaravelLocalization;
 use SocialiteProviders\Manager\SocialiteWasCalled;
@@ -128,5 +130,16 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(function (SocialiteWasCalled $event) {
             $event->extendSocialite('microsoft', MicrosoftProvider::class);
         });
+
+        // The default `current_password` rule uses Auth::guard()->validate() which
+        // queries users by email. Emails are encrypted at rest in this application,
+        // so that lookup always fails. Override the rule to verify the password
+        // hash directly against the authenticated user.
+        Validator::extend('current_password', function ($attribute, $value, $parameters, $validator) {
+            $guard = $parameters[0] ?? null;
+            $user = auth($guard)->user();
+
+            return $user && filled($user->password) && Hash::check($value, $user->password);
+        }, __('The provided password does not match your current password.'));
     }
 }
