@@ -1,0 +1,2633 @@
+openapi: 3.0.3
+
+info:
+  title: ArabianPay Financial API
+  version: 1.0.0
+  description: |
+    Financial module API for the ArabianPay BNPL admin panel.
+
+    ## Authentication Flow (Sanctum SPA)
+
+    1. `GET /sanctum/csrf-cookie` — fetch XSRF-TOKEN cookie
+    2. `POST /login` — `{ email, password }`
+       - If response has `{ two_factor: true }`, continue to step 3
+    3. `POST /two-factor-challenge` — `{ code }`
+    4. `GET /api/v1/user` — verify session, get roles & permissions
+
+    All subsequent requests must include:
+    - `XSRF-TOKEN` cookie (auto-sent with `withCredentials: true`)
+    - `Content-Type: application/json`
+    - `Accept: application/json`
+    - `X-Requested-With: XMLHttpRequest`
+
+servers:
+  - url: https://core.arabianpay.net
+    description: Production
+  - url: http://localhost:8000
+    description: Local development
+
+tags:
+  - name: User
+    description: Current user info and session
+  - name: Financial Dashboard
+    description: KPI dashboard, trial balance, CSV exports
+  - name: Chart of Accounts
+    description: CRUD operations on the chart of accounts
+  - name: Journal Transactions
+    description: Financial journal (double-entry) transaction management
+  - name: Expense Settings
+    description: Predefined expense templates
+  - name: Settlements
+    description: Weekly supplier settlement lifecycle
+  - name: Payouts
+    description: Supplier payout portal and double-entry creation
+  - name: Loan Transactions
+    description: BNPL loan transaction management
+  - name: Schedule Payments
+    description: Installment schedule management
+  - name: Collections
+    description: Collections dashboard, installments, and recovery
+  - name: Claims
+    description: Collection claims lifecycle
+  - name: Refund Requests
+    description: Refund request management
+  - name: Credit Management
+    description: Customer credit profiles and limits
+  - name: Investment Pools
+    description: Monthly investment portfolio pools
+  - name: Transfer Requests
+    description: Entity transfer between employees
+  - name: Financial Reports
+    description: Financial analysis and reporting
+
+paths:
+
+  #
+  # ─── User ──────────────────────────────────────────────────────────
+  #
+
+  /api/v1/user:
+    get:
+      tags: [User]
+      summary: Current authenticated user
+      description: "Returns the authenticated user's profile, roles, and permissions"
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: User data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserResponse'
+        '401':
+          description: Unauthenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  #
+  # ─── Financial Dashboard ───────────────────────────────────────────
+  #
+
+  /api/v1/finance/dashboard:
+    get:
+      tags: [Financial Dashboard]
+      summary: Financial dashboard
+      description: KPI metrics, charts, recent activities, accounts summary, and investment pool summaries
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Dashboard data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: object
+                    properties:
+                      kpis:
+                        $ref: '#/components/schemas/DashboardKPIs'
+                      charts:
+                        $ref: '#/components/schemas/DashboardCharts'
+                      recent_activities:
+                        type: array
+                      accounts_summary:
+                        type: array
+                      investment_pools:
+                        $ref: '#/components/schemas/PoolSummary'
+
+  /api/v1/finance/trial-balance:
+    get:
+      tags: [Financial Dashboard]
+      summary: Trial balance
+      description: Trial balance with debits, credits, and running balances per account
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/date'
+      responses:
+        '200':
+          description: Trial balance data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: object
+                    properties:
+                      accounts:
+                        type: array
+                      balance_date:
+                        type: string
+                        format: date
+                      total_debits:
+                        type: number
+                      total_credits:
+                        type: number
+
+  /api/v1/finance/trial-balance/export:
+    get:
+      tags: [Financial Dashboard]
+      summary: Export trial balance as CSV
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/date'
+      responses:
+        '200':
+          description: CSV file download
+
+  #
+  # ─── Chart of Accounts ─────────────────────────────────────────────
+  #
+
+  /api/v1/finance/accounts:
+    get:
+      tags: [Chart of Accounts]
+      summary: List accounts
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - in: query
+          name: account_type1
+          schema: { type: integer, enum: [1, 2] }
+          description: '1=Budget, 2=Non-Budget'
+        - in: query
+          name: account_type2
+          schema: { type: integer, enum: [1, 2] }
+          description: '1=Debit, 2=Credit'
+        - $ref: '#/components/parameters/status'
+      responses:
+        '200':
+          description: Paginated list of accounts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FAccount'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      tags: [Chart of Accounts]
+      summary: Create account
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FAccountInput'
+      responses:
+        '201':
+          description: Account created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/FAccount'
+                  message: { type: string }
+
+  /api/v1/finance/accounts/{account}:
+    parameters:
+      - in: path
+        name: account
+        required: true
+        schema: { type: integer }
+        description: Account ID
+    get:
+      tags: [Chart of Accounts]
+      summary: Show account with entries
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Account detail with paginated entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      account:
+                        $ref: '#/components/schemas/FAccount'
+                      entries:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FEntry'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+    put:
+      tags: [Chart of Accounts]
+      summary: Update account
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FAccountInput'
+      responses:
+        '200':
+          $ref: '#/components/responses/AccountUpdated'
+    delete:
+      tags: [Chart of Accounts]
+      summary: Delete account (blocks if entries exist)
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Account deleted
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+        '409':
+          description: Has entries — cannot delete
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /api/v1/finance/accounts/{account}/ledger:
+    get:
+      tags: [Chart of Accounts]
+      summary: Account ledger with running balance
+      description: Running balance computed across paginated pages. Filterable by date range and customer/supplier for AR (1203) / AP (2400) accounts.
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: account
+          required: true
+          schema: { type: integer }
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+        - $ref: '#/components/parameters/per_page'
+        - in: query
+          name: customer_id
+          schema: { type: integer }
+          description: Filter by customer (for Accounts Receivable 1203)
+        - in: query
+          name: supplier_id
+          schema: { type: integer }
+          description: Filter by supplier (for Accounts Payable 2400)
+      responses:
+        '200':
+          description: Ledger with running balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      account:
+                        $ref: '#/components/schemas/FAccount'
+                      entries:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/FEntry'
+                      opening_balance:
+                        type: number
+                      closing_balance:
+                        type: number
+                      totals:
+                        type: object
+                        properties:
+                          sum_debit: { type: number }
+                          sum_credit: { type: number }
+                      is_debit_normal:
+                        type: boolean
+                      date_from:
+                        type: string
+                        format: date
+                      date_to:
+                        type: string
+                        format: date
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+
+  #
+  # ─── Journal Transactions ──────────────────────────────────────────
+  #
+
+  /api/v1/finance/transactions:
+    get:
+      tags: [Journal Transactions]
+      summary: List financial transactions
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - in: query
+          name: type
+          schema: { type: string, enum: [payment, refund, withdrawal, deposit, transfer] }
+        - $ref: '#/components/parameters/status'
+      responses:
+        '200':
+          description: Paginated transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/FTransaction'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      tags: [Journal Transactions]
+      summary: Create financial transaction
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FTransactionInput'
+      responses:
+        '201':
+          description: Transaction created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/FTransaction'
+                  message: { type: string }
+
+  /api/v1/finance/transactions/create/form-data:
+    get:
+      tags: [Journal Transactions]
+      summary: Form dropdown data
+      description: Returns accounts, users, customers, suppliers, orders, and payments for form selectors
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Dropdown data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      accounts:
+                        type: array
+                      users:
+                        type: array
+                      customers:
+                        type: array
+                      suppliers:
+                        type: array
+                      orders:
+                        type: array
+                      payments:
+                        type: array
+                      transaction_types:
+                        type: array
+                      statuses:
+                        type: array
+
+  /api/v1/finance/transactions/{id}:
+    parameters:
+      - in: path
+        name: id
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Journal Transactions]
+      summary: Show transaction with entries
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Transaction detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/FTransaction'
+    put:
+      tags: [Journal Transactions]
+      summary: Update transaction
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FTransactionInput'
+      responses:
+        '200':
+          description: Transaction updated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/FTransaction'
+                  message: { type: string }
+    delete:
+      tags: [Journal Transactions]
+      summary: Delete transaction (blocks if entries exist)
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Deleted
+        '409':
+          description: Has entries — cannot delete
+
+  #
+  # ─── Expense Settings ──────────────────────────────────────────────
+  #
+
+  /api/v1/finance/expense-settings:
+    get:
+      tags: [Expense Settings]
+      summary: List expense settings
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: List of expense settings
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ExpenseSetting'
+    post:
+      tags: [Expense Settings]
+      summary: Create expense setting
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseSettingInput'
+      responses:
+        '201':
+          description: Created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/ExpenseSetting'
+                  message: { type: string }
+
+  /api/v1/finance/expense-settings/{expenseSetting}:
+    parameters:
+      - in: path
+        name: expenseSetting
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Expense Settings]
+      summary: Show expense setting
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Expense setting detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/ExpenseSetting'
+    put:
+      tags: [Expense Settings]
+      summary: Update expense setting
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpenseSettingInput'
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [Expense Settings]
+      summary: Delete expense setting
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Deleted
+
+  #
+  # ─── Settlements ───────────────────────────────────────────────────
+  #
+
+  /api/v1/settlements:
+    get:
+      tags: [Settlements]
+      summary: List settlements with period summaries
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+        - in: query
+          name: supplier_id
+          schema: { type: integer }
+        - $ref: '#/components/parameters/status'
+      responses:
+        '200':
+          description: Settlements list with current/finished period data
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      settlements:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Settlement'
+                      periods:
+                        type: object
+                        properties:
+                          current:
+                            $ref: '#/components/schemas/PeriodSummary'
+                          finished:
+                            $ref: '#/components/schemas/PeriodSummary'
+                      meta:
+                        $ref: '#/components/schemas/PaginationMeta'
+
+  /api/v1/settlements/generate:
+    post:
+      tags: [Settlements]
+      summary: Generate settlements for finished period
+      description: Creates draft settlements from delivered orders in the previous weekly period
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Settlements generated
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    type: object
+                    properties:
+                      count: { type: integer }
+                      settlements:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/Settlement'
+
+  /api/v1/settlements/{settlement}:
+    parameters:
+      - in: path
+        name: settlement
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Settlements]
+      summary: Settlement detail with orders, payouts, bank info
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Settlement detail
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/Settlement'
+
+  /api/v1/settlements/{settlement}/approve:
+    post:
+      tags: [Settlements]
+      summary: Approve a settlement
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: settlement
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Approved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  message: { type: string }
+                  data:
+                    $ref: '#/components/schemas/Settlement'
+        '422':
+          description: Cannot approve (wrong status, etc.)
+
+  /api/v1/settlements/{settlement}/pay:
+    post:
+      tags: [Settlements]
+      summary: Mark settlement as paid
+      description: Creates payout record and double-entry financial entries (Debit AP 2400, Credit Bank 1201)
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Paid
+        '422':
+          description: Not in approved status
+
+  /api/v1/settlements/{settlement}/cancel:
+    post:
+      tags: [Settlements]
+      summary: Cancel a settlement
+      description: Unlinks orders from the settlement. Cannot cancel a paid settlement.
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: settlement
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [reason]
+              properties:
+                reason:
+                  type: string
+                  maxLength: 1000
+      responses:
+        '200':
+          description: Cancelled
+
+  /api/v1/settlements/batch/approve:
+    post:
+      tags: [Settlements]
+      summary: Batch approve settlements
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [settlement_ids]
+              properties:
+                settlement_ids:
+                  type: array
+                  items: { type: integer }
+      responses:
+        '200':
+          description: Batch result
+
+  /api/v1/settlements/batch/cancel:
+    post:
+      tags: [Settlements]
+      summary: Batch cancel settlements
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [settlement_ids, reason]
+              properties:
+                settlement_ids:
+                  type: array
+                  items: { type: integer }
+                reason:
+                  type: string
+                  maxLength: 1000
+      responses:
+        '200':
+          description: Batch result
+
+  /api/v1/settlements/batch/payout:
+    post:
+      tags: [Settlements]
+      summary: Batch payout settlements
+      description: All-or-nothing transaction. Creates payouts and financial entries for all approved settlements.
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [settlement_ids]
+              properties:
+                settlement_ids:
+                  type: array
+                  items: { type: integer }
+      responses:
+        '200':
+          description: All processed
+        '400':
+          description: Some failed or all rolled back
+
+  /api/v1/settlements/report:
+    get:
+      tags: [Settlements]
+      summary: Generate payout report file
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: query
+          name: settlement_ids
+          required: true
+          schema:
+            type: array
+            items: { type: integer }
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: Report file download (PDF/txt)
+
+  /api/v1/settlements/bank-transfer-file:
+    get:
+      tags: [Settlements]
+      summary: Generate bank transfer CSV
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: query
+          name: settlement_ids
+          required: true
+          schema:
+            type: array
+            items: { type: integer }
+          style: form
+          explode: false
+      responses:
+        '200':
+          description: CSV file download with beneficiary, account, bank, amount
+
+  #
+  # ─── Payouts ───────────────────────────────────────────────────────
+  #
+
+  /api/v1/payouts:
+    get:
+      tags: [Payouts]
+      summary: List payout records
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+        - in: query
+          name: status
+          schema: { type: string, enum: [pending, processing, ready_to_payout, paid, canceled] }
+      responses:
+        '200':
+          description: Paginated payouts
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SupplierPayout'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      tags: [Payouts]
+      summary: Create payout
+      description: Creates SupplierPayout + FTransaction + 2× FEntry (Debit AP 2400, Credit Bank 1201)
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [order_id]
+              properties:
+                order_id:
+                  type: integer
+                amount:
+                  type: number
+                  description: Optional — defaults to grand_total minus commission
+                notes:
+                  type: string
+                  maxLength: 2000
+      responses:
+        '201':
+          description: Payout created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/SupplierPayout'
+                  message: { type: string }
+
+  /api/v1/payouts/status-by-order/{order}:
+    get:
+      tags: [Payouts]
+      summary: Check payout status for an order
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: order
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Payout status
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      order_id: { type: integer }
+                      has_payout: { type: boolean }
+                      status: { type: string, nullable: true }
+                      payout_id: { type: integer, nullable: true }
+
+  /api/v1/payouts/{payout}/complete:
+    post:
+      tags: [Payouts]
+      summary: Mark payout as completed
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: payout
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Completed
+
+  /api/v1/payouts/{payout}/fail:
+    post:
+      tags: [Payouts]
+      summary: Mark payout as failed
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: payout
+          required: true
+          schema: { type: integer }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                notes:
+                  type: string
+                  maxLength: 2000
+      responses:
+        '200':
+          description: Failed
+
+  #
+  # ─── Loan Transactions ─────────────────────────────────────────────
+  #
+
+  /api/v1/loan-transactions:
+    get:
+      tags: [Loan Transactions]
+      summary: List BNPL loan transactions
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated transactions
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Transaction'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /api/v1/loan-transactions/wallet:
+    get:
+      tags: [Loan Transactions]
+      summary: Seller wallet entries
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Wallet entries
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Wallet'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /api/v1/loan-transactions/invoice/{order}:
+    get:
+      tags: [Loan Transactions]
+      summary: Generate invoice PDF
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: order
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: PDF invoice stream
+
+  /api/v1/loan-transactions/{status}:
+    get:
+      tags: [Loan Transactions]
+      summary: List by payment status
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: status
+          required: true
+          schema:
+            type: string
+            enum: [pending, due, late, paid, failed]
+      responses:
+        '200':
+          description: Filtered transactions
+
+  #
+  # ─── Schedule Payments ─────────────────────────────────────────────
+  #
+
+  /api/v1/schedule-payments:
+    get:
+      tags: [Schedule Payments]
+      summary: List all schedule payments
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated schedule payments
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/SchedulePayment'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /api/v1/schedule-payments/detail/{schedulePayment}:
+    get:
+      tags: [Schedule Payments]
+      summary: Schedule payment detail
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: schedulePayment
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Detail with checkout, user, payment, claims
+
+  /api/v1/schedule-payments/pay-now:
+    post:
+      tags: [Schedule Payments]
+      summary: Record a payment with receipt upload
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [schedule_id, payment_method]
+              properties:
+                schedule_id:
+                  type: integer
+                payment_method:
+                  type: string
+                  maxLength: 50
+                receipt:
+                  type: string
+                  format: binary
+                  description: File (jpg, jpeg, png, pdf) up to 10MB
+      responses:
+        '200':
+          description: Payment recorded
+
+  /api/v1/schedule-payments/{schedulePayment}:
+    put:
+      tags: [Schedule Payments]
+      summary: Update due date
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: schedulePayment
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [due_date]
+              properties:
+                due_date:
+                  type: string
+                  format: date
+                  description: Must be today or later
+      responses:
+        '200':
+          description: Updated
+
+  /api/v1/schedule-payments/{status}:
+    get:
+      tags: [Schedule Payments]
+      summary: List by payment status
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: status
+          required: true
+          schema:
+            type: string
+            enum: [pending, paid, overdue, cancelled, failed]
+      responses:
+        '200':
+          description: Filtered list
+
+  #
+  # ─── Collections ───────────────────────────────────────────────────
+  #
+
+  /api/v1/collections/dashboard:
+    get:
+      tags: [Collections]
+      summary: Collections dashboard metrics
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+      responses:
+        '200':
+          description: Dashboard metrics, DPD distribution
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      metrics:
+                        type: object
+                        properties:
+                          total_outstanding: { type: number }
+                          overdue_amount: { type: number }
+                          collection_rate: { type: number }
+                          active_promises: { type: integer }
+                      dpd_distribution:
+                        type: array
+                      date_from:
+                        type: string
+                        format: date
+                      date_to:
+                        type: string
+                        format: date
+
+  /api/v1/collections/installments:
+    get:
+      tags: [Collections]
+      summary: Installment listing
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+        - $ref: '#/components/parameters/search'
+      responses:
+        '200':
+          description: Paginated installments
+
+  /api/v1/collections/installments/calendar:
+    get:
+      tags: [Collections]
+      summary: Installment calendar events (FullCalendar format)
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: query
+          name: start
+          schema: { type: string, format: date }
+        - in: query
+          name: end
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Array of calendar events
+
+  /api/v1/collections/installments/{order}:
+    get:
+      tags: [Collections]
+      summary: Installment detail by order
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: order
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Order with schedule payments
+
+  /api/v1/collections/alerts:
+    get:
+      tags: [Collections]
+      summary: Collection alerts
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Alert list (critical DPD, broken promises, failed payments)
+
+  /api/v1/collections/flags:
+    get:
+      tags: [Collections]
+      summary: Collection flags
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Flag list (high-value at risk, promises due today)
+
+  /api/v1/collections/allocations:
+    get:
+      tags: [Collections]
+      summary: Payment allocations grouped by order
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Grouped allocations
+
+  /api/v1/collections/promises:
+    get:
+      tags: [Collections]
+      summary: Promise-to-pay records
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/search'
+      responses:
+        '200':
+          description: Paginated promises
+
+  /api/v1/collections/partial-payments:
+    get:
+      tags: [Collections]
+      summary: Partial payment records
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/status'
+        - $ref: '#/components/parameters/search'
+      responses:
+        '200':
+          description: Paginated partial payments
+
+  /api/v1/collections/partial-payments/{partialPayment}/status:
+    post:
+      tags: [Collections]
+      summary: Approve or reject a partial payment
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: partialPayment
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [action]
+              properties:
+                action:
+                  type: string
+                  enum: [approve, reject]
+      responses:
+        '200':
+          description: Status updated
+
+  /api/v1/collections/pending-installments/{user}:
+    get:
+      tags: [Collections]
+      summary: Unpaid installments for a user
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: user
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: List of unpaid installments
+
+  #
+  # ─── Claims ────────────────────────────────────────────────────────
+  #
+
+  /api/v1/claims:
+    get:
+      tags: [Claims]
+      summary: List claims
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/status'
+        - in: query
+          name: priority
+          schema: { type: string, enum: [low, medium, high, urgent] }
+        - in: query
+          name: assigned_to
+          schema: { type: integer }
+        - in: query
+          name: overdue
+          schema: { type: boolean }
+        - in: query
+          name: escalation
+          schema: { type: boolean }
+      responses:
+        '200':
+          description: Paginated claims
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Claim'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      tags: [Claims]
+      summary: Create a claim
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClaimInput'
+      responses:
+        '201':
+          description: Claim created
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    $ref: '#/components/schemas/Claim'
+                  message: { type: string }
+
+  /api/v1/claims/{claim}:
+    parameters:
+      - in: path
+        name: claim
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Claims]
+      summary: Claim detail
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Claim with relations
+
+  /api/v1/claims/{claim}/attempt:
+    post:
+      tags: [Claims]
+      summary: Record a collection attempt
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contact_method:
+                  type: string
+                  maxLength: 50
+                customer_response:
+                  type: string
+                promised_payment_date:
+                  type: string
+                  format: date
+                promised_amount:
+                  type: number
+                notes:
+                  type: string
+      responses:
+        '200':
+          description: Attempt recorded
+
+  /api/v1/claims/{claim}/resolve:
+    post:
+      tags: [Claims]
+      summary: Resolve a claim
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Resolved
+
+  /api/v1/claims/{claim}/escalate:
+    post:
+      tags: [Claims]
+      summary: Escalate a claim
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [escalation_reason]
+              properties:
+                escalation_reason:
+                  type: string
+                  maxLength: 1000
+      responses:
+        '200':
+          description: Escalated
+
+  /api/v1/claims/by-schedule-payment/{schedulePayment}:
+    get:
+      tags: [Claims]
+      summary: Get claims for a schedule payment
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: schedulePayment
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Claim list
+
+  #
+  # ─── Refund Requests ───────────────────────────────────────────────
+  #
+
+  /api/v1/refund-requests:
+    get:
+      tags: [Refund Requests]
+      summary: List refund requests
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated refund requests
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/RefundRequest'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /api/v1/refund-requests/{status}:
+    get:
+      tags: [Refund Requests]
+      summary: List by refund status
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: status
+          required: true
+          schema:
+            type: string
+            enum: [pending, approved, rejected]
+      responses:
+        '200':
+          description: Filtered list
+
+  /api/v1/refund-requests/{refundRequest}/status:
+    patch:
+      tags: [Refund Requests]
+      summary: Update refund status
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: refundRequest
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refund_status]
+              properties:
+                refund_status:
+                  type: string
+                  enum: [pending, approved, rejected]
+      responses:
+        '200':
+          description: Status updated
+
+  #
+  # ─── Credit Management ─────────────────────────────────────────────
+  #
+
+  /api/v1/credit/profiles:
+    get:
+      tags: [Credit Management]
+      summary: Customer credit profiles
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/search'
+      responses:
+        '200':
+          description: Paginated credit profiles
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /api/v1/credit/limits:
+    get:
+      tags: [Credit Management]
+      summary: Credit limit records
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/search'
+      responses:
+        '200':
+          description: Paginated credit limits
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/CreditLimit'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+
+  /api/v1/credit/repayment-schedule:
+    get:
+      tags: [Credit Management]
+      summary: Customer repayment schedule
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/search'
+      responses:
+        '200':
+          description: Paginated schedule payments
+
+  /api/v1/credit/assessment/{customer}:
+    get:
+      tags: [Credit Management]
+      summary: Detailed credit & risk assessment
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: customer
+          required: true
+          schema: { type: integer }
+          description: User ID (customer)
+      responses:
+        '200':
+          description: Credit score and risk score breakdown
+
+  /api/v1/credit/limits/{customer}:
+    put:
+      tags: [Credit Management]
+      summary: Update customer credit limit
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: path
+          name: customer
+          required: true
+          schema: { type: integer }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [credit_limit, reason]
+              properties:
+                credit_limit:
+                  type: number
+                  min: 0
+                reason:
+                  type: string
+                  maxLength: 1000
+      responses:
+        '200':
+          description: Limit updated
+
+  /api/v1/credit/customers/search:
+    get:
+      tags: [Credit Management]
+      summary: Search customers
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/search'
+      responses:
+        '200':
+          description: Customer list (max 20)
+
+  #
+  # ─── Investment Pools ──────────────────────────────────────────────
+  #
+
+  /api/v1/investment-pools:
+    get:
+      tags: [Investment Pools]
+      summary: List investment pools
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+        - $ref: '#/components/parameters/status'
+      responses:
+        '200':
+          description: Paginated pools
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/InvestmentPool'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      tags: [Investment Pools]
+      summary: Create investment pool
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, start_date, end_date]
+              properties:
+                name:
+                  type: string
+                  maxLength: 255
+                start_date:
+                  type: string
+                  format: date
+                end_date:
+                  type: string
+                  format: date
+                expected_collections:
+                  type: number
+                description:
+                  type: string
+      responses:
+        '201':
+          description: Pool created
+
+  /api/v1/investment-pools/{pool}:
+    parameters:
+      - in: path
+        name: pool
+        required: true
+        schema: { type: integer }
+    get:
+      tags: [Investment Pools]
+      summary: Pool detail with checkouts, stats, trends
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Full pool detail
+    put:
+      tags: [Investment Pools]
+      summary: Update pool
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                start_date: { type: string, format: date }
+                end_date: { type: string, format: date }
+                expected_collections: { type: number }
+                status: { type: string, enum: [active, closed] }
+                description: { type: string }
+      responses:
+        '200':
+          description: Updated
+    delete:
+      tags: [Investment Pools]
+      summary: Delete pool (blocks if has checkouts)
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Deleted
+        '409':
+          description: Has checkouts
+
+  /api/v1/investment-pools/calendar-events:
+    get:
+      tags: [Investment Pools]
+      summary: Calendar events (FullCalendar format)
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: query
+          name: start
+          schema: { type: string, format: date }
+        - in: query
+          name: end
+          schema: { type: string, format: date }
+      responses:
+        '200':
+          description: Calendar event array
+
+  #
+  # ─── Transfer Requests ─────────────────────────────────────────────
+  #
+
+  /api/v1/transfers:
+    get:
+      tags: [Transfer Requests]
+      summary: List transfer requests
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/per_page'
+        - $ref: '#/components/parameters/page'
+      responses:
+        '200':
+          description: Paginated transfers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/TransferRequest'
+                  meta:
+                    $ref: '#/components/schemas/PaginationMeta'
+    post:
+      tags: [Transfer Requests]
+      summary: Create transfer request
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to_user_id, model_type, model_id]
+              properties:
+                to_user_id:
+                  type: integer
+                model_type:
+                  type: string
+                  enum: [Order, Merchant, SupportTicket, SchedulePayment, RefundRequest, Transaction, Customer]
+                model_id:
+                  type: integer
+                description:
+                  type: string
+                  maxLength: 500
+      responses:
+        '201':
+          description: Transfer created
+
+  /api/v1/transfers/bulk:
+    post:
+      tags: [Transfer Requests]
+      summary: Bulk transfer items
+      security: [{ SanctumCookie: [] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [to_user_id, model_type, model_ids]
+              properties:
+                to_user_id: { type: integer }
+                model_type: { type: string }
+                model_ids:
+                  type: array
+                  items: { type: integer }
+                description: { type: string }
+      responses:
+        '200':
+          description: Bulk result with processed/failed counts
+
+  /api/v1/transfers/by-model:
+    get:
+      tags: [Transfer Requests]
+      summary: Transfer history for a specific model
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: query
+          name: model_type
+          required: true
+          schema: { type: string }
+        - in: query
+          name: model_id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Transfer history list
+
+  #
+  # ─── Reports ───────────────────────────────────────────────────────
+  #
+
+  /api/v1/reports/portfolio-performance:
+    get:
+      tags: [Financial Reports]
+      summary: Portfolio performance report
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+        - in: query
+          name: merchant_id
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Portfolio performance data
+
+  /api/v1/reports/financial-summary:
+    get:
+      tags: [Financial Reports]
+      summary: Financial summary report
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+        - in: query
+          name: merchant_id
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Summary with revenue, payouts, costs, net profit
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean }
+                  data:
+                    type: object
+                    properties:
+                      summary:
+                        type: object
+                        properties:
+                          total_revenue: { type: number }
+                          supplier_payouts: { type: number }
+                          operational_costs: { type: number }
+                          net_profit: { type: number }
+                      charts:
+                        type: object
+                        properties:
+                          months: { type: array, items: { type: string } }
+                          monthly_revenue: { type: array, items: { type: number } }
+
+  /api/v1/reports/delinquency-aging:
+    get:
+      tags: [Financial Reports]
+      summary: Delinquency aging report
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+        - in: query
+          name: merchant_id
+          schema: { type: integer }
+      responses:
+        '200':
+          description: DPD-bucketed delinquency by merchant
+
+  /api/v1/reports/supplier-transaction:
+    get:
+      tags: [Financial Reports]
+      summary: Supplier transaction report
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+        - in: query
+          name: merchant_id
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Supplier transaction data
+
+  /api/v1/reports/collection-efficiency:
+    get:
+      tags: [Financial Reports]
+      summary: Collection efficiency report
+      security: [{ SanctumCookie: [] }]
+      responses:
+        '200':
+          description: Collection metrics
+
+  /api/v1/reports/risk-exposure:
+    get:
+      tags: [Financial Reports]
+      summary: Risk exposure analysis
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: query
+          name: date_range
+          schema: { type: string, default: '12M' }
+      responses:
+        '200':
+          description: Risk metrics
+
+  /api/v1/reports/instalment-repayment:
+    get:
+      tags: [Financial Reports]
+      summary: Instalment repayment report
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+        - in: query
+          name: customer_id
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Instalment groupings by order
+
+  /api/v1/reports/merchant-credit-history:
+    get:
+      tags: [Financial Reports]
+      summary: Merchant credit history report
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - $ref: '#/components/parameters/date_from'
+        - $ref: '#/components/parameters/date_to'
+        - in: query
+          name: customer_id
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Credit history per customer
+
+  /api/v1/reports/onboarding-funnel:
+    get:
+      tags: [Financial Reports]
+      summary: Merchant onboarding funnel report
+      security: [{ SanctumCookie: [] }]
+      parameters:
+        - in: query
+          name: date_range
+          schema: { type: string, enum: [1M, 3M, 6M, 12M], default: '1M' }
+      responses:
+        '200':
+          description: Funnel metrics
+
+components:
+
+  securitySchemes:
+    SanctumCookie:
+      type: apiKey
+      in: cookie
+      name: XSRF-TOKEN
+      description: |
+        Sanctum SPA authentication. Before making authenticated requests:
+        1. Send `GET /sanctum/csrf-cookie` to receive the XSRF-TOKEN cookie
+        2. Include `withCredentials: true` in all requests
+        3. Send `X-Requested-With: XMLHttpRequest` and `Accept: application/json` headers
+        4. Use the session cookie set after successful login
+
+  parameters:
+    page:
+      in: query
+      name: page
+      schema: { type: integer, default: 1 }
+      description: Page number
+    per_page:
+      in: query
+      name: per_page
+      schema: { type: integer, default: 15, maximum: 100 }
+      description: Items per page
+    status:
+      in: query
+      name: status
+      schema: { type: string }
+      description: Filter by status
+    date:
+      in: query
+      name: date
+      schema: { type: string, format: date }
+      description: Filter by date
+    date_from:
+      in: query
+      name: date_from
+      schema: { type: string, format: date }
+      description: Start date filter
+    date_to:
+      in: query
+      name: date_to
+      schema: { type: string, format: date }
+      description: End date filter
+    search:
+      in: query
+      name: search
+      schema: { type: string }
+      description: Search query (searches user name, order ID, etc.)
+
+  schemas:
+
+    # ── Shared ─────────────────────────────────────────────────────
+
+    ErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [false]
+        message:
+          type: string
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items: { type: string }
+
+    PaginationMeta:
+      type: object
+      properties:
+        current_page: { type: integer }
+        last_page: { type: integer }
+        per_page: { type: integer }
+        total: { type: integer }
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          enum: [true]
+        data:
+          type: object
+        message:
+          type: string
+
+    # ── User ──────────────────────────────────────────────────────
+
+    UserResponse:
+      type: object
+      properties:
+        success: { type: boolean, example: true }
+        data:
+          type: object
+          properties:
+            id: { type: integer }
+            first_name: { type: string }
+            last_name: { type: string }
+            email: { type: string }
+            user_type: { type: string, enum: [admin, employee, supplier, customer] }
+            profile_photo_url: { type: string, nullable: true }
+            roles:
+              type: array
+              items: { type: string }
+            permissions:
+              type: array
+              items: { type: string }
+
+    # ── Dashboard ─────────────────────────────────────────────────
+
+    DashboardKPIs:
+      type: object
+      properties:
+        total_assets: { type: number }
+        total_liabilities: { type: number }
+        monthly_revenue: { type: number }
+        monthly_expenses: { type: number }
+        cash_flow: { type: number }
+        net_income: { type: number }
+        accounts_receivable: { type: number }
+        accounts_payable: { type: number }
+        liquidity: { type: number }
+        net_worth_trend: { type: number }
+        net_income_trend: { type: number }
+        accounts_receivable_trend: { type: number }
+        accounts_payable_trend: { type: number }
+        net_worth_sparkline:
+          type: array
+          items: { type: number }
+          description: 6-month monthly values
+        net_income_sparkline:
+          type: array
+          items: { type: number }
+        accounts_receivable_sparkline:
+          type: array
+          items: { type: number }
+        accounts_payable_sparkline:
+          type: array
+          items: { type: number }
+
+    DashboardCharts:
+      type: object
+      properties:
+        monthly_data:
+          type: array
+          items:
+            type: object
+            properties:
+              month: { type: string }
+              revenue: { type: number }
+              expenses: { type: number }
+              net: { type: number }
+        account_types:
+          type: array
+          items:
+            type: object
+
+    PoolSummary:
+      type: object
+      properties:
+        recent_pools:
+          type: array
+        summary:
+          type: object
+          properties:
+            total_pools: { type: integer }
+            active_pools: { type: integer }
+            total_disbursed: { type: number }
+            total_collected: { type: number }
+            avg_collection_rate: { type: number }
+            total_outstanding: { type: number }
+
+    # ── Chart of Accounts ──────────────────────────────────────────
+
+    FAccount:
+      type: object
+      properties:
+        id: { type: integer }
+        account_name: { type: string }
+        description: { type: string, nullable: true }
+        account_type1: { type: integer, description: '1=Budget, 2=Non-Budget' }
+        account_type2: { type: integer, description: '1=Debit, 2=Credit' }
+        status: { type: string, enum: [active, inactive] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        entries_count: { type: integer, nullable: true }
+
+    FAccountInput:
+      type: object
+      required: [id, account_name, account_type1, account_type2, status]
+      properties:
+        id: { type: integer, description: 'Account code (e.g. 1203)' }
+        account_name: { type: string, maxLength: 255 }
+        description: { type: string }
+        account_type1: { type: integer, enum: [1, 2], description: '1=Budget, 2=Non-Budget' }
+        account_type2: { type: integer, enum: [1, 2], description: '1=Debit, 2=Credit' }
+        status: { type: string, enum: [active, inactive] }
+
+    # ── Journal Entry ────────────────────────────────────────────
+
+    FEntry:
+      type: object
+      properties:
+        id: { type: integer }
+        transaction_id: { type: integer, nullable: true }
+        account_id: { type: integer }
+        debit: { type: number }
+        credit: { type: number }
+        entry_date: { type: string, format: date-time }
+        notes: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        account:
+          type: object
+          properties:
+            id: { type: integer }
+            account_name: { type: string }
+            account_type1: { type: integer }
+            account_type2: { type: integer }
+        running_balance:
+          type: number
+          nullable: true
+          description: Computed for ledger view only
+
+    # ── Journal Transaction ──────────────────────────────────────
+
+    FTransaction:
+      type: object
+      properties:
+        id: { type: integer }
+        uuid: { type: string }
+        checkout_id: { type: integer, nullable: true }
+        customer_id: { type: integer, nullable: true }
+        supplier_id: { type: integer, nullable: true }
+        user_id: { type: integer }
+        order_id: { type: integer, nullable: true }
+        payment_id: { type: integer, nullable: true }
+        transaction_type: { type: string, enum: [payment, refund, withdrawal, deposit, transfer] }
+        amount: { type: number }
+        status: { type: string, enum: [pending, completed, failed, cancelled] }
+        transaction_date: { type: string, format: date-time }
+        notes: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        user:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+        entries:
+          type: array
+          items:
+            $ref: '#/components/schemas/FEntry'
+
+    FTransactionInput:
+      type: object
+      required: [user_id, transaction_type, amount, status, transaction_date]
+      properties:
+        reference_id: { type: string, maxLength: 255 }
+        customer_id: { type: integer, nullable: true }
+        supplier_id: { type: integer, nullable: true }
+        user_id: { type: integer }
+        order_id: { type: integer, nullable: true }
+        payment_id: { type: integer, nullable: true }
+        transaction_type: { type: string, enum: [payment, refund, withdrawal, deposit, transfer] }
+        amount: { type: number, minimum: 0 }
+        status: { type: string, enum: [pending, completed, failed, cancelled] }
+        transaction_date: { type: string, format: date }
+        notes: { type: string }
+
+    # ── Expense Setting ───────────────────────────────────────────
+
+    ExpenseSetting:
+      type: object
+      properties:
+        id: { type: integer }
+        refrence_id: { type: string }
+        description: { type: string }
+        amount_type: { type: string, enum: [fixed, percent] }
+        amount: { type: number }
+        credit_acc_id: { type: integer }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+
+    ExpenseSettingInput:
+      type: object
+      required: [refrence_id, description, amount_type, amount, credit_acc_id]
+      properties:
+        refrence_id: { type: string, maxLength: 255 }
+        description: { type: string, maxLength: 255 }
+        amount_type: { type: string, enum: [fixed, percent] }
+        amount: { type: number, minimum: 0, description: 'Max 100 if amount_type is percent' }
+        credit_acc_id: { type: integer }
+
+    # ── Settlement ──────────────────────────────────────────────
+
+    Settlement:
+      type: object
+      properties:
+        id: { type: integer }
+        uuid: { type: string }
+        settlement_number: { type: string }
+        supplier_user_id: { type: integer }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
+        settlement_date: { type: string, format: date }
+        total_amount: { type: number }
+        commission_amount: { type: number }
+        payable_amount: { type: number }
+        status: { type: string, enum: [draft, pending_approval, approved, paid, cancelled] }
+        paid_at: { type: string, format: date-time, nullable: true }
+        approved_at: { type: string, format: date-time, nullable: true }
+        notes: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        orders_count: { type: integer, nullable: true }
+        supplier:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+            business_name: { type: string, nullable: true }
+
+    PeriodSummary:
+      type: object
+      properties:
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
+        settlement_date: { type: string, format: date }
+        total_amount: { type: number }
+        orders_count: { type: integer }
+        unsettled_amount: { type: number }
+        unsettled_orders_count: { type: integer }
+
+    # ── Supplier Payout ─────────────────────────────────────────
+
+    SupplierPayout:
+      type: object
+      properties:
+        id: { type: integer }
+        uuid: { type: string }
+        supplier_id: { type: integer }
+        order_id: { type: integer, nullable: true }
+        settlement_id: { type: integer, nullable: true }
+        amount: { type: number }
+        status: { type: string, enum: [pending, completed, failed] }
+        payout_date: { type: string, format: date-time, nullable: true }
+        notes: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    # ── BNPL Transaction ──────────────────────────────────────
+
+    Transaction:
+      type: object
+      properties:
+        id: { type: integer }
+        uuid: { type: string }
+        user_id: { type: integer }
+        seller_id: { type: integer }
+        order_id: { type: integer, nullable: true }
+        loan_amount: { type: number }
+        collected: { type: number }
+        retrieved: { type: number }
+        canceled: { type: number }
+        subscription_fees: { type: number }
+        payment_status: { type: string }
+        settlement_status: { type: string, nullable: true }
+        general_status: { type: string, nullable: true }
+        loan_start_date: { type: string, format: date, nullable: true }
+        loan_end_date: { type: string, format: date, nullable: true }
+        credit_limit_at_time: { type: number }
+        remaining_credit_limit: { type: number }
+        created_at: { type: string, format: date-time }
+
+    # ── Schedule Payment ──────────────────────────────────────
+
+    SchedulePayment:
+      type: object
+      properties:
+        id: { type: integer }
+        uuid: { type: string }
+        user_id: { type: integer }
+        order_id: { type: integer }
+        seller_id: { type: integer }
+        instalment_number: { type: integer }
+        due_date: { type: string, format: date }
+        instalment_amount: { type: number }
+        principle_amount: { type: number }
+        late_fee: { type: number }
+        subscription_fee: { type: number }
+        shipping_amount: { type: number }
+        deducted_amount: { type: number }
+        is_late: { type: boolean }
+        late_days: { type: integer, nullable: true }
+        payment_status: { type: string, enum: [pending, paid, late, overdue, cancelled, failed] }
+        failure_reason: { type: string, nullable: true }
+        payment_method: { type: string, nullable: true }
+        paid_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    # ── Payment ───────────────────────────────────────────────
+
+    Payment:
+      type: object
+      properties:
+        id: { type: integer }
+        uuid: { type: string }
+        amount: { type: number }
+        payment_status: { type: string }
+        payment_method: { type: string, nullable: true }
+        invoice_number: { type: string, nullable: true }
+        txn_code: { type: string, nullable: true }
+        paid_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    # ── Wallet ────────────────────────────────────────────────
+
+    Wallet:
+      type: object
+      properties:
+        id: { type: integer }
+        user_id: { type: integer }
+        seller_id: { type: integer, nullable: true }
+        order_id: { type: integer, nullable: true }
+        transaction_type: { type: string, enum: [user_payment, loan_disbursment, seller_payment] }
+        amount: { type: number }
+        status: { type: string }
+        created_at: { type: string, format: date-time }
+
+    # ── Claim ─────────────────────────────────────────────────
+
+    Claim:
+      type: object
+      properties:
+        id: { type: integer }
+        uuid: { type: string }
+        schedule_payment_id: { type: integer }
+        user_id: { type: integer, nullable: true }
+        assigned_to: { type: integer, nullable: true }
+        claim_type: { type: string, enum: [call, sms, email, whatsapp, visit, letter, legal] }
+        claim_status: { type: string, enum: [pending, attempted, contacted, promised, resolved, failed] }
+        priority: { type: string, enum: [low, medium, high, urgent] }
+        notes: { type: string, nullable: true }
+        contact_method: { type: string, nullable: true }
+        attempted_at: { type: string, format: date-time, nullable: true }
+        contacted_at: { type: string, format: date-time, nullable: true }
+        promised_payment_date: { type: string, format: date-time, nullable: true }
+        customer_response: { type: string, nullable: true }
+        promised_amount: { type: number, nullable: true }
+        next_follow_up: { type: string, format: date-time, nullable: true }
+        requires_escalation: { type: boolean }
+        escalation_reason: { type: string, nullable: true }
+        attempt_count: { type: integer }
+        communication_log: { type: array, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    ClaimInput:
+      type: object
+      required: [schedule_payment_id, claim_type, priority]
+      properties:
+        schedule_payment_id: { type: integer }
+        claim_type: { type: string, enum: [call, sms, email, whatsapp, visit, letter, legal] }
+        priority: { type: string, enum: [low, medium, high, urgent] }
+        notes: { type: string }
+        next_follow_up: { type: string, format: date }
+
+    # ── Refund Request ─────────────────────────────────────────
+
+    RefundRequest:
+      type: object
+      properties:
+        id: { type: integer }
+        assigned_to: { type: integer, nullable: true }
+        user_id: { type: integer }
+        seller_id: { type: integer }
+        order_id: { type: integer }
+        seller_approval: { type: string, nullable: true }
+        admin_approval: { type: string, nullable: true }
+        refund_amount: { type: number }
+        reason: { type: string, nullable: true }
+        reject_reason: { type: string, nullable: true }
+        refund_status: { type: string, enum: [pending, approved, rejected] }
+        created_at: { type: string, format: date-time }
+
+    # ── Credit Limit ───────────────────────────────────────────
+
+    CreditLimit:
+      type: object
+      properties:
+        id: { type: integer }
+        user_id: { type: integer }
+        package_id: { type: integer, nullable: true }
+        simah_limit: { type: number }
+        limit_arabianpay_after: { type: number }
+        limit_arabianpay_before: { type: number }
+        comission: { type: number }
+        created_at: { type: string, format: date-time }
+
+    # ── Investment Pool ────────────────────────────────────────
+
+    InvestmentPool:
+      type: object
+      properties:
+        id: { type: integer }
+        uuid: { type: string }
+        name: { type: string }
+        start_date: { type: string, format: date }
+        end_date: { type: string, format: date }
+        expected_collections: { type: number }
+        status: { type: string, enum: [active, closed] }
+        total_checkouts: { type: integer, nullable: true }
+        total_disbursed: { type: number }
+        total_collected: { type: number }
+        collection_rate: { type: number }
+        description: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        days_remaining: { type: integer, nullable: true }
+        is_active: { type: boolean }
+
+    # ── Transfer Request ───────────────────────────────────────
+
+    TransferRequest:
+      type: object
+      properties:
+        id: { type: integer }
+        from_user_id: { type: integer }
+        to_user_id: { type: integer }
+        model_type: { type: string }
+        model_id: { type: integer }
+        description: { type: string, nullable: true }
+        status: { type: string }
+        created_at: { type: string, format: date-time }
+        from_user:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+        to_user:
+          type: object
+          properties:
+            id: { type: integer }
+            name: { type: string }
+
+    # ── Partial Payment ────────────────────────────────────────
+
+    PartialPayment:
+      type: object
+      properties:
+        id: { type: integer }
+        user_id: { type: integer }
+        employee_id: { type: integer, nullable: true }
+        schedule_payment_id: { type: integer }
+        partial_amount: { type: number }
+        partial_due_date: { type: string, format: date, nullable: true }
+        details: { type: string, nullable: true }
+        status: { type: string, nullable: true }
+        approval_status: { type: string, nullable: true }
+        payment_method: { type: string, nullable: true }
+        paid_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+
+    # ── Promise ────────────────────────────────────────────────
+
+    Promise:
+      type: object
+      properties:
+        id: { type: integer }
+        user_id: { type: integer }
+        employee_id: { type: integer, nullable: true }
+        schedule_payment_id: { type: integer }
+        promise_date: { type: string, format: date }
+        method: { type: string }
+        notes: { type: string, nullable: true }
+        status: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+
+  responses:
+    AccountUpdated:
+      description: Account updated
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              success: { type: boolean }
+              data:
+                $ref: '#/components/schemas/FAccount'
+              message: { type: string }
+    Unauthenticated:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    Forbidden:
+      description: Permission denied
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    ValidationError:
+      description: Validation failed
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
