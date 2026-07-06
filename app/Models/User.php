@@ -94,6 +94,11 @@ class User extends Authenticatable implements HasPasskeys
         'profile_photo_url',
     ];
 
+    public function getNameAttribute(): ?string
+    {
+        return trim(($this->first_name ?? '').' '.($this->last_name ?? ''));
+    }
+
     /**
      * The attributes that should be cast.
      *

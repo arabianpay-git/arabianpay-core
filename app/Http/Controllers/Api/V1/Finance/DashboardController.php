@@ -1,53 +1,41 @@
 <?php
 
-namespace App\Http\Controllers\Financial;
+namespace App\Http\Controllers\Api\V1\Finance;
 
 use App\Http\Controllers\Controller;
 use App\Services\Finance\FinancialDashboardService;
 use Carbon\Carbon;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-class FinancialDashboardController extends Controller
+class DashboardController extends Controller
 {
-    protected FinancialDashboardService $dashboardService;
+    public function __construct(
+        protected FinancialDashboardService $dashboardService
+    ) {}
 
-    public function __construct(FinancialDashboardService $dashboardService)
+    public function index(): JsonResponse
     {
-        $this->dashboardService = $dashboardService;
-    }
-
-    public function index(Request $request)
-    {
-        $data = [
-            'kpis' => $this->dashboardService->getKPIs(),
-            'chartData' => $this->dashboardService->getChartData(),
-            'recentActivities' => $this->dashboardService->getRecentActivities(),
-            'accountsSummary' => $this->dashboardService->getAccountsSummary(),
-            'trialBalance' => $this->trialBalance($request),
-            'investmentPools' => $this->dashboardService->getInvestmentPoolsSummary(),
-        ];
-
-        return view('admin.financial.dashboard', $data);
-    }
-
-    public function getChartDataJson(Request $request)
-    {
-        $type = $request->get('type', 'monthly');
+        $kpis = $this->dashboardService->getKPIs();
         $chartData = $this->dashboardService->getChartData();
+        $recentActivities = $this->dashboardService->getRecentActivities();
 
-        switch ($type) {
-            case 'monthly':
-                return response()->json($chartData['monthly_data']);
-            case 'accounts':
-                return response()->json($chartData['account_types']);
-            default:
-                return response()->json([]);
-        }
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'kpis' => $kpis,
+                'charts' => $chartData,
+                'recent_activities' => $recentActivities,
+                'accounts_summary' => $this->dashboardService->getAccountsSummary(),
+                'investment_pools' => $this->dashboardService->getInvestmentPoolsSummary(),
+            ],
+        ]);
     }
 
-    public function trialBalance(Request $request)
+    public function trialBalance(Request $request): JsonResponse
     {
         $trialBalance = $this->dashboardService->getTrialBalance($request);
+        $balanceDate = $request->get('date', Carbon::now()->format(dateFormat()));
         $totalDebits = 0;
         $totalCredits = 0;
 
@@ -56,12 +44,15 @@ class FinancialDashboardController extends Controller
             $totalCredits += $account->total_credit;
         }
 
-        return [
-            'trialBalance' => $trialBalance,
-            'balanceDate' => $request->get('date', Carbon::now()->format(dateFormat())),
-            'totalDebits' => $totalDebits,
-            'totalCredits' => $totalCredits,
-        ];
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'accounts' => $trialBalance,
+                'balance_date' => $balanceDate,
+                'total_debits' => $totalDebits,
+                'total_credits' => $totalCredits,
+            ],
+        ]);
     }
 
     public function exportTrialBalance(Request $request)
